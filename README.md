@@ -17,4 +17,5 @@ Please note that the following Python packages are required and have to be insta
 - pyto ImageIO  (TODO reference)
 - vtk (http://www.vtk.org)
 - graph-tool (Peixoto, 2014; https://git.skewed.de/count0/graph-tool)
+
 The scripts can be run using Python 2.7 versions.
