@@ -1,0 +1,1 @@
+The script 'prepare_ribosome_centers_inside_membrane.m' list the sequence of MATLAB scripts that were executed in order to map ribosome centers from template matching onto membrane mask from segmentation.

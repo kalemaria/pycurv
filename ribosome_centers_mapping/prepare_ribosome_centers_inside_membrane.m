@@ -1,0 +1,7 @@
+
+run_bin_motl_twice
+run_visualise_sec61_centers_within_dist_to_membrane_bin6
+run_region_maximas_to_1
+run_find_closest_points_inside_membrane
+run_filter_motl_within_dist_to_points_and_visualise_particles
+
