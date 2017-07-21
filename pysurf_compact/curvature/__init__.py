@@ -1,3 +1,3 @@
 from surface_graphs import *
 
-print 'Checking Git and Pycharm'
+print 'Checking Git and Pycharm    '
