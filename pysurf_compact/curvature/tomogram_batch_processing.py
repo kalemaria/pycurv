@@ -63,6 +63,17 @@ def split_segmentation(infile, lbl=1, close=True, close_cube_size=5, close_iter=
     return regions, outfile
 
 
+# Function for running all processing steps to estimate membrane curvature:
+# 1. signed surface generation, 2. surface cleaning using a graph, 3. curvature calculation using a graph generated from the clean surface.
+# fold          folder (string)
+# tomo          tomogram (string)
+# seg_file      membrane segmentation mask (string, may contain 'fold' and 'tomo')
+# label         label to be considered in the membrane mask (int)
+# pixel_size    pixel size in nm of the membrane mask (float)
+# scale_x       size of the membrane mask in X dimension (int)
+# scale_y       size of the membrane mask in Y dimension (int)
+# scale_z       size of the membrane mask in Z dimension (int)
+# k             parameter of Normal Vector Voting algorithm determining the neighborhood size, g_max = k * average weak triangle graph edge length (int)
 def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z, k):
     epsilon = 0
     eta = 0
@@ -297,7 +308,7 @@ def main():
     scale_x = 620
     scale_y = 620
     scale_z = 80
-    k = 5
+    k = 3
 
     workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z, k)
 
