@@ -1049,4 +1049,4 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.gauss_curvature_VV[vertex_v] = kappa_1 * kappa_2
         self.graph.vp.mean_curvature_VV[vertex_v] = (kappa_1 + kappa_2) / 2
         self.graph.vp.shape_index_VV[vertex_v] = 2 / math.pi * math.atan((kappa_1 + kappa_2) / (kappa_1 - kappa_2))
-        self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(kappa_1 ** 2 + kappa_2 ** 2) / 2
+        self.graph.vp.curvedness_VV[vertex_v] = math.sqrt((kappa_1 ** 2 + kappa_2 ** 2) / 2)
