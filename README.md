@@ -14,8 +14,8 @@ This folder contains Python packages with scripts used for the following two ana
 - Estimation of membrane curvature using our implementation of Normal Vector Voting algorithm (Page et al., 2002). The workflow consists of the following three main steps: 1. signed surface generation, 2. surface cleaning using a graph, and 3. curvature calculation using a graph generated from the clean surface. The function 'workflow' in 'curvature/tomogram_batch_processing.py' provides the complete execution code, which can be called as shown in the 'main' function.
 
 Please note that the following Python packages are required and have to be installed:
-- pyto ImageIO  (TODO reference)
-- vtk (http://www.vtk.org)
+- Pyto ImageIO (Lučić et al., 2016, PMID: 27742578 DOI: 10.1016/j.jsb.2016.10.004)
+- VTK (http://www.vtk.org)
 - graph-tool (Peixoto, 2014; https://git.skewed.de/count0/graph-tool)
 
 The scripts can be run using Python 2.7 versions.
