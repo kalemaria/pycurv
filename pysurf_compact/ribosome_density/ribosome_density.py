@@ -386,29 +386,20 @@ def run_build_graph_from_np_ndarray_and_calculate_density(mem_mask, ribo_mask, p
     return densities
 
 
+# Calculates ribosome density on ER_membranes for a tomogram. Ribosome coordinates had been rescaled from bin 3 to bin 6 and bin 6 membrane segmentation mask was used.
 def main():
-    # Real data
-
-    # Tiny cutout (1 vesicle with one ribosome) files in bin6
-    # fold = '/fs/pool/pool-ruben/Maria/curvature/'
-    # membrane_mask_file = fold + 'in_new/t85_vesicle_bin6.Labels.mrc'
-    # ribosome_mask_file = fold + 'in_new/t85_vesicle_bin6.ribosome_centers.mrc'
-    # ribosome_densities_file = fold + 'out_new/t85_vesicle_bin6.vg_nm_ribosome_densities.mrc'
-    # vtp_files_base = fold + 'out_new/t85_vesicle_bin6.vg_nm'
-    # pixel_size_nm = 2.52608
-
-    # Whole files in bin6
-    tomo = 't85'  # 't84', 't92'
+    # TODO change those parameters for each tomogram:
+    tomo = 't85'
     tm_fold = '/fs/pool/pool-ruben/Maria/Felix_ribosomes_and_Htt/bin3OPS1.263nm/02_template_matching/' + tomo + '/etomo_cleaned_notcorr_Felix/'
     class_fold = \
         '/fs/pool/pool-ruben/Maria/Felix_ribosomes_and_Htt/bin3OPS1.263nm/04_classifications_refined_membrane/' + tomo + '/6classes/'
-    output_fold = '/fs/pool/pool-ruben/Maria/Felix_ribosomes_and_Htt/bin3OPS1.263nm/05_ribosome_density' + tomo + '/'
+    output_fold = '/fs/pool/pool-ruben/Maria/Felix_ribosomes_and_Htt/bin3OPS1.263nm/05_ribosome_density/' + tomo + '/'
     membrane_mask_file = tm_fold + 'mask_membrane_final_bin6.mrc'
     membrane_graph_file = output_fold + 'graph_membrane_final_bin6.gt'
     ribosome_mask_file = class_fold + 'sec61_centers_inside_membrane_r4_bin6.mrc'
     ribosome_densities_file = output_fold + 'densities_sec61_centers_r4_bin6.mrc'
     vtp_files_base = output_fold + 'densities_sec61_centers_r4_bin6'
-    pixel_size_nm = 1  # 2.526
+    pixel_size_nm = 2.526
 
     # To check how many of the target voxels from the ribosome mask are inside the membrane mask:
     # membrane_mask = read_in_mask(membrane_mask_file)
@@ -416,19 +407,19 @@ def main():
     # get_target_voxels_in_membrane_mask(ribosome_mask, membrane_mask)
 
     # To generate the graph and calculate the densities:
-    # membrane_mask = read_in_mask(membrane_mask_file)
-    # ribosome_mask = read_in_mask(ribosome_mask_file)
-    # ribosome_densities = run_build_graph_from_np_ndarray_and_calculate_density(membrane_mask, ribosome_mask, pixel_size_nm, vtp_files_base)
-    # io.save_numpy(ribosome_densities, ribosome_densities_file)
-
-    # To generate and save the graph only:
     membrane_mask = read_in_mask(membrane_mask_file)
-    run_build_graph_from_np_ndarray(membrane_mask, membrane_graph_file, pixel_size_nm)
-
-    # To calculate the densities using the saved graph:
     ribosome_mask = read_in_mask(ribosome_mask_file)
-    ribosome_densities = run_calculate_density(membrane_graph_file, ribosome_mask, pixel_size_nm, vtp_files_base)
+    ribosome_densities = run_build_graph_from_np_ndarray_and_calculate_density(membrane_mask, ribosome_mask, pixel_size_nm, vtp_files_base)
     io.save_numpy(ribosome_densities, ribosome_densities_file)
+
+    # # To generate and save the graph only:
+    # membrane_mask = read_in_mask(membrane_mask_file)
+    # run_build_graph_from_np_ndarray(membrane_mask, membrane_graph_file, pixel_size_nm)
+    #
+    # # To calculate the densities using the saved graph:
+    # ribosome_mask = read_in_mask(ribosome_mask_file)
+    # ribosome_densities = run_calculate_density(membrane_graph_file, ribosome_mask, pixel_size_nm, vtp_files_base)
+    # io.save_numpy(ribosome_densities, ribosome_densities_file)
 
 
 if __name__ == "__main__":
