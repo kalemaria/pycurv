@@ -8,9 +8,8 @@ function [] = visualise_particles_on_tomo(motl_file, template_file, tomo_x, tomo
 %   tomo_y                  y size of the original tomogram in voxels
 %   tomo_z                  z size of the original tomogram in voxels
 %   mapped_particles_file   output EM or MRC file name
+%   class                   class of particles in the MOTL
 %
-% TODO: added class parameter - was hard coded to 0. Change scripts running
-% it accordingly!
 
 % Read in the motive list file.
 motl = tom_emread(motl_file); motl = motl.Value;

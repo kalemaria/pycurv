@@ -48,9 +48,9 @@ for x = 1:size_x
                     max_intensity = 0; % init.
                     central_voxel = []; % init.
                     % iterate over the relevant voxels in the region mask:
-                    for i = (x-ceil(r)):(x+ceil(r)) %1:size_x
-                        for j = (y-ceil(r)):(y+ceil(r)) %1:size_y
-                            for k = (z-ceil(r)):(z+ceil(r)) %1:size_z
+                    for i = (x-ceil(r)):(x+ceil(r))
+                        for j = (y-ceil(r)):(y+ceil(r))
+                            for k = (z-ceil(r)):(z+ceil(r))
                                 voxel_intensity = region_mask(i, j, k);
                                 if voxel_intensity > 0 % in foreground of the region
                                     % update the maximal intensity and the "central voxel", having

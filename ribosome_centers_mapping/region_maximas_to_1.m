@@ -19,14 +19,13 @@ for ri = 1:size(stats, 1) % iterate over regions (ri = region index)
     region_voxels = region_voxels{:};
     region_max_intensity = max_intensities(ri, 1);
     for vi = 1:size(region_voxels, 1) % iterate over voxels in the current region (vi = voxel index)
-        %disp(['  Voxel number ' num2str(vi)]); %test
         % get voxel's coordinates (x, y, z):
         x = region_voxels(vi, 2);
-        y = region_voxels(vi, 1); % I don't know why regionprops exchanges x and y coordinates...
+        y = region_voxels(vi, 1); % regionprops exchanges x and y coordinates for some reason
         z = region_voxels(vi, 3);
         voxel_intensity = region_mask(x, y, z);
         if voxel_intensity == region_max_intensity
-            disp(['    Maximal intensity is ' num2str(voxel_intensity) ' at voxel (' num2str(x) ', ' num2str(y) ', ' num2str(z) ')']);
+            disp(['    Maximal intensity ' num2str(voxel_intensity) ' at voxel (' num2str(x) ', ' num2str(y) ', ' num2str(z) ') was set to 1']);
             binary_points_mask(x, y, z) = 1;
             break;
         end

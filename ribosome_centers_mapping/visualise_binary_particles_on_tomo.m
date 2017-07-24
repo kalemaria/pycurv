@@ -1,4 +1,14 @@
 function [] = visualise_binary_particles_on_tomo(motl_file, template_file, tomo_x, tomo_y, tomo_z, mapped_particles_file)
+% visualise_binary_particles_on_tomo maps a binary template structure at
+% particle positions from a motive list to a tomographic volume.
+%
+%   motl_file               motive list EM file
+%   template_file           binary template EM or MRC file
+%   tomo_x                  x size of the original tomogram in voxels
+%   tomo_y                  y size of the original tomogram in voxels
+%   tomo_z                  z size of the original tomogram in voxels
+%   mapped_particles_file   output EM or MRC file name
+%
 
 % Read in the motive list file.
 motl = tom_emread(motl_file); motl = motl.Value;
