@@ -4,7 +4,7 @@ This software was developed to analyze the membrane-bound ribosome density and c
 # ribosome_centers_mapping folder
 This folder contains MATLAB scripts used to map ribosome center coordinates obtained by template matching onto a membrane mask from tomogram segmentation. Usage details can be found in the README file inside this folder.
 
-Please note that TOM MATLAB package (Hrabe et al., 2012; http://www.biochem.mpg.de/tom) is required for reading and writing EM and MRC files. MATLAB/2015b version was used to run these scripts.
+Please note that TOM MATLAB package (Hrabe et al., 2012; http://www.biochem.mpg.de/tom) is required for reading and writing EM and MRC files and generating a mask from a motive list. MATLAB/2015b version was used to run these scripts.
 
 # pysurf_compact folder
 This folder contains Python packages with scripts used for the following two analyses:
