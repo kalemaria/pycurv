@@ -1,5 +1,5 @@
 ############################################################################################################
-# Set of functions for reading the results returned by DisPerSe tools  # TODO edit, also in __init__.py?
+# Set of functions for reading and writing different data types.
 #
 #
 
