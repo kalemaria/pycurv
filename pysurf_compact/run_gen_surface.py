@@ -6,9 +6,17 @@ import vtk
 import time
 
 
-# Closes small holes in objects in the given binary volume file by doing a binary closing operation with a cube of a given size and the given number of iteration.
-# Writes the output to the given output file.
 def close_holes(infile, cube_size, iterations, outfile):
+    """
+    Closes small holes in a binary volume by using a binary closing operation.
+
+    Args:
+        infile (str): input 'MRC' file with a binary volume.
+        cube_size (str): size of the cube used for the binary closing operation (dilation followed by erosion).
+        iterations (int): number of closing iterations
+        outfile (str): output 'MRC' file with the closed volume
+
+    """
     tomo = io.load_tomo(infile)
     data_type = tomo.dtype  # dtype('uint8')
     tomo_closed = ndimage.binary_closing(tomo, structure=np.ones((cube_size, cube_size, cube_size)), iterations=iterations).astype(data_type)
