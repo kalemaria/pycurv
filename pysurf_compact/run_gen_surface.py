@@ -1,6 +1,6 @@
 import pexceptions
 import pysurf_io as io
-from scipy import ndimage
+from scipy import ndimage  # TODO namespace!?
 import numpy as np
 import vtk
 import time

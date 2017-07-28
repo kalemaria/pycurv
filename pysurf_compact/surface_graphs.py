@@ -2,8 +2,8 @@ import graphs
 import vtk
 import numpy as np
 import time
-from graph_tool.all import *
-from scipy import ndimage
+from graph_tool.all import *  # TODO namespace!
+from scipy import ndimage  # TODO namespace!?
 import math
 
 

@@ -1,8 +1,8 @@
 import math
-from graph_tool.all import *
+from graph_tool.all import *  # TODO namespace!
 import vtk
 import numpy as np
-from datetime import datetime
+from datetime import datetime  # TODO namespace!?
 from pysurf_io import TypesConverter
 
 

@@ -1,11 +1,11 @@
 import pysurf_io as io
 import numpy as np
-from skimage.measure import label, regionprops
+from skimage.measure import label, regionprops  # TODO namespace!?
 import time
 import gzip
-from os import remove
-from os.path import isfile
-from graph_tool.all import load_graph
+from os import remove  # TODO namespace!?
+from os.path import isfile  # TODO namespace!?
+from graph_tool.all import load_graph  # TODO namespace!?
 
 
 # Splits the segmentation in connected regions with at least the given size (number of voxels).

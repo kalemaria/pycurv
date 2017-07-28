@@ -1,10 +1,10 @@
 import graphs
 import pysurf_io as io
 import numpy as np
-from graph_tool.all import *
+from graph_tool.all import *  # TODO namespace!
 import math
-from scipy import spatial
-from datetime import datetime
+from scipy import spatial  # TODO namespace!?
+from datetime import datetime  # TODO namespace!?
 import time
 
 
