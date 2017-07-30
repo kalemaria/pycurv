@@ -11,7 +11,7 @@ This is a wonderful package. Use it!
 Why PySurf?
 +++++++++++
 
-Because it is useful
+Because it is useful for calculating particle density on cellular membranes and for estimating membrane curvature.
 
 Installation
 ++++++++++++

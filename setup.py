@@ -6,7 +6,7 @@ setup(
     packages=['pysurf_compact'],
     url='',
     license='',
-    author='Maria Kalemanov, Antonio Martinez',
+    author='Maria Kalemanov, Antonio Martinez-Sanchez',
     author_email='',
     description='',
     install_requires=[
