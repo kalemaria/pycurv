@@ -143,8 +143,8 @@ def main():
     # io.save_numpy(ribosome_densities, ribosome_densities_file)
 
     # To generate and save the graph only:
-    # membrane_mask = read_in_mask(membrane_mask_file)
-    # run_build_graph_from_np_ndarray(membrane_mask, membrane_graph_file, pixel_size_nm)
+    membrane_mask = read_in_mask(membrane_mask_file)
+    run_build_graph_from_np_ndarray(membrane_mask, membrane_graph_file, pixel_size_nm)
 
     # To calculate the densities using the saved graph:
     ribosome_mask = read_in_mask(ribosome_mask_file)

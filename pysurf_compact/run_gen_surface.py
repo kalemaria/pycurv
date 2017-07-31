@@ -1,6 +1,6 @@
 import pexceptions
 import pysurf_io as io
-from scipy import ndimage  # TODO namespace!?
+from scipy import ndimage
 import numpy as np
 import vtk
 import time
@@ -13,8 +13,8 @@ def close_holes(infile, cube_size, iterations, outfile):
     Args:
         infile (str): input 'MRC' file with a binary volume.
         cube_size (str): size of the cube used for the binary closing operation (dilation followed by erosion).
-        iterations (int): number of closing iterations
-        outfile (str): output 'MRC' file with the closed volume
+        iterations (int): number of closing iterations.
+        outfile (str): output 'MRC' file with the closed volume.
 
     """
     tomo = io.load_tomo(infile)
@@ -23,23 +23,30 @@ def close_holes(infile, cube_size, iterations, outfile):
     io.save_numpy(tomo_closed, outfile)
 
 
-# Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle surface of objects in a segmented volume file with a given label.
-# Parameters:
-#   infile: (string) The segmentation input file in one of the formats: '.mrc', '.em', '.vti' or '.fits' or
-#           (numpy ndarray) 3D array containing the segmentation
-#   outfile_base: (string) The path and filename without the ending for saving the surface (ending '.surface.vtp' will be added automatically).
-#   lbl: (integer>=1, optional) The label to be considered, 0 will be ignored (default 1).
-#   mask: (boolean, optional) If True (default), a mask of the binary objects is applied on the resulting surface to reduce artifacts.
-#   save_infile_as_vti: (boolean, optional) If True (default False), the input is saved as a .vti file (as <outfile_base.vti>).
-# Returns the surface.
 def run_gen_surface(input, outfile_base, lbl=1, mask=True, save_input_as_vti=False, verbose=False):
+    """
+    Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle surface for objects in a segmented volume with a given label.
+    Removes triangles with zero area, if any are present, from the resulting surface.
+
+    Args:
+        input (str or numpy.ndarray): segmentation input file in one of the formats: '.mrc', '.em' or '.vti', or 3D array containing the segmentation.
+        outfile_base (str): the path and filename without the ending for saving the surface (ending '.surface.vtp' will be added automatically).
+        lbl (int, optional): the label to be considered, should be >= 1, default is 1.
+        mask (boolean, optional): if True (default), a mask of the binary objects is applied on the resulting surface to reduce artifacts.
+        save_input_as_vti (boolean, optional): if True (default False), the input is saved as a '.vti' file ('<outfile_base>.vti').
+        verbose (boolean, optional): if True (default False), some extra information will be printed out.
+
+    Returns:
+        the triangle surface (vtk.PolyData).
+
+    """
     t_begin = time.time()
 
     # Generating the surface (vtkPolyData object)
     surface = io.gen_surface(input, lbl=lbl, mask=mask, verbose=verbose)
 
     # Filter out triangles with area=0, if any are present
-    surface = __filter_null_triangles(surface)
+    surface = __filter_null_triangles(surface, verbose=verbose)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -64,8 +71,19 @@ def run_gen_surface(input, outfile_base, lbl=1, mask=True, save_input_as_vti=Fal
     return surface
 
 
-# For a given VTK PolyData surface, filters out triangles with area=0, if any are present. Returns the filtered surface.
 def __filter_null_triangles(surface, verbose=False):
+    """
+    For a given VTK PolyData surface, filters out triangles with zero area, if any are present.
+    Is used by the function run_gen_surface.
+
+    Args:
+        surface (vtk.PolyData): surface of triangles.
+        verbose (boolean, optional): if True (default False), some extra information will be printed out.
+
+    Returns:
+        the filtered triangle surface (vtk.PolyData).
+
+    """
     if isinstance(surface, vtk.vtkPolyData):
 
         # Check numbers of cells (polygons or triangles) (and all points).
