@@ -1,27 +1,31 @@
-import numpy as np
-from skimage.measure import label, regionprops
 import time
-import gzip
-from os import remove
 from os.path import isfile
-from graph_tool.all import load_graph
+from graph_tool import load_graph
 
 from pysurf_compact import vector_voting, run_gen_surface, TriangleGraph, split_segmentation, vtp_arrays_to_mrc_volumes
 from pysurf_compact import pysurf_io as io
 
 
-# Function for running all processing steps to estimate membrane curvature:
-# 1. signed surface generation, 2. surface cleaning using a graph, 3. curvature calculation using a graph generated from the clean surface.
-# fold          folder (string)
-# tomo          tomogram (string)
-# seg_file      membrane segmentation mask (string, may contain 'fold' and 'tomo')
-# label         label to be considered in the membrane mask (int)
-# pixel_size    pixel size in nm of the membrane mask (float)
-# scale_x       size of the membrane mask in X dimension (int)
-# scale_y       size of the membrane mask in Y dimension (int)
-# scale_z       size of the membrane mask in Z dimension (int)
-# k             parameter of Normal Vector Voting algorithm determining the neighborhood size, g_max = k * average weak triangle graph edge length (int)
 def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z, k):
+    """
+    Function for running all processing steps to estimate membrane curvature:
+    1. signed surface generation, 2. surface cleaning using a graph, 3. curvature calculation using a graph generated from the clean surface.
+
+    Args:
+        fold (str): path where the input membrane segmentation is and where the ouptut will be written
+        tomo (str): tomogram name with which the segmentation file starts
+        seg_file (str): membrane segmentation mask (may contain 'fold' and 'tomo')
+        label (int): label to be considered in the membrane mask
+        pixel_size (float): pixel size in nanometer of the membrane mask
+        scale_x (int): size of the membrane mask in X dimension
+        scale_y (int): size of the membrane mask in Y dimension
+        scale_z (int): size of the membrane mask in Z dimension
+        k (int): parameter of Normal Vector Voting algorithm determining the neighborhood size, g_max = k * average weak triangle graph edge length
+
+    Returns:
+        None
+
+    """
     epsilon = 0
     eta = 0
     region_file_base = "%s%s_ERregion" % (fold, tomo)
@@ -200,6 +204,12 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
 
 
 def main():
+    """
+    Main function for running the workflow function for example data.
+    Returns:
+        None
+
+    """
     t_begin = time.time()
 
     # TODO change those parameters for each tomogram & label:
@@ -212,6 +222,17 @@ def main():
     scale_y = 620
     scale_z = 80
     k = 3
+
+    # Test run for a vesicle:
+    # fold = '/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/vesicle3_t74/'
+    # tomo = "t74"
+    # seg_file = "%s%s_vesicle3_bin6.Labels.mrc" % (fold, tomo)
+    # label = 1
+    # pixel_size = 2.526
+    # scale_x = 100
+    # scale_y = 100
+    # scale_z = 50
+    # k = 3
 
     workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z, k)
 

@@ -1,14 +1,25 @@
 import time
 from datetime import datetime
-from graph_tool.all import load_graph
+from graph_tool import load_graph
 
 from pysurf_compact import read_in_mask, get_target_voxels_in_membrane_mask, VoxelGraph
 from pysurf_compact import pysurf_io as io
 
 
-# Builds a graph from a membrane mask and write the graph to a file. Input: membrane mask and name for the membrane
-# graph file (preferably with "gt" or "graphml" extension).
 def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1, verbose=False):
+    """
+    Builds a graph from a membrane mask and writes the graph to a file.
+
+    Args:
+        mem_mask (numpy ndarray): binary membrane mask in form of 3D array, segmenting the underlying tomogram into membrane (voxels with value 1) and background (voxels with value 0)
+        mem_graph_file (str): name for the output membrane graph file (preferably with '.gt' or '.graphml' extension)
+        pixel_size_nm (float, optional): pixel size in nanometers, default = 1 (if no scaling to nanometers is desired)
+        verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+    Returns:
+        None
+
+    """
     t_begin = time.time()
 
     # Build a graph from the membrane mask:
@@ -32,9 +43,22 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1, v
     print 'Elapsed time: %s s' % duration
 
 
-# Reads in the membrane graph from a file and calculates ribosome density for each membrane voxel. Input: ribosome
-# centers mask and membrane graph file name. Returns a numpy array (with the same shape as the mask) with the densities.
 def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1, vtp_files_base=None, verbose=False):
+    """
+    Reads in the membrane graph from a file and calculates ribosome density for each membrane voxel.
+
+    Args:
+        mem_graph_file (str): name of the input membrane graph file (preferably with '.gt' or '.graphml' extension)
+        ribo_mask (numpy ndarray): binary mask of ribosomes centers on membrane in form of 3D array, where a voxel with value 1 means a particle is present at that membrane coordinate
+        pixel_size_nm (float, optional): pixel size in nanometers, default = 1 (if the graph was not scaled to nanometers)
+        vtp_files_base (str, optional): If not None (default None), the VoxelGraph is converted to VTK PolyData points and lines objects and written to '<vtp_files_base>.vertices.vtp' and
+                                        '<vtp_files_base>.edges.vtp' files, respectively
+        verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+    Returns:
+        a numpy ndarray (with the same shape as the mask) with the densities
+
+    """
     t_begin = time.time()
 
     # Read in the graph from the file:
@@ -73,9 +97,25 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1, vtp_files_
     return densities
 
 
-# Builds a graph from a membrane mask and calculates ribosome density for each membrane voxel. Input: membrane and
-# ribosome centers masks. Returns a numpy array (with the same shape as the masks) with the densities.
 def run_build_graph_from_np_ndarray_and_calculate_density(mem_mask, ribo_mask, pixel_size_nm=1, vtp_files_base=None, verbose=False):
+    """
+    Builds a graph from a membrane mask and calculates ribosome density for each membrane voxel.
+
+    Args:
+        mem_mask (numpy ndarray): binary membrane mask in form of 3D array, segmenting the underlying tomogram into membrane (voxels with value 1) and background (voxels with value 0)
+        ribo_mask (numpy ndarray): binary mask of ribosomes centers on membrane in form of 3D array, where a voxel with value 1 means a particle is present at that membrane coordinate
+        pixel_size_nm (float, optional): pixel size in nanometers, default = 1 (if no scaling to nanometers is desired)
+        vtp_files_base (str, optional): If not None (default None), the VoxelGraph is converted to VTK PolyData points and lines objects and written to '<vtp_files_base>.vertices.vtp' and
+                                        '<vtp_files_base>.edges.vtp' files, respectively
+        verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+    Returns:
+        a numpy ndarray (with the same shape as the masks) with the densities
+
+    Note:
+        Both masks - mem_mask and ribo_mask - have to have the same shape.
+
+    """
     t_begin = time.time()
     assert (mem_mask.shape == ribo_mask.shape)
 
@@ -116,8 +156,14 @@ def run_build_graph_from_np_ndarray_and_calculate_density(mem_mask, ribo_mask, p
     return densities
 
 
-# Calculates ribosome density on ER_membranes for a tomogram. Ribosome coordinates had been rescaled from bin 3 to bin 6 and bin 6 membrane segmentation mask was used.
 def main():
+    """
+    Main function with an examplary calculation of ribosome density on ER-membranes for a tomogram. Ribosome coordinates had been rescaled from bin 3 to bin 6 and bin 6 membrane
+    segmentation mask was used.
+
+    Returns:
+        None
+    """
     # TODO change those parameters for each tomogram:
     tomo = 't85'
     tm_fold = '/fs/pool/pool-ruben/Maria/Felix_ribosomes_and_Htt/bin3OPS1.263nm/02_template_matching/' + tomo + '/etomo_cleaned_notcorr_Felix/'

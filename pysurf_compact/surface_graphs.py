@@ -1,10 +1,12 @@
-import graphs
 import vtk
 import numpy as np
 import time
-from graph_tool.all import *  # TODO namespace!
-from scipy import ndimage  # TODO namespace!?
+from scipy import ndimage
 import math
+from graph_tool import Graph, GraphView, incident_edges_op
+from graph_tool.topology import shortest_distance, label_largest_component, label_components
+
+import graphs
 
 
 # Calculates curvatures for a vtkPolyData surface.
@@ -415,7 +417,7 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.unreachable_from_border = self.graph.new_vertex_property("boolean")
         num_vertices_unreachable_from_border = 0
         for v in self.graph.vertices():
-            d = graph_tool.topology.shortest_distance(self.graph, source=v, target=border_vertices_indices,
+            d = shortest_distance(self.graph, source=v, target=border_vertices_indices,
                                                       weights=self.graph.ep.distance)
             self.graph.vp.min_geodesics_to_border[v] = min(d)
             if self.graph.vp.min_geodesics_to_border[v] == np.finfo(np.float64).max:  # == 1.7976931348623157e+308
@@ -483,7 +485,7 @@ class TriangleGraph(SurfaceGraph):
         vertex_id_within_b_to_border = dict()
         for border_v_i in border_vertices_indices:
             border_v = self.graph.vertex(border_v_i)
-            dist_border_v = graph_tool.topology.shortest_distance(self.graph, source=border_v, target=None, weights=self.graph.ep.distance, max_dist=b)
+            dist_border_v = shortest_distance(self.graph, source=border_v, target=None, weights=self.graph.ep.distance, max_dist=b)
             dist_border_v = dist_border_v.get_array()
 
             idxs = np.where(dist_border_v <= b)[0]
@@ -633,8 +635,8 @@ class TriangleGraph(SurfaceGraph):
     # Finds and returns the largest connected component (lcc) of the graph. If "replace" is True and the lcc has less vertices, the graph is replaced by its lcc.
     def find_largest_connected_component(self, replace=False):
         print 'Total number of vertices in the graph: %s' % self.graph.num_vertices()
-        is_in_lcc = graph_tool.topology.label_largest_component(self.graph)
-        lcc = graph_tool.GraphView(self.graph, vfilt=is_in_lcc)
+        is_in_lcc = label_largest_component(self.graph)
+        lcc = GraphView(self.graph, vfilt=is_in_lcc)
         print 'Number of vertices in the largest connected component of the graph: %s' % lcc.num_vertices()
 
         if replace is True and lcc.num_vertices() < self.graph.num_vertices():
@@ -654,7 +656,7 @@ class TriangleGraph(SurfaceGraph):
     def find_small_connected_components(self, threshold=100, purge=False, verbose=False):
         t_begin = time.time()
 
-        comp_labels_map, sizes = graph_tool.topology.label_components(self.graph)
+        comp_labels_map, sizes = label_components(self.graph)
         small_components = []
         for i, size in enumerate(sizes):
             comp_label = i

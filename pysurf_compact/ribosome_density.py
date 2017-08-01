@@ -2,7 +2,7 @@ import math
 import numpy as np
 from scipy import spatial
 from datetime import datetime
-from graph_tool.all import Graph
+from graph_tool import Graph
 
 import graphs
 import pysurf_io as io

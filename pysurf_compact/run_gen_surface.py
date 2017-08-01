@@ -1,9 +1,10 @@
-import pexceptions
-import pysurf_io as io
 from scipy import ndimage
 import numpy as np
 import vtk
 import time
+
+import pexceptions
+import pysurf_io as io
 
 
 def close_holes(infile, cube_size, iterations, outfile):
@@ -11,10 +12,13 @@ def close_holes(infile, cube_size, iterations, outfile):
     Closes small holes in a binary volume by using a binary closing operation.
 
     Args:
-        infile (str): input 'MRC' file with a binary volume.
-        cube_size (str): size of the cube used for the binary closing operation (dilation followed by erosion).
-        iterations (int): number of closing iterations.
-        outfile (str): output 'MRC' file with the closed volume.
+        infile (str): input 'MRC' file with a binary volume
+        cube_size (str): size of the cube used for the binary closing operation (dilation followed by erosion)
+        iterations (int): number of closing iterations
+        outfile (str): output 'MRC' file with the closed volume
+
+    Returns:
+        None
 
     """
     tomo = io.load_tomo(infile)
@@ -29,15 +33,15 @@ def run_gen_surface(input, outfile_base, lbl=1, mask=True, save_input_as_vti=Fal
     Removes triangles with zero area, if any are present, from the resulting surface.
 
     Args:
-        input (str or numpy.ndarray): segmentation input file in one of the formats: '.mrc', '.em' or '.vti', or 3D array containing the segmentation.
-        outfile_base (str): the path and filename without the ending for saving the surface (ending '.surface.vtp' will be added automatically).
-        lbl (int, optional): the label to be considered, should be >= 1, default is 1.
-        mask (boolean, optional): if True (default), a mask of the binary objects is applied on the resulting surface to reduce artifacts.
-        save_input_as_vti (boolean, optional): if True (default False), the input is saved as a '.vti' file ('<outfile_base>.vti').
-        verbose (boolean, optional): if True (default False), some extra information will be printed out.
+        input (str or numpy.ndarray): segmentation input file in one of the formats: '.mrc', '.em' or '.vti', or 3D array containing the segmentation
+        outfile_base (str): the path and filename without the ending for saving the surface (ending '.surface.vtp' will be added automatically)
+        lbl (int, optional): the label to be considered, should be >= 1, default is 1
+        mask (boolean, optional): if True (default), a mask of the binary objects is applied on the resulting surface to reduce artifacts
+        save_input_as_vti (boolean, optional): if True (default False), the input is saved as a '.vti' file ('<outfile_base>.vti')
+        verbose (boolean, optional): if True (default False), some extra information will be printed out
 
     Returns:
-        the triangle surface (vtk.PolyData).
+        the triangle surface (vtk.PolyData)
 
     """
     t_begin = time.time()
@@ -77,11 +81,11 @@ def __filter_null_triangles(surface, verbose=False):
     Is used by the function run_gen_surface.
 
     Args:
-        surface (vtk.PolyData): surface of triangles.
-        verbose (boolean, optional): if True (default False), some extra information will be printed out.
+        surface (vtk.PolyData): surface of triangles
+        verbose (boolean, optional): if True (default False), some extra information will be printed out
 
     Returns:
-        the filtered triangle surface (vtk.PolyData).
+        the filtered triangle surface (vtk.PolyData)
 
     """
     if isinstance(surface, vtk.vtkPolyData):

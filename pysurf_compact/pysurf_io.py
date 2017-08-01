@@ -12,8 +12,9 @@ import scipy
 import os
 import vtk
 import math
+from pyto.io.image_io import ImageIO
+
 import pexceptions
-from pyto.io.image_io import ImageIO  # TODO namespace!?
 
 
 ##########################################################################

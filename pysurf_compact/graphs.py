@@ -1,10 +1,11 @@
 import math
-from graph_tool.all import *  # TODO namespace!
 import vtk
 import numpy as np
-from datetime import datetime  # TODO namespace!?
-from pysurf_io import TypesConverter
+from datetime import datetime
+from graph_tool import Graph
+from graph_tool.topology import shortest_distance
 
+from pysurf_io import TypesConverter
 
 # Class defining the abstract SegmentationGraph object.
 class SegmentationGraph(object):
@@ -103,7 +104,7 @@ class SegmentationGraph(object):
             if verbose:
                 print 'Membrane vertex (%s, %s, %s)' % (membrane_xyz[0], membrane_xyz[1], membrane_xyz[2])
             # Get a distance map with all pairs of distances between current graph vertex (membrane_xyz) and target vertices (ribosome coordinates):
-            dist_map = graph_tool.topology.shortest_distance(self.graph, source=v_membrane, target=target_vertices_indices, weights=self.graph.ep.distance)
+            dist_map = shortest_distance(self.graph, source=v_membrane, target=target_vertices_indices, weights=self.graph.ep.distance)
 
             # Iterate over all shortest distances from the membrane vertex to the target vertices, while calculating the density:
             # Initializing: membrane coordinates with no reachable ribosomes will have a value of 0, those with reachable ribosomes > 0.
@@ -178,7 +179,7 @@ class SegmentationGraph(object):
 
         # Filtering
         for s in self.graph.vertices():
-            dist_map = graph_tool.topology.shortest_distance(self.graph, source=s, weights=prop_e_p, max_dist=s3)
+            dist_map = shortest_distance(self.graph, source=s, weights=prop_e_p, max_dist=s3)
             ids = np.where(dist_map.get_array() < s3)[0]  # IDs of vertices within the 3 sigma neighborhood from the source vertex.
             # Computing energy preserving coefficients
             fields = np.zeros(shape=ids.shape[0], dtype=np.float)  # stores the respective vertex property values for the neighboring vertices
@@ -438,7 +439,7 @@ class SegmentationGraph(object):
     # Finds geodesic neighbor vertices of a given vertex v in the graph that are within a given maximal geodesic distance g_max from it. Also finds the corresponding geodesic distances. (All edges are considered.)
     # Returns a dictionary mapping a neighbor vertex index to the geodesic distance from vertex v.
     def find_geodesic_neighbors(self, v, g_max, verbose=False):
-        dist_v = graph_tool.topology.shortest_distance(self.graph, source=v, target=None, weights=self.graph.ep.distance, max_dist=g_max)
+        dist_v = shortest_distance(self.graph, source=v, target=None, weights=self.graph.ep.distance, max_dist=g_max)
         dist_v = dist_v.get_array()
 
         neighbor_id_to_dist = dict()
