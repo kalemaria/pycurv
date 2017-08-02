@@ -7,17 +7,22 @@ from os.path import isfile
 import pysurf_io as io
 
 
-# Splits the segmentation in connected regions with at least the given size (number of voxels).
-# Parameters:
-#   infile: (string) The segmentation input file in one of the formats: '.mrc', '.em', '.vti' or '.fits'.
-#   lbl: (integer>=1, optional) The label to be considered, 0 will be ignored (default 1).
-#   close: (boolean, optional) If True, closes small holes in the segmentation first (default True).
-#   close_cube_size: (integer, optional) If close is True, gives the size of the cube structuring element used for closing (default 5).
-#   close_iter: (integer, optional) If close is True, gives the number of iterations the closing should be repeated (default 1).
-#   min_region_size: (integer, optional) Gives the minimal number of voxels a region has to have to be considered (default 100).
-# Returns:
-#   regions: (a list of (N,3) ndarrays) Each item is a binary ndarray with the same shape as the segmentation but contains one region.
 def split_segmentation(infile, lbl=1, close=True, close_cube_size=5, close_iter=1, min_region_size=100):
+    """
+    Splits the segmentation in connected regions with at least the given size (number of voxels).
+
+    Args:
+        infile (str): the segmentation input file in one of the formats: '.mrc', '.em' or '.vti'.
+        lbl (int, optional) the label to be considered, 0 will be ignored, default 1
+        close (boolean, optional): if True (default), closes small holes in the segmentation first
+        close_cube_size (int, optional): if close is True, gives the size of the cube structuring element used for closing, default 5
+        close_iter (int, optional): if close is True, gives the number of iterations the closing should be repeated, default 1
+        min_region_size (int, optional): gives the minimal number of voxels a region has to have in order to be considered, default 100
+
+    Returns:
+        a list of regions, where each item is a binary ndarray with the same shape as the segmentation but contains one region
+
+    """
     # Load the segmentation numpy array from a file and get only the requested labels as 1 and the background as 0:
     seg = io.load_tomo(infile)
     assert(isinstance(seg, np.ndarray))
@@ -57,47 +62,3 @@ def split_segmentation(infile, lbl=1, close=True, close_cube_size=5, close_iter=
             print "%s. region has %s voxels and does NOT pass" % (i + 1, region_area)
     print "%s regions passed." % len(regions)
     return regions, outfile
-
-
-# Converting vtkPolyData cell arrays from a '.vtp' file to 3-D volumes and saving them as '.mrc.gz' files.
-# If mean=True (default False) in case multiple triangles map to the same voxel, takes the mean value, else the maximal value.
-# If log_files=True (default False) writes the log files for such cases.
-def vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y, scale_z, k, epsilon, eta, mean=False, log_files=False):
-    array_name1 = "kappa_1"
-    name1 = "max_curvature"
-    array_name2 = "kappa_2"
-    name2 = "min_curvature"
-    array_name3 = "curvedness_VV"
-    name3 = "curvedness"
-
-    if mean == True:
-        voxel_mean_str = ".voxel_mean"
-    else:
-        voxel_mean_str = ""
-    mrcfilename1 = '%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc' % (all_file_base, k, epsilon, eta, name1, voxel_mean_str)
-    mrcfilename2 = '%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc' % (all_file_base, k, epsilon, eta, name2, voxel_mean_str)
-    mrcfilename3 = '%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc' % (all_file_base, k, epsilon, eta, name3, voxel_mean_str)
-    if log_files:
-        logfilename1 = mrcfilename1[0:-4] + '.log'
-        logfilename2 = mrcfilename2[0:-4] + '.log'
-        logfilename3 = mrcfilename3[0:-4] + '.log'
-    else:
-        logfilename1 = None
-        logfilename2 = None
-        logfilename3 = None
-
-    # Load the vtkPolyData object from the '.vtp' file, calculate the volumes from arrays, write '.log' files, and save the volumes as '.mrc' files:
-    poly = io.load_poly(all_surf_VV_vtp_file)
-    volume1 = io.poly_array_to_volume(poly, array_name1, pixel_size, scale_x, scale_y, scale_z, logfilename=logfilename1, mean=mean)
-    io.save_numpy(volume1, mrcfilename1)
-    volume2 = io.poly_array_to_volume(poly, array_name2, pixel_size, scale_x, scale_y, scale_z, logfilename=logfilename2, mean=mean)
-    io.save_numpy(volume2, mrcfilename2)
-    volume3 = io.poly_array_to_volume(poly, array_name3, pixel_size, scale_x, scale_y, scale_z, logfilename=logfilename3, mean=mean)
-    io.save_numpy(volume3, mrcfilename3)
-
-    # Gunzip the '.mrc' files and delete the uncompressed files:
-    for mrcfilename in [mrcfilename1, mrcfilename2, mrcfilename3]:
-        with open(mrcfilename) as f_in, gzip.open(mrcfilename + '.gz', 'wb') as f_out:
-            f_out.writelines(f_in)
-        remove(mrcfilename)
-        print 'Archive %s.gz was written' % mrcfilename

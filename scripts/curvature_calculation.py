@@ -2,7 +2,7 @@ import time
 from os.path import isfile
 from graph_tool import load_graph
 
-from pysurf_compact import vector_voting, run_gen_surface, TriangleGraph, split_segmentation, vtp_arrays_to_mrc_volumes
+from pysurf_compact import vector_voting, run_gen_surface, TriangleGraph, split_segmentation
 from pysurf_compact import pysurf_io as io
 
 
@@ -199,8 +199,70 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
     print "The '.vtp' file %s was converted to .stl format" % all_surf_VV_vtp_file
 
     # Converting vtkPolyData selected cell arrays from the '.vtp' file to 3-D volumes and saving them as '.mrc.gz' files.
-    vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y, scale_z, k, epsilon, eta, log_files=True)  # maximal voxel value & .log files
-    vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y, scale_z, k, epsilon, eta, mean=True)  # mean voxel value & no .log files
+    __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y, scale_z, k, epsilon, eta, log_files=True)  # maximal voxel value & .log files
+    __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y, scale_z, k, epsilon, eta, mean=True)  # mean voxel value & no .log files
+
+
+def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y, scale_z, k, epsilon, eta, mean=False, log_files=False):
+    """
+    This subfunction converts vtkPolyData cell arrays from a '.vtp' file to 3-D volumes and saves them as '.mrc.gz' files.
+    Most of the parameters are passed from the "parent" function, "workflow".
+
+    Args:
+        all_file_base (str): as defined in workflow
+        all_surf_VV_vtp_file (str): as defined in workflow
+        pixel_size (float): pixel size in nanometer of the membrane mask (as passed to workflow)
+        scale_x (int): size of the membrane mask in X dimension (as passed to workflow)
+        scale_y (int): size of the membrane mask in Y dimension (as passed to workflow)
+        scale_z (int): size of the membrane mask in Z dimension (as passed to workflow)
+        k (int): parameter of Normal Vector Voting algorithm determining the neighborhood size, g_max = k * average weak triangle graph edge length (as passed to workflow)
+        epsilon (int): as defined in workflow
+        eta (int): as defined in workflow
+        mean (boolean, optional): if True (default False), in case multiple triangles map to the same voxel, takes the mean value, else the maximal value
+        log_files (boolean, optional): if True (default False), writes the log files for such cases
+
+    Returns:
+        None
+
+    """
+    array_name1 = "kappa_1"
+    name1 = "max_curvature"
+    array_name2 = "kappa_2"
+    name2 = "min_curvature"
+    array_name3 = "curvedness_VV"
+    name3 = "curvedness"
+
+    if mean == True:
+        voxel_mean_str = ".voxel_mean"
+    else:
+        voxel_mean_str = ""
+    mrcfilename1 = '%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc' % (all_file_base, k, epsilon, eta, name1, voxel_mean_str)
+    mrcfilename2 = '%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc' % (all_file_base, k, epsilon, eta, name2, voxel_mean_str)
+    mrcfilename3 = '%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc' % (all_file_base, k, epsilon, eta, name3, voxel_mean_str)
+    if log_files:
+        logfilename1 = mrcfilename1[0:-4] + '.log'
+        logfilename2 = mrcfilename2[0:-4] + '.log'
+        logfilename3 = mrcfilename3[0:-4] + '.log'
+    else:
+        logfilename1 = None
+        logfilename2 = None
+        logfilename3 = None
+
+    # Load the vtkPolyData object from the '.vtp' file, calculate the volumes from arrays, write '.log' files, and save the volumes as '.mrc' files:
+    poly = io.load_poly(all_surf_VV_vtp_file)
+    volume1 = io.poly_array_to_volume(poly, array_name1, pixel_size, scale_x, scale_y, scale_z, logfilename=logfilename1, mean=mean)
+    io.save_numpy(volume1, mrcfilename1)
+    volume2 = io.poly_array_to_volume(poly, array_name2, pixel_size, scale_x, scale_y, scale_z, logfilename=logfilename2, mean=mean)
+    io.save_numpy(volume2, mrcfilename2)
+    volume3 = io.poly_array_to_volume(poly, array_name3, pixel_size, scale_x, scale_y, scale_z, logfilename=logfilename3, mean=mean)
+    io.save_numpy(volume3, mrcfilename3)
+
+    # Gunzip the '.mrc' files and delete the uncompressed files:
+    for mrcfilename in [mrcfilename1, mrcfilename2, mrcfilename3]:
+        with open(mrcfilename) as f_in, gzip.open(mrcfilename + '.gz', 'wb') as f_out:
+            f_out.writelines(f_in)
+        remove(mrcfilename)
+        print 'Archive %s.gz was written' % mrcfilename
 
 
 def main():

@@ -13,7 +13,7 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1, v
     Args:
         mem_mask (numpy ndarray): binary membrane mask in form of 3D array, segmenting the underlying tomogram into membrane (voxels with value 1) and background (voxels with value 0)
         mem_graph_file (str): name for the output membrane graph file (preferably with '.gt' or '.graphml' extension)
-        pixel_size_nm (float, optional): pixel size in nanometers, default = 1 (if no scaling to nanometers is desired)
+        pixel_size_nm (float, optional): pixel size in nanometers, default 1 (if no scaling to nanometers is desired)
         verbose (boolean, optional): if True (default False), some extra information will be printed out
 
     Returns:
@@ -50,7 +50,7 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1, vtp_files_
     Args:
         mem_graph_file (str): name of the input membrane graph file (preferably with '.gt' or '.graphml' extension)
         ribo_mask (numpy ndarray): binary mask of ribosomes centers on membrane in form of 3D array, where a voxel with value 1 means a particle is present at that membrane coordinate
-        pixel_size_nm (float, optional): pixel size in nanometers, default = 1 (if the graph was not scaled to nanometers)
+        pixel_size_nm (float, optional): pixel size in nanometers, default 1 (if the graph was not scaled to nanometers)
         vtp_files_base (str, optional): If not None (default None), the VoxelGraph is converted to VTK PolyData points and lines objects and written to '<vtp_files_base>.vertices.vtp' and
                                         '<vtp_files_base>.edges.vtp' files, respectively
         verbose (boolean, optional): if True (default False), some extra information will be printed out
@@ -104,7 +104,7 @@ def run_build_graph_from_np_ndarray_and_calculate_density(mem_mask, ribo_mask, p
     Args:
         mem_mask (numpy ndarray): binary membrane mask in form of 3D array, segmenting the underlying tomogram into membrane (voxels with value 1) and background (voxels with value 0)
         ribo_mask (numpy ndarray): binary mask of ribosomes centers on membrane in form of 3D array, where a voxel with value 1 means a particle is present at that membrane coordinate
-        pixel_size_nm (float, optional): pixel size in nanometers, default = 1 (if no scaling to nanometers is desired)
+        pixel_size_nm (float, optional): pixel size in nanometers, default 1 (if no scaling to nanometers is desired)
         vtp_files_base (str, optional): If not None (default None), the VoxelGraph is converted to VTK PolyData points and lines objects and written to '<vtp_files_base>.vertices.vtp' and
                                         '<vtp_files_base>.edges.vtp' files, respectively
         verbose (boolean, optional): if True (default False), some extra information will be printed out

@@ -35,7 +35,7 @@ def run_gen_surface(input, outfile_base, lbl=1, mask=True, save_input_as_vti=Fal
     Args:
         input (str or numpy.ndarray): segmentation input file in one of the formats: '.mrc', '.em' or '.vti', or 3D array containing the segmentation
         outfile_base (str): the path and filename without the ending for saving the surface (ending '.surface.vtp' will be added automatically)
-        lbl (int, optional): the label to be considered, should be >= 1, default is 1
+        lbl (int, optional): the label to be considered, 0 will be ignored, default 1
         mask (boolean, optional): if True (default), a mask of the binary objects is applied on the resulting surface to reduce artifacts
         save_input_as_vti (boolean, optional): if True (default False), the input is saved as a '.vti' file ('<outfile_base>.vti')
         verbose (boolean, optional): if True (default False), some extra information will be printed out
