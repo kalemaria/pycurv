@@ -1,6 +1,8 @@
 import time
 from os.path import isfile
 from graph_tool import load_graph
+import gzip
+from os import remove
 
 from pysurf_compact import vector_voting, run_gen_surface, TriangleGraph, split_segmentation
 from pysurf_compact import pysurf_io as io
@@ -136,7 +138,7 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
             shape_index_VV_file = "%s%s.VV_k%s_epsilon%s_eta%s.shape_index.txt" % (region_file_base, i + 1, k, epsilon, eta)
             curvedness_VV_file = "%s%s.VV_k%s_epsilon%s_eta%s.curvedness.txt" % (region_file_base, i + 1, k, epsilon, eta)
 
-            surf_VV, tg_VV = vector_voting(tg, k, epsilon=epsilon, eta=eta, all_vertices=True, exclude_borders=True)  # does not calculate curvatures for triangles at borders
+            surf_VV, tg_VV = vector_voting(tg, k, epsilon=epsilon, eta=eta, exclude_borders=True)  # does not calculate curvatures for triangles at borders
                                                                                                                       # and removes them in the end
             print 'The graph without outer borders and with VV curvatures has %s vertices and %s edges' % (tg.graph.num_vertices(), tg.graph.num_edges())
             tg_VV.graph.list_properties()
@@ -275,26 +277,26 @@ def main():
     t_begin = time.time()
 
     # TODO change those parameters for each tomogram & label:
-    fold = "/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/diffuseHtt97Q/"
-    tomo = "t112"
-    seg_file = "%s%s_final_ER1_vesicles2_notER3_NE4.Labels.mrc" % (fold, tomo)
-    label = 1
-    pixel_size = 2.526
-    scale_x = 620
-    scale_y = 620
-    scale_z = 80
-    k = 3
-
-    # Test run for a vesicle:
-    # fold = '/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/vesicle3_t74/'
-    # tomo = "t74"
-    # seg_file = "%s%s_vesicle3_bin6.Labels.mrc" % (fold, tomo)
+    # fold = "/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/diffuseHtt97Q/"
+    # tomo = "t112"
+    # seg_file = "%s%s_final_ER1_vesicles2_notER3_NE4.Labels.mrc" % (fold, tomo)
     # label = 1
     # pixel_size = 2.526
-    # scale_x = 100
-    # scale_y = 100
-    # scale_z = 50
+    # scale_x = 620
+    # scale_y = 620
+    # scale_z = 80
     # k = 3
+
+    # Test run for a vesicle:
+    fold = '/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/vesicle3_t74/'
+    tomo = "t74"
+    seg_file = "%s%s_vesicle3_bin6.Labels.mrc" % (fold, tomo)
+    label = 1
+    pixel_size = 2.526
+    scale_x = 100
+    scale_y = 100
+    scale_z = 50
+    k = 3
 
     workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z, k)
 

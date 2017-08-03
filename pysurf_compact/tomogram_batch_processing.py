@@ -1,7 +1,5 @@
 import numpy as np
 from skimage.measure import label, regionprops
-import gzip
-from os import remove
 from os.path import isfile
 
 import pysurf_io as io

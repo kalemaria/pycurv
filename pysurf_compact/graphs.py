@@ -7,10 +7,23 @@ from graph_tool.topology import shortest_distance
 
 from pysurf_io import TypesConverter
 
-# Class defining the abstract SegmentationGraph object.
 class SegmentationGraph(object):
-    # Initializes the object, specifying the parameters of the underlying segmentation that will be used to generate the graph: pixel size in nm and the scales.
+    """Class defining the abstract SegmentationGraph object and implementing functions common to all derived graph classes."""
+
     def __init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z):
+        """
+        Initializes the object, specifying the parameters of the underlying segmentation that will be used to generate the graph.
+        The graph will be scaled in nanometers, according to the provided pixel size.
+
+        Args:
+            scale_factor_to_nm: pixel size in nanometers
+            scale_x: x axis length in pixels of the segmentation
+            scale_y: y axis length in pixels of the segmentation
+            scale_z: z axis length in pixels of the segmentation
+
+        Returns:
+            None
+        """
         self.graph = Graph(directed=False)
         self.scale_factor_to_nm = scale_factor_to_nm
         self.scale_x = scale_x
@@ -29,30 +42,45 @@ class SegmentationGraph(object):
         self.coordinates_pair_connected = {}
 
     @staticmethod
-    # Calculates and returns the euclidean distance between two voxels (3D points).
     def distance_between_voxels(voxel1, voxel2):
+        """
+        Calculates and returns the Euclidean distance between two voxels.
+
+        Args:
+            voxel1 (tuple): first voxel coordinates in form of a tuple of integers of length 3 (x1, y1, z1)
+            voxel2 (tuple): second voxel coordinates in form of a tuple of integers of length 3 (x2, y2, z2)
+
+        Returns:
+            the Euclidean distance between two voxels (float)
+
+        """
         if isinstance(voxel1, tuple) and (len(voxel1) == 3) and isinstance(voxel2, tuple) and (len(voxel2) == 3):
             sum_of_squared_differences = 0
             for i in range(3):  # for each dimension
                 sum_of_squared_differences += (voxel1[i] - voxel2[i]) ** 2
             return math.sqrt(sum_of_squared_differences)
         else:
-            print 'Error: Wrong input data, each voxel has to be a tuple of integers of length 3.'
+            print 'Error: Wrong input data, each voxel has to be a tuple of integers of length 3.'  # TODO raise an input pexeption
             exit(1)
 
-    # Returns the coordinates of all vertices in numpy array format.
-    def vertices_xyz_to_np_array(self):
-        vertices_xyz = []
-        for v in self.graph.vertices():
-            v_xyz = self.graph.vp.xyz[v]  # [x,y,z]
-            vertices_xyz.append(v_xyz)
-        vertices_xyz = np.array(vertices_xyz)
-        return vertices_xyz
-
-    # Calculates shortest distances for each node in the graph (membrane_xyz) to each reachable voxel of ribosome center mapped on the membrane given by
-    # a mask in pixels (3D numpy ndarray) or a numpy ndarray of target coordinates in nm (output of nearest_vertex_for_particles), and from the distances
-    # a density measure of ribosomes at each membrane voxel. Returns a numpy ndarray (with the same shape as the underlying segmentation/mask) with the densities.
     def calculate_density(self, mask=None, target_coordinates=None, verbose=False):
+        """
+        Calculates shortest geodesic distances (d) for each vertex in the graph to each reachable ribosome center mapped on the membrane given by a binary mask with coordinates in pixels
+        or an array of coordinates in nm. Then, calculates a density measure of ribosomes at each vertex / membrane voxel: D = sum {over all reachable ribosomes} (1 / (d + 1)).
+        Adds the density as vertex PropertyMap to the graph. Returns an array with the same shape as the underlying segmentation with the densities + 1, in order to distinguish membrane
+        voxels with 0 density from the background.
+
+        Args:
+            mask (numpy.ndarray, optional): a binary mask of the ribosome centers as 3D array where indices are coordinates in pixels (default None)
+            target_coordinates (numpy.ndarray, optional): the ribosome centers coordinates in nm as 2D array in format [[x1, y1, z1], [x2, y2, z2], ...] (default None)
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            a 3D numpy ndarray with the densities + 1
+
+        Note:
+            One of the first two parameters, mask or target_coordinates, has to be given.
+        """
         import ribosome_density as rd
         # If a mask is given, find the set of voxels of ribosome centers mapped on the membrane, 'target_voxels', and rescale them to nm, 'target_coordinates':
         if mask is not None:
@@ -153,57 +181,6 @@ class SegmentationGraph(object):
         if verbose:
             print 'densities:\n%s' % densities
         return densities
-
-    # Computes Geodesic Gaussian Filter on the graph
-    # sig: sigma for the Gaussian function
-    # prop_v: property key for weighting the vertices (e.g. "curvature")
-    # prop_e: property key for weighting the edges ("distance")
-    # energy: if True energy normalization is active, so the resulting values will be in the same unit scale as input.
-    # Adapted from Antonio's ggf from pyseg/graph/gt.py.
-    def ggf(self, sig, str_ggf, prop_v=None, prop_e=None, energy=True):
-
-        # Initialization
-        if prop_v is not None:
-            prop_v_p = self.graph.vertex_properties[prop_v]
-            field_v = prop_v_p.get_array()
-        else:
-            field_v = np.ones(shape=self.graph.num_vertices(), dtype=np.float)
-        prop_e_p = None
-        if prop_e is not None:
-            prop_e_p = self.graph.edge_properties[prop_e]
-            # field_e = prop_e_p.get_array()
-            # prop_e_p.get_array()[:] = field_e  # Antonio did not know anymore what it is for, works also without it.
-        prop_ggf = self.graph.new_vertex_property('float')
-        s3 = 3. * sig
-        c = (-1.) / (2. * sig * sig)
-
-        # Filtering
-        for s in self.graph.vertices():
-            dist_map = shortest_distance(self.graph, source=s, weights=prop_e_p, max_dist=s3)
-            ids = np.where(dist_map.get_array() < s3)[0]  # IDs of vertices within the 3 sigma neighborhood from the source vertex.
-            # Computing energy preserving coefficients
-            fields = np.zeros(shape=ids.shape[0], dtype=np.float)  # stores the respective vertex property values for the neighboring vertices
-            coeffs = np.zeros(shape=ids.shape[0], dtype=np.float)  # stores the "gaussian distance" coefficients from the source vertex for the neighboring vertices
-            hold_sum = 0  # "gaussian distance" coefficients sum over all neighborhood
-            for i in range(ids.shape[0]):
-                v = self.graph.vertex(ids[i])
-                fields[i] = field_v[int(v)]
-                dst = dist_map[v]  # distance of the current neighboring vertex from the source vertex
-                hold = math.exp(c * dst * dst)  # "gaussian distance" coefficients
-                coeffs[i] = hold
-                hold_sum += hold
-            if hold_sum > 0:  # Not tested for a negative sum.
-                # Convolution
-                if energy:
-                    coeffs *= (1 / hold_sum)  # Every coefficient divided by the sum of coefficients for normalization, so the total sum will be 1.
-                    prop_ggf[s] = np.sum(fields * coeffs)
-                else:
-                    prop_ggf[s] = np.sum(fields * coeffs)  # The same as hold_sum.
-            else:
-                print "Non-positive hold_sum = %s" % hold_sum  # -- No such cases occurred.
-
-        # Storing the property
-        self.graph.vertex_properties[str_ggf] = prop_ggf
 
     # Generates a VTK PolyData object with vertices as points and edges as lines.
     # vertices: if True (default) vertices are stored as points

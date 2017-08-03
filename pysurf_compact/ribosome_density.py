@@ -8,35 +8,68 @@ import graphs
 import pysurf_io as io
 
 
-# Reads in a mask from file.
-def read_in_mask(mask_file):
+def read_in_mask(mask_file, verbose=False):
+    """
+    A wrapper for reading in a membrane segmentation or ribosome centers mask (binary tomographic data).
+
+    Args:
+        mask_file (str): a mask file in EM, MRC or VTI format
+        verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+    Returns:
+        the read in mask (numpy.ndarray)
+
+    """
     print '\nReading in the mask %s' % mask_file
     mask = io.load_tomo(mask_file)
-    print 'Shape and data type:'
-    print mask.shape
-    print mask.dtype
+    if verbose:
+        print 'Shape and data type:'
+        print mask.shape
+        print mask.dtype
     return mask
 
 
-# Returns a list of foreground voxels as tupels in form (x, y, z) from a binary mask (numpy ndarray).
 def get_foreground_voxels_from_mask(mask):
+    """
+    Gets foreground (non-zero) voxel coordinates from a mask (binary tomographic data).
+
+    Args:
+        mask (numpy ndarray): a 3D array holding the mask, which should be binary
+
+    Returns:
+        a list of foreground (nonzero) voxel coordinates as tuples in form (x, y, z)
+
+    """
     voxels = []
-    if isinstance(mask, np.ndarray):
-        # check that the mask is a 3D array:
-        assert(len(mask.shape) == 3)
+    # check that the mask is a 3D numpy array:
+    if isinstance(mask, np.ndarray) and (len(mask.shape) == 3):
         indices = mask.nonzero()
         voxels_num = indices[0].size
         for i in xrange(voxels_num):
             voxel_i = (indices[0][i], indices[1][i], indices[2][i])
             voxels.append(voxel_i)
     else:
-        print 'Error: Wrong input data type, the mask has to be a numpy ndarray (3D).'
+        print 'Error: Wrong input data type, the mask has to be a 3D numpy ndarray.'  # TODO raise an input pexeption
         exit(1)
     return voxels
 
 
-# Rescales foreground voxels coordinates from a mask file using the scaling factor inside a new mask with the given shape.
 def rescale_mask(in_mask_file, out_mask_file, scaling_factor, out_shape):
+    """
+    Reads in a mask (binary tomographic data) from a file, rescales the mask and writes it into a file.
+    How rescaling is done: The output (rescaled) mask with a given shape is initialized with zeros. Foreground (non-zero) voxel coordinates from the original mask are multiplied by the
+    scaling factor, and ones (1) are put at the resulting coordinates inside the rescaled mask.
+
+    Args:
+        in_mask_file (str): an input mask file
+        out_mask_file (str): an output (rescaled) mask file
+        scaling_factor (int): a scaling factor by which the foreground voxel coordinates in the input file are multiplied
+        out_shape (tuple): shape of the output (rescaled) mask (size_x, size_y, size_z)
+
+    Returns:
+        None
+
+    """
     in_mask = read_in_mask(in_mask_file)
     in_target_voxels = get_foreground_voxels_from_mask(in_mask)
 
@@ -54,14 +87,19 @@ def rescale_mask(in_mask_file, out_mask_file, scaling_factor, out_shape):
     io.save_numpy(out_mask, out_mask_file)
 
 
-# Returns a list of foreground voxels as tupels in form (x, y, z) from a numpy ndarray in format [[x1,y1,z1], [x2,y2,z2], ...].
 def ndarray_voxels_to_tupel_list(voxels_ndarray):
+    """
+    Turns voxel coordinates from a 2D numpy ndarray in format [[x1, y1, z1], [x2, y2, z2], ...] into a list of tuples in format [(x1, y1, z1), (x2, y2, z2), ...].
+
+    Args:
+        voxels_ndarray (numpy.ndarray): a 2D array containing voxel coordinates in format [[x1, y1, z1], [x2, y2, z2], ...]
+
+    Returns:
+        a list of tuples containing the voxel coordinates in format [(x1, y1, z1), (x2, y2, z2), ...]
+    """
     tupel_list = []
-    if isinstance(voxels_ndarray, np.ndarray):
-        # check that voxels_ndarray is a 2D array with 3 columns:
-        dims = voxels_ndarray.shape
-        assert (len(dims) == 2)
-        assert (dims[1] == 3)
+    # check that voxels_ndarray is a 2D numpy array with 3 columns:
+    if isinstance(voxels_ndarray, np.ndarray) and (len(voxels_ndarray.shape) == 2) and (voxels_ndarray.shape[1] == 3):
         voxels_list = voxels_ndarray.tolist()
         for voxel in voxels_list:
             x = voxel[0]
@@ -69,13 +107,21 @@ def ndarray_voxels_to_tupel_list(voxels_ndarray):
             z = voxel[2]
             tupel_list.append((x, y, z))
     else:
-        print 'Error: Wrong input data type, the voxels have to be given as a numpy ndarray.'
+        print 'Error: Wrong input data type, the voxels have to be given as a 2D numpy ndarray with 3 columns.'  # TODO raise an input pexeption
         exit(1)
     return tupel_list
 
 
 # From a list of foreground voxels as tupels in form (x, y, z), returns a numpy ndarray in format [[x1,y1,z1], [x2,y2,z2], ...].
 def tupel_list_to_ndarray_voxels(tupel_list):
+    """
+    Turns voxel coordinates from a list of tuples in format [(x1, y1, z1), (x2, y2, z2), ...] into a 2D numpy ndarray in format [[x1, y1, z1], [x2, y2, z2], ...].
+    Args:
+        tupel_list: a list of tuples containing voxel coordinates in format [(x1, y1, z1), (x2, y2, z2), ...]
+
+    Returns:
+        a 2D array containing the voxel coordinates in format [[x1, y1, z1], [x2, y2, z2], ...] (numpy.ndarray)
+    """
     voxels_list = []
     for tupel in tupel_list:
         x = tupel[0]
@@ -90,9 +136,19 @@ def tupel_list_to_ndarray_voxels(tupel_list):
     return voxels_ndarray
 
 
-# Gets the target voxels from the ribosome mask and pre-filters them to those that are inside the membrane mask
-# (value 1), printing out the voxel numbers and, if verbose, the voxels. Returns the pre-filtered set as a list.
 def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
+    """
+    Gets target voxels from a ribosome mask and pre-filters them to those that are inside a membrane mask (value 1).
+    Prints out the target voxel numbers before and after filtering and warns of the voxels that are not inside the membrane mask.
+
+    Args:
+        ribo_mask (numpy.ndarray): a ribosome mask
+        mem_mask (numpy.ndarray): a membrane mask
+        verbose (boolean, optional): it True (default False), additionally prints out the target voxels before and after filtering
+
+    Returns:
+         a list of the target voxels that are inside the membrane mask as tuples in form (x, y, z)
+    """
     if isinstance(ribo_mask, np.ndarray) and isinstance(mem_mask, np.ndarray):
         assert (ribo_mask.shape == mem_mask.shape)  # both mask have to have the same dimensions and scales
         # Find the set of voxels of ribosome centers mapped on the membrane, called 'target voxels' from now on:
@@ -112,13 +168,22 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
             print target_voxels_in_membrane_mask
         return target_voxels_in_membrane_mask
     else:
-        print 'Error: Wrong input data type, the both masks have to be numpy ndarrays.'
+        print 'Error: Wrong input data type, the both masks have to be numpy ndarrays.'  # TODO raise an input pexeption
         exit(1)
 
 
-# Extracts coordinates of all particles from a motive list EM file and returns them in numpy array format.
-# Scales the coordinates with the given scaling factor by multiplying (default 1 = no scaling).
 def particles_xyz_to_np_array(motl_em_file, scaling_factor=1):
+    """
+    Extracts coordinates of all particles from a motive list EM file and returns them in numpy array format.
+    Optionally, scales the coordinates by multiplying with a given scaling factor.
+
+    Args:
+        motl_em_file (str): TOM motive list EM file holding the particle coordinates in rows 8-10
+        scaling_factor (int, optional): scaling factor by which the coordinates are multiplied; if 1 (default), no scaling is performed
+
+    Returns:
+        a 2D array containing the particle coordinates in format [[x1, y1, z1], [x2, y2, z2], ...] (numpy.ndarray)
+    """
     motl = io.load_tomo(motl_em_file)
     particles_xyz = []
     for col in xrange(motl.shape[1]):
@@ -130,11 +195,22 @@ def particles_xyz_to_np_array(motl_em_file, scaling_factor=1):
     return particles_xyz
 
 
-# Finds for each particle coordinates the nearest vertex coordinates (both given by an array) within a given radius.
-# If no vertex exists within the radius, [-1, -1, -1] is returned at the respective index.
-# Note: all input parameters have to be in the same scale (either in pixels or in nm)!
-# Uses KD trees for a fast search. Returns a numpy array with the nearest vertices coordinates.
 def nearest_vertex_for_particles(vertices_xyz, particles_xyz, radius):
+    """
+    Finds for each particle coordinates the nearest membrane graph vertices coordinates (both sets given by 2D numpy arrays) within a given radius.
+    If no vertex exists within the radius, [-1, -1, -1] is returned at the respective index. Uses KD trees for a fast search.
+
+    Args:
+        vertices_xyz (numpy.ndarray): membrane graph vertices coordinates in format [[x1, y1, z1], [x2, y2, z2], ...]
+        particles_xyz (numpy.ndarray): particle coordinates in same format as the vertices coordinates
+        radius (int or float): distance upper bound for searching vertices from each particle coordinate
+
+    Returns:
+        a 2D array in same format as the inputs with the nearest vertices coordinates (numpy.ndarray)
+
+    Note:
+        All input parameters have to be in the same scale (either in pixels or in nanometers).
+    """
     # Construct the KD tree from the vertices coordinates:
     tree = spatial.KDTree(vertices_xyz)
     # Search in the tree for the nearest vertex within the radius to the particles:
@@ -154,6 +230,15 @@ def nearest_vertex_for_particles(vertices_xyz, particles_xyz, radius):
 class VoxelGraph(graphs.SegmentationGraph):
     # Builds a graph from a numpy ndarray mask with values 1 and 0, including only voxels with value 1.
     def build_graph_from_np_ndarray(self, mask, verbose):
+        """
+
+        Args:
+            mask:
+            verbose:
+
+        Returns:
+
+        """
         if isinstance(mask, np.ndarray):
             assert mask.shape == (self.scale_x, self.scale_y, self.scale_z)  # dimensions and scales of the mask have to be the same as given in the initialization method
             # Find the set of the membrane voxels, which become the vertices of the graph:
@@ -169,6 +254,15 @@ class VoxelGraph(graphs.SegmentationGraph):
     @staticmethod
     # Returns neighbor voxels of a voxel inside a matrix (mask), which have value 1 (foreground)
     def foreground_neighbors_of_voxel(mask, voxel):
+        """
+
+        Args:
+            mask:
+            voxel:
+
+        Returns:
+
+        """
         neighbor_voxels = []
         if isinstance(mask, np.ndarray):
             if isinstance(voxel, tuple) and (len(voxel) == 3):
@@ -200,6 +294,16 @@ class VoxelGraph(graphs.SegmentationGraph):
     # neighbor voxels and edges with euclidean distances between the neighbor voxels (all scaled in nm) to the graph.
     # This method should only be called by the method build_graph_from_np_ndarray!
     def __expand_voxels(self, mask, remaining_mem_voxels, verbose):
+        """
+
+        Args:
+            mask:
+            remaining_mem_voxels:
+            verbose:
+
+        Returns:
+
+        """
         while len(remaining_mem_voxels) > 0:
             try:
                 if verbose:
@@ -267,6 +371,11 @@ class VoxelGraph(graphs.SegmentationGraph):
 
     # Fills the dictionary coordinates_to_vertex_index. To use after reading a graph from a file before density calculation.
     def fill_coordinates_to_vertex_index(self):
+        """
+
+        Returns:
+
+        """
         for v in self.graph.vertices():
             voxel = self.graph.vp.xyz[v]
             voxel = (voxel[0], voxel[1], voxel[2])
