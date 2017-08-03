@@ -632,7 +632,7 @@ class TypesConverter(object):
             error_msg = 'Graph tool alias not identified.' % din
             raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)', msg=error_msg)
 
-    # From the graph tool property value type return the numpy data type
+    # From the graph-tool property value type return the numpy data type
     @staticmethod
     def gt_to_numpy(din):
 

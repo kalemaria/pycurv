@@ -182,11 +182,19 @@ class SegmentationGraph(object):
             print 'densities:\n%s' % densities
         return densities
 
-    # Generates a VTK PolyData object with vertices as points and edges as lines.
-    # vertices: if True (default) vertices are stored as points
-    # edges: if True (default) edges are stored as lines
-    # (Rewritten from Antonio's pyseg/graph/morse.py -> get_scheme_vtp - he used his own "graph-tool" (gt).)
     def graph_to_points_and_lines_polys(self, vertices=True, edges=True, verbose=False):
+        """
+        Generates a VTK PolyData object from the graph with vertices as vertex-cells (containing 1 point) and edges as line-cells (containing 2 points).
+
+        Args:
+            vertices (boolean, optional): if True (default) vertices are stored a VTK PolyData object as vertex-cells
+            edges (boolean, optional): if True (default) edges are stored a VTK PolyData object as line-cells
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            - vtk.vtkPolyData with vertex-cells
+            - vtk.vtkPolyData with edges as line-cells
+        """
         # Initialization
         poly_verts = vtk.vtkPolyData()
         poly_lines = vtk.vtkPolyData()
@@ -288,84 +296,20 @@ class SegmentationGraph(object):
 
         return poly_verts, poly_lines
 
-    # Generates a VTK PolyData object with triangle-cells.
-    def graph_to_triangle_poly(self, verbose=False):
-        if self.graph.num_vertices() > 0:
-            # Initialization
-            poly_triangles = vtk.vtkPolyData()
-            points = vtk.vtkPoints()
-            vertex_arrays = list()
-            # Vertex property arrays
-            for prop_key in self.graph.vp.keys():
-                data_type = self.graph.vp[prop_key].value_type()
-                if data_type != 'string' and data_type != 'python::object' and prop_key != 'points' and prop_key != 'xyz':
-                    if verbose:
-                        print '\nvertex property key: %s' % prop_key
-                        print 'value type: %s' % data_type
-                    if data_type[0:6] != 'vector':  # scalar
-                        num_components = 1
-                    else:  # vector
-                        num_components = len(self.graph.vp[prop_key][self.graph.vertex(0)])
-                    array = TypesConverter().gt_to_vtk(data_type)
-                    array.SetName(prop_key)
-                    if verbose:
-                        print 'number of components: %s' % num_components
-                    array.SetNumberOfComponents(num_components)
-                    vertex_arrays.append(array)
-            if verbose:
-                print '\nvertex arrays length: %s' % len(vertex_arrays)
-
-            # Geometry
-            lut = np.zeros(shape=(self.graph.num_vertices(), 3), dtype=np.int)  # lut[vertex_index, triangle_point_index*] = point_array_index**; *ALWAYS 0-2, **0-(NumPoints-1)
-            i = 0  # next new point index
-            points_dict = {}  # dictionary of points with a key (x, y, z) and the index in VTK points list as a value
-            for vd in self.graph.vertices():
-                for j, [x, y, z] in enumerate(self.graph.vp.points[vd]):  # enumerate over the 3 points of the triangle (vertex)
-                    if (x, y, z) not in points_dict:  # add the new point everywhere & update the index
-                        points.InsertPoint(i, x, y, z)
-                        lut[self.graph.vertex_index[vd], j] = i
-                        points_dict[(x, y, z)] = i
-                        i += 1
-                    else:  # reference the old point index only in the lut
-                        lut[self.graph.vertex_index[vd], j] = points_dict[(x, y, z)]
-            if verbose:
-                print 'number of points: %s' % points.GetNumberOfPoints()
-
-            # Topology
-            # Triangles
-            triangles = vtk.vtkCellArray()
-            for vd in self.graph.vertices():  # vd = vertex descriptor
-                # storing triangles of type Triangle:
-                triangle = vtk.vtkTriangle()
-                # The first parameter is the index of the triangle vertex which is ALWAYS 0-2.
-                # The second parameter is the index into the point (geometry) array, so this can range from 0-(NumPoints-1)
-                triangle.GetPointIds().SetId(0, lut[self.graph.vertex_index[vd], 0])
-                triangle.GetPointIds().SetId(1, lut[self.graph.vertex_index[vd], 1])
-                triangle.GetPointIds().SetId(2, lut[self.graph.vertex_index[vd], 2])
-                triangles.InsertNextCell(triangle)
-                for array in vertex_arrays:
-                    prop_key = array.GetName()
-                    n_comp = array.GetNumberOfComponents()
-                    data_type = self.graph.vp[prop_key].value_type()
-                    data_type = TypesConverter().gt_to_numpy(data_type)
-                    array.InsertNextTuple(self.__get_vertex_prop_entry(prop_key, vd, n_comp, data_type))
-            if verbose:
-                print 'number of triangle cells: %s' % triangles.GetNumberOfCells()
-
-            # vtkPolyData construction
-            poly_triangles.SetPoints(points)
-            poly_triangles.SetPolys(triangles)
-            for array in vertex_arrays:
-                poly_triangles.GetCellData().AddArray(array)
-
-            return poly_triangles
-
-        else:
-            print "The graph is empty!"
-            return None
-
-    # Get the property value of a vertex
     def __get_vertex_prop_entry(self, prop_key, vertex_descriptor, n_comp, data_type):
+        """
+        Get a property value of a vertex for inserting into a VTK vtkDataArray object.
+        This private function is used by the methods graph_to_points_and_lines_polys and graph_to_triangle_poly (the latter of the derived class surface_graphs.TriangleGraph).
+
+        Args:
+            prop_key (str): name of the desired vertex property
+            vertex_descriptor (graph_tool.Vertex): vertex descriptor of the current vertex
+            n_comp (int): number of components of the array (length of the output tuple)
+            data_type: numpy data type converted from a graph-tool property value type by TypesConverter().gt_to_numpy
+
+        Returns:
+            a tuple (with length like n_comp) with the property value of the vertex converted to a numpy data type
+        """
         prop = list()
         if n_comp == 1:
             prop.append(data_type(self.graph.vp[prop_key][vertex_descriptor]))
@@ -376,6 +320,19 @@ class SegmentationGraph(object):
 
     # Get the property value of an edge
     def __get_edge_prop_entry(self, prop_key, edge_descriptor, n_comp, data_type):
+        """
+        Get a property value of an edge for inserting into a VTK vtkDataArray object.
+        This private function is used by the method graph_to_points_and_lines_polys.
+
+        Args:
+            prop_key (str): name of the desired vertex property
+            edge_descriptor (graph_tool.Edge): edge descriptor of the current edge
+            n_comp (int): number of components of the array (length of the output tuple)
+            data_type: numpy data type converted from a graph-tool property value type by TypesConverter().gt_to_numpy
+
+        Returns:
+            a tuple (with length like n_comp) with the property value of the edge converted to a numpy data type
+        """
         prop = list()
         if n_comp == 1:
             prop.append(data_type(self.graph.ep[prop_key][edge_descriptor]))
