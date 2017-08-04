@@ -341,11 +341,19 @@ class SegmentationGraph(object):
                 prop.append(data_type(self.graph.ep[prop_key][edge_descriptor][i]))
         return tuple(prop)
 
-    # * The following Graph methods are needed for the vector voting algorithm. *
-    # Calculates and returns the average edge length in the graph.
-    # If a special edge property is specified as prop_e, include only the edges where this property equals the given value (default 1).
-    # If there are no edges in the graph, such a property does not exist or there are no edges with the given property equaling the given value, None is returned.
+    # * The following SegmentationGraph methods are needed for the normal vector voting algorithm. *
+
     def calculate_average_edge_length(self, prop_e=None, value=1):
+        """
+        Calculates the average edge length in the graph. If a special edge property is specified, includes only the edges where this property equals the given value.
+        If there are no edges in the graph, the given property does not exist or there are no edges with the given property equaling the given value, None is returned.
+        Args:
+            prop_e (str, optional): edge property, if specified only edges where this property equals the given value will be considered
+            value (int, optional): value of the specified edge property an edge has to have in order to be considered (default 1)
+
+        Returns:
+            the average edge length in the graph (float) or None
+        """
         total_edge_length = 0
         average_edge_length = None
         if prop_e is None:
@@ -370,9 +378,19 @@ class SegmentationGraph(object):
         print "Average length: %s" % average_edge_length
         return average_edge_length
 
-    # Finds geodesic neighbor vertices of a given vertex v in the graph that are within a given maximal geodesic distance g_max from it. Also finds the corresponding geodesic distances. (All edges are considered.)
-    # Returns a dictionary mapping a neighbor vertex index to the geodesic distance from vertex v.
     def find_geodesic_neighbors(self, v, g_max, verbose=False):
+        """
+        Finds geodesic neighbor vertices of a given vertex v in the graph that are within a given maximal geodesic distance g_max from it. Also finds the corresponding geodesic distances.
+        All edges are considered.
+
+        Args:
+            v (graph_tool.Vertex): the source vertex
+            g_max: maximal geodesic distance (in nanometers, if the graph was scaled)
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            a dictionary mapping a neighbor vertex index to the geodesic distance from vertex v
+        """
         dist_v = shortest_distance(self.graph, source=v, target=None, weights=self.graph.ep.distance, max_dist=g_max)
         dist_v = dist_v.get_array()
 
@@ -388,8 +406,15 @@ class SegmentationGraph(object):
             print "%s neighbors" % len(neighbor_id_to_dist)
         return neighbor_id_to_dist
 
-    # Returns a numpy array of all values from the vertex properties of the graph.
     def get_vertex_property_array(self, property_name):
+        """
+        Gets a numpy array with all values of a vertex property of the graph, printing out the number of values, the minimal and the maximal value.
+        Args:
+            property_name (str): vertex property name
+
+        Returns:
+            an array (numpy.ndarray) with all values of the vertex property or None
+        """
         if isinstance(property_name, str) and property_name in self.graph.vertex_properties:
             values = self.graph.vertex_properties[property_name].get_array()
             print '%s "%s" values' % (len(values), property_name)
@@ -397,53 +422,4 @@ class SegmentationGraph(object):
             return values
         else:
             print '"%s" is not a string or not found in vertex properties of the graph.'
-
-    # Converts a vertex property array of the graph to a 3-D array of size like the underlying segmentation.
-    # Initializes a 3-D matrix of size like the segmentation with zeros, transforms triangle coordinates in nm to voxels and puts the corresponding property value into the voxel.
-    # If more than one triangles map to the same voxel, takes the maximal value. Logs such cases by writing out the voxel coordinates and the value list into a file.
-    def property_to_volume(self, property_name, logfilename, verbose=False):
-        # Dictionary mapping voxel coordinates (for the volume returned later) to a list of values falling within that voxel:
-        voxel_to_values = {}
-
-        # For each vertex in the graph:
-        for v in self.graph.vertices():
-            # Get its coordinates:
-            v_xyz = self.graph.vp.xyz[v]
-
-            # Get the property value assigned to the graph vertex:
-            v_value = self.graph.vertex_properties[property_name][v]
-
-            # Calculate the corresponding voxel of the vertex and add the value to the list keyed by the voxel in the dictionary:
-            # Scaling the coordinates back from nm to voxels. (Without round float coordinates are truncated to the next lowest integer.)
-            voxel_x = int(round(v_xyz[0] / self.scale_factor_to_nm))
-            voxel_y = int(round(v_xyz[1] / self.scale_factor_to_nm))
-            voxel_z = int(round(v_xyz[2] / self.scale_factor_to_nm))
-            voxel = (voxel_x, voxel_y, voxel_z)
-            if voxel in voxel_to_values:
-                voxel_to_values[voxel].append(v_value)
-            else:
-                voxel_to_values[voxel] = [v_value]
-
-            if verbose:
-                print '\nMembrane vertex (%s, %s, %s)' % (v_xyz[0], v_xyz[1], v_xyz[2])
-                print 'voxel (%s, %s, %s)' % (voxel[0], voxel[1], voxel[2])
-                print '%s value = %s' % (property_name, v_value)
-
-        print '\n%s voxels mapped from %s vertices' % (len(voxel_to_values), self.graph.num_vertices())
-
-        # Initialize a 3-D array scaled like the original segmentation, which will hold in each voxel the maximal value among the corresponding vertex coordinates in the graph
-        # and 0 in all other (background) voxels:
-        volume = np.zeros((self.scale_x, self.scale_y, self.scale_z), dtype=np.float32)  # single precision float: sign bit, 8 bit exponent, 23 bits mantissa
-        # Open and write the cases with multiple values into a log file:
-        with open(logfilename, 'w') as f:
-            for voxel in voxel_to_values:
-                value_list = voxel_to_values[voxel]
-                volume[voxel[0], voxel[1], voxel[2]] = max(value_list)
-                if len(value_list) > 1:
-                    line = '%s\t%s\t%s\t' % (voxel[0], voxel[1], voxel[2])
-                    for value in value_list:
-                        line += '%s\t' % value
-                    line = line[0:-1] + '\n'
-                    f.write(line)
-
-        return volume
+            return None

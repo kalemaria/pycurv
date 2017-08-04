@@ -226,21 +226,27 @@ def nearest_vertex_for_particles(vertices_xyz, particles_xyz, radius):
     return nearest_vertices_xyz
 
 
-# Class defining the VoxelGraph object, its attributes and methods.
 class VoxelGraph(graphs.SegmentationGraph):
-    # Builds a graph from a numpy ndarray mask with values 1 and 0, including only voxels with value 1.
-    def build_graph_from_np_ndarray(self, mask, verbose):
+    """Class defining the VoxelGraph object and its methods."""
+
+    def build_graph_from_np_ndarray(self, mask, verbose=False):
         """
+        Builds a graph from a binary mask of a membrane segmentation, including only voxels with value 1 (foreground voxels).
+        Each foreground voxel, its foreground neighbor voxels and edges with euclidean distances between the voxel and its neighbor voxels (all scaled in nm) are added to the graph.
 
         Args:
-            mask:
-            verbose:
+            mask (numpy.ndarray): a binary 3D mask
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
 
         Returns:
-
+            None
         """
         if isinstance(mask, np.ndarray):
-            assert mask.shape == (self.scale_x, self.scale_y, self.scale_z)  # dimensions and scales of the mask have to be the same as given in the initialization method
+            try:
+                assert mask.shape == (self.scale_x, self.scale_y, self.scale_z)
+            except AssertionError:
+                print 'AssertionError: dimensions and scales of the mask have to be the same as given in the graph initialization method.'  # TODO raise an exeption?
+                exit(1)
             # Find the set of the membrane voxels, which become the vertices of the graph:
             membrane_voxels = get_foreground_voxels_from_mask(mask)
             print '%s membrane voxels' % len(membrane_voxels)
@@ -248,61 +254,21 @@ class VoxelGraph(graphs.SegmentationGraph):
                 print membrane_voxels
             self.__expand_voxels(mask, membrane_voxels, verbose)
         else:
-            print 'Error: Wrong input data type, the mask has to be a numpy ndarray.'
+            print 'Error: Wrong input data type, the mask has to be a numpy ndarray.'  # TODO raise an input pexeption
             exit(1)
 
-    @staticmethod
-    # Returns neighbor voxels of a voxel inside a matrix (mask), which have value 1 (foreground)
-    def foreground_neighbors_of_voxel(mask, voxel):
+    def __expand_voxels(self, mask, remaining_mem_voxels, verbose=False):
         """
+        An iterative function used for building the membrane graph of a VoxelGraph object. This private method should only be called by the method build_graph_from_np_ndarray!
+        Expands each foreground voxel, adding it, its foreground neighbor voxels and edges with euclidean distances between the voxel and its neighbor voxels (all scaled in nm) to the graph.
 
         Args:
-            mask:
-            voxel:
+            mask (numpy.ndarray): a binary 3D mask
+            remaining_mem_voxels: a list of remaining membrane voxel coordinates as tuples in form (x, y, z)
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
 
         Returns:
-
-        """
-        neighbor_voxels = []
-        if isinstance(mask, np.ndarray):
-            if isinstance(voxel, tuple) and (len(voxel) == 3):
-                x = voxel[0]
-                y = voxel[1]
-                z = voxel[2]
-                x_size = mask.shape[0]
-                y_size = mask.shape[1]
-                z_size = mask.shape[2]
-                # iterate over all possible (max 26) neighbor voxels combinations
-                for i in (x - 1, x, x + 1):
-                    for j in (y - 1, y, y + 1):
-                        for k in (z - 1, z, z + 1):
-                            # do not add the voxel itself and voxels outside the border
-                            if ((i, j, k) != (x, y, z)) and \
-                                    (i in xrange(0, x_size)) and (j in xrange(0, y_size)) and (k in xrange(0, z_size)):
-                                # add only foreground voxels to the neighbors list
-                                if mask[i, j, k] == 1:
-                                    neighbor_voxels.append((i, j, k))
-            else:
-                print 'Error: Wrong input data, the voxel has to be a tuple of integers of length 3.'
-                exit(1)
-        else:
-            print 'Error: Wrong input data type, the mask has to be a numpy ndarray.'
-            exit(1)
-        return neighbor_voxels
-
-    # An iterative function used for building the membrane graph. Expands each foreground voxel, adding it, its foreground
-    # neighbor voxels and edges with euclidean distances between the neighbor voxels (all scaled in nm) to the graph.
-    # This method should only be called by the method build_graph_from_np_ndarray!
-    def __expand_voxels(self, mask, remaining_mem_voxels, verbose):
-        """
-
-        Args:
-            mask:
-            remaining_mem_voxels:
-            verbose:
-
-        Returns:
-
+            None
         """
         while len(remaining_mem_voxels) > 0:
             try:
@@ -317,8 +283,7 @@ class VoxelGraph(graphs.SegmentationGraph):
                 # get and remove the last voxel on the list of remaining membrane voxels to expand it next
                 voxel_to_expand = remaining_mem_voxels.pop()
                 if verbose:
-                    print '\nCurrent voxel to expand:'
-                    print voxel_to_expand
+                    print '\nCurrent voxel to expand: (%s, %s, %s)' % (voxel_to_expand[0], voxel_to_expand[1], voxel_to_expand[2])
 
                 scaled_voxel_to_expand = (voxel_to_expand[0] * self.scale_factor_to_nm, voxel_to_expand[1] * self.scale_factor_to_nm, voxel_to_expand[2] * self.scale_factor_to_nm)
                 # If the scaled voxel to be expanded has been already added to the graph, get its vertex descriptor:
@@ -353,7 +318,8 @@ class VoxelGraph(graphs.SegmentationGraph):
                                       % (neighbor_voxel[0], neighbor_voxel[1], neighbor_voxel[2])
 
                         # Add an edge with a distance between the expanded scaled vertex and the scaled neighbor vertex, if it does not exist yet:
-                        if not (((scaled_voxel_to_expand, scaled_neighbor_voxel) in self.coordinates_pair_connected) or ((scaled_neighbor_voxel, scaled_voxel_to_expand) in self.coordinates_pair_connected)):
+                        if not (((scaled_voxel_to_expand, scaled_neighbor_voxel) in self.coordinates_pair_connected) or
+                                    ((scaled_neighbor_voxel, scaled_voxel_to_expand) in self.coordinates_pair_connected)):
                             ed = self.graph.add_edge(v_expanded, v_neighbor)  # edge descriptor
                             self.graph.ep.distance[ed] = self.distance_between_voxels(scaled_voxel_to_expand, scaled_neighbor_voxel)
                             self.coordinates_pair_connected[(scaled_voxel_to_expand, scaled_neighbor_voxel)] = True
@@ -369,12 +335,51 @@ class VoxelGraph(graphs.SegmentationGraph):
             if verbose:
                 print '0 remaining membrane voxels'
 
-    # Fills the dictionary coordinates_to_vertex_index. To use after reading a graph from a file before density calculation.
-    def fill_coordinates_to_vertex_index(self):
+    @staticmethod
+    def foreground_neighbors_of_voxel(mask, voxel):
         """
+        Returns neighbor voxels with value 1 (foreground) of a given voxel inside a binary mask of a membrane segmentation.
+
+        Args:
+            mask (numpy.ndarray): a binary 3D mask
+            voxel (tuple): voxel coordinates in the mask as a tuple of integers of length 3: (x, y, z)
 
         Returns:
+            a list of tuples with neighbor voxels coordinates in format: [(x1, y1, z1), (x2, y2, z2), ...]
+        """
+        neighbor_voxels = []
+        if isinstance(mask, np.ndarray):
+            if isinstance(voxel, tuple) and (len(voxel) == 3):
+                x = voxel[0]
+                y = voxel[1]
+                z = voxel[2]
+                x_size = mask.shape[0]
+                y_size = mask.shape[1]
+                z_size = mask.shape[2]
+                # iterate over all possible (max 26) neighbor voxels combinations
+                for i in (x - 1, x, x + 1):
+                    for j in (y - 1, y, y + 1):
+                        for k in (z - 1, z, z + 1):
+                            # do not add the voxel itself and voxels outside the border
+                            if ((i, j, k) != (x, y, z)) and \
+                                    (i in xrange(0, x_size)) and (j in xrange(0, y_size)) and (k in xrange(0, z_size)):
+                                # add only foreground voxels to the neighbors list
+                                if mask[i, j, k] == 1:
+                                    neighbor_voxels.append((i, j, k))
+            else:
+                print 'Error: Wrong input data, the voxel has to be a tuple of integers of length 3.'  # TODO raise an input pexeption
+                exit(1)
+        else:
+            print 'Error: Wrong input data type, the mask has to be a numpy ndarray.'  # TODO raise an input pexeption
+            exit(1)
+        return neighbor_voxels
 
+    def fill_coordinates_to_vertex_index(self):
+        """
+        Fills the dictionary coordinates_to_vertex_index. To use after reading a graph from a file before density calculation.
+
+        Returns:
+            None
         """
         for v in self.graph.vertices():
             voxel = self.graph.vp.xyz[v]
