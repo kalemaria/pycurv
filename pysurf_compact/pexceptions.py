@@ -1,8 +1,9 @@
 """
-Set of classes for handling exceptions and warnings used in PySeg package
+Set of classes for handling exceptions and warnings used in PySeg package. Used here for the PySurf package.
 
-# Author: Antonio Martinez-Sanchez (Max Planck Institute for Biochemistry)
-# Date: 02.04.14
+Author: Antonio Martinez-Sanchez (Max Planck Institute for Biochemistry)
+
+Date: 02.04.14
 """
 
 __author__ = 'martinez'
@@ -17,11 +18,12 @@ class PySegError(Exception):
 
 
 class PySegInputError(PySegError):
-    """Exception raised for errors in the input.
+    """
+    Exception raised for errors in the input.
 
-    Attributes:
-        expr -- input expression in which the error occurred
-        msg  -- explanation of the error
+    Args:
+        expr (str): input expression in which the error occurred
+        msg (str): explanation of the error
     """
 
     def __init__(self, expr, msg):
@@ -29,17 +31,22 @@ class PySegInputError(PySegError):
         self.msg = msg
 
     def get_message(self):
+        """
+        Gets the input expression and the message of the error.
+
+        Returns:
+            string in format '<expr> - <msg>'
+        """
         return self.expr + ' - ' + self.msg
 
 
 class PySegTransitionError(PySegError):
-    """Raised when an operation attempts a state transition that's not
-    allowed.
+    """Raised when an operation attempts a state transition that is not allowed.
 
-    Attributes:
-        prev -- state at beginning of transition
-        next -- attempted new state
-        msg  -- explanation of why the specific transition is not allowed
+    Args:
+        prev: state at beginning of transition
+        next: attempted new state
+        msg (str): explanation of why the specific transition is not allowed
     """
 
     def __init__(self, prev, next, msg):
@@ -59,9 +66,9 @@ class PySegWarning(Warning):
 class PySegInputWarning(PySegWarning):
     """Exception raised for warnings in the input.
 
-    Attributes:
-        expr -- input expression in which the warning occurred
-        msg  -- explanation of the warning
+    Args:
+        expr (str): input expression in which the warning occurred
+        msg (str): explanation of the warning
     """
 
     def __init__(self, expr, msg):
@@ -69,4 +76,10 @@ class PySegInputWarning(PySegWarning):
         self.msg = msg
 
     def get_message(self):
+        """
+        Gets the input expression and the message of the warning.
+
+        Returns:
+            string in format '<expr> - <msg>'
+        """
         return self.expr + ' - ' + self.msg

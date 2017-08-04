@@ -6,6 +6,7 @@ from graph_tool import Graph
 
 import graphs
 import pysurf_io as io
+import pexceptions
 
 
 def read_in_mask(mask_file, verbose=False):
@@ -49,8 +50,8 @@ def get_foreground_voxels_from_mask(mask):
             voxel_i = (indices[0][i], indices[1][i], indices[2][i])
             voxels.append(voxel_i)
     else:
-        print 'Error: Wrong input data type, the mask has to be a 3D numpy ndarray.'  # TODO raise an input pexeption
-        exit(1)
+        error_msg = 'a 3D numpy ndarray object required as input.'
+        raise pexceptions.PySegInputError(expr='get_foreground_voxels_from_mask', msg=error_msg)
     return voxels
 
 
@@ -107,8 +108,8 @@ def ndarray_voxels_to_tupel_list(voxels_ndarray):
             z = voxel[2]
             tupel_list.append((x, y, z))
     else:
-        print 'Error: Wrong input data type, the voxels have to be given as a 2D numpy ndarray with 3 columns.'  # TODO raise an input pexeption
-        exit(1)
+        error_msg = 'a 2D numpy ndarray with 3 columns required as input'
+        raise pexceptions.PySegInputError(expr='ndarray_voxels_to_tupel_list', msg=error_msg)
     return tupel_list
 
 
@@ -149,8 +150,10 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
     Returns:
          a list of the target voxels that are inside the membrane mask as tuples in form (x, y, z)
     """
-    if isinstance(ribo_mask, np.ndarray) and isinstance(mem_mask, np.ndarray):
-        assert (ribo_mask.shape == mem_mask.shape)  # both mask have to have the same dimensions and scales
+    if isinstance(ribo_mask, np.ndarray) and (len(ribo_mask.shape) == 3) and isinstance(mem_mask, np.ndarray) and (len(mem_mask.shape) == 3):
+        if ribo_mask.shape != mem_mask.shape:
+            error_msg = 'Both input 3D numpy ndarray objects (ribo_mask and mem_mask) have to have the same scales'
+            raise pexceptions.PySegInputError(expr='get_target_voxels_in_membrane_mask', msg=error_msg)
         # Find the set of voxels of ribosome centers mapped on the membrane, called 'target voxels' from now on:
         target_voxels = get_foreground_voxels_from_mask(ribo_mask)
         print '%s target voxels' % len(target_voxels)
@@ -162,14 +165,16 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
             if mem_mask[target_voxel[0], target_voxel[1], target_voxel[2]] == 1:
                 target_voxels_in_membrane_mask.append(target_voxel)
             else:
-                print 'Warning: Target voxel (%s, %s, %s) not inside the membrane!' % (target_voxel[0], target_voxel[1], target_voxel[2])
+                # print 'Warning: Target voxel (%s, %s, %s) not inside the membrane!' % (target_voxel[0], target_voxel[1], target_voxel[2])
+                error_msg = 'Target voxel (%s, %s, %s) not inside the membrane!' % (target_voxel[0], target_voxel[1], target_voxel[2])
+                raise pexceptions.PySegInputWarning(expr='get_target_voxels_in_membrane_mask', msg=error_msg)  # TODO check if it works and remove the commented out print line above
         print '%s target voxels in membrane' % len(target_voxels_in_membrane_mask)
         if verbose:
             print target_voxels_in_membrane_mask
         return target_voxels_in_membrane_mask
     else:
-        print 'Error: Wrong input data type, the both masks have to be numpy ndarrays.'  # TODO raise an input pexeption
-        exit(1)
+        error_msg = '3D numpy ndarray objects required as input (both ribo_mask and mem_mask)'
+        raise pexceptions.PySegInputError(expr='get_target_voxels_in_membrane_mask', msg=error_msg)
 
 
 def particles_xyz_to_np_array(motl_em_file, scaling_factor=1):
@@ -241,12 +246,10 @@ class VoxelGraph(graphs.SegmentationGraph):
         Returns:
             None
         """
-        if isinstance(mask, np.ndarray):
-            try:
-                assert mask.shape == (self.scale_x, self.scale_y, self.scale_z)
-            except AssertionError:
-                print 'AssertionError: dimensions and scales of the mask have to be the same as given in the graph initialization method.'  # TODO raise an exeption?
-                exit(1)
+        if isinstance(mask, np.ndarray) and (len(mask.shape) == 3):
+            if mask.shape != (self.scale_x, self.scale_y, self.scale_z):
+                error_msg = 'Scales of the input mask have to be equal to those set during the generation of the VoxelGraph object.'
+                raise pexceptions.PySegInputError(expr='build_graph_from_np_ndarray (VoxelGraph)', msg=error_msg)
             # Find the set of the membrane voxels, which become the vertices of the graph:
             membrane_voxels = get_foreground_voxels_from_mask(mask)
             print '%s membrane voxels' % len(membrane_voxels)
@@ -254,8 +257,8 @@ class VoxelGraph(graphs.SegmentationGraph):
                 print membrane_voxels
             self.__expand_voxels(mask, membrane_voxels, verbose)
         else:
-            print 'Error: Wrong input data type, the mask has to be a numpy ndarray.'  # TODO raise an input pexeption
-            exit(1)
+            error_msg = 'a 3D numpy ndarray object required as input (mask).'
+            raise pexceptions.PySegInputError(expr='build_graph_from_np_ndarray (VoxelGraph)', msg=error_msg)
 
     def __expand_voxels(self, mask, remaining_mem_voxels, verbose=False):
         """
@@ -348,7 +351,7 @@ class VoxelGraph(graphs.SegmentationGraph):
             a list of tuples with neighbor voxels coordinates in format: [(x1, y1, z1), (x2, y2, z2), ...]
         """
         neighbor_voxels = []
-        if isinstance(mask, np.ndarray):
+        if isinstance(mask, np.ndarray) and (len(mask.shape) == 3):
             if isinstance(voxel, tuple) and (len(voxel) == 3):
                 x = voxel[0]
                 y = voxel[1]
@@ -367,11 +370,11 @@ class VoxelGraph(graphs.SegmentationGraph):
                                 if mask[i, j, k] == 1:
                                     neighbor_voxels.append((i, j, k))
             else:
-                print 'Error: Wrong input data, the voxel has to be a tuple of integers of length 3.'  # TODO raise an input pexeption
-                exit(1)
+                error_msg = 'a tuple of integers of length 3 required as input (voxel)'
+                raise pexceptions.PySegInputError(expr='foreground_neighbors_of_voxel (VoxelGraph)', msg=error_msg)
         else:
-            print 'Error: Wrong input data type, the mask has to be a numpy ndarray.'  # TODO raise an input pexeption
-            exit(1)
+            error_msg = 'a 3D numpy ndarray required as input (mask)'
+            raise pexceptions.PySegInputError(expr='foreground_neighbors_of_voxel (VoxelGraph)', msg=error_msg)
         return neighbor_voxels
 
     def fill_coordinates_to_vertex_index(self):

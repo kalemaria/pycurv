@@ -6,24 +6,20 @@ from graph_tool import Graph
 from graph_tool.topology import shortest_distance
 
 from pysurf_io import TypesConverter
+import pexceptions
+
 
 class SegmentationGraph(object):
-    """Class defining the abstract SegmentationGraph object and implementing functions common to all derived graph classes."""
+    """Class defining the abstract SegmentationGraph object and implementing functions common to all derived graph classes.
+    The object generator required the following parameters of the underlying segmentation that will be used to build the graph.
 
+    Args:
+        scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
+        scale_x (int): x axis length in pixels of the segmentation
+        scale_y (int): y axis length in pixels of the segmentation
+        scale_z (int): z axis length in pixels of the segmentation
+    """
     def __init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z):
-        """
-        Initializes the object, specifying the parameters of the underlying segmentation that will be used to generate the graph.
-        The graph will be scaled in nanometers, according to the provided pixel size.
-
-        Args:
-            scale_factor_to_nm: pixel size in nanometers
-            scale_x: x axis length in pixels of the segmentation
-            scale_y: y axis length in pixels of the segmentation
-            scale_z: z axis length in pixels of the segmentation
-
-        Returns:
-            None
-        """
         self.graph = Graph(directed=False)
         self.scale_factor_to_nm = scale_factor_to_nm
         self.scale_x = scale_x
@@ -60,8 +56,8 @@ class SegmentationGraph(object):
                 sum_of_squared_differences += (voxel1[i] - voxel2[i]) ** 2
             return math.sqrt(sum_of_squared_differences)
         else:
-            print 'Error: Wrong input data, each voxel has to be a tuple of integers of length 3.'  # TODO raise an input pexeption
-            exit(1)
+            error_msg = 'tuples of integers of length 3 required as input (voxel1 and voxel2)'
+            raise pexceptions.PySegInputError(expr='distance_between_voxels (SegmentationGraph)', msg=error_msg)
 
     def calculate_density(self, mask=None, target_coordinates=None, verbose=False):
         """
@@ -84,9 +80,9 @@ class SegmentationGraph(object):
         import ribosome_density as rd
         # If a mask is given, find the set of voxels of ribosome centers mapped on the membrane, 'target_voxels', and rescale them to nm, 'target_coordinates':
         if mask is not None:
-            assert mask.shape[0] == self.scale_x
-            assert mask.shape[1] == self.scale_y
-            assert mask.shape[2] == self.scale_z
+            if mask.shape != (self.scale_x, self.scale_y, self.scale_z):
+                error_msg = 'Scales of the input mask have to be equal to those set during the generation of the graph object.'
+                raise pexceptions.PySegInputError(expr='calculate_density (SegmentationGraph)', msg=error_msg)
             target_voxels = rd.get_foreground_voxels_from_mask(mask)  # output as a list of tuples: [(x1,y1,z1), (x2,y2,z2), ...] in pixels
             target_ndarray_voxels = rd.tupel_list_to_ndarray_voxels(target_voxels)  # for rescaling have to convert to a ndarray
             target_ndarray_coordinates = target_ndarray_voxels * self.scale_factor_to_nm  # rescale to nm, output a ndarray: [[x1,y1,z1], [x2,y2,z2], ...]
@@ -96,8 +92,8 @@ class SegmentationGraph(object):
             target_coordinates = rd.ndarray_voxels_to_tupel_list(target_coordinates)  # to convert numpy ndarray to a list of tuples: [(x1,y1,z1), (x2,y2,z2), ...]
         # Exit if the target_voxels list is empty:
         if len(target_coordinates) == 0:
-            print 'Error: no target voxels were found!'
-            exit(1)
+            error_msg = 'No target voxels were found! Check your input (mask or target_coordinates).'
+            raise pexceptions.PySegInputError(expr='calculate_density (SegmentationGraph)', msg=error_msg)
         print '%s target voxels' % len(target_coordinates)
         if verbose:
             print target_coordinates
@@ -108,7 +104,10 @@ class SegmentationGraph(object):
             if target_xyz in self.coordinates_to_vertex_index:
                 target_coordinates_in_graph.append(target_xyz)
             else:
-                print 'Warning: Target (%s, %s, %s) not inside the membrane!' % (target_xyz[0], target_xyz[1], target_xyz[2])
+                # print 'Warning: Target (%s, %s, %s) not inside the membrane!' % (target_xyz[0], target_xyz[1], target_xyz[2])
+                error_msg = 'Target (%s, %s, %s) not inside the membrane!' % (target_xyz[0], target_xyz[1], target_xyz[2])
+                raise pexceptions.PySegInputWarning(expr='calculate_density (SegmentationGraph)', msg=error_msg)  # TODO check if it works and remove the commented out print line above
+
         print '%s target coordinates in graph' % len(target_coordinates_in_graph)
         if verbose:
             print target_coordinates_in_graph
@@ -413,7 +412,7 @@ class SegmentationGraph(object):
             property_name (str): vertex property name
 
         Returns:
-            an array (numpy.ndarray) with all values of the vertex property or None
+            an array (numpy.ndarray) with all values of the vertex property
         """
         if isinstance(property_name, str) and property_name in self.graph.vertex_properties:
             values = self.graph.vertex_properties[property_name].get_array()
@@ -421,5 +420,5 @@ class SegmentationGraph(object):
             print 'min = %s, max = %s' % (min(values), max(values))
             return values
         else:
-            print '"%s" is not a string or not found in vertex properties of the graph.'
-            return None
+            error_msg = 'The input "%s" is not a str object or is not found in vertex properties of the graph.' % property_name
+            raise pexceptions.PySegInputError(expr='get_vertex_property_array (SegmentationGraph)', msg=error_msg)
