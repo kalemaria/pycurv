@@ -7,15 +7,21 @@ from graph_tool import Graph, GraphView, incident_edges_op
 from graph_tool.topology import shortest_distance, label_largest_component, label_components
 
 import graphs
+import pexceptions
+from pysurf_io import TypesConverter
 
 
-# Calculates curvatures for a vtkPolyData surface.
-# Returns the vtkPolyData surface with '<type>_Curvature' property added for each point.
-# How to get the curvatures later, e.g. for point with ID 0:
-# point_data = surface_curvature.GetPointData()
-# curvatures = point_data.GetArray(n), n=2 for Gaussian, 3 for Mean, 4 for Maximum or Minimum
-# curvature_point0 = curvatures.GetTuple1(0)
 def add_curvature_to_vtk_surface(surface, curvature_type):
+    """
+    Adds curvatures (Gaussian, mean, maximum or minimum) to each triangle vertex of a vtkPolyData surface calculated by VTK.
+
+    Args:
+        surface (vtk.vtkPolyData): a surface of triangles
+        curvature_type (str): type of curvature to add: 'Gaussian', 'Mean', 'Maximum' or 'Minimum'
+
+    Returns:
+        the vtkPolyData surface with '<type>_Curvature' property added to each triangle vertex
+    """
     if isinstance(surface, vtk.vtkPolyData):
         curvature_filter = vtk.vtkCurvatures()
         curvature_filter.SetInputData(surface)
@@ -32,18 +38,31 @@ def add_curvature_to_vtk_surface(surface, curvature_type):
             print "Minimum curvature"
             curvature_filter.SetCurvatureTypeToMinimum()
         else:
-            print 'Error: Wrong curvature type.'
-            exit(1)
+            error_msg = "One of the following strings required as the second input: 'Gaussian', 'Mean', 'Maximum' or 'Minimum'."
+            raise pexceptions.PySegInputError(expr='add_curvature_to_vtk_surface', msg=error_msg)
         curvature_filter.Update()
         surface_curvature = curvature_filter.GetOutput()
         return surface_curvature
     else:
-        print 'Error: Wrong input data type, \'surface\' has to be a vtkPolyData object.'
-        exit(1)
+        error_msg = "A vtkPolyData object required as the first input."
+        raise pexceptions.PySegInputError(expr='add_curvature_to_vtk_surface', msg=error_msg)
+    # How to get the curvatures later, e.g. for point with ID 0:
+    # point_data = surface_curvature.GetPointData()
+    # curvatures = point_data.GetArray(n)  # where n = 2 for Gaussian, 3 for Mean, 4 for Maximum or Minimum
+    # curvature_point0 = curvatures.GetTuple1(0)
 
 
-# Rescales the given surface with a given scaling factor "scale".
 def rescale_surface(surface, scale):
+    """
+    Rescales the given vtkPolyData surface with a given scaling factor in each of the three dimensions.
+
+    Args:
+        surface (vtk.vtkPolyData): a surface of triangles
+        scale (float): a scaling factor
+
+    Returns:
+        rescaled surface (vtk.vtkPolyData)
+    """
     if isinstance(surface, vtk.vtkPolyData):
         transf = vtk.vtkTransform()
         transf.Scale(scale, scale, scale)
@@ -54,78 +73,42 @@ def rescale_surface(surface, scale):
         scaled_surface = tpd.GetOutput()
         return scaled_surface
     else:
-        print 'Error: Wrong input data type, \'surface\' has to be a vtkPolyData object.'
-        exit(1)
+        error_msg = "A vtkPolyData object required as the first input."
+        raise pexceptions.PySegInputError(expr='rescale_surface', msg=error_msg)
 
 
-# Class defining the SurfaceGraph object, its attributes and methods.
 class SurfaceGraph(graphs.SegmentationGraph):
-    # Builds the graph from a vtkPolyData surface.
-    def build_graph_from_vtk_surface(self, surface, verbose):
+    """
+    Class defining the abstract SurfaceGraph object.
+    """
+
+    def build_graph_from_vtk_surface(self, surface, verbose=False):
+        """
+        Base method for building a graph from a vtkPolyData surface, to be implemented by SurfaceGraph subclasses.
+
+        Args:
+            surface (vtk.vtkPolyData): a surface of triangles
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            None
+        """
         pass
 
 
-# Class defining the PointGraph object, its attributes and methods.
-class PointGraph(SurfaceGraph):
-    # Builds the graph from a vtkPolyData surface.
-    def build_graph_from_vtk_surface(self, surface, verbose):
-        if isinstance(surface, vtk.vtkPolyData):
-            surface = rescale_surface(surface, self.scale_factor_to_nm)  # rescale the surface to nm
-
-            # 0. Check numbers of cells (polygons or triangles) and all points.
-            print '%s cells' % surface.GetNumberOfCells()
-            print '%s points' % surface.GetNumberOfPoints()
-
-            # 1. Iterate over all cells, adding their points as vertices to the graph and connecting them by edges.
-            for i in xrange(surface.GetNumberOfCells()):
-                if verbose:
-                    print 'Cell number %s:' % i
-
-                # Get all points which made up the cell and check that they are 3.
-                points_cell = surface.GetCell(i).GetPoints()
-                if points_cell.GetNumberOfPoints() == 3:
-                    # 1a) Add each of the 3 points as vertex to the graph, if it has not been added yet.
-                    for j in range(0, 3):
-                        x, y, z = points_cell.GetPoint(j)
-                        p = (x, y, z)
-                        if p not in self.coordinates_to_vertex_index:
-                            vd = self.graph.add_vertex()  # vertex descriptor
-                            self.graph.vp.xyz[vd] = [x, y, z]
-                            self.coordinates_to_vertex_index[p] = self.graph.vertex_index[vd]
-                            if verbose:
-                                print '\tThe point (%s, %s, %s) has been added to the graph as a vertex.' % (x, y, z)
-
-                    # 1b) Add an edge with a distance between all 3 pairs of vertices, if it has not been added yet.
-                    for k in range(0, 2):
-                        x1, y1, z1 = points_cell.GetPoint(k)
-                        p1 = (x1, y1, z1)
-                        vd1 = self.graph.vertex(self.coordinates_to_vertex_index[p1])  # vertex descriptor of the 1st point
-                        for l in range(k + 1, 3):
-                            x2, y2, z2 = points_cell.GetPoint(l)
-                            p2 = (x2, y2, z2)
-                            vd2 = self.graph.vertex(self.coordinates_to_vertex_index[p2])  # vertex descriptor of the 2nd point
-                            if not (((p1, p2) in self.coordinates_pair_connected) or ((p2, p1) in self.coordinates_pair_connected)):
-                                ed = self.graph.add_edge(vd1, vd2)  # edge descriptor
-                                self.graph.ep.distance[ed] = self.distance_between_voxels(p1, p2)
-                                self.coordinates_pair_connected[(p1, p2)] = True
-                                if verbose:
-                                    print '\tThe neighbor points (%s, %s, %s) and (%s, %s, %s) have been connected by an edge with a distance of %s pixels.' \
-                                          % (x1, y1, z1, x2, y2, z2, self.graph.ep.distance[ed])
-                else:
-                    print 'Oops, there are %s points in cell number %s' % points_cell.GetNumberOfPoints(), i
-
-            # 2. Check if the numbers of vertices and edges are as they should be:
-            assert self.graph.num_vertices() == len(self.coordinates_to_vertex_index)  # surface.GetNumberOfPoints() is higher for some reason
-            assert self.graph.num_edges() == len(self.coordinates_pair_connected)
-            print '%s triangle vertices' % self.graph.num_vertices()
-        else:
-            print 'Error: Wrong input data type, \'surface\' has to be a vtkPolyData object.'
-            exit(1)
-
-
-# Class defining the TriangleGraph object, its attributes and methods.
 class TriangleGraph(SurfaceGraph):
+    """
+    Class defining the TriangleGraph object, its attributes and methods.
+    The object generator required the following parameters of the underlying segmentation that will be used to build the graph.
+
+    Args:
+        scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
+        scale_x (int): x axis length in pixels of the segmentation
+        scale_y (int): y axis length in pixels of the segmentation
+        scale_z (int): z axis length in pixels of the segmentation
+    """
     def __init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z):
+
         graphs.SegmentationGraph.__init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z)
 
         # Add more "internal property maps" to the graph.
@@ -149,8 +132,19 @@ class TriangleGraph(SurfaceGraph):
         # A dictionary mapping a point coordinates (x, y, z) scaled in nm to a list of cell indices sharing this point:
         self.point_in_cells = {}
 
-    # Builds the graph from a vtkPolyData surface. Returns the rescaled surface to nm for writing into a file, if needed.
     def build_graph_from_vtk_surface(self, surface, verbose=False):
+        """
+        Builds the graph from a vtkPolyData surface, which is rescaled to nanometers according to the scale factor specified when creating the TriangleGraph object.
+        Every vertex of the graph represents the center of a surface triangle, and every edge of the graph connects two adjacent triangles. There are two types of edges:
+        a "strong" edge if the adjacent triangles share two triangle edges and a "weak" edge if they share only one edge.
+
+        Args:
+            surface (vtk.vtkPolyData): a surface of triangles
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            the rescaled surface to nanometers (vtk.vtkPolyData)
+        """
         if isinstance(surface, vtk.vtkPolyData):
             t_begin = time.time()
 
@@ -238,7 +232,7 @@ class TriangleGraph(SurfaceGraph):
                 normal = np.zeros(shape=3)
                 cell.ComputeNormal(points_cell.GetPoint(0), points_cell.GetPoint(1), points_cell.GetPoint(2), normal)
 
-                # Get the min, max and Gaussian curvatures for each of 3 points of the triangle i and calculate the average curvatures:
+                # Get the min, max, Gaussian and mean curvatures (calculated by VTK) for each of 3 points of the triangle i and calculate the average curvatures:
                 avg_min_curvature = 0
                 avg_max_curvature = 0
                 avg_gauss_curvature = 0
@@ -311,7 +305,7 @@ class TriangleGraph(SurfaceGraph):
                 # Get the vertex descriptor representing the cell i:
                 vd_i = self.graph.vertex(i)  # vertex descriptor of the current cell, vertex i
 
-                # Get the coordinates of the vertex i (as a list and convert into a tupel):
+                # Get the coordinates of the vertex i (as a list and convert into a tuple):
                 p_i = self.graph.vp.xyz[vd_i]
                 p_i = (p_i[0], p_i[1], p_i[2])
 
@@ -322,7 +316,7 @@ class TriangleGraph(SurfaceGraph):
                     x = triangle_cell_ids.index(neighbor_cell_id)  # vertex index of the current neighbor cell
                     vd_x = self.graph.vertex(x)  # vertex descriptor of the current neighbor cell, vertex x
 
-                    # Get the coordinates of the vertex x (as a list and convert into a tupel):
+                    # Get the coordinates of the vertex x (as a list and convert into a tuple):
                     p_x = self.graph.vp.xyz[vd_x]
                     p_x = (p_x[0], p_x[1], p_x[2])
 
@@ -358,8 +352,8 @@ class TriangleGraph(SurfaceGraph):
 
             return surface  # rescaled surface to nm for writing into a file
         else:
-            print 'Error: Wrong input data type, \'surface\' has to be a vtkPolyData object.'
-            exit(1)
+            error_msg = "A vtkPolyData object required as the first input."
+            raise pexceptions.PySegInputError(expr='build_graph_from_vtk_surface (TriangleGraph)', msg=error_msg)
 
     def graph_to_triangle_poly(self, verbose=False):
         """
@@ -445,14 +439,6 @@ class TriangleGraph(SurfaceGraph):
             print "The graph is empty!"
             return None
 
-    # Updates graph's dictionary coordinates_to_vertex_index, which has to be done after purging the graph, because vertices are renumbered.
-    # Reminder: the dictionary maps the vertex coordinates (x, y, z) scaled in nm to the vertex index.
-    def __update_coordinates_to_vertex_index(self):
-        self.coordinates_to_vertex_index = {}
-        for vd in self.graph.vertices():
-            [x_center, y_center, z_center] = self.graph.vp.xyz[vd]
-            self.coordinates_to_vertex_index[(x_center, y_center, z_center)] = self.graph.vertex_index[vd]
-
     # Finds and returns (as list of indices) vertices at the graph border (defined as such having less than 3 strong
     # edges) and adds corresponding vertex properties, 'num_strong_edges' and 'is_on_border'. If "purge" is set to True,
     # those vertices and their edges will be filtered out permanently, if it is False (default) no filtering will be done.
@@ -485,7 +471,7 @@ class TriangleGraph(SurfaceGraph):
             del self.graph.vertex_properties["num_strong_edges"]  # del self.graph.vp.num_strong_edges  # AttributeError: num_strong_edges
             del self.graph.vertex_properties["is_on_border"]
             # Update graph's dictionary coordinates_to_vertex_index:
-            self.__update_coordinates_to_vertex_index()
+            self.update_coordinates_to_vertex_index()
 
 
     # Calculates for each vertex geodesics to each graph border vertex and stores the minimal one as a vertex property,
@@ -558,7 +544,7 @@ class TriangleGraph(SurfaceGraph):
 
         if purge is True or filter_islands is True:
             # Update graph's dictionary coordinates_to_vertex_index:
-            self.__update_coordinates_to_vertex_index()
+            self.update_coordinates_to_vertex_index()
 
     # A faster version for find_vertices_near_border (Note: no option to filter islands - use a subgraphs filtering method).
     def find_vertices_near_border_fast(self, b, purge=False, verbose=False):
@@ -601,7 +587,7 @@ class TriangleGraph(SurfaceGraph):
             del self.graph.vertex_properties["is_on_border"]
             del self.graph.vertex_properties["is_near_border"]
             # Update graph's dictionary coordinates_to_vertex_index:
-            self.__update_coordinates_to_vertex_index()
+            self.update_coordinates_to_vertex_index()
 
         t_very_end = time.time()
         duration = t_very_end - t_very_begin
@@ -683,7 +669,7 @@ class TriangleGraph(SurfaceGraph):
 
         if purge is True or filter_islands is True:
             # Update graph's dictionary coordinates_to_vertex_index:
-            self.__update_coordinates_to_vertex_index()
+            self.update_coordinates_to_vertex_index()
 
     # A faster version for find_vertices_near_border_and_outside_mask (Note: no option to filter islands - use a subgraphs filtering method).
     def find_vertices_near_border_and_outside_mask_fast(self, b, mask, label=1, allowed_dist=0, purge=False, verbose=False):
@@ -714,7 +700,7 @@ class TriangleGraph(SurfaceGraph):
             del self.graph.vertex_properties["is_outside_mask"]
             del self.graph.vertex_properties["is_near_border_and_outside_mask"]
             # Update graph's dictionary coordinates_to_vertex_index:
-            self.__update_coordinates_to_vertex_index()
+            self.update_coordinates_to_vertex_index()
 
     # Finds and returns the largest connected component (lcc) of the graph. If "replace" is True and the lcc has less vertices, the graph is replaced by its lcc.
     def find_largest_connected_component(self, replace=False):
@@ -733,7 +719,7 @@ class TriangleGraph(SurfaceGraph):
             if "unreachable_from_border" in self.graph.vertex_properties:
                 del self.graph.vertex_properties["unreachable_from_border"]
             # Update graph's dictionary coordinates_to_vertex_index:
-            self.__update_coordinates_to_vertex_index()
+            self.update_coordinates_to_vertex_index()
 
         return lcc
 
@@ -769,7 +755,7 @@ class TriangleGraph(SurfaceGraph):
             # Purge the filtered out vertices and edges permanently from the graph:
             self.graph.purge_vertices()
             # Update graph's dictionary coordinates_to_vertex_index:
-            self.__update_coordinates_to_vertex_index()
+            self.update_coordinates_to_vertex_index()
         # Remove the properties used for the filtering that are no longer true:
         del self.graph.vertex_properties["small_component"]
 

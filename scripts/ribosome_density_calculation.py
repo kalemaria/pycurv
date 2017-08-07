@@ -69,7 +69,7 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1, vtp_files_
     vg.graph.list_properties()
 
     # Fill the dictionary of VoxelGraph, coordinates_to_vertex_index:
-    vg.fill_coordinates_to_vertex_index()
+    vg.update_coordinates_to_vertex_index()
     print 'Size of coordinates_to_vertex_index: %s' % len(vg.coordinates_to_vertex_index)
 
     # Calculate shortest distances for each node in the graph (membrane voxel) to each reachable voxel of ribosome center mapped on the membrane,

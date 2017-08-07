@@ -10,8 +10,9 @@ import pexceptions
 
 
 class SegmentationGraph(object):
-    """Class defining the abstract SegmentationGraph object and implementing functions common to all derived graph classes.
-    The object generator required the following parameters of the underlying segmentation that will be used to build the graph.
+    """
+    Class defining the abstract SegmentationGraph object, its attributes and implements methods common to all derived graph classes.
+    The object generator requires the following parameters of the underlying segmentation that will be used to build the graph.
 
     Args:
         scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
@@ -56,8 +57,22 @@ class SegmentationGraph(object):
                 sum_of_squared_differences += (voxel1[i] - voxel2[i]) ** 2
             return math.sqrt(sum_of_squared_differences)
         else:
-            error_msg = 'tuples of integers of length 3 required as input (voxel1 and voxel2)'
+            error_msg = 'Tuples of integers of length 3 required as first and second input.'
             raise pexceptions.PySegInputError(expr='distance_between_voxels (SegmentationGraph)', msg=error_msg)
+
+    def update_coordinates_to_vertex_index(self):
+        """
+        Updates graph's dictionary coordinates_to_vertex_index. This has to be done after purging the graph, because vertices are renumbered,
+        as well as after reading a graph from a file (e.g. before density calculation).
+        Reminder: the dictionary maps the vertex coordinates (x, y, z) scaled in nanometers to the vertex index.
+
+        Returns:
+            None
+        """
+        self.coordinates_to_vertex_index = {}
+        for vd in self.graph.vertices():
+            [x, y, z] = self.graph.vp.xyz[vd]
+            self.coordinates_to_vertex_index[(x, y, z)] = self.graph.vertex_index[vd]
 
     def calculate_density(self, mask=None, target_coordinates=None, verbose=False):
         """
@@ -81,7 +96,7 @@ class SegmentationGraph(object):
         # If a mask is given, find the set of voxels of ribosome centers mapped on the membrane, 'target_voxels', and rescale them to nm, 'target_coordinates':
         if mask is not None:
             if mask.shape != (self.scale_x, self.scale_y, self.scale_z):
-                error_msg = 'Scales of the input mask have to be equal to those set during the generation of the graph object.'
+                error_msg = "Scales of the input 'mask' have to be equal to those set during the generation of the graph object."
                 raise pexceptions.PySegInputError(expr='calculate_density (SegmentationGraph)', msg=error_msg)
             target_voxels = rd.get_foreground_voxels_from_mask(mask)  # output as a list of tuples: [(x1,y1,z1), (x2,y2,z2), ...] in pixels
             target_ndarray_voxels = rd.tupel_list_to_ndarray_voxels(target_voxels)  # for rescaling have to convert to a ndarray
@@ -92,7 +107,7 @@ class SegmentationGraph(object):
             target_coordinates = rd.ndarray_voxels_to_tupel_list(target_coordinates)  # to convert numpy ndarray to a list of tuples: [(x1,y1,z1), (x2,y2,z2), ...]
         # Exit if the target_voxels list is empty:
         if len(target_coordinates) == 0:
-            error_msg = 'No target voxels were found! Check your input (mask or target_coordinates).'
+            error_msg = "No target voxels were found! Check your input ('mask' or 'target_coordinates')."
             raise pexceptions.PySegInputError(expr='calculate_density (SegmentationGraph)', msg=error_msg)
         print '%s target voxels' % len(target_coordinates)
         if verbose:

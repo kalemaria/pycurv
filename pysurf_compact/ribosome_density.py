@@ -50,7 +50,7 @@ def get_foreground_voxels_from_mask(mask):
             voxel_i = (indices[0][i], indices[1][i], indices[2][i])
             voxels.append(voxel_i)
     else:
-        error_msg = 'a 3D numpy ndarray object required as input.'
+        error_msg = 'A 3D numpy ndarray object required as input.'
         raise pexceptions.PySegInputError(expr='get_foreground_voxels_from_mask', msg=error_msg)
     return voxels
 
@@ -108,7 +108,7 @@ def ndarray_voxels_to_tupel_list(voxels_ndarray):
             z = voxel[2]
             tupel_list.append((x, y, z))
     else:
-        error_msg = 'a 2D numpy ndarray with 3 columns required as input'
+        error_msg = 'A 2D numpy ndarray with 3 columns required as input.'
         raise pexceptions.PySegInputError(expr='ndarray_voxels_to_tupel_list', msg=error_msg)
     return tupel_list
 
@@ -152,7 +152,7 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
     """
     if isinstance(ribo_mask, np.ndarray) and (len(ribo_mask.shape) == 3) and isinstance(mem_mask, np.ndarray) and (len(mem_mask.shape) == 3):
         if ribo_mask.shape != mem_mask.shape:
-            error_msg = 'Both input 3D numpy ndarray objects (ribo_mask and mem_mask) have to have the same scales'
+            error_msg = 'Both input 3D numpy ndarray objects have to have the same scales.'
             raise pexceptions.PySegInputError(expr='get_target_voxels_in_membrane_mask', msg=error_msg)
         # Find the set of voxels of ribosome centers mapped on the membrane, called 'target voxels' from now on:
         target_voxels = get_foreground_voxels_from_mask(ribo_mask)
@@ -173,7 +173,7 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
             print target_voxels_in_membrane_mask
         return target_voxels_in_membrane_mask
     else:
-        error_msg = '3D numpy ndarray objects required as input (both ribo_mask and mem_mask)'
+        error_msg = '3D numpy ndarray objects required as first and second input'
         raise pexceptions.PySegInputError(expr='get_target_voxels_in_membrane_mask', msg=error_msg)
 
 
@@ -232,7 +232,16 @@ def nearest_vertex_for_particles(vertices_xyz, particles_xyz, radius):
 
 
 class VoxelGraph(graphs.SegmentationGraph):
-    """Class defining the VoxelGraph object and its methods."""
+    """
+    Class defining the VoxelGraph object and its methods.
+    The object generator requires the following parameters of the underlying segmentation that will be used to build the graph.
+
+    Args:
+        scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
+        scale_x (int): x axis length in pixels of the segmentation
+        scale_y (int): y axis length in pixels of the segmentation
+        scale_z (int): z axis length in pixels of the segmentation
+    """
 
     def build_graph_from_np_ndarray(self, mask, verbose=False):
         """
@@ -257,7 +266,7 @@ class VoxelGraph(graphs.SegmentationGraph):
                 print membrane_voxels
             self.__expand_voxels(mask, membrane_voxels, verbose)
         else:
-            error_msg = 'a 3D numpy ndarray object required as input (mask).'
+            error_msg = 'A 3D numpy ndarray object required as first input.'
             raise pexceptions.PySegInputError(expr='build_graph_from_np_ndarray (VoxelGraph)', msg=error_msg)
 
     def __expand_voxels(self, mask, remaining_mem_voxels, verbose=False):
@@ -370,22 +379,9 @@ class VoxelGraph(graphs.SegmentationGraph):
                                 if mask[i, j, k] == 1:
                                     neighbor_voxels.append((i, j, k))
             else:
-                error_msg = 'a tuple of integers of length 3 required as input (voxel)'
+                error_msg = 'A tuple of integers of length 3 required as the second input.'
                 raise pexceptions.PySegInputError(expr='foreground_neighbors_of_voxel (VoxelGraph)', msg=error_msg)
         else:
-            error_msg = 'a 3D numpy ndarray required as input (mask)'
+            error_msg = 'A 3D numpy ndarray required as the first input.'
             raise pexceptions.PySegInputError(expr='foreground_neighbors_of_voxel (VoxelGraph)', msg=error_msg)
         return neighbor_voxels
-
-    def fill_coordinates_to_vertex_index(self):
-        """
-        Fills the dictionary coordinates_to_vertex_index. To use after reading a graph from a file before density calculation.
-
-        Returns:
-            None
-        """
-        for v in self.graph.vertices():
-            voxel = self.graph.vp.xyz[v]
-            voxel = (voxel[0], voxel[1], voxel[2])
-            if voxel not in self.coordinates_to_vertex_index:
-                self.coordinates_to_vertex_index[voxel] = self.graph.vertex_index[v]
