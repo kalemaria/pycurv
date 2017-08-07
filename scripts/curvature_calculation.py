@@ -84,7 +84,7 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
             print 'The surface scaled to nm was written into the file %s_nm.vtp' % surf_file[0:-4]
 
             print '\nFinding triangles that are 3 pixels to surface borders...'
-            tg.find_vertices_near_border_fast(3 * scale_factor_to_nm, purge=True, verbose=False)
+            tg.find_vertices_near_border(3 * scale_factor_to_nm, purge=True)
             print 'The graph has %s vertices and %s edges' % (tg.graph.num_vertices(), tg.graph.num_edges())
 
             print '\nFinding small connected components of the graph...'

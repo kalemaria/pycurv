@@ -28,7 +28,6 @@ def vector_voting(tg, k, epsilon=2, eta=2, exclude_borders=True):
 
     Notes:
         If epsilon = 0 and eta = 0, all triangles will be classified as "surface patch" (class 1).
-
     """
     # Preparation (calculations & printouts that are the same for the whole graph)
     t_begin = time.time()

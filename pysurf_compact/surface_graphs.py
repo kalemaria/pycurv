@@ -439,10 +439,16 @@ class TriangleGraph(SurfaceGraph):
             print "The graph is empty!"
             return None
 
-    # Finds and returns (as list of indices) vertices at the graph border (defined as such having less than 3 strong
-    # edges) and adds corresponding vertex properties, 'num_strong_edges' and 'is_on_border'. If "purge" is set to True,
-    # those vertices and their edges will be filtered out permanently, if it is False (default) no filtering will be done.
     def find_graph_border(self, purge=False):
+        """
+        Finds vertices at the graph border, defined as such having less than 3 strong edges, and adds corresponding vertex properties, 'num_strong_edges' and 'is_on_border'.
+
+        Args:
+            purge (boolean, optional): if True, those vertices and their edges will be filtered out permanently, if False (default) no filtering will be done
+
+        Returns:
+            list of indices of vertices at the graph border
+        """
         if "is_on_border" not in self.graph.vertex_properties:
             print 'Finding vertices at the graph border...'
             # Add a vertex property for storing the number of strong edges:
@@ -473,81 +479,17 @@ class TriangleGraph(SurfaceGraph):
             # Update graph's dictionary coordinates_to_vertex_index:
             self.update_coordinates_to_vertex_index()
 
+    def find_vertices_near_border(self, b, purge=False):
+        """
+        Finds vertices that are within a given distance in nanometers to the graph border.
 
-    # Calculates for each vertex geodesics to each graph border vertex and stores the minimal one as a vertex property,
-    # 'min_geodesics_to_border'. Also marks surface "islands" unreachable from the graph border in a vertex property.
-    def __calculate_min_geodesics_to_border(self, verbose=False):
-        border_vertices_indices = self.find_graph_border()
+        Args:
+            b (float): distance from border in nanometers
+            purge (boolean, optional): if True, those vertices and their edges will be filtered out permanently; if False (default), no filtering will be done
 
-        print 'Calculating for each vertex geodesics to each graph border vertex...'
-        t_begin = time.time()
-        # Add a vertex property for storing the minimal geodesics to graph border:
-        self.graph.vp.min_geodesics_to_border = self.graph.new_vertex_property("float")
-        # Add a vertex property telling whether a vertex is unreachable from any graph border:
-        self.graph.vp.unreachable_from_border = self.graph.new_vertex_property("boolean")
-        num_vertices_unreachable_from_border = 0
-        for v in self.graph.vertices():
-            d = shortest_distance(self.graph, source=v, target=border_vertices_indices,
-                                                      weights=self.graph.ep.distance)
-            self.graph.vp.min_geodesics_to_border[v] = min(d)
-            if self.graph.vp.min_geodesics_to_border[v] == np.finfo(np.float64).max:  # == 1.7976931348623157e+308
-                self.graph.vp.min_geodesics_to_border[v] = -1  # so ParaView doesn't run into problem showing the range
-                self.graph.vp.unreachable_from_border[v] = 1
-                num_vertices_unreachable_from_border += 1
-                if verbose:
-                    print 'Vertex %s is unreachable from border' % self.graph.vertex_index[v]
-            else:
-                self.graph.vp.unreachable_from_border[v] = 0
-        t_end = time.time()
-        duration = t_end - t_begin
-        print '...took: %s min %s s' % divmod(duration, 60)
-        print "%s vertices are unreachable from border." % num_vertices_unreachable_from_border
-
-    # Finds vertices that are within distance b nm to the graph border. If "purge" is set to True, those vertices and
-    # their edges will be filtered out permanently. If "filter_islands" is set to True, the islands unreachable from the
-    # graph border will be filtered out permanently. If those parameters are set to False (default), no filtering will be done.
-    def find_vertices_near_border(self, b, purge=False, filter_islands=False, verbose=False):
-        self.__calculate_min_geodesics_to_border(verbose=verbose)  # this calls add one property and self.find_graph_border(), which adds two properties!
-
-        print '\nFinding vertices within distance %s nm to the graph border...' % b
-        # Add a boolean vertex property telling whether a vertex is within distance b to border:
-        self.graph.vp.is_near_border = self.graph.new_vertex_property("boolean")
-        num_vertices_near_border = 0
-        for v in self.graph.vertices():
-            if self.graph.vp.unreachable_from_border[v] == 0 and self.graph.vp.min_geodesics_to_border[v] <= b:
-                self.graph.vp.is_near_border[v] = 1
-                num_vertices_near_border += 1
-            else:
-                self.graph.vp.is_near_border[v] = 0
-        print '%s vertices are within distance %s nm to the graph border.' % (num_vertices_near_border, b)
-
-        if purge is True:
-            print 'Filtering out those vertices and their edges...'
-            # Set the filter to get only vertices NOT within distance b to border.
-            self.graph.set_vertex_filter(self.graph.vp.is_near_border, inverted=True)
-            # Purge the filtered out vertices and edges permanently from the graph:
-            self.graph.purge_vertices()
-            # Remove the properties used for the filtering that are no longer true:
-            del self.graph.vertex_properties["num_strong_edges"]
-            del self.graph.vertex_properties["is_on_border"]
-            del self.graph.vertex_properties["min_geodesics_to_border"]
-            del self.graph.vertex_properties["is_near_border"]
-
-        if filter_islands is True:
-            print 'Filtering out "islands" unreachable from the graph border...'
-            # Set the filter to get only vertices NOT unreachable from border.
-            self.graph.set_vertex_filter(self.graph.vp.unreachable_from_border, inverted=True)
-            # Purge the filtered out vertices and edges permanently from the graph:
-            self.graph.purge_vertices()
-            # Remove the properties used for the filtering that are no longer true:
-            del self.graph.vertex_properties["unreachable_from_border"]
-
-        if purge is True or filter_islands is True:
-            # Update graph's dictionary coordinates_to_vertex_index:
-            self.update_coordinates_to_vertex_index()
-
-    # A faster version for find_vertices_near_border (Note: no option to filter islands - use a subgraphs filtering method).
-    def find_vertices_near_border_fast(self, b, purge=False, verbose=False):
+        Returns:
+            None
+        """
         t_very_begin = time.time()
         border_vertices_indices = self.find_graph_border()
 
@@ -593,14 +535,23 @@ class TriangleGraph(SurfaceGraph):
         duration = t_very_end - t_very_begin
         print 'Finding vertices near border took: %s min %s s' % divmod(duration, 60)
 
-    # Finds vertices that are outside a mask, which means that their scaled back to pixels and rounded coordinates are further away than an allowed distance (in pixels)
-    # to a mask voxel with the given label.
     def find_vertices_outside_mask(self, mask, label=1, allowed_dist=0):
+        """
+        Finds vertices that are outside a mask, which means that their scaled back to pixels and rounded coordinates are further away than an allowed distance in pixels
+        to a mask voxel with the given label.
+        Args:
+            mask (numpy.ndarray): 3D mask of the segmentation from which the underlying surface was created
+            label (int, optional): the label in the mask to be considered (default 1)
+            allowed_dist (int, optional): allowed distance in pixels between a voxel coordinate and a mask voxel (default 0)
+
+        Returns:
+            None
+        """
         if isinstance(mask, np.ndarray):
             print '\nFinding vertices outside the membrane mask...'
             # Add a boolean vertex property telling whether a vertex is outside the mask:
             self.graph.vp.is_outside_mask = self.graph.new_vertex_property("boolean")
-            maskd = ndimage.morphology.distance_transform_edt(np.invert(mask == label)) # Invert the boolean matrix,
+            maskd = ndimage.morphology.distance_transform_edt(np.invert(mask == label))  # Invert the boolean matrix,
             # because distance_transform_edt calculates distances from '0's, not from '1's!
 
             num_vertices_outside_mask = 0
@@ -622,58 +573,25 @@ class TriangleGraph(SurfaceGraph):
             print '%s vertices are further away than %s pixel to the mask.' % (num_vertices_outside_mask, allowed_dist)
 
         else:
-            print 'Error: Wrong input data type, the mask has to be a numpy ndarray (3D).'
-            exit(1)
+            error_msg = "A a 3D numpy ndarray object required as the first input."
+            raise pexceptions.PySegInputError(expr='find_vertices_outside_mask (TriangleGraph)', msg=error_msg)
 
-    # Finds vertices that are within distance b nm to the graph border and outside a mask, i.e. further than the allowed distance (in pixels) from a mask voxel with the given label.
-    # If "purge" is set to True, those vertices and their edges will be filtered out permanently.
-    # If "filter_islands" is set to True, the islands unreachable from the graph border will be filtered out permanently.
-    # If those parameters are set to False (default), no filtering will be done.
-    def find_vertices_near_border_and_outside_mask(self, b, mask, label=1, allowed_dist=0, purge=False, filter_islands=False, verbose=False):
-        self.find_vertices_near_border(b, purge=False, filter_islands=False, verbose=verbose)  # don't remove vertices near border, because have to intersect with the mask first!
-        self.find_vertices_outside_mask(mask, label=label, allowed_dist=allowed_dist)
+    def find_vertices_near_border_and_outside_mask(self, b, mask, label=1, allowed_dist=0, purge=False):
+        """
+        Finds vertices that are within distance in nanometers to the graph border and outside a mask, i.e. further than the allowed distance in pixels
+        to a mask voxel with the given label.
 
-        # Add a boolean vertex property telling whether a vertex within distance b to border and outside mask:
-        self.graph.vp.is_near_border_and_outside_mask = self.graph.new_vertex_property("boolean")
-        num_vertices_near_border_and_outside_mask = 0
-        for v in self.graph.vertices():
-            if self.graph.vp.is_near_border[v] == 1 and self.graph.vp.is_outside_mask[v] == 1:
-                self.graph.vp.is_near_border_and_outside_mask[v] = 1
-                num_vertices_near_border_and_outside_mask += 1
-            else:
-                self.graph.vp.is_near_border_and_outside_mask[v] = 0
-        print '%s vertices are within distance %s nm to the graph border and further than %s pixel from the mask.' % (num_vertices_near_border_and_outside_mask, b, allowed_dist)
+        Args:
+            b (float): distance from border in nanometers
+            mask (numpy.ndarray): 3D mask of the segmentation from which the underlying surface was created
+            label (int, optional): the label in the mask to be considered (default 1)
+            allowed_dist (int, optional): allowed distance in pixels between a voxel coordinate and a mask voxel (default 0)
+            purge (boolean, optional): if True, those vertices and their edges will be filtered out permanently; if False (default), no filtering will be done
 
-        if purge is True:
-            print 'Filtering out those vertices and their edges...'
-            # Set the filter to get only vertices NOT (near border and outside mask).
-            self.graph.set_vertex_filter(self.graph.vp.is_near_border_and_outside_mask, inverted=True)
-            # Purge the filtered out vertices and edges permanently from the graph:
-            self.graph.purge_vertices()
-            # Remove the properties used for the filtering that are no longer true:
-            del self.graph.vertex_properties["num_strong_edges"]
-            del self.graph.vertex_properties["is_on_border"]
-            del self.graph.vertex_properties["min_geodesics_to_border"]
-            del self.graph.vertex_properties["is_near_border"]  # until here as in self.find_vertices_near_border(), because not purged
-            del self.graph.vertex_properties["is_outside_mask"]
-            del self.graph.vertex_properties["is_near_border_and_outside_mask"]
-
-        if filter_islands is True:
-            print 'Filtering out "islands" unreachable from the graph border...'
-            # Set the filter to get only vertices NOT unreachable from border.
-            self.graph.set_vertex_filter(self.graph.vp.unreachable_from_border, inverted=True)
-            # Purge the filtered out vertices and edges permanently from the graph:
-            self.graph.purge_vertices()
-            # Remove the properties used for the filtering that are no longer true:
-            del self.graph.vertex_properties["unreachable_from_border"]
-
-        if purge is True or filter_islands is True:
-            # Update graph's dictionary coordinates_to_vertex_index:
-            self.update_coordinates_to_vertex_index()
-
-    # A faster version for find_vertices_near_border_and_outside_mask (Note: no option to filter islands - use a subgraphs filtering method).
-    def find_vertices_near_border_and_outside_mask_fast(self, b, mask, label=1, allowed_dist=0, purge=False, verbose=False):
-        self.find_vertices_near_border_fast(b, purge=False, verbose=verbose)  # don't remove vertices near border, because have to intersect with the mask first!
+        Returns:
+            None
+        """
+        self.find_vertices_near_border(b, purge=False)  # don't remove vertices near border, because have to intersect with the mask first!
         self.find_vertices_outside_mask(mask, label=label, allowed_dist=allowed_dist)
 
         # Add a boolean vertex property telling whether a vertex within distance b to border and outside mask:
@@ -702,8 +620,19 @@ class TriangleGraph(SurfaceGraph):
             # Update graph's dictionary coordinates_to_vertex_index:
             self.update_coordinates_to_vertex_index()
 
-    # Finds and returns the largest connected component (lcc) of the graph. If "replace" is True and the lcc has less vertices, the graph is replaced by its lcc.
     def find_largest_connected_component(self, replace=False):
+        """
+        Finds the largest connected component (lcc) of the graph.
+
+        Args:
+            replace (boolean, optional): if True (default False) and the lcc has less vertices, the graph is replaced by its lcc
+
+        Returns:
+            the lcc of the graph (graph_tool.GraphView)
+
+        Note:
+            Use lcc only if you are sure that the segmentation region was not split into multiple parts during surface generation of subsequent surface cleaning.
+        """
         print 'Total number of vertices in the graph: %s' % self.graph.num_vertices()
         is_in_lcc = label_largest_component(self.graph)
         lcc = GraphView(self.graph, vfilt=is_in_lcc)
@@ -724,6 +653,18 @@ class TriangleGraph(SurfaceGraph):
         return lcc
 
     def find_small_connected_components(self, threshold=100, purge=False, verbose=False):
+        """
+        Finds small connected components of the graph that are below a given threshold size in voxels.
+
+        Args:
+            threshold (int, optional): threshold size in voxels (default 100), below which connected components are considered small
+            purge (boolean, optional): if True (default False) and small components were found, their vertices and edges will be filtered out permanently;
+                                        otherwise no filtering will be done
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            None
+        """
         t_begin = time.time()
 
         comp_labels_map, sizes = label_components(self.graph)
@@ -763,21 +704,17 @@ class TriangleGraph(SurfaceGraph):
         duration = t_end - t_begin
         print 'Finding small components took: %s min %s s' % divmod(duration, 60)
 
-    # Returns a list of all minimal geodesics to border from the vertex properties of the graph.
-    def get_min_geodesics_to_border(self):
-        if 'min_geodesics_to_border' not in self.graph.vp.keys():
-            print 'min_geodesics_to_border property was not calculated. Please run ' \
-                  '__calculate_min_geodesics_to_border or find_vertices_within_dist_b_to_border.'
-            return None
-        min_geodesics_to_border = []
-        for v in self.graph.vertices():
-            min_geodesics_to_border.append(self.graph.vp.min_geodesics_to_border[v])
-        print '%s minimal geodesics to border values' % len(min_geodesics_to_border)
-        print 'min = %s, max = %s' % (min(min_geodesics_to_border), max(min_geodesics_to_border))
-        return min_geodesics_to_border
-
-    # Returns numpy arrays of all triangle areas in nm squared from the vertex properties of the graph and the total area.
     def get_areas(self, verbose=False):
+        """
+        Gets all triangle areas in nanometers squared from the vertex properties of the graph and calculates the total area.
+
+        Args:
+            verbose (boolean, optional): if True (default False), prints out the minimal and the maximal triangle area values as well the the total surface area
+
+        Returns:
+            - all triangle areas in nanometers squared (numpy.ndarray)
+            - the total area in nanometers squared (float)
+        """
         triangle_areas = self.graph.vp.area.get_array()
         total_area = np.sum(triangle_areas)
         if verbose:
@@ -786,39 +723,27 @@ class TriangleGraph(SurfaceGraph):
             print 'total surface area = %s' % total_area
         return triangle_areas, total_area
 
-    # Calculates and returns a numpy array of weighted curvatures by the relative triangle areas.
-    # curvatures_key            property key of the curvature to be weighted
-    # weighted_curvatures_key   if given (default None), the weighted curvature will be stored in a property with this key
-    # triangle_areas            (optional) numpy array of all triangle areas in nm squared
-    # total_area                (optional) the total area of the surface in nm squared
-    # Last two options are for faster calculation if several weighted curvatures are calculated.
-    def weight_curvatures_by_areas(self, curvatures_key, weighted_curvatures_key=None, triangle_areas=None, total_area=None):
-        curvatures = self.graph.vertex_properties[curvatures_key].get_array()
-        if triangle_areas is None or total_area is None:
-            (triangle_areas, total_area) = self.get_areas()
+    # * The following TriangleGraph methods are implementing with adaptations the normal vector voting algorithm of Page et al., 2002. *
 
-        weighted_curvatures_prop = self.graph.new_vertex_property('float')
-        for v in self.graph.vertices():
-            weighted_curvatures_prop[v] = curvatures[int(v)] * triangle_areas[int(v)] / total_area
-
-        weighted_curvatures = weighted_curvatures_prop.get_array()
-        if weighted_curvatures_key is not None:
-            # Storing the property
-            self.graph.vertex_properties[weighted_curvatures_key] = weighted_curvatures_prop
-
-        print '%s weighted %s values' % (len(weighted_curvatures), curvatures_key)
-        print 'min = %s, max = %s' % (min(weighted_curvatures), max(weighted_curvatures))
-        return weighted_curvatures
-
-    # * The following TriangleGraph methods are implementing with adaptations the vector voting algorithm of Page et al. from 2002. *
-
-    # For a vertex v, collects the normal votes of all triangles within its geodesic neighborhood and calculates the weighted covariance matrix sum V_v.
-    # Implements equations (6), illustrated in figure 6(b), (7) and (8) from the paper.
-    # More precisely, a normal vote N_i of each triangle i (whose centroid c_i is lying within the geodesic neighborhood of vertex v) is calculated using the normal N assigned to the triangle i.
-    # Then, covariance matrix V_i is calculated from N_i and a weight depending of the area of triangle i and the geodesic distance of its centroid c_i from v.
-    # In our case c_i and v are both centroids of triangles (v is a triangle vertex in Page's approach), which are vertices of TriangleGraph generated from the triangle surface.
-    # Returns a dictionary of neighbors of vertex v, mapping index of each vertex c_i to its geodesic distance from the vertex v, and the 3x3 symmetric matrix V_v.
     def collecting_votes(self, vertex_v, g_max, A_max, sigma, verbose=False):
+        """
+        For a vertex v, collects the normal votes of all triangles within its geodesic neighborhood and calculates the weighted covariance matrix sum V_v.
+        Implements equations (6), illustrated in figure 6(b), (7) and (8) from the paper of Page et al., 2002.
+        More precisely, a normal vote N_i of each triangle i (whose centroid c_i is lying within the geodesic neighborhood of vertex v) is calculated using the normal N assigned to the
+        triangle i. Then, covariance matrix V_i is calculated from N_i and a weight depending on the area of triangle i and the geodesic distance of its centroid c_i from v.
+        Here, c_i and v are both centroids of triangles (v is a triangle vertex in Page's approach), which are vertices of TriangleGraph generated from the triangle surface.
+
+        Args:
+            vertex_v (graph_tool.Vertex): the vertex v in the surface triangle-graph for which the votes are collected
+            g_max (float): the maximal geodesic distance in nanometers
+            A_max (float): the area of the largest triangle in the surface triangle-graph
+            sigma (float): sigma, defined as 3*sigma = g_max, so that votes beyond the neighborhood can be ignored
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            - a dictionary of neighbors of vertex v, mapping index of each vertex c_i to its geodesic distance from the vertex v
+            - the 3x3 symmetric matrix V_v (numpy.ndarray)
+        """
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         normal = self.graph.vp.normal
@@ -895,11 +820,27 @@ class TriangleGraph(SurfaceGraph):
             print "\nV_v: %s" % V_v
         return neighbor_idx_to_dist, V_v
 
-    # For a vertex v, its calculated matrix V_v (output of collecting_votes) and the parameters epsilon and eta (default 2 each), classifies and returns its orientation:
-    # 1 if it belongs to a surface patch, 2 if it belongs to a crease junction or 3 if it doesn't have a preferred orientation.
-    # Adds the "orientation_class", the estimated normal "N_v" (if class is 1) and the estimated_tangent "T_v" (if class is 2) as vertex properties into the graph.
-    # This is done using eigen-decomposition of V_v and equations (9) and (10). Also equations (11) and (12) may help to choose epsilon and eta.
     def classifying_orientation(self, vertex_v, V_v, epsilon=2, eta=2, verbose=False):
+        """
+        For a vertex v, its calculated matrix V_v (output of collecting_votes) and the parameters epsilon and eta (default 2 each), classifies its orientation:
+        1 if it belongs to a surface patch, 2 if it belongs to a crease junction or 3 if it doesn't have a preferred orientation.
+        This is done using eigen-decomposition of V_v and equations (9) and (10) from the paper of Page et al., 2002. Equations (11) and (12) may help to choose epsilon and eta.
+        Adds the "orientation_class", the estimated normal "N_v" (if class is 1) and the estimated_tangent "T_v" (if class is 2) as vertex properties into the graph.
+
+        Args:
+            vertex_v (graph_tool.Vertex): the vertex v in the surface triangle-graph whose orientation is classified
+            V_v (numpy.ndarray): the 3x3 symmetric matrix V_v
+            epsilon (int, optional): parameter of Normal Vector Voting algorithm influencing the number of triangles classified as "crease junction" (class 2), default 2
+            eta (int, optional): parameter of Normal Vector Voting algorithm influencing the number of triangles classified as "crease junction" (class 2) and "no
+                                preferred orientation" (class 3, see Notes), default 2
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            orientation of vertex v (int) - 1 if it belongs to a surface patch, 2 if it belongs to a crease junction or 3 if it doesn't have a preferred orientation
+
+        Notes:
+            If epsilon = 0 and eta = 0, all triangles will be classified as "surface patch" (class 1).
+        """
         # Decompose the symmetric semidefinite matrix V_v:
         eigenvalues, eigenvectors = np.linalg.eigh(V_v)  # eigenvalues are in increasing order and eigenvectors are in columns of the returned quadratic matrix
         # Eigenvalues from highest to lowest:
@@ -963,14 +904,28 @@ class TriangleGraph(SurfaceGraph):
             self.graph.vp.T_v[vertex_v] = np.zeros(shape=3)
             return 3
 
-    # For a vertex v, collects the curvature and tangent votes of all triangles within its geodesic neighborhood belonging to a surface patch and calculates the matrix B_v.
-    # Implements equations (13) and (15) also illustrated in figure 6(c), (16), (17), (14), and (5) from the paper.
-    # In short, three components are calculated for each neighboring vertex (representing triangle centroid) v_i:
-    # 1) Weight w_i depending on the geodesic distance between v_i and v (so that all weight sum up to 2 * pi).
-    # 2) Tangent T_i from v in the direction of the arc connecting v and v_i (using the estimated normal N_v at v).
-    # 3) Normal curvature kappa_i, which is the turning angle between N_v and the projection of the estimated normal of v_i (N_v_i) onto the arc plane (formed by v, N_v and v_i) divided by the arc length.
-    # Those components are incorporated into the 3x3 symmetric matrix B_v (Eq. 5), which is returned.
     def collecting_votes2(self, vertex_v, neighbor_idx_to_dist, sigma, verbose=False):
+        """
+        For a vertex v, collects the curvature and tangent votes of all triangles within its geodesic neighborhood belonging to a surface patch and calculates the matrix B_v.
+        Implements equations (13) and (15) also illustrated in figure 6(c), (16), (17), (14), and (5) from the paper.
+        In short, three components are calculated for each neighboring vertex (representing triangle centroid) v_i:
+
+        1. Weight w_i depending on the geodesic distance between v_i and v (so that all weights sum up to 2 * pi).
+
+        2. Tangent T_i from v in the direction of the arc connecting v and v_i (using the estimated normal N_v at v).
+
+        3. Normal curvature kappa_i, which is the turning angle between N_v and the projection of the estimated normal of v_i (N_v_i) onto the arc plane (formed by v, N_v and v_i) divided
+        by the arc length. Those components are incorporated into the 3x3 symmetric matrix B_v (Eq. 5), which is returned.
+
+        Args:
+            vertex_v (graph_tool.Vertex): the vertex v in the surface triangle-graph for which the votes are collected
+            neighbor_idx_to_dist (dict): a dictionary of neighbors of vertex v, mapping index of each vertex v_i to its geodesic distance from the vertex v (output of collecting_votes)
+            sigma (float): sigma, defined as 3*sigma = g_max, so that votes beyond the neighborhood can be ignored
+            verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            the 3x3 symmetric matrix B_v (numpy.ndarray)
+        """
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         vp_N_v = self.graph.vp.N_v
@@ -1089,10 +1044,20 @@ class TriangleGraph(SurfaceGraph):
             print "\nB_v = %s" % B_v
         return B_v
 
-    # For a vertex v and its calculated matrix B_v, calculates the principal directions (T_1 and T_2) and curvatures (kappa_1 and kappa_2) at this vertex and adds them as vertex properties into the graph.
-    # This is done using eigen-decomposition of B_v: the eigenvectors corresponding to the two largest eigenvalues are the principal directions and the principal curvatures are found with the linear transformations of
-    # those eigenvalues in equation (4).
     def estimate_curvature(self, vertex_v, B_v, verbose=False):
+        """
+        For a vertex v and its calculated matrix B_v (output of collecting_votes2), calculates the principal directions (T_1 and T_2) and curvatures (kappa_1 and kappa_2) at this vertex and
+        adds them as vertex properties into the graph. This is done using eigen-decomposition of B_v: the eigenvectors corresponding to the two largest eigenvalues are the principal
+        directions and the principal curvatures are found with linear transformations of those eigenvalues (Eq. 4).
+
+        Args:
+            vertex_v (graph_tool.Vertex): the vertex v in the surface triangle-graph for which the principal directions and curvatures are estimated
+            B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of collecting_votes2)
+            verbose(boolean, optional): if True (default False), some extra information will be printed out
+
+        Returns:
+            None
+        """
         # Decompose the symmetric matrix B_v:
         eigenvalues, eigenvectors = np.linalg.eigh(B_v)  # eigenvalues are in increasing order and eigenvectors are in columns of the returned quadratic matrix
         # Eigenvalues from highest to lowest:

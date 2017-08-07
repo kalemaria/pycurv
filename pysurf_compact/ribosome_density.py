@@ -165,9 +165,8 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
             if mem_mask[target_voxel[0], target_voxel[1], target_voxel[2]] == 1:
                 target_voxels_in_membrane_mask.append(target_voxel)
             else:
-                # print 'Warning: Target voxel (%s, %s, %s) not inside the membrane!' % (target_voxel[0], target_voxel[1], target_voxel[2])
                 error_msg = 'Target voxel (%s, %s, %s) not inside the membrane!' % (target_voxel[0], target_voxel[1], target_voxel[2])
-                raise pexceptions.PySegInputWarning(expr='get_target_voxels_in_membrane_mask', msg=error_msg)  # TODO check if it works and remove the commented out print line above
+                raise pexceptions.PySegInputWarning(expr='get_target_voxels_in_membrane_mask', msg=error_msg)
         print '%s target voxels in membrane' % len(target_voxels_in_membrane_mask)
         if verbose:
             print target_voxels_in_membrane_mask
@@ -357,7 +356,7 @@ class VoxelGraph(graphs.SegmentationGraph):
             voxel (tuple): voxel coordinates in the mask as a tuple of integers of length 3: (x, y, z)
 
         Returns:
-            a list of tuples with neighbor voxels coordinates in format: [(x1, y1, z1), (x2, y2, z2), ...]
+            a list of tuples with neighbor voxels coordinates in format [(x1, y1, z1), (x2, y2, z2), ...]
         """
         neighbor_voxels = []
         if isinstance(mask, np.ndarray) and (len(mask.shape) == 3):
