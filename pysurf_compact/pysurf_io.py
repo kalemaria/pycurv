@@ -1,7 +1,6 @@
-############################################################################################################
-# Set of functions for reading and writing different data types.
-#
-#
+"""
+Set of functions for reading and writing different data types.
+"""
 
 __author__ = 'martinez'
 
@@ -17,21 +16,25 @@ from pyto.io.image_io import ImageIO
 import pexceptions
 
 
-##########################################################################
+
 # CONSTANTS
-#
 MAX_DIST_SURF = 3
 
 
-############################################################################################################
-# Load tomogram in numpy format
-# fname: full path to the tomogram
-# mmap: if True (default False) a np.memmap object is loaded instead of np.ndarray, which means that data
-#       are not loaded completely to memory, this is useful only for very large tomograms. Only valid with formats
-#       MRC and EM.
-#       VERY IMPORTANT: This subclass of ndarray has some unpleasant interaction with some operations,
-#       because it does not quite fit properly as a subclass of np.ndarray
 def load_tomo(fname, mmap=False):
+    """
+    Loads a tomogram in MRC, EM or VTI format and converts it into a numpy format.
+
+    Args:
+        fname (str): full path to the tomogram, has to end with '.mrc', '.em' or '.vti'
+        mmap (boolean, optional): if True (default False) a numpy.memmap object is loaded instead of numpy.ndarray, which means that data are not loaded completely to memory, this is useful
+                                    only for very large tomograms. Only valid with formats MRC and EM.
+                                    VERY IMPORTANT: This subclass of ndarray has some unpleasant interaction with some operations, because it does not quite fit properly as a subclass of
+                                    numpy.ndarray
+
+    Returns:
+        numpy.ndarray or numpy.memmap object
+    """
 
     # Input parsing
     stem, ext = os.path.splitext(fname)
@@ -71,8 +74,17 @@ def load_tomo(fname, mmap=False):
     return im_data
 
 
-# Input vti must be a scalar field TODO complete function description
-def vti_to_numpy(image, transpose=True):
+def vti_to_numpy(image, transpose=True):  # TODO Antonio, please check the function description, why transpose=True by default?
+    """
+    Converts VTK image data (that was read in from a VTI file) into a numpy format.
+
+    Args:
+        image (vtkImageData): input VTK image data, must be a scalar field (output of vtk.vtkXMLImageDataReader)
+        transpose (boolean, optional): if True (default), the image is transposed (x and z axes are switched)
+
+    Returns:
+        numpy.ndarray with the image data
+    """
 
     # Read tomogram data
     image.ComputeBounds()
@@ -92,8 +104,17 @@ def vti_to_numpy(image, transpose=True):
     return dout
 
 
-# TODO function description
-def save_numpy(array, fname):
+def save_numpy(array, fname):  # TODO Antonio, please check the function description
+    """
+    Saves a numpy array to a file in MRC, EM or VTI format.
+
+    Args:
+        array (numpy.ndarray): input array
+        fname (str): full path to the tomogram, has to end with '.mrc', '.em' or '.vti'
+
+    Returns:
+        None
+    """
 
     _, ext = os.path.splitext(fname)
 
@@ -128,8 +149,17 @@ def save_numpy(array, fname):
         raise pexceptions.PySegInputError(expr='save_numpy', msg=error_msg)
 
 
-# TODO function description
-def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):
+def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):  # TODO Antonio, please check the function description
+    """
+    Converts a numpy array into a VTK image data object.
+    Args:
+        array (numpy.ndarray): input numpy array
+        offset (int [3], optional): the reading start positions in x, y and z dimensions, default [0, 0, 0]
+        spacing (float [3], optional): the spacing (width, height, length) of the cubical cells that compose the data set, default [1, 1, 1]
+
+    Returns:
+        vtk.vtkImageData object
+    """
 
     nx, ny, nz = array.shape
     image = vtk.vtkImageData()
@@ -146,8 +176,18 @@ def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):
     return image
 
 
-# TODO function description
-def save_vti(image, fname, outputdir):
+def save_vti(image, fname, outputdir):  # TODO Antonio, please check the function description
+    """
+    Saves a VTK image data object into a VTI file.
+
+    Args:
+        image (vtk.vtkImageData):
+        fname (str): output file name, should end with '.vti'
+        outputdir (str): output directory
+
+    Returns:
+        None
+    """
 
     writer = vtk.vtkXMLImageDataWriter()
     outputfile = outputdir + '/' + fname
@@ -158,8 +198,17 @@ def save_vti(image, fname, outputdir):
         raise pexceptions.PySegInputError(expr='save_vti', msg=error_msg)
 
 
-# Store data from VTK PolyData into a file called fname
-def save_vtp(poly, fname):
+def save_vtp(poly, fname):  # TODO Antonio, please check the function description
+    """
+    Saves a VTK PolyData object into a VTP file.
+
+    Args:
+        poly (vtk.vtkPolyData): input VTK PolyData object
+        fname (str): output file name
+
+    Returns:
+        None
+    """
 
     writer = vtk.vtkXMLPolyDataWriter()
     writer.SetFileName(fname)
@@ -169,8 +218,16 @@ def save_vtp(poly, fname):
         raise pexceptions.PySegInputError(expr='save_vtp', msg=error_msg)
 
 
-# Load data from VTK PolyData file called fname
-def load_poly(fname):
+def load_poly(fname):  # TODO Antonio, please check the function description
+    """
+    Loads data from a VTK PolyData (VTP) file.
+
+    Args:
+        fname (str): input file name, should end with '.vtp'
+
+    Returns:
+        vtk.vtkPolyData object
+    """
 
     reader = vtk.vtkXMLPolyDataReader()
     reader.SetFileName(fname)
@@ -179,17 +236,23 @@ def load_poly(fname):
     return reader.GetOutput()
 
 
-# Gen a surface from a segmented tomogram
-# tomo: the input segmentation, a numpy ndarray or a string with the file name to a segmented
-#          tomogram, only 'fits', 'mrc', 'em' and 'vti' formats allowed
-# lbl: label for the foreground
-# mask: If True (default) the input segmentation is used as mask for the surface
-# purge_ratio: if greater than 1 (default) then 1 every purge_ratio points of tomo are randomly
-# deleted
-# field: if True (default False) return the polarity distance scalar field
-# verbose: print out messages for checking the progress
-# Return: output surface (vtkPolyData)
-def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=False, verbose=False):
+def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=False, verbose=False):  # TODO Antonio, please check the function description
+    """
+    Generates a VTK PolyData surface from a segmented tomogram.
+
+    Args:
+        tomo (numpy.ndarray or str): the input segmentation as numpy ndarray or the file name in MRC, EM or VTI format
+        lbl (int, optional): label for the foreground, default 1
+        mask (boolean, optional): if True (default), the input segmentation is used as mask for the surface
+        purge_ratio (int, optional): if greater than 1 (default), then 1 every purge_ratio points of the segmentation are randomly deleted
+        field (boolean, optional): if True (default False), additionally returns the polarity distance scalar field
+        mode_2d (boolean, optional): needed for polarity distance calculation (if field is True), if True (default False), ...
+        verbose (boolean, optional): if True (default False), prints out messages for checking the progress
+
+    Returns:
+        - output surface (vtk.vtkPolyData)
+        - polarity distance scalar field (np.ndarray), if field is True
+    """
 
     # Check input format
     if isinstance(tomo, str):
@@ -317,7 +380,7 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
         if verbose:
             print 'Mask applied...'
 
-        # Field distance
+    # Field distance
     if field:
 
         # Get normal attributes
@@ -401,10 +464,18 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
     return tsurf
 
 
-# Makes the dotproduct between the input point and the closest point normal
-# both vectors are previously normalized
-# Input must be float numpy array
-def dot_norm(p, pnorm, norm):
+def dot_norm(p, pnorm, norm):  # TODO Antonio, please check the function description
+    """
+    Makes the dot-product between the input point and the closest point normal. Both vectors are first normalized.
+
+    Args:
+        p (numpy.ndarray): the input point, must be float numpy array
+        pnorm (numpy.ndarray): the point normal, must be float numpy array
+        norm (numpy.ndarray): the closest point normal, must be float numpy array
+
+    Returns:
+        the dot-product between the input point and the closest point normal (float)
+    """
 
     # Point and vector coordinates
     v = pnorm - p
@@ -424,15 +495,33 @@ def dot_norm(p, pnorm, norm):
     return v[0]*norm[0] + v[1]*norm[1] + v[2]*norm[2]
 
 
-# Writes a list or numpy array of (numerical) values into a file as a column.
 def write_values_to_file(values, filename):
+    """
+    Writes a list or numpy array of values into a file as a column.
+
+    Args:
+        values (list or numpy.ndarray): a list or 1D array of values
+        filename (str): an output file name (with path)
+
+    Returns:
+        None
+    """
     with open(filename, 'w') as f:
         for i in xrange(len(values)):
             f.write(str(values[i]) + '\n')
 
 
-# Merge a list of '.vtp' files to one file.
 def merge_vtp_files(vtp_file_list, outfilename):
+    """
+    Merges a list of '.vtp' files to one file.
+
+    Args:
+        vtp_file_list (str list): a list of strings with paths and names of '.vtp' files
+        outfilename (str): an output file name (with path)
+
+    Returns:
+        None
+    """
     poly_list = []
     for vtp_file in vtp_file_list:
         poly = load_poly(vtp_file)
@@ -441,8 +530,16 @@ def merge_vtp_files(vtp_file_list, outfilename):
     save_vtp(merged_poly, outfilename)
 
 
-# Append a list of VTK PolyData objects to one object.
 def append_polys(poly_list):
+    """
+    Appends a list of VTK PolyData objects to one object.
+
+    Args:
+        poly_list (list): a list of vtk.vtkPolyData objects
+
+    Returns:
+        vtk.vtkPolyData object containing all input objects
+    """
     appender = vtk.vtkAppendPolyData()
     for poly in poly_list:
         appender.AddInputData(poly)
@@ -450,14 +547,32 @@ def append_polys(poly_list):
     return appender.GetOutput()
 
 
-# Converting a '.vtp' file to an '.stl' file.
 def vtp_file_to_stl_file(infilename, outfilename):
+    """
+    Converts a '.vtp' file to an '.stl' file.
+
+    Args:
+        infilename (str): an input '.vtp' file name (with path)
+        outfilename (str): an output '.stl' file name (with path)
+
+    Returns:
+        None
+    """
     poly = load_poly(infilename)
     write_stl_file(poly, outfilename)
 
 
-# Writing an '.stl' file from a VTK PolyData object.
 def write_stl_file(poly, outfilename):
+    """
+    Writs an '.stl' file from a VTK PolyData object.
+
+    Args:
+        poly (vtk.vtkPolyData): an input VTK PolyData object
+        outfilename (str): an output '.stl' file name (with path)
+
+    Returns:
+        None
+    """
     stlWriter = vtk.vtkSTLWriter()
     stlWriter.SetFileName(outfilename)
     stlWriter.SetInputDataObject(poly)
@@ -465,13 +580,28 @@ def write_stl_file(poly, outfilename):
     stlWriter.Write()
 
 
-# Converts a (triangle) cell array of the given vtkPolyData to a 3-D array of size like the underlying segmentation.
-# Initializes a 3-D matrix of size like the segmentation with zeros, calculated triangle centroid coordinates, transforms them from nm to voxels and puts the
-# corresponding property value into the voxel.
-# If more than one triangles map to the same voxel, takes the mean value if mean==True (default False), else the maximal value. Logs such cases (if logfilename
-# is not None, default None) by writing out the voxel coordinates and the value list into a file.
 def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y, scale_z, logfilename=None, mean=False, verbose=False):
-    print 'Converting the vtkPolyData cell array %s to a 3-D volume...' % array_name
+    """
+    Converts a triangle-cell data array of the given vtkPolyData to a 3D array of size like the underlying segmentation. Initializes a 3D matrix of size like the segmentation with zeros,
+    calculates triangle centroid coordinates, transforms them from nanometers to voxels and puts the corresponding cell data value into the voxel.
+    If more than one triangles map to the same voxel, takes the maximal or mean value. Optionally, logs such cases by writing out the voxel coordinates and the value list into a file.
+
+    Args:
+        poly (vtk.vtkPolyData): a vtkPolyData object with triangle-cells.
+        array_name (str): name of the desired cell data array of the vtkPolyData object
+        scale_factor_to_nm (float): pixel size in nanometers that was used for scaling the graph
+        scale_x (int): x axis length in pixels of the segmentation
+        scale_y (int): y axis length in pixels of the segmentation
+        scale_z (int): z axis length in pixels of the segmentation
+        logfilename (str, optional): specifies an output logfile name (with path; default None) for listing voxel coordinates with multiple values mapping to this voxel
+        mean (boolean, optional): if True, takes the mean value in case multiple triangles map to the same voxel, if False (default) the maximal value
+        verbose (boolean, optional): if True (default False), some extra information will be printed out
+
+    Returns:
+        the 3D numpy.ndarray of size like the segmentation containing the cell data values at the corresponding coordinates
+
+    """
+    print 'Converting the vtkPolyData cell array %s to a 3D volume...' % array_name
     # Find the array with the wanted name:
     array = None
     numberOfCellArrays = poly.GetCellData().GetNumberOfArrays()
@@ -541,7 +671,7 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
 
     print '%s voxels mapped from %s cells' % (len(voxel_to_values), poly.GetNumberOfCells())
 
-    # Initialize a 3-D array scaled like the original segmentation, which will hold in each voxel the maximal value among the corresponding vertex coordinates
+    # Initialize a 3D array scaled like the original segmentation, which will hold in each voxel the maximal value among the corresponding vertex coordinates
     # in the graph and 0 in all other (background) voxels:
     volume = np.zeros((scale_x, scale_y, scale_z), dtype=np.float32)  # single precision float: sign bit, 8 bit exponent, 23 bits mantissa
     # Write the array and (if logfilename is given) write the cases with multiple values into a log file:
@@ -568,19 +698,26 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
     return volume
 
 
-#####################################################################################
-# Static class for converting types between the different libraries: Numpy, VTK and Graph-tool.
-# In general if types do not match exactly data are upcasted.
-#
-#
 class TypesConverter(object):
-    # Creates a numpy data type object from the equivalent vtk object
+    """
+    A static class for converting types between different libraries: numpy, VTK and graph-tool. In general if types do not match exactly, data are upcasted.
+    """
+
     @staticmethod
     def vtk_to_numpy(din):
+        """
+        From a vtkDataArray object returns an equivalent numpy data type.
+
+        Args:
+            din (vtk.vtkDataArray): input vtkDataArray object
+
+        Returns:
+            numpy type
+        """
 
         # Check that a type object is passed
         if not isinstance(din, vtk.vtkDataArray):
-            error_msg = 'vtkDataArray object required as input.' % din
+            error_msg = 'vtkDataArray object required as input.' % din  # TODO ask Antonio why "% din" if there is no "%s"
             raise pexceptions.PySegInputError(expr='vtk_to_numpy (TypesConverter)', msg=error_msg)
 
         if isinstance(din, vtk.vtkBitArray):
@@ -606,16 +743,24 @@ class TypesConverter(object):
         elif isinstance(din, vtk.vtkDoubleArray) or isinstance(din, vtk.vtkTypeFloat64Array):
             return np.float64
         else:
-            error_msg = 'VTK type not identified.' % din
+            error_msg = 'VTK type not identified.' % din  # TODO the same
             raise pexceptions.PySegInputError(expr='numpy_to_vtk_array (TypesConverter)', msg=error_msg)
 
-    # From the graph tool property value type creates an equivalent vtkDataArray object
     @staticmethod
     def gt_to_vtk(din):
+        """
+        From the graph-tool property value type creates an equivalent vtkDataArray object.
+
+        Args:
+            din (str): graph-tool property value type
+
+        Returns:
+            vtkDataArray object
+        """
 
         # Check that a string object is passed
         if not isinstance(din, str):
-            error_msg = 'str object required as input.' % din
+            error_msg = 'str object required as input.' % din  # TODO the same
             raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)', msg=error_msg)
 
         if (din == 'bool') or (din == 'vector<bool>'):
@@ -629,16 +774,24 @@ class TypesConverter(object):
         elif (din == 'double') or (din == 'vector<double>'):
             return vtk.vtkFloatArray()
         else:
-            error_msg = 'Graph tool alias not identified.' % din
+            error_msg = 'Graph-tool alias not identified.' % din  # TODO the same
             raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)', msg=error_msg)
 
-    # From the graph-tool property value type return the numpy data type
     @staticmethod
     def gt_to_numpy(din):
+        """
+        From the graph-tool property value type return an equivalent numpy data type.
+
+        Args:
+            din (str): graph-tool property value type
+
+        Returns:
+            numpy type
+        """
 
         # Check that a string object is passed
         if not isinstance(din, str):
-            error_msg = 'str object required as input.' % din
+            error_msg = 'str object required as input.' % din  # TODO the same
             raise pexceptions.PySegInputError(expr='gt_to_numpy (TypesConverter)', msg=error_msg)
 
         if (din == 'bool') or (din == 'vector<bool>'):
@@ -652,5 +805,5 @@ class TypesConverter(object):
         elif (din == 'double') or (din == 'vector<double>'):
             return np.float
         else:
-            error_msg = 'Graph tool alias not identified.' % din
+            error_msg = 'Graph-tool alias not identified.' % din  # TODO the same
             raise pexceptions.PySegInputError(expr='gt_to_numpy (TypesConverter)', msg=error_msg)

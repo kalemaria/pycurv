@@ -9,7 +9,7 @@ Date: 02.04.14
 __author__ = 'martinez'
 __version__ = "$Revision: 001 $"
 
-################################################################################################
+
 # Exceptions
 
 class PySegError(Exception):
@@ -55,7 +55,6 @@ class PySegTransitionError(PySegError):
         self.msg = msg
 
 
-################################################################################################
 # Warnings
 
 class PySegWarning(Warning):
