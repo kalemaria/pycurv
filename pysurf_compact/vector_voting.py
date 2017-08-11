@@ -23,8 +23,7 @@ def vector_voting(tg, k, epsilon=2, eta=2, exclude_borders=True):
         exclude_borders (boolean, optional): if True (default), principle curvatures and directions are not estimated for triangles at surface borders
 
     Returns:
-        - the surface of triangles with classified orientation and estimated normals or tangents, principle curvatures and directions (vtkPolyData)
-        - the underlying triangle graph (TriangleGraph)
+        the surface of triangles with classified orientation and estimated normals or tangents, principle curvatures and directions (vtkPolyData)
 
     Notes:
         If epsilon = 0 and eta = 0, all triangles will be classified as "surface patch" (class 1).
@@ -181,4 +180,4 @@ def vector_voting(tg, k, epsilon=2, eta=2, exclude_borders=True):
     t_end = time.time()
     duration = t_end - t_begin
     print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
-    return surface_VV, tg
+    return surface_VV

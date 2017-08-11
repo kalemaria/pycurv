@@ -138,10 +138,9 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
             shape_index_VV_file = "%s%s.VV_k%s_epsilon%s_eta%s.shape_index.txt" % (region_file_base, i + 1, k, epsilon, eta)
             curvedness_VV_file = "%s%s.VV_k%s_epsilon%s_eta%s.curvedness.txt" % (region_file_base, i + 1, k, epsilon, eta)
 
-            surf_VV, tg_VV = vector_voting(tg, k, epsilon=epsilon, eta=eta, exclude_borders=True)  # does not calculate curvatures for triangles at borders
-                                                                                                                      # and removes them in the end
+            surf_VV = vector_voting(tg, k, epsilon=epsilon, eta=eta, exclude_borders=True)  # does not calculate curvatures for triangles at borders and removes them in the end
             print 'The graph without outer borders and with VV curvatures has %s vertices and %s edges' % (tg.graph.num_vertices(), tg.graph.num_edges())
-            tg_VV.graph.list_properties()
+            tg.graph.list_properties()
             tg.graph.save(cleaned_scaled_graph_VV_file)
             print 'The graph without outer borders and with VV curvatures was written into the file %s' % cleaned_scaled_graph_VV_file
 
@@ -153,17 +152,17 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
             region_surf_VV_files.append(cleaned_scaled_surf_VV_file)
 
             # Getting the VV curvatures from the output graph (without outer borders), and merging the respective values for all regions:
-            kappa_1_values = tg_VV.get_vertex_property_array("kappa_1")
+            kappa_1_values = tg.get_vertex_property_array("kappa_1")
             all_kappa_1_values.extend(kappa_1_values.tolist())
-            kappa_2_values = tg_VV.get_vertex_property_array("kappa_2")
+            kappa_2_values = tg.get_vertex_property_array("kappa_2")
             all_kappa_2_values.extend(kappa_2_values.tolist())
-            gauss_curvature_VV_values = tg_VV.get_vertex_property_array("gauss_curvature_VV")
+            gauss_curvature_VV_values = tg.get_vertex_property_array("gauss_curvature_VV")
             all_gauss_curvature_VV_values.extend(gauss_curvature_VV_values.tolist())
-            mean_curvature_VV_values = tg_VV.get_vertex_property_array("mean_curvature_VV")
+            mean_curvature_VV_values = tg.get_vertex_property_array("mean_curvature_VV")
             all_mean_curvature_VV_values.extend(mean_curvature_VV_values.tolist())
-            shape_index_VV_values = tg_VV.get_vertex_property_array("shape_index_VV")
+            shape_index_VV_values = tg.get_vertex_property_array("shape_index_VV")
             all_shape_index_VV_values.extend(shape_index_VV_values.tolist())
-            curvedness_VV_values = tg_VV.get_vertex_property_array("curvedness_VV")
+            curvedness_VV_values = tg.get_vertex_property_array("curvedness_VV")
             all_curvedness_VV_values.extend(curvedness_VV_values.tolist())
 
             # Writing all the region curvature values into files:
@@ -277,25 +276,14 @@ def main():
     t_begin = time.time()
 
     # TODO change those parameters for each tomogram & label:
-    # fold = "/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/diffuseHtt97Q/"
-    # tomo = "t112"
-    # seg_file = "%s%s_final_ER1_vesicles2_notER3_NE4.Labels.mrc" % (fold, tomo)
-    # label = 1
-    # pixel_size = 2.526
-    # scale_x = 620
-    # scale_y = 620
-    # scale_z = 80
-    # k = 3
-
-    # Test run for a vesicle:
-    fold = '/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/vesicle3_t74/'
-    tomo = "t74"
-    seg_file = "%s%s_vesicle3_bin6.Labels.mrc" % (fold, tomo)
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/diffuseHtt97Q/"
+    tomo = "t112"
+    seg_file = "%s%s_final_ER1_vesicles2_notER3_NE4.Labels.mrc" % (fold, tomo)
     label = 1
     pixel_size = 2.526
-    scale_x = 100
-    scale_y = 100
-    scale_z = 50
+    scale_x = 620
+    scale_y = 620
+    scale_z = 80
     k = 3
 
     workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z, k)

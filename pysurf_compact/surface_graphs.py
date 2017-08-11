@@ -423,7 +423,7 @@ class TriangleGraph(SurfaceGraph):
                     n_comp = array.GetNumberOfComponents()
                     data_type = self.graph.vp[prop_key].value_type()
                     data_type = TypesConverter().gt_to_numpy(data_type)
-                    array.InsertNextTuple(self.__get_vertex_prop_entry(prop_key, vd, n_comp, data_type))
+                    array.InsertNextTuple(self.get_vertex_prop_entry(prop_key, vd, n_comp, data_type))
             if verbose:
                 print 'number of triangle cells: %s' % triangles.GetNumberOfCells()
 

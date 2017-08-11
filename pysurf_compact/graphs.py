@@ -119,9 +119,8 @@ class SegmentationGraph(object):
             if target_xyz in self.coordinates_to_vertex_index:
                 target_coordinates_in_graph.append(target_xyz)
             else:
-                # print 'Warning: Target (%s, %s, %s) not inside the membrane!' % (target_xyz[0], target_xyz[1], target_xyz[2])
                 error_msg = 'Target (%s, %s, %s) not inside the membrane!' % (target_xyz[0], target_xyz[1], target_xyz[2])
-                raise pexceptions.PySegInputWarning(expr='calculate_density (SegmentationGraph)', msg=error_msg)  # TODO check if it works and remove the commented out print line above
+                raise pexceptions.PySegInputWarning(expr='calculate_density (SegmentationGraph)', msg=error_msg)
 
         print '%s target coordinates in graph' % len(target_coordinates_in_graph)
         if verbose:
@@ -277,7 +276,7 @@ class SegmentationGraph(object):
                     n_comp = array.GetNumberOfComponents()
                     data_type = self.graph.vp[prop_key].value_type()
                     data_type = TypesConverter().gt_to_numpy(data_type)
-                    array.InsertNextTuple(self.__get_vertex_prop_entry(prop_key, vd, n_comp, data_type))
+                    array.InsertNextTuple(self.get_vertex_prop_entry(prop_key, vd, n_comp, data_type))
             if verbose:
                 print 'number of vertex cells: %s' % verts.GetNumberOfCells()
         # Edges
@@ -292,7 +291,7 @@ class SegmentationGraph(object):
                     n_comp = array.GetNumberOfComponents()
                     data_type = self.graph.ep[prop_key].value_type()
                     data_type = TypesConverter().gt_to_numpy(data_type)
-                    array.InsertNextTuple(self.__get_edge_prop_entry(prop_key, ed, n_comp, data_type))
+                    array.InsertNextTuple(self.get_edge_prop_entry(prop_key, ed, n_comp, data_type))
             if verbose:
                 print 'number of line cells: %s' % lines.GetNumberOfCells()
 
@@ -310,7 +309,7 @@ class SegmentationGraph(object):
 
         return poly_verts, poly_lines
 
-    def __get_vertex_prop_entry(self, prop_key, vertex_descriptor, n_comp, data_type):
+    def get_vertex_prop_entry(self, prop_key, vertex_descriptor, n_comp, data_type):
         """
         Get a property value of a vertex for inserting into a VTK vtkDataArray object.
         This private function is used by the methods graph_to_points_and_lines_polys and graph_to_triangle_poly (the latter of the derived class surface_graphs.TriangleGraph).
@@ -332,8 +331,7 @@ class SegmentationGraph(object):
                 prop.append(data_type(self.graph.vp[prop_key][vertex_descriptor][i]))
         return tuple(prop)
 
-    # Get the property value of an edge
-    def __get_edge_prop_entry(self, prop_key, edge_descriptor, n_comp, data_type):
+    def get_edge_prop_entry(self, prop_key, edge_descriptor, n_comp, data_type):
         """
         Get a property value of an edge for inserting into a VTK vtkDataArray object.
         This private function is used by the method graph_to_points_and_lines_polys.
