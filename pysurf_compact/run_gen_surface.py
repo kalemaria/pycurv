@@ -1,3 +1,12 @@
+"""
+Set of functions for running single-layer, signed surface generation from a membrane segmentation, preprocessing the segmentation and postprocessing the surface.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
+
 from scipy import ndimage
 import numpy as np
 import vtk
@@ -19,7 +28,6 @@ def close_holes(infile, cube_size, iterations, outfile):
 
     Returns:
         None
-
     """
     tomo = io.load_tomo(infile)
     data_type = tomo.dtype  # dtype('uint8')
@@ -30,6 +38,7 @@ def close_holes(infile, cube_size, iterations, outfile):
 def run_gen_surface(input, outfile_base, lbl=1, mask=True, save_input_as_vti=False, verbose=False):
     """
     Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle surface for objects in a segmented volume with a given label.
+
     Removes triangles with zero area, if any are present, from the resulting surface.
 
     Args:
@@ -42,7 +51,6 @@ def run_gen_surface(input, outfile_base, lbl=1, mask=True, save_input_as_vti=Fal
 
     Returns:
         the triangle surface (vtk.PolyData)
-
     """
     t_begin = time.time()
 
@@ -78,6 +86,7 @@ def run_gen_surface(input, outfile_base, lbl=1, mask=True, save_input_as_vti=Fal
 def __filter_null_triangles(surface, verbose=False):
     """
     For a given VTK PolyData surface, filters out triangles with zero area, if any are present.
+
     Is used by the function run_gen_surface.
 
     Args:
@@ -86,7 +95,6 @@ def __filter_null_triangles(surface, verbose=False):
 
     Returns:
         the filtered triangle surface (vtk.PolyData)
-
     """
     if isinstance(surface, vtk.vtkPolyData):
 

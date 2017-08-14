@@ -1,10 +1,13 @@
 """
-Implementation with adaptation of the Normal Vector Voting algorithm (Page et al., 2002).
+Contains a function implementing the normal vector voting algorithm (Page et al., 2002) with adaptation.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+The main differences to the original method are usage of a graph (TriangleGraph object) representing the underlying surface and approximating geodesic distances by shortest distances along
+the graph edges. Uses the last four methods of the TriangleGraph class in the surface_graphs module, which implement triangle-wise operations of the algorithm.
 
-Date: 2017-06-17
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry), date: 2017-06-17
 """
+
+__author__ = 'kalemanov'
 
 import time
 import numpy as np

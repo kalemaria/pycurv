@@ -1,16 +1,16 @@
 pysurf_compact package
 ======================
 
-Submodules
-----------
+Package contents
+----------------
 
-pysurf_compact.graphs module
-----------------------------
-
-.. automodule:: pysurf_compact.graphs
+.. automodule:: pysurf_compact
     :members:
     :undoc-members:
     :show-inheritance:
+
+Modules
+-------
 
 pysurf_compact.pexceptions module
 ---------------------------------
@@ -24,6 +24,14 @@ pysurf_compact.pysurf_io module
 -------------------------------
 
 .. automodule:: pysurf_compact.pysurf_io
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pysurf_compact.graphs module
+----------------------------
+
+.. automodule:: pysurf_compact.graphs
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,14 +60,6 @@ pysurf_compact.surface_graphs module
     :undoc-members:
     :show-inheritance:
 
-pysurf_compact.tomogram_batch_processing module
------------------------------------------------
-
-.. automodule:: pysurf_compact.tomogram_batch_processing
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 pysurf_compact.vector_voting module
 -----------------------------------
 
@@ -68,11 +68,10 @@ pysurf_compact.vector_voting module
     :undoc-members:
     :show-inheritance:
 
+pysurf_compact.tomogram_batch_processing module
+-----------------------------------------------
 
-Module contents
----------------
-
-.. automodule:: pysurf_compact
+.. automodule:: pysurf_compact.tomogram_batch_processing
     :members:
     :undoc-members:
     :show-inheritance:

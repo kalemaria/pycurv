@@ -1,3 +1,11 @@
+"""
+Contains an abstract class (SegmentationGraph) for representing a segmentation by a graph with attributes and methods common for all derived classes.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 import math
 import vtk
 import numpy as np
@@ -12,7 +20,8 @@ import pexceptions
 class SegmentationGraph(object):
     """
     Class defining the abstract SegmentationGraph object, its attributes and implements methods common to all derived graph classes.
-    The object generator requires the following parameters of the underlying segmentation that will be used to build the graph.
+
+    The constructor requires the following parameters of the underlying segmentation that will be used to build the graph.
 
     Args:
         scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
@@ -20,7 +29,20 @@ class SegmentationGraph(object):
         scale_y (int): y axis length in pixels of the segmentation
         scale_z (int): z axis length in pixels of the segmentation
     """
+
     def __init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z):
+        """
+        Constructor.
+
+        Args:
+            scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
+            scale_x (int): x axis length in pixels of the segmentation
+            scale_y (int): y axis length in pixels of the segmentation
+            scale_z (int): z axis length in pixels of the segmentation
+
+        Returns:
+            None
+        """
         self.graph = Graph(directed=False)
         self.scale_factor_to_nm = scale_factor_to_nm
         self.scale_x = scale_x
@@ -62,8 +84,9 @@ class SegmentationGraph(object):
 
     def update_coordinates_to_vertex_index(self):
         """
-        Updates graph's dictionary coordinates_to_vertex_index. This has to be done after purging the graph, because vertices are renumbered,
-        as well as after reading a graph from a file (e.g. before density calculation).
+        Updates graph's dictionary coordinates_to_vertex_index.
+
+        This has to be done after purging the graph, because vertices are renumbered, as well as after reading a graph from a file (e.g. before density calculation).
         Reminder: the dictionary maps the vertex coordinates (x, y, z) scaled in nanometers to the vertex index.
 
         Returns:
@@ -76,6 +99,8 @@ class SegmentationGraph(object):
 
     def calculate_density(self, mask=None, target_coordinates=None, verbose=False):
         """
+        Calculates ribosome density for each membrane graph vertex.
+
         Calculates shortest geodesic distances (d) for each vertex in the graph to each reachable ribosome center mapped on the membrane given by a binary mask with coordinates in pixels
         or an array of coordinates in nm. Then, calculates a density measure of ribosomes at each vertex / membrane voxel: D = sum {over all reachable ribosomes} (1 / (d + 1)).
         Adds the density as vertex PropertyMap to the graph. Returns an array with the same shape as the underlying segmentation with the densities + 1, in order to distinguish membrane
@@ -311,7 +336,8 @@ class SegmentationGraph(object):
 
     def get_vertex_prop_entry(self, prop_key, vertex_descriptor, n_comp, data_type):
         """
-        Get a property value of a vertex for inserting into a VTK vtkDataArray object.
+        Gets a property value of a vertex for inserting into a VTK vtkDataArray object.
+
         This private function is used by the methods graph_to_points_and_lines_polys and graph_to_triangle_poly (the latter of the derived class surface_graphs.TriangleGraph).
 
         Args:
@@ -333,7 +359,8 @@ class SegmentationGraph(object):
 
     def get_edge_prop_entry(self, prop_key, edge_descriptor, n_comp, data_type):
         """
-        Get a property value of an edge for inserting into a VTK vtkDataArray object.
+        Gets a property value of an edge for inserting into a VTK vtkDataArray object.
+
         This private function is used by the method graph_to_points_and_lines_polys.
 
         Args:
@@ -357,8 +384,11 @@ class SegmentationGraph(object):
 
     def calculate_average_edge_length(self, prop_e=None, value=1):
         """
-        Calculates the average edge length in the graph. If a special edge property is specified, includes only the edges where this property equals the given value.
+        Calculates the average edge length in the graph.
+
+        If a special edge property is specified, includes only the edges where this property equals the given value.
         If there are no edges in the graph, the given property does not exist or there are no edges with the given property equaling the given value, None is returned.
+
         Args:
             prop_e (str, optional): edge property, if specified only edges where this property equals the given value will be considered
             value (int, optional): value of the specified edge property an edge has to have in order to be considered (default 1)
@@ -392,8 +422,9 @@ class SegmentationGraph(object):
 
     def find_geodesic_neighbors(self, v, g_max, verbose=False):
         """
-        Finds geodesic neighbor vertices of a given vertex v in the graph that are within a given maximal geodesic distance g_max from it. Also finds the corresponding geodesic distances.
-        All edges are considered.
+        Finds geodesic neighbor vertices of a given vertex v in the graph that are within a given maximal geodesic distance g_max from it.
+
+        Also finds the corresponding geodesic distances. All edges are considered.
 
         Args:
             v (graph_tool.Vertex): the source vertex
@@ -421,6 +452,7 @@ class SegmentationGraph(object):
     def get_vertex_property_array(self, property_name):
         """
         Gets a numpy array with all values of a vertex property of the graph, printing out the number of values, the minimal and the maximal value.
+
         Args:
             property_name (str): vertex property name
 

@@ -1,3 +1,11 @@
+"""
+A script with an example application of the PySurf package for estimation of membrane curvature.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 import time
 from os.path import isfile
 from graph_tool import load_graph
@@ -10,8 +18,9 @@ from pysurf_compact import pysurf_io as io
 
 def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z, k):
     """
-    Function for running all processing steps to estimate membrane curvature:
-    1. signed surface generation, 2. surface cleaning using a graph, 3. curvature calculation using a graph generated from the clean surface.
+    Function for running all processing steps to estimate membrane curvature.
+
+    The three steps are: 1. signed surface generation, 2. surface cleaning using a graph, 3. curvature calculation using a graph generated from the clean surface.
 
     Args:
         fold (str): path where the input membrane segmentation is and where the ouptut will be written
@@ -26,7 +35,6 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
 
     Returns:
         None
-
     """
     epsilon = 0
     eta = 0
@@ -207,6 +215,7 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
 def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y, scale_z, k, epsilon, eta, mean=False, log_files=False):
     """
     This subfunction converts vtkPolyData cell arrays from a '.vtp' file to 3-D volumes and saves them as '.mrc.gz' files.
+
     Most of the parameters are passed from the "parent" function, "workflow".
 
     Args:
@@ -224,7 +233,6 @@ def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
 
     Returns:
         None
-
     """
     array_name1 = "kappa_1"
     name1 = "max_curvature"
@@ -269,9 +277,9 @@ def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
 def main():
     """
     Main function for running the workflow function for example data.
+
     Returns:
         None
-
     """
     t_begin = time.time()
 

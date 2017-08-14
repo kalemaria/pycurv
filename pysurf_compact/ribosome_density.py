@@ -1,3 +1,11 @@
+"""
+Set of functions and a class (VoxelGraph) for calculating ribosome density on membranes.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 import math
 import numpy as np
 from scipy import spatial
@@ -19,7 +27,6 @@ def read_in_mask(mask_file, verbose=False):
 
     Returns:
         the read in mask (numpy.ndarray)
-
     """
     print '\nReading in the mask %s' % mask_file
     mask = io.load_tomo(mask_file)
@@ -39,7 +46,6 @@ def get_foreground_voxels_from_mask(mask):
 
     Returns:
         a list of foreground (nonzero) voxel coordinates as tuples in form (x, y, z)
-
     """
     voxels = []
     # check that the mask is a 3D numpy array:
@@ -58,6 +64,7 @@ def get_foreground_voxels_from_mask(mask):
 def rescale_mask(in_mask_file, out_mask_file, scaling_factor, out_shape):
     """
     Reads in a mask (binary tomographic data) from a file, rescales the mask and writes it into a file.
+
     How rescaling is done: The output (rescaled) mask with a given shape is initialized with zeros. Foreground (non-zero) voxel coordinates from the original mask are multiplied by the
     scaling factor, and ones (1) are put at the resulting coordinates inside the rescaled mask.
 
@@ -69,7 +76,6 @@ def rescale_mask(in_mask_file, out_mask_file, scaling_factor, out_shape):
 
     Returns:
         None
-
     """
     in_mask = read_in_mask(in_mask_file)
     in_target_voxels = get_foreground_voxels_from_mask(in_mask)
@@ -117,6 +123,7 @@ def ndarray_voxels_to_tupel_list(voxels_ndarray):
 def tupel_list_to_ndarray_voxels(tupel_list):
     """
     Turns voxel coordinates from a list of tuples in format [(x1, y1, z1), (x2, y2, z2), ...] into a 2D numpy ndarray in format [[x1, y1, z1], [x2, y2, z2], ...].
+
     Args:
         tupel_list: a list of tuples containing voxel coordinates in format [(x1, y1, z1), (x2, y2, z2), ...]
 
@@ -140,6 +147,7 @@ def tupel_list_to_ndarray_voxels(tupel_list):
 def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
     """
     Gets target voxels from a ribosome mask and pre-filters them to those that are inside a membrane mask (value 1).
+
     Prints out the target voxel numbers before and after filtering and warns of the voxels that are not inside the membrane mask.
 
     Args:
@@ -179,6 +187,7 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
 def particles_xyz_to_np_array(motl_em_file, scaling_factor=1):
     """
     Extracts coordinates of all particles from a motive list EM file and returns them in numpy array format.
+
     Optionally, scales the coordinates by multiplying with a given scaling factor.
 
     Args:
@@ -202,6 +211,7 @@ def particles_xyz_to_np_array(motl_em_file, scaling_factor=1):
 def nearest_vertex_for_particles(vertices_xyz, particles_xyz, radius):
     """
     Finds for each particle coordinates the nearest membrane graph vertices coordinates (both sets given by 2D numpy arrays) within a given radius.
+
     If no vertex exists within the radius, [-1, -1, -1] is returned at the respective index. Uses KD trees for a fast search.
 
     Args:
@@ -233,7 +243,8 @@ def nearest_vertex_for_particles(vertices_xyz, particles_xyz, radius):
 class VoxelGraph(graphs.SegmentationGraph):
     """
     Class defining the VoxelGraph object and its methods.
-    The object generator requires the following parameters of the underlying segmentation that will be used to build the graph.
+
+    The constructor requires the following parameters of the underlying segmentation that will be used to build the graph.
 
     Args:
         scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
@@ -245,6 +256,7 @@ class VoxelGraph(graphs.SegmentationGraph):
     def build_graph_from_np_ndarray(self, mask, verbose=False):
         """
         Builds a graph from a binary mask of a membrane segmentation, including only voxels with value 1 (foreground voxels).
+
         Each foreground voxel, its foreground neighbor voxels and edges with euclidean distances between the voxel and its neighbor voxels (all scaled in nm) are added to the graph.
 
         Args:
@@ -270,7 +282,9 @@ class VoxelGraph(graphs.SegmentationGraph):
 
     def __expand_voxels(self, mask, remaining_mem_voxels, verbose=False):
         """
-        An iterative function used for building the membrane graph of a VoxelGraph object. This private method should only be called by the method build_graph_from_np_ndarray!
+        An iterative function used for building the membrane graph of a VoxelGraph object.
+
+        This private method should only be called by the method build_graph_from_np_ndarray!
         Expands each foreground voxel, adding it, its foreground neighbor voxels and edges with euclidean distances between the voxel and its neighbor voxels (all scaled in nm) to the graph.
 
         Args:

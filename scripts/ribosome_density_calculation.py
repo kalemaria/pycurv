@@ -1,3 +1,11 @@
+"""
+A script with an example application of the PySurf package for calculation of membrane-bound ribosome density.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 import time
 from datetime import datetime
 from graph_tool import load_graph
@@ -18,7 +26,6 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1, v
 
     Returns:
         None
-
     """
     t_begin = time.time()
 
@@ -57,7 +64,6 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1, vtp_files_
 
     Returns:
         a numpy ndarray (with the same shape as the mask) with the densities
-
     """
     t_begin = time.time()
 
@@ -114,7 +120,6 @@ def run_build_graph_from_np_ndarray_and_calculate_density(mem_mask, ribo_mask, p
 
     Note:
         Both masks - mem_mask and ribo_mask - have to have the same shape.
-
     """
     t_begin = time.time()
     assert (mem_mask.shape == ribo_mask.shape)
@@ -158,8 +163,9 @@ def run_build_graph_from_np_ndarray_and_calculate_density(mem_mask, ribo_mask, p
 
 def main():
     """
-    Main function with an examplary calculation of ribosome density on ER-membranes for a tomogram. Ribosome coordinates had been rescaled from bin 3 to bin 6 and bin 6 membrane
-    segmentation mask was used.
+    Main function with an examplary calculation of ribosome density on ER-membranes for a tomogram.
+
+    Ribosome coordinates had been rescaled from bin 3 to bin 6 and bin 6 membrane segmentation mask was used.
 
     Returns:
         None

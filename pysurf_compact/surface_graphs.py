@@ -1,3 +1,13 @@
+"""
+Set of functions and classes (abstract SurfaceGraph and derived TriangleGraph) for representing a surface by a graph, cleaning the surface and triangle-wise operations of the normal vector
+voting algorithm.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
+
 import vtk
 import numpy as np
 import time
@@ -78,9 +88,7 @@ def rescale_surface(surface, scale):
 
 
 class SurfaceGraph(graphs.SegmentationGraph):
-    """
-    Class defining the abstract SurfaceGraph object.
-    """
+    """Class defining the abstract SurfaceGraph object."""
 
     def build_graph_from_vtk_surface(self, surface, verbose=False):
         """
@@ -99,7 +107,8 @@ class SurfaceGraph(graphs.SegmentationGraph):
 class TriangleGraph(SurfaceGraph):
     """
     Class defining the TriangleGraph object, its attributes and methods.
-    The object generator required the following parameters of the underlying segmentation that will be used to build the graph.
+
+    The constructor requires the following parameters of the underlying segmentation that will be used to build the graph.
 
     Args:
         scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
@@ -107,7 +116,20 @@ class TriangleGraph(SurfaceGraph):
         scale_y (int): y axis length in pixels of the segmentation
         scale_z (int): z axis length in pixels of the segmentation
     """
+
     def __init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z):
+        """
+        Constructor.
+
+        Args:
+            scale_factor_to_nm (float): pixel size in nanometers for scaling the graph
+            scale_x (int): x axis length in pixels of the segmentation
+            scale_y (int): y axis length in pixels of the segmentation
+            scale_z (int): z axis length in pixels of the segmentation
+
+        Returns:
+            None
+        """
 
         graphs.SegmentationGraph.__init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z)
 
@@ -135,6 +157,7 @@ class TriangleGraph(SurfaceGraph):
     def build_graph_from_vtk_surface(self, surface, verbose=False):
         """
         Builds the graph from a vtkPolyData surface, which is rescaled to nanometers according to the scale factor specified when creating the TriangleGraph object.
+
         Every vertex of the graph represents the center of a surface triangle, and every edge of the graph connects two adjacent triangles. There are two types of edges:
         a "strong" edge if the adjacent triangles share two triangle edges and a "weak" edge if they share only one edge.
 
@@ -537,8 +560,10 @@ class TriangleGraph(SurfaceGraph):
 
     def find_vertices_outside_mask(self, mask, label=1, allowed_dist=0):
         """
-        Finds vertices that are outside a mask, which means that their scaled back to pixels and rounded coordinates are further away than an allowed distance in pixels
-        to a mask voxel with the given label.
+        Finds vertices that are outside a mask.
+
+        This means that their scaled back to pixels coordinates are further away than an allowed distance in pixels to a mask voxel with the given label.
+
         Args:
             mask (numpy.ndarray): 3D mask of the segmentation from which the underlying surface was created
             label (int, optional): the label in the mask to be considered (default 1)
@@ -578,8 +603,9 @@ class TriangleGraph(SurfaceGraph):
 
     def find_vertices_near_border_and_outside_mask(self, b, mask, label=1, allowed_dist=0, purge=False):
         """
-        Finds vertices that are within distance in nanometers to the graph border and outside a mask, i.e. further than the allowed distance in pixels
-        to a mask voxel with the given label.
+        Finds vertices that are within distance in nanometers to the graph border and outside a mask.
+
+        Outside mask means that scaled back to pixels vertices coordinates are further than the allowed distance in pixels to a mask voxel with the given label.
 
         Args:
             b (float): distance from border in nanometers
@@ -728,6 +754,7 @@ class TriangleGraph(SurfaceGraph):
     def collecting_votes(self, vertex_v, g_max, A_max, sigma, verbose=False):
         """
         For a vertex v, collects the normal votes of all triangles within its geodesic neighborhood and calculates the weighted covariance matrix sum V_v.
+
         Implements equations (6), illustrated in figure 6(b), (7) and (8) from the paper of Page et al., 2002.
         More precisely, a normal vote N_i of each triangle i (whose centroid c_i is lying within the geodesic neighborhood of vertex v) is calculated using the normal N assigned to the
         triangle i. Then, covariance matrix V_i is calculated from N_i and a weight depending on the area of triangle i and the geodesic distance of its centroid c_i from v.
@@ -822,8 +849,9 @@ class TriangleGraph(SurfaceGraph):
 
     def classifying_orientation(self, vertex_v, V_v, epsilon=2, eta=2, verbose=False):
         """
-        For a vertex v, its calculated matrix V_v (output of collecting_votes) and the parameters epsilon and eta (default 2 each), classifies its orientation:
-        1 if it belongs to a surface patch, 2 if it belongs to a crease junction or 3 if it doesn't have a preferred orientation.
+        For a vertex v, its calculated matrix V_v (output of collecting_votes) and the parameters epsilon and eta (default 2 each), classifies its orientation.
+
+        The output classes are 1 if it belongs to a surface patch, 2 if it belongs to a crease junction or 3 if it doesn't have a preferred orientation.
         This is done using eigen-decomposition of V_v and equations (9) and (10) from the paper of Page et al., 2002. Equations (11) and (12) may help to choose epsilon and eta.
         Adds the "orientation_class", the estimated normal "N_v" (if class is 1) and the estimated_tangent "T_v" (if class is 2) as vertex properties into the graph.
 
@@ -907,6 +935,7 @@ class TriangleGraph(SurfaceGraph):
     def collecting_votes2(self, vertex_v, neighbor_idx_to_dist, sigma, verbose=False):
         """
         For a vertex v, collects the curvature and tangent votes of all triangles within its geodesic neighborhood belonging to a surface patch and calculates the matrix B_v.
+
         Implements equations (13) and (15) also illustrated in figure 6(c), (16), (17), (14), and (5) from the paper.
         In short, three components are calculated for each neighboring vertex (representing triangle centroid) v_i:
 
@@ -1046,9 +1075,10 @@ class TriangleGraph(SurfaceGraph):
 
     def estimate_curvature(self, vertex_v, B_v, verbose=False):
         """
-        For a vertex v and its calculated matrix B_v (output of collecting_votes2), calculates the principal directions (T_1 and T_2) and curvatures (kappa_1 and kappa_2) at this vertex and
-        adds them as vertex properties into the graph. This is done using eigen-decomposition of B_v: the eigenvectors corresponding to the two largest eigenvalues are the principal
-        directions and the principal curvatures are found with linear transformations of those eigenvalues (Eq. 4).
+        For a vertex v and its calculated matrix B_v (output of collecting_votes2), calculates the principal directions (T_1 and T_2) and curvatures (kappa_1 and kappa_2) at this vertex.
+
+        This is done using eigen-decomposition of B_v: the eigenvectors corresponding to the two largest eigenvalues are the principal directions and the principal curvatures are found with
+        linear transformations of those eigenvalues (Eq. 4).
 
         Args:
             vertex_v (graph_tool.Vertex): the vertex v in the surface triangle-graph for which the principal directions and curvatures are estimated

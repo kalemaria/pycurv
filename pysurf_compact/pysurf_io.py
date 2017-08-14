@@ -1,8 +1,10 @@
 """
-Set of functions for reading and writing different data types.
+Set of functions and a class (TypesConverter) for reading and writing different data types.
+
+Authors: Maria Kalemanov and Antonio Martinez-Sanchez (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'martinez'
+__author__ = 'martinez and kalemanov'
 
 import numpy as np
 import scipy
@@ -14,7 +16,6 @@ import math
 from pyto.io.image_io import ImageIO
 
 import pexceptions
-
 
 
 # CONSTANTS
@@ -35,7 +36,6 @@ def load_tomo(fname, mmap=False):
     Returns:
         numpy.ndarray or numpy.memmap object
     """
-
     # Input parsing
     stem, ext = os.path.splitext(fname)
     if mmap and (not (ext == '.mrc' or (ext == '.em'))):
@@ -85,7 +85,6 @@ def vti_to_numpy(image, transpose=True):  # TODO Antonio, please check the funct
     Returns:
         numpy.ndarray with the image data
     """
-
     # Read tomogram data
     image.ComputeBounds()
     nx, ny, nz = image.GetDimensions()
@@ -115,7 +114,6 @@ def save_numpy(array, fname):  # TODO Antonio, please check the function descrip
     Returns:
         None
     """
-
     _, ext = os.path.splitext(fname)
 
     # Parse input array for fulfilling format requirements
@@ -152,6 +150,7 @@ def save_numpy(array, fname):  # TODO Antonio, please check the function descrip
 def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):  # TODO Antonio, please check the function description
     """
     Converts a numpy array into a VTK image data object.
+
     Args:
         array (numpy.ndarray): input numpy array
         offset (int [3], optional): the reading start positions in x, y and z dimensions, default [0, 0, 0]
@@ -160,7 +159,6 @@ def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):  # TODO Antonio, p
     Returns:
         vtk.vtkImageData object
     """
-
     nx, ny, nz = array.shape
     image = vtk.vtkImageData()
     image.SetExtent(offset[0], nx+offset[0]-1, offset[1], ny+offset[1]-1, offset[2], nz+offset[2]-1)
@@ -188,7 +186,6 @@ def save_vti(image, fname, outputdir):  # TODO Antonio, please check the functio
     Returns:
         None
     """
-
     writer = vtk.vtkXMLImageDataWriter()
     outputfile = outputdir + '/' + fname
     writer.SetFileName(outputfile)
@@ -209,7 +206,6 @@ def save_vtp(poly, fname):  # TODO Antonio, please check the function descriptio
     Returns:
         None
     """
-
     writer = vtk.vtkXMLPolyDataWriter()
     writer.SetFileName(fname)
     writer.SetInputData(poly)
@@ -228,7 +224,6 @@ def load_poly(fname):  # TODO Antonio, please check the function description
     Returns:
         vtk.vtkPolyData object
     """
-
     reader = vtk.vtkXMLPolyDataReader()
     reader.SetFileName(fname)
     reader.Update()
@@ -253,7 +248,6 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
         - output surface (vtk.vtkPolyData)
         - polarity distance scalar field (np.ndarray), if field is True
     """
-
     # Check input format
     if isinstance(tomo, str):
         fname, fext = os.path.splitext(tomo)
@@ -476,7 +470,6 @@ def dot_norm(p, pnorm, norm):  # TODO Antonio, please check the function descrip
     Returns:
         the dot-product between the input point and the closest point normal (float)
     """
-
     # Point and vector coordinates
     v = pnorm - p
 
@@ -582,7 +575,9 @@ def write_stl_file(poly, outfilename):
 
 def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y, scale_z, logfilename=None, mean=False, verbose=False):
     """
-    Converts a triangle-cell data array of the given vtkPolyData to a 3D array of size like the underlying segmentation. Initializes a 3D matrix of size like the segmentation with zeros,
+    Converts a triangle-cell data array of the given vtkPolyData to a 3D array of size like the underlying segmentation.
+
+    Initializes a 3D matrix of size like the segmentation with zeros,
     calculates triangle centroid coordinates, transforms them from nanometers to voxels and puts the corresponding cell data value into the voxel.
     If more than one triangles map to the same voxel, takes the maximal or mean value. Optionally, logs such cases by writing out the voxel coordinates and the value list into a file.
 
@@ -599,7 +594,6 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
 
     Returns:
         the 3D numpy.ndarray of size like the segmentation containing the cell data values at the corresponding coordinates
-
     """
     print 'Converting the vtkPolyData cell array %s to a 3D volume...' % array_name
     # Find the array with the wanted name:
@@ -700,7 +694,9 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
 
 class TypesConverter(object):
     """
-    A static class for converting types between different libraries: numpy, VTK and graph-tool. In general if types do not match exactly, data are upcasted.
+    A static class for converting types between different libraries: numpy, VTK and graph-tool.
+
+    In general if types do not match exactly, data are upcasted.
     """
 
     @staticmethod

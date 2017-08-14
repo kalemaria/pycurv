@@ -15,7 +15,9 @@ This is a Python package used for the following two analyses:
 the membrane mask.
 
 - Estimation of membrane curvature using our implementation of Normal Vector Voting algorithm (Page et al., 2002). The workflow consists of the following three main steps:
-1. signed surface generation, 2. surface cleaning using a graph, and 3. curvature calculation using a graph generated from the clean surface.
+    1. signed surface generation
+    2. surface cleaning using a graph
+    3. curvature calculation using a graph generated from the clean surface.
 
 Please note that the following Python packages are required and have to be installed:
 - Pyto ImageIO (Lučić et al., 2016, PMID: 27742578 DOI: 10.1016/j.jsb.2016.10.004)

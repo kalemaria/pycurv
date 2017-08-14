@@ -1,3 +1,13 @@
+"""
+Contains a function for splitting a tomogram segmentation in connected regions of certain label and minimal size.
+
+The idea is to work on each region separately, e.g. create a surface, transform it to a graph, clean and calculate curvatures.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry), date: 2017-06-17
+"""
+
+__author__ = 'kalemanov'
+
 import numpy as np
 from skimage.measure import label, regionprops
 from os.path import isfile
@@ -19,7 +29,6 @@ def split_segmentation(infile, lbl=1, close=True, close_cube_size=5, close_iter=
 
     Returns:
         a list of regions, where each item is a binary ndarray with the same shape as the segmentation but contains one region
-
     """
     # Load the segmentation numpy array from a file and get only the requested labels as 1 and the background as 0:
     seg = io.load_tomo(infile)
