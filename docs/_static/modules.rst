@@ -1,3 +1,5 @@
+:orphan:
+
 pysurf_compact
 ==============
 

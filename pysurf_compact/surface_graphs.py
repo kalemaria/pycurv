@@ -152,7 +152,7 @@ class TriangleGraph(SurfaceGraph):
         self.graph.ep.is_strong = self.graph.new_edge_property("int")
 
         self.point_in_cells = {}
-        """dict: A dictionary mapping a point coordinates (x, y, z) in nanometers to a list of triangle-cell indices sharing this point."""
+        """dict: a dictionary mapping a point coordinates (x, y, z) in nanometers to a list of triangle-cell indices sharing this point."""
 
     def build_graph_from_vtk_surface(self, surface, verbose=False):
         """
