@@ -134,9 +134,9 @@ class TriangleGraph(SurfaceGraph):
         graphs.SegmentationGraph.__init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z)
 
         # Add more "internal property maps" to the graph.
-        # vertex property for storing the area of the corresponding triangle in nm squared:
+        # vertex property for storing the area in nanometers squared of the corresponding triangle:
         self.graph.vp.area = self.graph.new_vertex_property("float")
-        # vertex property for storing the normal of the corresponding triangle scaled in nm:
+        # vertex property for storing the normal in nanometers of the corresponding triangle:
         self.graph.vp.normal = self.graph.new_vertex_property("vector<float>")
         # vertex property for storing the VTK minimal curvature at the corresponding triangle:
         self.graph.vp.min_curvature = self.graph.new_vertex_property("float")
@@ -146,13 +146,13 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.gauss_curvature = self.graph.new_vertex_property("float")
         # vertex property for storing the VTK mean curvature at the corresponding triangle:
         self.graph.vp.mean_curvature = self.graph.new_vertex_property("float")
-        # vertex property for storing the coordinates scaled in nm of the 3 points of the corresponding triangle:
+        # vertex property for storing the coordinates in nanometers of the 3 points of the corresponding triangle:
         self.graph.vp.points = self.graph.new_vertex_property("object")
         # edge property storing the "strength" property of the edge: 1 for a "strong" or 0 for a "weak" one:
         self.graph.ep.is_strong = self.graph.new_edge_property("int")
 
-        # A dictionary mapping a point coordinates (x, y, z) scaled in nm to a list of cell indices sharing this point:
         self.point_in_cells = {}
+        """dict: A dictionary mapping a point coordinates (x, y, z) in nanometers to a list of triangle-cell indices sharing this point."""
 
     def build_graph_from_vtk_surface(self, surface, verbose=False):
         """

@@ -20,6 +20,7 @@ import pexceptions
 
 # CONSTANTS
 MAX_DIST_SURF = 3
+"""int: a constant determining the maximal distance in pixels of a point on the surface from the segmentation mask, used in gen_surface method."""
 
 
 def load_tomo(fname, mmap=False):

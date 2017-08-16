@@ -44,21 +44,26 @@ class SegmentationGraph(object):
             None
         """
         self.graph = Graph(directed=False)
+        """graph_tool.Graph: a graph object storing the segmentation graph topology, geometry and properties."""
         self.scale_factor_to_nm = scale_factor_to_nm
+        """float: pixel size in nanometers for scaling the coordinates and distances in the graph"""
         self.scale_x = scale_x
+        """int: x axis length in pixels of the segmentation"""
         self.scale_y = scale_y
+        """int: y axis length in pixels of the segmentation"""
         self.scale_z = scale_z
+        """int: z axis length in pixels of the segmentation"""
 
         # Add "internal property maps" to the graph.
-        # vertex property for storing the xyz coordinates of the corresponding vertex scaled in nm:
+        # vertex property for storing the xyz coordinates in nanometers of the corresponding vertex:
         self.graph.vp.xyz = self.graph.new_vertex_property("vector<float>")
-        # edge property storing the distance between the connected vertices in nm:
+        # edge property for storing the distance in nanometers between the connected vertices:
         self.graph.ep.distance = self.graph.new_edge_property("float")
 
-        # A dictionary mapping the vertex coordinates (x, y, z) scaled in nm to the vertex index:
         self.coordinates_to_vertex_index = {}
-        # A dictionary of connected coordinates pairs in form ((x1, y1, z1), (x2, y2, z2)) scaled in nm -> True
+        """dist: a dictionary mapping the vertex coordinates in nanometers (x, y, z) to the vertex index."""
         self.coordinates_pair_connected = {}
+        """dict: a dictionary storing pairs of vertex coordinates in nanometers that are connected by an edge as a key in a tuple form ((x1, y1, z1), (x2, y2, z2)) with value True."""
 
     @staticmethod
     def distance_between_voxels(voxel1, voxel2):
