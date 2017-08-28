@@ -26,7 +26,7 @@ Please note that the following Python packages are required and have to be insta
 
 The package can be run using Python 2.7 versions.
 
-# script folder
+# scripts folder
 This folder contains two Python scripts using pysurf_compact package:
 - ribosome_density_calculation.py script contains functions for running the ribosome density calculation.
 - curvature_calculation.py script contains functions for running the curvature calculation.
