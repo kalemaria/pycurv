@@ -13,23 +13,23 @@ import time
 import numpy as np
 
 
-def vector_voting(tg, k, epsilon=2, eta=2, exclude_borders=True):
+def vector_voting(tg, k, epsilon=0, eta=0, exclude_borders=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface orientation, principle curvatures and directions for a surface using its triangle graph.
 
     Args:
         tg (TriangleGraph): triangle graph generated from the surface of interest
         k (int): parameter of Normal Vector Voting algorithm determining the neighborhood size, g_max = k * average weak triangle graph edge length
-        epsilon (int, optional): parameter of Normal Vector Voting algorithm influencing the number of triangles classified as "crease junction" (class 2), default 2
+        epsilon (int, optional): parameter of Normal Vector Voting algorithm influencing the number of triangles classified as "crease junction" (class 2), default 0
         eta (int, optional): parameter of Normal Vector Voting algorithm influencing the number of triangles classified as "crease junction" (class 2) and "no
-                            preferred orientation" (class 3, see Notes), default 2
+                            preferred orientation" (class 3, see Notes), default 0
         exclude_borders (boolean, optional): if True (default), principle curvatures and directions are not estimated for triangles at surface borders
 
     Returns:
         the surface of triangles with classified orientation and estimated normals or tangents, principle curvatures and directions (vtkPolyData)
 
     Notes:
-        If epsilon = 0 and eta = 0, all triangles will be classified as "surface patch" (class 1).
+        If epsilon = 0 and eta = 0 (default), all triangles will be classified as "surface patch" (class 1).
     """
     # Preparation (calculations & printouts that are the same for the whole graph)
     t_begin = time.time()
