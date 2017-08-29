@@ -1,7 +1,9 @@
 """
-Set of functions and a class (TypesConverter) for reading and writing different data types.
+Set of functions and a class (TypesConverter) for reading and writing different
+data types.
 
-Authors: Maria Kalemanov and Antonio Martinez-Sanchez (Max Planck Institute for Biochemistry)
+Authors: Maria Kalemanov and Antonio Martinez-Sanchez (Max Planck Institute for
+Biochemistry)
 """
 
 __author__ = 'martinez and kalemanov'
@@ -20,19 +22,27 @@ import pexceptions
 
 # CONSTANTS
 MAX_DIST_SURF = 3
-"""int: a constant determining the maximal distance in pixels of a point on the surface from the segmentation mask, used in gen_surface method."""
+"""
+int: a constant determining the maximal distance in pixels of a point on the
+    surface from the segmentation mask, used in gen_surface method.
+"""
 
 
 def load_tomo(fname, mmap=False):
     """
-    Loads a tomogram in MRC, EM or VTI format and converts it into a numpy format.
+    Loads a tomogram in MRC, EM or VTI format and converts it into a numpy
+    format.
 
     Args:
-        fname (str): full path to the tomogram, has to end with '.mrc', '.em' or '.vti'
-        mmap (boolean, optional): if True (default False) a numpy.memmap object is loaded instead of numpy.ndarray, which means that data are not loaded completely to memory, this is useful
-                                    only for very large tomograms. Only valid with formats MRC and EM.
-                                    VERY IMPORTANT: This subclass of ndarray has some unpleasant interaction with some operations, because it does not quite fit properly as a subclass of
-                                    numpy.ndarray
+        fname (str): full path to the tomogram, has to end with '.mrc', '.em' or
+            '.vti'
+        mmap (boolean, optional): if True (default False) a numpy.memmap object
+            is loaded instead of numpy.ndarray, which means that data are not
+            loaded completely to memory, this is useful only for very large
+            tomograms. Only valid with formats MRC and EM. VERY IMPORTANT: This
+            subclass of ndarray has some unpleasant interaction with some
+            operations, because it does not quite fit properly as a subclass of
+            numpy.ndarray
 
     Returns:
         numpy.ndarray or numpy.memmap object
@@ -40,7 +50,8 @@ def load_tomo(fname, mmap=False):
     # Input parsing
     stem, ext = os.path.splitext(fname)
     if mmap and (not (ext == '.mrc' or (ext == '.em'))):
-        error_msg = 'mmap option is only valid for MRC or EM formats, current ' + ext
+        error_msg = ('mmap option is only valid for MRC or EM formats, current '
+                     + ext)
         raise pexceptions.PySegInputError(expr='load_tomo', msg=error_msg)
 
     # if ext == '.fits':
@@ -77,11 +88,14 @@ def load_tomo(fname, mmap=False):
 
 def vti_to_numpy(image, transpose=True):  # TODO Antonio, please check the function description, why transpose=True by default?
     """
-    Converts VTK image data (that was read in from a VTI file) into a numpy format.
+    Converts VTK image data (that was read in from a VTI file) into a numpy
+    format.
 
     Args:
-        image (vtkImageData): input VTK image data, must be a scalar field (output of vtk.vtkXMLImageDataReader)
-        transpose (boolean, optional): if True (default), the image is transposed (x and z axes are switched)
+        image (vtkImageData): input VTK image data, must be a scalar field
+            (output of vtk.vtkXMLImageDataReader)
+        transpose (boolean, optional): if True (default), the image is
+            transposed (x and z axes are switched)
 
     Returns:
         numpy.ndarray with the image data
@@ -91,12 +105,14 @@ def vti_to_numpy(image, transpose=True):  # TODO Antonio, please check the funct
     nx, ny, nz = image.GetDimensions()
     scalars = image.GetPointData().GetScalars()
     if transpose:
-        dout = np.zeros(shape=[nz, ny, nx], dtype=TypesConverter.vtk_to_numpy(scalars))
+        dout = np.zeros(shape=[nz, ny, nx],
+                        dtype=TypesConverter.vtk_to_numpy(scalars))
         for i in range(scalars.GetNumberOfTuples()):
             [x, y, z] = image.GetPoint(i)
             dout[int(z), int(y), int(x)] = scalars.GetTuple1(i)
     else:
-        dout = np.zeros(shape=[nx, ny, nz], dtype=TypesConverter.vtk_to_numpy(scalars))
+        dout = np.zeros(shape=[nx, ny, nz],
+                        dtype=TypesConverter.vtk_to_numpy(scalars))
         for i in range(scalars.GetNumberOfTuples()):
             [x, y, z] = image.GetPoint(i)
             dout[int(x), int(y), int(z)] = scalars.GetTuple1(i)
@@ -110,7 +126,8 @@ def save_numpy(array, fname):  # TODO Antonio, please check the function descrip
 
     Args:
         array (numpy.ndarray): input array
-        fname (str): full path to the tomogram, has to end with '.mrc', '.em' or '.vti'
+        fname (str): full path to the tomogram, has to end with '.mrc', '.em' or
+            '.vti'
 
     Returns:
         None
@@ -119,7 +136,8 @@ def save_numpy(array, fname):  # TODO Antonio, please check the function descrip
 
     # Parse input array for fulfilling format requirements
     if (ext == '.mrc') or (ext == '.em'):
-        if (array.dtype != 'ubyte') and (array.dtype != 'int16') and (array.dtype != 'float32'):
+        if ((array.dtype != 'ubyte') and (array.dtype != 'int16') and
+                (array.dtype != 'float32')):
             array = array.astype('float32')
         # if (len(array.shape) == 3) and (array.shape[2] == 1):
         #   array = np.reshape(array, (array.shape[0], array.shape[1]))
@@ -154,15 +172,18 @@ def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):  # TODO Antonio, p
 
     Args:
         array (numpy.ndarray): input numpy array
-        offset (int [3], optional): the reading start positions in x, y and z dimensions, default [0, 0, 0]
-        spacing (float [3], optional): the spacing (width, height, length) of the cubical cells that compose the data set, default [1, 1, 1]
+        offset (int [3], optional): the reading start positions in x, y and z
+            dimensions, default [0, 0, 0]
+        spacing (float [3], optional): the spacing (width, height, length) of
+            the cubical cells that compose the data set, default [1, 1, 1]
 
     Returns:
         vtk.vtkImageData object
     """
     nx, ny, nz = array.shape
     image = vtk.vtkImageData()
-    image.SetExtent(offset[0], nx+offset[0]-1, offset[1], ny+offset[1]-1, offset[2], nz+offset[2]-1)
+    image.SetExtent(offset[0], nx+offset[0]-1, offset[1], ny+offset[1]-1,
+                    offset[2], nz+offset[2]-1)
     image.SetSpacing(spacing)
     image.AllocateScalars(vtk.VTK_FLOAT, 1)
     scalars = image.GetPointData().GetScalars()
@@ -170,7 +191,8 @@ def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):  # TODO Antonio, p
     for x in range(offset[0], nx):
         for y in range(offset[1], ny):
             for z in range(offset[2], nz):
-                scalars.SetTuple1(image.ComputePointId([x, y, z]), float(array[x, y, z]))
+                scalars.SetTuple1(image.ComputePointId([x, y, z]),
+                                  float(array[x, y, z]))
 
     return image
 
@@ -192,7 +214,7 @@ def save_vti(image, fname, outputdir):  # TODO Antonio, please check the functio
     writer.SetFileName(outputfile)
     writer.SetInputData(image)
     if writer.Write() != 1:
-        error_msg = 'Error writing the %s file on %s.' % fname, outputdir
+        error_msg = 'Error writing the %s file on %s.' % (fname, outputdir)
         raise pexceptions.PySegInputError(expr='save_vti', msg=error_msg)
 
 
@@ -232,18 +254,25 @@ def load_poly(fname):  # TODO Antonio, please check the function description
     return reader.GetOutput()
 
 
-def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=False, verbose=False):  # TODO Antonio, please check the function description
+def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False,
+                mode_2d=False, verbose=False):  # TODO Antonio, please check the function description
     """
     Generates a VTK PolyData surface from a segmented tomogram.
 
     Args:
-        tomo (numpy.ndarray or str): the input segmentation as numpy ndarray or the file name in MRC, EM or VTI format
+        tomo (numpy.ndarray or str): the input segmentation as numpy ndarray or
+            the file name in MRC, EM or VTI format
         lbl (int, optional): label for the foreground, default 1
-        mask (boolean, optional): if True (default), the input segmentation is used as mask for the surface
-        purge_ratio (int, optional): if greater than 1 (default), then 1 every purge_ratio points of the segmentation are randomly deleted
-        field (boolean, optional): if True (default False), additionally returns the polarity distance scalar field
-        mode_2d (boolean, optional): needed for polarity distance calculation (if field is True), if True (default False), ...
-        verbose (boolean, optional): if True (default False), prints out messages for checking the progress
+        mask (boolean, optional): if True (default), the input segmentation is
+            used as mask for the surface
+        purge_ratio (int, optional): if greater than 1 (default), then 1 every
+            purge_ratio points of the segmentation are randomly deleted
+        field (boolean, optional): if True (default False), additionally returns
+            the polarity distance scalar field
+        mode_2d (boolean, optional): needed for polarity distance calculation
+            (if field is True), if True (default False), ...
+        verbose (boolean, optional): if True (default False), prints out
+            messages for checking the progress
 
     Returns:
         - output surface (vtk.vtkPolyData)
@@ -305,7 +334,7 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
     surf = vtk.vtkSurfaceReconstructionFilter()
     # surf.SetSampleSpacing(2)
     surf.SetSampleSpacing(purge_ratio)
-    #surf.SetNeighborhoodSize(10)
+    # surf.SetNeighborhoodSize(10)
     surf.SetInputData(cloud)
     contf = vtk.vtkContourFilter()
     contf.SetInputConnection(surf.GetOutputPort())
@@ -355,7 +384,8 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
 
     # Masking according to distance to the original segmentation
     if mask:
-        tomod = scipy.ndimage.morphology.distance_transform_edt(np.invert(tomo == lbl))
+        tomod = scipy.ndimage.morphology.distance_transform_edt(
+            np.invert(tomo == lbl))
         for i in range(tsurf.GetNumberOfCells()):
 
             # Check if all points which made up the polygon are in the mask
@@ -363,7 +393,8 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
             count = 0
             for j in range(0, points_cell.GetNumberOfPoints()):
                 x, y, z = points_cell.GetPoint(j)
-                if tomod[int(round(x)), int(round(y)), int(round(z))] > MAX_DIST_SURF:
+                if (tomod[int(round(x)), int(round(y)), int(round(z))]
+                        > MAX_DIST_SURF):
                     count += 1
 
             if count > 0:
@@ -395,7 +426,7 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
         # Build membrane mask
         tomoh = np.ones(shape=tomo.shape, dtype=np.bool)
         tomon = np.ones(shape=(tomo.shape[0], tomo.shape[1], tomo.shape[2], 3),
-                           dtype=TypesConverter().vtk_to_numpy(array))
+                        dtype=TypesConverter().vtk_to_numpy(array))
         # for i in range(tsurf.GetNumberOfCells()):
         #     points_cell = tsurf.GetCell(i).GetPoints()
         #     for j in range(0, points_cell.GetNumberOfPoints()):
@@ -415,14 +446,16 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
                     tomon[x, y, z, :] = array.GetTuple(i)
 
         # Distance transform
-        tomod, ids = scipy.ndimage.morphology.distance_transform_edt(tomoh, return_indices=True)
+        tomod, ids = scipy.ndimage.morphology.distance_transform_edt(
+            tomoh, return_indices=True)
 
         # Compute polarity
         if mode_2d:
             for x in range(nx):
                 for y in range(ny):
                     for z in range(nz):
-                        i_x, i_y, i_z = ids[0, x, y, z], ids[1, x, y, z], ids[2, x, y, z]
+                        i_x, i_y, i_z = (ids[0, x, y, z], ids[1, x, y, z],
+                                         ids[2, x, y, z])
                         norm = tomon[i_x, i_y, i_z]
                         norm[2] = 0
                         pnorm = (i_x, i_y, 0)
@@ -435,7 +468,8 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
             for x in range(nx):
                 for y in range(ny):
                     for z in range(nz):
-                        i_x, i_y, i_z = ids[0, x, y, z], ids[1, x, y, z], ids[2, x, y, z]
+                        i_x, i_y, i_z = (ids[0, x, y, z], ids[1, x, y, z],
+                                         ids[2, x, y, z])
                         hold_norm = tomon[i_x, i_y, i_z]
                         norm = hold_norm
                         # norm[0] = (-1) * hold_norm[1]
@@ -461,15 +495,18 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False, mode_2d=Fals
 
 def dot_norm(p, pnorm, norm):  # TODO Antonio, please check the function description
     """
-    Makes the dot-product between the input point and the closest point normal. Both vectors are first normalized.
+    Makes the dot-product between the input point and the closest point normal.
+    Both vectors are first normalized.
 
     Args:
         p (numpy.ndarray): the input point, must be float numpy array
         pnorm (numpy.ndarray): the point normal, must be float numpy array
-        norm (numpy.ndarray): the closest point normal, must be float numpy array
+        norm (numpy.ndarray): the closest point normal, must be float numpy
+            array
 
     Returns:
-        the dot-product between the input point and the closest point normal (float)
+        the dot-product between the input point and the closest point normal
+        (float)
     """
     # Point and vector coordinates
     v = pnorm - p
@@ -477,12 +514,12 @@ def dot_norm(p, pnorm, norm):  # TODO Antonio, please check the function descrip
     # Normalization
     mv = math.sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
     if mv > 0:
-        v = v / mv
+        v /= mv
     else:
         return 0
     mnorm = math.sqrt(norm[0]*norm[0] + norm[1]*norm[1] + norm[2]*norm[2])
     if mnorm > 0:
-        norm = norm / mnorm
+        norm /= mnorm
     else:
         return 0
 
@@ -510,7 +547,8 @@ def merge_vtp_files(vtp_file_list, outfilename):
     Merges a list of '.vtp' files to one file.
 
     Args:
-        vtp_file_list (str list): a list of strings with paths and names of '.vtp' files
+        vtp_file_list (str list): a list of strings with paths and names of
+            '.vtp' files
         outfilename (str): an output file name (with path)
 
     Returns:
@@ -574,29 +612,44 @@ def write_stl_file(poly, outfilename):
     stlWriter.Write()
 
 
-def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y, scale_z, logfilename=None, mean=False, verbose=False):
+def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
+                         scale_z, logfilename=None, mean=False, verbose=False):
     """
-    Converts a triangle-cell data array of the given vtkPolyData to a 3D array of size like the underlying segmentation.
+    Converts a triangle-cell data array of the given vtkPolyData to a 3D array
+    of size like the underlying segmentation.
 
-    Initializes a 3D matrix of size like the segmentation with zeros,
-    calculates triangle centroid coordinates, transforms them from nanometers to voxels and puts the corresponding cell data value into the voxel.
-    If more than one triangles map to the same voxel, takes the maximal or mean value. Optionally, logs such cases by writing out the voxel coordinates and the value list into a file.
+    Initializes a 3D matrix of size like the segmentation with zeros, calculates
+    triangle centroid coordinates, transforms them from nanometers to voxels and
+    puts the corresponding cell data value into the voxel.
+
+    If more than one triangles map to the same voxel, takes the maximal or mean
+    value. Optionally, logs such cases by writing out the voxel coordinates and
+    the value list into a file.
 
     Args:
         poly (vtk.vtkPolyData): a vtkPolyData object with triangle-cells.
-        array_name (str): name of the desired cell data array of the vtkPolyData object
-        scale_factor_to_nm (float): pixel size in nanometers that was used for scaling the graph
+        array_name (str): name of the desired cell data array of the vtkPolyData
+            object
+        scale_factor_to_nm (float): pixel size in nanometers that was used for
+            scaling the graph
         scale_x (int): x axis length in pixels of the segmentation
         scale_y (int): y axis length in pixels of the segmentation
         scale_z (int): z axis length in pixels of the segmentation
-        logfilename (str, optional): specifies an output logfile name (with path; default None) for listing voxel coordinates with multiple values mapping to this voxel
-        mean (boolean, optional): if True, takes the mean value in case multiple triangles map to the same voxel, if False (default) the maximal value
-        verbose (boolean, optional): if True (default False), some extra information will be printed out
+        logfilename (str, optional): specifies an output log file path (default
+            None) for listing voxel coordinates with multiple values mapping to
+            this voxel
+        mean (boolean, optional): if True, takes the mean value in case multiple
+            triangles map to the same voxel; if False (default), takes the
+            maximal value
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
 
     Returns:
-        the 3D numpy.ndarray of size like the segmentation containing the cell data values at the corresponding coordinates
+        the 3D numpy.ndarray of size like the segmentation containing the cell
+            data values at the corresponding coordinates
     """
-    print 'Converting the vtkPolyData cell array %s to a 3D volume...' % array_name
+    print ('Converting the vtkPolyData cell array %s to a 3D volume...'
+           % array_name)
     # Find the array with the wanted name:
     array = None
     numberOfCellArrays = poly.GetCellData().GetNumberOfArrays()
@@ -615,10 +668,12 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
         return None
     n_comp_array = array.GetNumberOfComponents()
     if n_comp_array != 1:
-        print 'Array has %s components but 1 component is expected!' % n_comp_array
+        print ('Array has %s components but 1 component is expected!'
+               % n_comp_array)
         return None
 
-    # Dictionary mapping voxel coordinates (for the volume returned later) to a list of values falling within that voxel:
+    # Dictionary mapping voxel coordinates (for the volume returned later) to a
+    # list of values falling within that voxel:
     voxel_to_values = {}
 
     # For each cell:
@@ -627,7 +682,8 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
         cell = poly.GetCell(cell_id)
         if isinstance(cell, vtk.vtkTriangle):
 
-            # Get its vertex coordinates and calculate the centroid of the triangle (because it is not saved as a vtkPolyData array):
+            # Get its vertex coordinates and calculate the centroid of the
+            # triangle (because it is not saved as a vtkPolyData array):
             points_cell = cell.GetPoints()
             x_center = 0
             y_center = 0
@@ -644,8 +700,10 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
             # Get the array value assigned to the triangle cell:
             cell_value = array.GetTuple1(cell_id)
 
-            # Calculate the corresponding voxel of the vertex and add the value to the list keyed by the voxel in the dictionary:
-            # Scaling the coordinates back from nm to voxels. (Without round float coordinates are truncated to the next lowest integer.)
+            # Calculate the corresponding voxel of the vertex and add the value
+            # to the list keyed by the voxel in the dictionary:
+            # Scaling the coordinates back from nm to voxels. (Without round
+            # float coordinates are truncated to the next lowest integer.)
             voxel_x = int(round(x_center / scale_factor_to_nm))
             voxel_y = int(round(y_center / scale_factor_to_nm))
             voxel_z = int(round(z_center / scale_factor_to_nm))
@@ -662,20 +720,26 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
                 print '%s value = %s' % (array_name, cell_value)
 
         else:
-            print '\nOops, the cell number %s is not a vtkTriangle but a %s! It will be ignored.' % (cell_id, cell.__class__.__name__)
+            print '\nOops, the cell number %s is not a vtkTriangle but a %s! ' \
+                  'It will be ignored.' % (cell_id, cell.__class__.__name__)
 
-    print '%s voxels mapped from %s cells' % (len(voxel_to_values), poly.GetNumberOfCells())
+    print '%s voxels mapped from %s cells' % (len(voxel_to_values),
+                                              poly.GetNumberOfCells())
 
-    # Initialize a 3D array scaled like the original segmentation, which will hold in each voxel the maximal value among the corresponding vertex coordinates
-    # in the graph and 0 in all other (background) voxels:
-    volume = np.zeros((scale_x, scale_y, scale_z), dtype=np.float32)  # single precision float: sign bit, 8 bit exponent, 23 bits mantissa
-    # Write the array and (if logfilename is given) write the cases with multiple values into a log file:
+    # Initialize a 3D array scaled like the original segmentation, which will
+    # hold in each voxel the maximal value among the corresponding vertex
+    # coordinates in the graph and 0 in all other (background) voxels:
+    volume = np.zeros((scale_x, scale_y, scale_z), dtype=np.float32)
+
+    # Write the array and (if logfilename is given) write the cases with
+    # multiple values into a log file:
     if logfilename is not None:
         f = open(logfilename, 'w')
     for voxel in voxel_to_values:
         value_list = voxel_to_values[voxel]
-        # take the maximal or mean value from the list (the same if there is only one value):
-        if mean==True:
+        # take the maximal or mean value from the list (the same if there is
+        # only one value):
+        if mean:
             final_value = sum(value_list) / float(len(value_list))
         else:
             final_value = max(value_list)
@@ -695,7 +759,8 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
 
 class TypesConverter(object):
     """
-    A static class for converting types between different libraries: numpy, VTK and graph-tool.
+    A static class for converting types between different libraries: numpy, VTK
+    and graph-tool.
 
     In general if types do not match exactly, data are upcasted.
     """
@@ -715,11 +780,13 @@ class TypesConverter(object):
         # Check that a type object is passed
         if not isinstance(din, vtk.vtkDataArray):
             error_msg = 'vtkDataArray object required as input.' % din  # TODO ask Antonio why "% din" if there is no "%s"
-            raise pexceptions.PySegInputError(expr='vtk_to_numpy (TypesConverter)', msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='vtk_to_numpy (TypesConverter)', msg=error_msg)
 
         if isinstance(din, vtk.vtkBitArray):
             return np.bool
-        elif isinstance(din, vtk.vtkIntArray) or isinstance(din, vtk.vtkTypeInt32Array):
+        elif (isinstance(din, vtk.vtkIntArray)
+                or isinstance(din, vtk.vtkTypeInt32Array)):
             return np.int
         elif isinstance(din, vtk.vtkTypeInt8Array):
             return np.int8
@@ -735,18 +802,22 @@ class TypesConverter(object):
             return np.uint32
         elif isinstance(din, vtk.vtkTypeUInt64Array):
             return np.uint64
-        elif isinstance(din, vtk.vtkFloatArray) or isinstance(din, vtk.vtkTypeFloat32Array):
+        elif (isinstance(din, vtk.vtkFloatArray)
+                or isinstance(din, vtk.vtkTypeFloat32Array)):
             return np.float32
-        elif isinstance(din, vtk.vtkDoubleArray) or isinstance(din, vtk.vtkTypeFloat64Array):
+        elif (isinstance(din, vtk.vtkDoubleArray)
+                or isinstance(din, vtk.vtkTypeFloat64Array)):
             return np.float64
         else:
             error_msg = 'VTK type not identified.' % din  # TODO the same
-            raise pexceptions.PySegInputError(expr='numpy_to_vtk_array (TypesConverter)', msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='numpy_to_vtk_array (TypesConverter)', msg=error_msg)
 
     @staticmethod
     def gt_to_vtk(din):
         """
-        From the graph-tool property value type creates an equivalent vtkDataArray object.
+        From the graph-tool property value type creates an equivalent
+        vtkDataArray object.
 
         Args:
             din (str): graph-tool property value type
@@ -758,7 +829,8 @@ class TypesConverter(object):
         # Check that a string object is passed
         if not isinstance(din, str):
             error_msg = 'str object required as input.' % din  # TODO the same
-            raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)', msg=error_msg)
+            raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)',
+                                              msg=error_msg)
 
         if (din == 'bool') or (din == 'vector<bool>'):
             return vtk.vtkIntArray()  # was vtk.vtkBitArray()
@@ -772,12 +844,14 @@ class TypesConverter(object):
             return vtk.vtkFloatArray()
         else:
             error_msg = 'Graph-tool alias not identified.' % din  # TODO the same
-            raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)', msg=error_msg)
+            raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)',
+                                              msg=error_msg)
 
     @staticmethod
     def gt_to_numpy(din):
         """
-        From the graph-tool property value type return an equivalent numpy data type.
+        From the graph-tool property value type return an equivalent numpy data
+        type.
 
         Args:
             din (str): graph-tool property value type
@@ -789,7 +863,8 @@ class TypesConverter(object):
         # Check that a string object is passed
         if not isinstance(din, str):
             error_msg = 'str object required as input.' % din  # TODO the same
-            raise pexceptions.PySegInputError(expr='gt_to_numpy (TypesConverter)', msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='gt_to_numpy (TypesConverter)', msg=error_msg)
 
         if (din == 'bool') or (din == 'vector<bool>'):
             return np.bool
@@ -803,4 +878,5 @@ class TypesConverter(object):
             return np.float
         else:
             error_msg = 'Graph-tool alias not identified.' % din  # TODO the same
-            raise pexceptions.PySegInputError(expr='gt_to_numpy (TypesConverter)', msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='gt_to_numpy (TypesConverter)', msg=error_msg)
