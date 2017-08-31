@@ -1,13 +1,3 @@
-"""
-Set of functions and a class (TypesConverter) for reading and writing different
-data types.
-
-Authors: Maria Kalemanov and Antonio Martinez-Sanchez (Max Planck Institute for
-Biochemistry)
-"""
-
-__author__ = 'martinez and kalemanov'
-
 import numpy as np
 import scipy
 # import pyfits
@@ -19,12 +9,21 @@ from pyto.io.image_io import ImageIO
 
 import pexceptions
 
+"""
+Set of functions and a class (TypesConverter) for reading and writing different
+data types.
+
+Authors: Maria Kalemanov and Antonio Martinez-Sanchez (Max Planck Institute for
+Biochemistry)
+"""
+
+__author__ = 'martinez and kalemanov'
+
 
 # CONSTANTS
 MAX_DIST_SURF = 3
-"""
-int: a constant determining the maximal distance in pixels of a point on the
-    surface from the segmentation mask, used in gen_surface method.
+"""int: a constant determining the maximal distance in pixels of a point on the
+surface from the segmentation mask, used in gen_surface method.
 """
 
 
@@ -720,8 +719,8 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
                 print '%s value = %s' % (array_name, cell_value)
 
         else:
-            print '\nOops, the cell number %s is not a vtkTriangle but a %s! ' \
-                  'It will be ignored.' % (cell_id, cell.__class__.__name__)
+            print ('\nOops, the cell number %s is not a vtkTriangle but a %s! '
+                   'It will be ignored.' % (cell_id, cell.__class__.__name__))
 
     print '%s voxels mapped from %s cells' % (len(voxel_to_values),
                                               poly.GetNumberOfCells())
@@ -779,14 +778,15 @@ class TypesConverter(object):
 
         # Check that a type object is passed
         if not isinstance(din, vtk.vtkDataArray):
-            error_msg = 'vtkDataArray object required as input.' % din  # TODO ask Antonio why "% din" if there is no "%s"
+            error_msg = 'vtkDataArray object required as input.' % din  # TODO ask Antonio why "% din" if there is no "%s" - TypeError: not all arguments converted during string formatting
             raise pexceptions.PySegInputError(
-                expr='vtk_to_numpy (TypesConverter)', msg=error_msg)
+                expr='vtk_to_numpy (TypesConverter)', msg=error_msg
+            )
 
         if isinstance(din, vtk.vtkBitArray):
             return np.bool
-        elif (isinstance(din, vtk.vtkIntArray)
-                or isinstance(din, vtk.vtkTypeInt32Array)):
+        elif (isinstance(din, vtk.vtkIntArray) or
+                isinstance(din, vtk.vtkTypeInt32Array)):
             return np.int
         elif isinstance(din, vtk.vtkTypeInt8Array):
             return np.int8
@@ -802,16 +802,17 @@ class TypesConverter(object):
             return np.uint32
         elif isinstance(din, vtk.vtkTypeUInt64Array):
             return np.uint64
-        elif (isinstance(din, vtk.vtkFloatArray)
-                or isinstance(din, vtk.vtkTypeFloat32Array)):
+        elif (isinstance(din, vtk.vtkFloatArray) or
+                isinstance(din, vtk.vtkTypeFloat32Array)):
             return np.float32
-        elif (isinstance(din, vtk.vtkDoubleArray)
-                or isinstance(din, vtk.vtkTypeFloat64Array)):
+        elif (isinstance(din, vtk.vtkDoubleArray) or
+                isinstance(din, vtk.vtkTypeFloat64Array)):
             return np.float64
         else:
             error_msg = 'VTK type not identified.' % din  # TODO the same
             raise pexceptions.PySegInputError(
-                expr='numpy_to_vtk_array (TypesConverter)', msg=error_msg)
+                expr='numpy_to_vtk_array (TypesConverter)', msg=error_msg
+            )
 
     @staticmethod
     def gt_to_vtk(din):
@@ -864,7 +865,8 @@ class TypesConverter(object):
         if not isinstance(din, str):
             error_msg = 'str object required as input.' % din  # TODO the same
             raise pexceptions.PySegInputError(
-                expr='gt_to_numpy (TypesConverter)', msg=error_msg)
+                expr='gt_to_numpy (TypesConverter)', msg=error_msg
+            )
 
         if (din == 'bool') or (din == 'vector<bool>'):
             return np.bool
@@ -879,4 +881,5 @@ class TypesConverter(object):
         else:
             error_msg = 'Graph-tool alias not identified.' % din  # TODO the same
             raise pexceptions.PySegInputError(
-                expr='gt_to_numpy (TypesConverter)', msg=error_msg)
+                expr='gt_to_numpy (TypesConverter)', msg=error_msg
+            )

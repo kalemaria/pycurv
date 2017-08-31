@@ -1,7 +1,9 @@
 """
-Set of classes for handling exceptions and warnings implemented for PySeg package and also used in the PySurf package.
+Set of classes for handling exceptions and warnings implemented for PySeg
+package and also used in the PySurf package.
 
-Author: Antonio Martinez-Sanchez (Max Planck Institute for Biochemistry), date: 2014-04-02
+Author: Antonio Martinez-Sanchez (Max Planck Institute for Biochemistry), date:
+2014-04-02
 """
 
 __author__ = 'martinez'
