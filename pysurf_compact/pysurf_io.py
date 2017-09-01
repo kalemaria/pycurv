@@ -85,7 +85,7 @@ def load_tomo(fname, mmap=False):
     return im_data
 
 
-def vti_to_numpy(image, transpose=True):  # TODO Antonio, please check the function description, why transpose=True by default?
+def vti_to_numpy(image, transpose=True):
     """
     Converts VTK image data (that was read in from a VTI file) into a numpy
     format.
@@ -119,7 +119,7 @@ def vti_to_numpy(image, transpose=True):  # TODO Antonio, please check the funct
     return dout
 
 
-def save_numpy(array, fname):  # TODO Antonio, please check the function description
+def save_numpy(array, fname):
     """
     Saves a numpy array to a file in MRC, EM or VTI format.
 
@@ -165,7 +165,7 @@ def save_numpy(array, fname):  # TODO Antonio, please check the function descrip
         raise pexceptions.PySegInputError(expr='save_numpy', msg=error_msg)
 
 
-def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):  # TODO Antonio, please check the function description
+def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):
     """
     Converts a numpy array into a VTK image data object.
 
@@ -196,7 +196,7 @@ def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):  # TODO Antonio, p
     return image
 
 
-def save_vti(image, fname, outputdir):  # TODO Antonio, please check the function description
+def save_vti(image, fname, outputdir):
     """
     Saves a VTK image data object into a VTI file.
 
@@ -217,7 +217,7 @@ def save_vti(image, fname, outputdir):  # TODO Antonio, please check the functio
         raise pexceptions.PySegInputError(expr='save_vti', msg=error_msg)
 
 
-def save_vtp(poly, fname):  # TODO Antonio, please check the function description
+def save_vtp(poly, fname):
     """
     Saves a VTK PolyData object into a VTP file.
 
@@ -236,7 +236,7 @@ def save_vtp(poly, fname):  # TODO Antonio, please check the function descriptio
         raise pexceptions.PySegInputError(expr='save_vtp', msg=error_msg)
 
 
-def load_poly(fname):  # TODO Antonio, please check the function description
+def load_poly(fname):
     """
     Loads data from a VTK PolyData (VTP) file.
 
@@ -254,7 +254,7 @@ def load_poly(fname):  # TODO Antonio, please check the function description
 
 
 def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False,
-                mode_2d=False, verbose=False):  # TODO Antonio, please check the function description
+                mode_2d=False, verbose=False):
     """
     Generates a VTK PolyData surface from a segmented tomogram.
 
@@ -492,7 +492,7 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False,
     return tsurf
 
 
-def dot_norm(p, pnorm, norm):  # TODO Antonio, please check the function description
+def dot_norm(p, pnorm, norm):
     """
     Makes the dot-product between the input point and the closest point normal.
     Both vectors are first normalized.
@@ -778,7 +778,7 @@ class TypesConverter(object):
 
         # Check that a type object is passed
         if not isinstance(din, vtk.vtkDataArray):
-            error_msg = 'vtkDataArray object required as input.' % din  # TODO ask Antonio why "% din" if there is no "%s" - TypeError: not all arguments converted during string formatting
+            error_msg = 'vtkDataArray object required as input.'
             raise pexceptions.PySegInputError(
                 expr='vtk_to_numpy (TypesConverter)', msg=error_msg
             )
@@ -809,7 +809,7 @@ class TypesConverter(object):
                 isinstance(din, vtk.vtkTypeFloat64Array)):
             return np.float64
         else:
-            error_msg = 'VTK type not identified.' % din  # TODO the same
+            error_msg = 'VTK type not identified.'
             raise pexceptions.PySegInputError(
                 expr='numpy_to_vtk_array (TypesConverter)', msg=error_msg
             )
@@ -829,7 +829,7 @@ class TypesConverter(object):
 
         # Check that a string object is passed
         if not isinstance(din, str):
-            error_msg = 'str object required as input.' % din  # TODO the same
+            error_msg = 'str object required as input.'
             raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)',
                                               msg=error_msg)
 
@@ -844,7 +844,7 @@ class TypesConverter(object):
         elif (din == 'double') or (din == 'vector<double>'):
             return vtk.vtkFloatArray()
         else:
-            error_msg = 'Graph-tool alias not identified.' % din  # TODO the same
+            error_msg = 'Graph-tool alias not identified.'
             raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)',
                                               msg=error_msg)
 
@@ -863,7 +863,7 @@ class TypesConverter(object):
 
         # Check that a string object is passed
         if not isinstance(din, str):
-            error_msg = 'str object required as input.' % din  # TODO the same
+            error_msg = 'str object required as input.'
             raise pexceptions.PySegInputError(
                 expr='gt_to_numpy (TypesConverter)', msg=error_msg
             )
@@ -879,7 +879,7 @@ class TypesConverter(object):
         elif (din == 'double') or (din == 'vector<double>'):
             return np.float
         else:
-            error_msg = 'Graph-tool alias not identified.' % din  # TODO the same
+            error_msg = 'Graph-tool alias not identified.'
             raise pexceptions.PySegInputError(
                 expr='gt_to_numpy (TypesConverter)', msg=error_msg
             )

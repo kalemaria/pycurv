@@ -35,7 +35,7 @@ def close_holes(infile, cube_size, iterations, outfile):
     data_type = tomo.dtype  # dtype('uint8')
     tomo_closed = ndimage.binary_closing(
         tomo, structure=np.ones((cube_size, cube_size, cube_size)),
-        iterations=iterations).astype(data_type)  # TODO check splitting
+        iterations=iterations).astype(data_type)
     io.save_numpy(tomo_closed, outfile)
 
 

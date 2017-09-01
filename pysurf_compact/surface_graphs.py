@@ -338,7 +338,7 @@ class TriangleGraph(SurfaceGraph):
                 self.graph.vp.xyz[vd] = [x_center, y_center, z_center]
                 self.coordinates_to_vertex_index[
                     (x_center, y_center, z_center)
-                ] = self.graph.vertex_index[vd]  # TODO check splitting
+                ] = self.graph.vertex_index[vd]
                 self.graph.vp.area[vd] = area
                 self.graph.vp.normal[vd] = normal
                 self.graph.vp.min_curvature[vd] = avg_min_curvature
@@ -421,7 +421,7 @@ class TriangleGraph(SurfaceGraph):
 
                         # Add the distance of the edge
                         self.graph.ep.distance[ed] = \
-                            self.distance_between_voxels(p_i, p_x)  # TODO check splitting
+                            self.distance_between_voxels(p_i, p_x)
 
                         # Assign the "strength" property to the edge as
                         # explained above:
@@ -539,7 +539,7 @@ class TriangleGraph(SurfaceGraph):
                 # array, so this can range from 0-(NumPoints-1)
                 triangle.GetPointIds().SetId(
                     0, lut[self.graph.vertex_index[vd], 0]
-                )  # TODO check splitting
+                )
                 triangle.GetPointIds().SetId(
                     1, lut[self.graph.vertex_index[vd], 1]
                 )
@@ -554,7 +554,7 @@ class TriangleGraph(SurfaceGraph):
                     data_type = TypesConverter().gt_to_numpy(data_type)
                     array.InsertNextTuple(self.get_vertex_prop_entry(
                         prop_key, vd, n_comp, data_type
-                    ))  # TODO check splitting
+                    ))
             if verbose:
                 print ('number of triangle cells: %s'
                        % triangles.GetNumberOfCells())
@@ -588,7 +588,7 @@ class TriangleGraph(SurfaceGraph):
             print 'Finding vertices at the graph border...'
             # Add a vertex property for storing the number of strong edges:
             self.graph.vp.num_strong_edges = \
-                self.graph.new_vertex_property("int")  # TODO check splitting
+                self.graph.new_vertex_property("int")
             # Sum up the "strong" edges coming out of each vertex and add them
             # to the new property:
             num_strong_edges = incident_edges_op(self.graph, "out", "sum",
@@ -600,12 +600,12 @@ class TriangleGraph(SurfaceGraph):
             # Add a boolean vertex property telling whether a vertex is on
             # border:
             self.graph.vp.is_on_border = \
-                self.graph.new_vertex_property("boolean")  # TODO check splitting
+                self.graph.new_vertex_property("boolean")
             # indices of vertices with less than 3 strong edges (= vertices on
             # border)
             border_vertices_indices = np.where(
                 self.graph.vp.num_strong_edges.a < 3
-            )[0]  # TODO check splitting
+            )[0]
             self.graph.vp.is_on_border.a = np.zeros(
                 shape=self.graph.num_vertices()
             )

@@ -411,7 +411,7 @@ class VoxelGraph(graphs.SegmentationGraph):
                         scaled_voxel_to_expand[2]
                     ]
                     self.coordinates_to_vertex_index[scaled_voxel_to_expand] = \
-                        self.graph.vertex_index[v_expanded]  # TODO check splitting
+                        self.graph.vertex_index[v_expanded]
                     if verbose:
                         print ('This voxel has been added to the graph as '
                                'vertex.')
@@ -463,17 +463,17 @@ class VoxelGraph(graphs.SegmentationGraph):
                         if not (((scaled_voxel_to_expand, scaled_neighbor_voxel)
                                  in self.coordinates_pair_connected) or
                                 ((scaled_neighbor_voxel, scaled_voxel_to_expand)
-                                 in self.coordinates_pair_connected)):  # TODO check splitting
+                                 in self.coordinates_pair_connected)):
                             # edge descriptor
                             ed = self.graph.add_edge(v_expanded, v_neighbor)
                             self.graph.ep.distance[
                                 ed
                             ] = self.distance_between_voxels(
                                 scaled_voxel_to_expand, scaled_neighbor_voxel
-                            )  # TODO check splitting
+                            )
                             self.coordinates_pair_connected[
                                 (scaled_voxel_to_expand, scaled_neighbor_voxel)
-                            ] = True  # TODO check splitting
+                            ] = True
                             if verbose:
                                 print ('The neighbor voxels (%s, %s, %s) and '
                                        '(%s, %s, %s) have been connected by an '
