@@ -1,6 +1,8 @@
 import time
 import numpy as np
 
+import pexceptions
+
 """
 Contains a function implementing the normal vector voting algorithm (Page et
 al., 2002) with adaptation.
@@ -19,7 +21,7 @@ date: 2017-06-17
 __author__ = 'kalemanov'
 
 
-def vector_voting(tg, k, epsilon=0, eta=0, exclude_borders=True):
+def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -27,9 +29,12 @@ def vector_voting(tg, k, epsilon=0, eta=0, exclude_borders=True):
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
-        k (int): parameter of Normal Vector Voting algorithm determining the
-            neighborhood size, g_max = k * average weak triangle graph edge
-            length
+        k (int, optional): parameter of Normal Vector Voting algorithm
+            determining the geodesic neighborhood radius:
+            g_max = k * average weak triangle graph edge length (default k=3)
+        g_max (float, optional): geodesic neighborhood radius in length unit of
+            the graph, e.g. nanometers; if positive (default 0.0) this g_max
+            will be used and k will be ignored
         epsilon (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2), default 0
@@ -46,32 +51,45 @@ def vector_voting(tg, k, epsilon=0, eta=0, exclude_borders=True):
         normals or tangents, principle curvatures and directions (vtkPolyData)
 
     Notes:
-        If epsilon = 0 and eta = 0 (default), all triangles will be classified
-        as "surface patch" (class 1).
+        * Either g_max or k must be positive (if both are positive, the
+          specified g_max will be used).
+        * If epsilon = 0 and eta = 0 (default), all triangles will be classified
+          as "surface patch" (class 1).
     """
     # Preparation (calculations that are the same for the whole graph)
     t_begin = time.time()
     print '\nPreparing for running modified Vector Voting...'
 
-    # * k, integer multiple of the average length of the triangle edges *
-    print "k = %s" % k
+    if g_max > 0:
+        # * Maximal geodesic distance g_max (given directly) *
+        print "g_max = {}".format(g_max)
+    elif k > 0:
+        # * k, integer multiple of the average length of the triangle edges *
+        print "k = {}".format(k)
 
-    # * Average length of the triangle edges *
-    # weak edges of triangle graph are the most similar in length to surface
-    # triangle edges
-    avg_weak_edge_length = tg.calculate_average_edge_length(prop_e="is_strong",
-                                                            value=0)
-    try:
-        assert(avg_weak_edge_length > 0)
-    except AssertionError:
-        print ("Something wrong in the graph construction has happened: "
-               "average weak edge length is 0.")
-        exit(1)
+        # * Average length of the triangle edges *
+        # weak edges of triangle graph are the most similar in length to surface
+        # triangle edges
+        avg_weak_edge_length = tg.calculate_average_edge_length(prop_e="is_strong",
+                                                                value=0)
+        try:
+            assert(avg_weak_edge_length > 0)
+        except AssertionError:
+            print ("Something wrong in the graph construction has happened: "
+                   "average weak edge length is 0.")
+            exit(1)
 
-    # * Maximal geodesic distance g_max and sigma (depend on k but is also the
-    # same for the whole graph) *
-    g_max = k * avg_weak_edge_length
-    print "g_max = %s" % g_max
+        # * Maximal geodesic distance g_max (depend on k but is also the same
+        # for the whole graph) *
+        g_max = k * avg_weak_edge_length
+        print "g_max = {}".format(g_max)
+    else:
+        error_msg = ("Either g_max or k must be positive (if both are "
+                     "positive, the specified g_max will be used).")
+        raise pexceptions.PySegInputError(expr='vector_voting',
+                                          msg=error_msg)
+
+    # * sigma *
     sigma = g_max / 3.0
 
     # * Maximal triangle area *
