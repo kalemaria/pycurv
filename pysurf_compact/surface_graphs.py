@@ -984,7 +984,7 @@ class TriangleGraph(SurfaceGraph):
 
         Returns:
             - a dictionary of neighbors of vertex v, mapping index of each
-                vertex c_i to its geodesic distance from the vertex v
+              vertex c_i to its geodesic distance from the vertex v
             - the 3x3 symmetric matrix V_v (numpy.ndarray)
         """
         # To spare function referencing every time in the following for loop:
