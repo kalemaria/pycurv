@@ -180,7 +180,8 @@ class TriangleGraph(SurfaceGraph):
         nanometers to a list of triangle-cell indices sharing this point.
         """
 
-    def build_graph_from_vtk_surface(self, surface, verbose=False):
+    def build_graph_from_vtk_surface(self, surface, verbose=False,
+                                     reverse_normals=False):
         """
         Builds the graph from a vtkPolyData surface, which is rescaled to
         nanometers according to the scale factor specified when creating the
@@ -298,6 +299,8 @@ class TriangleGraph(SurfaceGraph):
                 cell.ComputeNormal(points_cell.GetPoint(0),
                                    points_cell.GetPoint(1),
                                    points_cell.GetPoint(2), normal)
+                if reverse_normals:
+                    normal *= -1
 
                 # Get the min, max, Gaussian and mean curvatures (calculated by
                 # VTK) for each of 3 points of the triangle i and calculate the
