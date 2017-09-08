@@ -339,9 +339,8 @@ class TriangleGraph(SurfaceGraph):
                 # Note: vertex index is numbered from 0 and does not necessarily
                 # correspond to the (triangle) cell index!
                 self.graph.vp.xyz[vd] = [x_center, y_center, z_center]
-                self.coordinates_to_vertex_index[
-                    (x_center, y_center, z_center)
-                ] = self.graph.vertex_index[vd]
+                self.coordinates_to_vertex_index[(
+                    x_center, y_center, z_center)] = self.graph.vertex_index[vd]
                 self.graph.vp.area[vd] = area
                 self.graph.vp.normal[vd] = normal
                 self.graph.vp.min_curvature[vd] = avg_min_curvature
@@ -541,14 +540,11 @@ class TriangleGraph(SurfaceGraph):
                 # The second parameter is the index into the point (geometry)
                 # array, so this can range from 0-(NumPoints-1)
                 triangle.GetPointIds().SetId(
-                    0, lut[self.graph.vertex_index[vd], 0]
-                )
+                    0, lut[self.graph.vertex_index[vd], 0])
                 triangle.GetPointIds().SetId(
-                    1, lut[self.graph.vertex_index[vd], 1]
-                )
+                    1, lut[self.graph.vertex_index[vd], 1])
                 triangle.GetPointIds().SetId(
-                    2, lut[self.graph.vertex_index[vd], 2]
-                )
+                    2, lut[self.graph.vertex_index[vd], 2])
                 triangles.InsertNextCell(triangle)
                 for array in vertex_arrays:
                     prop_key = array.GetName()
@@ -556,8 +552,7 @@ class TriangleGraph(SurfaceGraph):
                     data_type = self.graph.vp[prop_key].value_type()
                     data_type = TypesConverter().gt_to_numpy(data_type)
                     array.InsertNextTuple(self.get_vertex_prop_entry(
-                        prop_key, vd, n_comp, data_type
-                    ))
+                        prop_key, vd, n_comp, data_type))
             if verbose:
                 print ('number of triangle cells: %s'
                        % triangles.GetNumberOfCells())
@@ -607,11 +602,9 @@ class TriangleGraph(SurfaceGraph):
             # indices of vertices with less than 3 strong edges (= vertices on
             # border)
             border_vertices_indices = np.where(
-                self.graph.vp.num_strong_edges.a < 3
-            )[0]
+                self.graph.vp.num_strong_edges.a < 3)[0]
             self.graph.vp.is_on_border.a = np.zeros(
-                shape=self.graph.num_vertices()
-            )
+                shape=self.graph.num_vertices())
             self.graph.vp.is_on_border.a[border_vertices_indices] = 1
             print ('%s vertices are at the graph border.'
                    % len(border_vertices_indices))

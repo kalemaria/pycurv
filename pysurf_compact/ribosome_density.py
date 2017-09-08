@@ -467,13 +467,11 @@ class VoxelGraph(graphs.SegmentationGraph):
                             # edge descriptor
                             ed = self.graph.add_edge(v_expanded, v_neighbor)
                             self.graph.ep.distance[
-                                ed
-                            ] = self.distance_between_voxels(
-                                scaled_voxel_to_expand, scaled_neighbor_voxel
-                            )
-                            self.coordinates_pair_connected[
-                                (scaled_voxel_to_expand, scaled_neighbor_voxel)
-                            ] = True
+                                ed] = self.distance_between_voxels(
+                                scaled_voxel_to_expand, scaled_neighbor_voxel)
+                            self.coordinates_pair_connected[(
+                                scaled_voxel_to_expand,
+                                scaled_neighbor_voxel)] = True
                             if verbose:
                                 print ('The neighbor voxels (%s, %s, %s) and '
                                        '(%s, %s, %s) have been connected by an '
