@@ -23,13 +23,31 @@ class VectorVotingTestCase(unittest.TestCase):
         kappa_1 = kappa_2 = 1/r; 30% of difference is allowed.
 
         Args:
-            radius:
-            res:
-            inverse:
-            k:
-            g_max:
-            epsilon:
-            eta:
+            radius (int): radius of the sphere
+            res (int): parameter determining how many stripes (and then
+                triangles) the sphere has (longitude and latitude)
+            inverse (boolean, optional): if True (default False), the sphere
+                will have normals pointing outwards (negative curvature), else
+                the other way around
+            k (int, optional): parameter of Normal Vector Voting algorithm
+                determining the geodesic neighborhood radius:
+                g_max = k * average weak triangle graph edge length (default 3)
+            g_max (float, optional): geodesic neighborhood radius in length unit
+                of the graph, hier voxels; if positive (default 0.0) this g_max
+                will be used and k will be ignored
+            epsilon (int, optional): parameter of Normal Vector Voting algorithm
+                influencing the number of triangles classified as "crease
+                junction" (class 2), default 0
+            eta (int, optional): parameter of Normal Vector Voting algorithm
+                influencing the number of triangles classified as "crease
+                junction" (class 2) and "no preferred orientation" (class 3, see
+                Notes), default 0
+
+            Notes:
+            * Either g_max or k must be positive (if both are positive, the
+              specified g_max will be used).
+            * If epsilon = 0 and eta = 0 (default), all triangles will be
+              classified as "surface patch" (class 1).
         """
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
@@ -83,8 +101,8 @@ class VectorVotingTestCase(unittest.TestCase):
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
                          "positive, the specified g_max will be used).")
-            raise pexceptions.PySegInputError(expr='vector_voting',
-                                              msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='parametric_test_sphere_curvatures', msg=error_msg)
         vtk_max_curvature_file = ('{}.VTK.max_curvature.txt'
                                   .format(base_filename))
         vtk_min_curvature_file = ('{}.VTK.min_curvature.txt'

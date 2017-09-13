@@ -97,6 +97,24 @@ def rescale_surface(surface, scale):
         raise pexceptions.PySegInputError(expr='rescale_surface', msg=error_msg)
 
 
+def signum(number):
+    """
+    Returns the signum of a number.
+
+    Args:
+        number: a number
+
+    Returns:
+        -1 if the number is negative, 1 if it is positive, 0 if it is 0
+    """
+    if number < 0:
+        return -1
+    elif number > 0:
+        return 1
+    else:
+        return 0
+
+
 class SurfaceGraph(graphs.SegmentationGraph):
     """Class defining the abstract SurfaceGraph object."""
 
@@ -1176,6 +1194,9 @@ class TriangleGraph(SurfaceGraph):
             self.graph.vp.T_v[vertex_v] = np.zeros(shape=3)
             return 3
 
+    num_curvature_is_negated = 0
+    """int: counts for how many triangles  the curvature is negated"""
+
     def collecting_votes2(self, vertex_v, neighbor_idx_to_dist, sigma,
                           verbose=False):
         """
@@ -1285,6 +1306,7 @@ class TriangleGraph(SurfaceGraph):
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated:
         B_v = np.zeros(shape=(3, 3))
+        num_negative_kappa_i = 0
 
         # Let each of the neighboring triangles belonging to a surface patch
         # (as checked before) to cast a vote on vertex v:
@@ -1321,6 +1343,10 @@ class TriangleGraph(SurfaceGraph):
                 tetha = acos(cos_tetha)
             s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
             kappa_i = tetha / s
+            # kappa_i_sign = signum(dot(T_i, n_i))  # has to be like this according to Page's paper
+            kappa_i_sign = -1 * signum(dot(T_i, n_i))  # but negated according to Tang & Medioni's definition (more suitable for our surface)
+            if kappa_i_sign < 0:
+                num_negative_kappa_i += 1
 
             # Recover the corresponding weight, which was calculated and
             # normalized before:
@@ -1348,9 +1374,22 @@ class TriangleGraph(SurfaceGraph):
 
         if verbose:
             print "\nB_v = %s" % B_v
-        return B_v
 
-    def estimate_curvature(self, vertex_v, B_v, verbose=False):
+        # Vote for the correct curvature sign: if 50% of the neighbors "say"
+        # kappa_i is negative - principle directions and curvatures have to be
+        # swapped and the latter also negated in estimate_curvature
+        curvature_is_negated = False
+        if (float(num_negative_kappa_i) /
+                float(len(surface_neighbors_idx)) > 0.5):
+            TriangleGraph.num_curvature_is_negated += 1
+            curvature_is_negated = True
+            if verbose:
+                print "curvature has to be negated"
+
+        return B_v, curvature_is_negated
+
+    def estimate_curvature(self, vertex_v, B_v, curvature_is_negated,
+                           verbose=False):
         """
         For a vertex v and its calculated matrix B_v (output of
         collecting_votes2), calculates the principal directions (T_1 and T_2)
@@ -1367,7 +1406,7 @@ class TriangleGraph(SurfaceGraph):
                 are estimated
             B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
                 collecting_votes2)
-            verbose(boolean, optional): if True (default False), some extra
+            verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
         Returns:
@@ -1384,6 +1423,17 @@ class TriangleGraph(SurfaceGraph):
         # estimated principal directions:
         T_1 = eigenvectors[:, 2]
         T_2 = eigenvectors[:, 1]
+        T_3 = eigenvectors[:, 0]  # has to be equal to the normal N_v or -N_v
+        N_v = np.array(self.graph.vp.N_v[vertex_v])
+        try:
+            assert(round(abs(T_3[0]), 7) == round(abs(N_v[0]), 7) or
+                   round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) or
+                   round(abs(T_3[2]), 7) == round(abs(N_v[2])), 7)
+        except AssertionError:
+            print "Error: T_3 has to be equal to the normal N_v or -N_v, but:"
+            print "T_3 = %s" % T_3
+            print "N_v = %s" % N_v
+            exit(1)
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
         kappa_2 = 3 * b_2 - b_1
@@ -1396,6 +1446,16 @@ class TriangleGraph(SurfaceGraph):
             print "kappa_1 = %s" % kappa_1
             print "kappa_2 = %s" % kappa_2
 
+        if curvature_is_negated:
+            T_1, T_2 = T_2, T_1
+            kappa_1, kappa_2 = -1 * kappa_2, -1 * kappa_1
+            if verbose:
+                print "curvature is negated, now:"
+                print "T_1 = %s" % T_1
+                print "T_2 = %s" % T_2
+                print "kappa_1 = %s" % kappa_1
+                print "kappa_2 = %s" % kappa_2
+
         # Add T_1, T_2, kappa_1, kappa_2, derived Gaussian and mean curvatures
         # as well as shape index and curvedness as properties to the graph:
         self.graph.vp.T_1[vertex_v] = T_1
@@ -1405,8 +1465,6 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.gauss_curvature_VV[vertex_v] = kappa_1 * kappa_2
         self.graph.vp.mean_curvature_VV[vertex_v] = (kappa_1 + kappa_2) / 2
         self.graph.vp.shape_index_VV[vertex_v] = 2 / math.pi * math.atan(
-            (kappa_1 + kappa_2) / (kappa_1 - kappa_2)
-        )
+            (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
         self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
-            (kappa_1 ** 2 + kappa_2 ** 2) / 2
-        )
+            (kappa_1 ** 2 + kappa_2 ** 2) / 2)

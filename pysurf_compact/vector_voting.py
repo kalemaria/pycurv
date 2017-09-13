@@ -2,6 +2,7 @@ import time
 import numpy as np
 
 import pexceptions
+from surface_graphs import TriangleGraph
 
 """
 Contains a function implementing the normal vector voting algorithm (Page et
@@ -56,6 +57,7 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
         * If epsilon = 0 and eta = 0 (default), all triangles will be classified
           as "surface patch" (class 1).
     """
+    TriangleGraph.num_curvature_is_negated = 0
     # Preparation (calculations that are the same for the whole graph)
     t_begin = time.time()
     print '\nPreparing for running modified Vector Voting...'
@@ -70,8 +72,8 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
         # * Average length of the triangle edges *
         # weak edges of triangle graph are the most similar in length to surface
         # triangle edges
-        avg_weak_edge_length = tg.calculate_average_edge_length(prop_e="is_strong",
-                                                                value=0)
+        avg_weak_edge_length = tg.calculate_average_edge_length(
+            prop_e="is_strong", value=0)
         try:
             assert(avg_weak_edge_length > 0)
         except AssertionError:
@@ -205,10 +207,10 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
             if orientation_class[v] == 1:
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
-                B_v = collecting_votes2(v, all_neighbor_idx_to_dist[i], sigma,
-                                        verbose=False)
+                B_v, curvature_is_negated = collecting_votes2(
+                    v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
             if B_v is not None:
-                estimate_curvature(v, B_v, verbose=False)
+                estimate_curvature(v, B_v, curvature_is_negated, verbose=False)
             # For crease, no preferably oriented vertices or vertices lacking
             # neighbors, add placeholders to the corresponding vertex properties
             if orientation_class[v] != 1 or B_v is None:
@@ -237,10 +239,10 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
             if orientation_class[v] == 1 and is_on_border[v] == 0:
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
-                B_v = collecting_votes2(v, all_neighbor_idx_to_dist[i], sigma,
-                                        verbose=False)
+                B_v, curvature_is_negated = collecting_votes2(
+                    v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
             if B_v is not None:
-                estimate_curvature(v, B_v, verbose=False)
+                estimate_curvature(v, B_v, curvature_is_negated, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
             # vertices lacking neighbors, add placeholders to the corresponding
             # vertex properties
@@ -265,4 +267,5 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     t_end = time.time()
     duration = t_end - t_begin
     print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
+    print "kappa was negated %s times" % TriangleGraph.num_curvature_is_negated
     return surface_VV
