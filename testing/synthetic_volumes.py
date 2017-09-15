@@ -109,14 +109,15 @@ def main():
 
     # Generate a hollow cylinder mask
     cm = CylinderMask()
-    cylinder_r10_h21_box27_t2 = cm.generate_cylinder_mask(
-        r=10, h=21, box=27, t=2)
-    io.save_numpy(cylinder_r10_h21_box27_t2,
-                  fold + "cylinder_r10_h21_box27_t2.mrc")
+    thickness = 1  # 3592 cells (for 2 there were some artifacts & 3578 cells)
+    cylinder_r10_h21_box27 = cm.generate_cylinder_mask(
+        r=10, h=21, box=27, t=thickness)
+    io.save_numpy(cylinder_r10_h21_box27,
+                  "{}cylinder_r10_h21_box27_t{}.mrc".format(fold, thickness))
 
     # From the mask, generate a surface
-    run_gen_surface(cylinder_r10_h21_box27_t2,
-                    fold + "cylinder_r10_h21_box27_t2")  # 3578 cells
+    run_gen_surface(cylinder_r10_h21_box27,
+                    "{}cylinder_r10_h21_box27_t{}".format(fold, thickness))
 
 
 if __name__ == "__main__":
