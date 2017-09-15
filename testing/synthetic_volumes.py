@@ -3,7 +3,7 @@ import math
 import os
 
 from pysurf_compact import pysurf_io as io
-from pysurf_compact import run_gen_surface
+from pysurf_compact import run_gen_surface, pexceptions
 
 """A set of functions and classes for generating artificial segmentation volumes
 (masks) of geometrical objects."""
@@ -36,6 +36,11 @@ class CylinderMask(object):
     @staticmethod
     def generate_cylinder_mask(r=10, h=21, box=27, t=0):
         # TODO docstring
+        if h > box:
+            error_msg = "Cylinder high has to be maximum the box size."
+            raise pexceptions.PySegInputError(
+                expr='CylinderMask.generate_cylinder_mask', msg=error_msg)
+
         # Create a 2D grid with center (0, 0) in the middle
         # (slice through the box in XY plane)
         low = - math.floor(box / 2.0)
@@ -55,12 +60,15 @@ class CylinderMask(object):
         for zz in range(bottom, top):
             cylinder[:, :, zz] = circle
 
-        if t > 0:  # If thickness parameter is given
-            # Generate an inner cylinder smaller by t
-            inner_cylinder = CylinderMask.generate_cylinder_mask(
-                r=r-t, h=h-2*t, box=box)
-            # Subtract it from the bigger cylinder - get a hollow cylinder with
-            # thickness t
+        if t > 0:  # Generate a hollow cylinder with thickness t
+            # Generate an inner cylinder smaller by t ...
+            if h < box:  # ... in radius and by 2t in high ("closed" cylinder)
+                inner_cylinder = CylinderMask.generate_cylinder_mask(
+                    r=r-t, h=h-2*t, box=box)
+            else:  # ... in radius only (h == box, "open" cylinder)
+                inner_cylinder = CylinderMask.generate_cylinder_mask(
+                    r=r-t, h=h, box=box)
+            # Subtract it from the bigger cylinder
             cylinder = cylinder - inner_cylinder
 
         return cylinder
@@ -109,15 +117,27 @@ def main():
 
     # Generate a hollow cylinder mask
     cm = CylinderMask()
-    thickness = 1  # 3592 cells (for 2 there were some artifacts & 3578 cells)
-    cylinder_r10_h21_box27 = cm.generate_cylinder_mask(
-        r=10, h=21, box=27, t=thickness)
-    io.save_numpy(cylinder_r10_h21_box27,
-                  "{}cylinder_r10_h21_box27_t{}.mrc".format(fold, thickness))
+    thickness = 1  # (for 2 there were some artifacts)
+    # cylinder_r10_h21_box27 = cm.generate_cylinder_mask(
+    #     r=10, h=21, box=27, t=thickness)
+    # io.save_numpy(cylinder_r10_h21_box27,
+    #               "{}cylinder_r10_h21_box27_t{}.mrc".format(fold, thickness))
+    # cylinder_r10_h23_box23 = cm.generate_cylinder_mask(
+    #     r=10, h=23, box=23, t=thickness)
+    # io.save_numpy(cylinder_r10_h23_box23,
+    #               "{}cylinder_r10_h23_box23_t{}.mrc".format(fold, thickness))
+    cylinder_r10_h27_box27 = cm.generate_cylinder_mask(
+        r=10, h=27, box=27, t=thickness)
+    io.save_numpy(cylinder_r10_h27_box27,
+                  "{}cylinder_r10_h27_box27_t{}.mrc".format(fold, thickness))
 
     # From the mask, generate a surface
-    run_gen_surface(cylinder_r10_h21_box27,
-                    "{}cylinder_r10_h21_box27_t{}".format(fold, thickness))
+    # run_gen_surface(cylinder_r10_h21_box27,  # 3592 cells
+    #                 "{}cylinder_r10_h21_box27_t{}".format(fold, thickness))
+    # run_gen_surface(cylinder_r10_h23_box23,  # 3140 cells, little unevenness
+    #                 "{}cylinder_r10_h23_box23_t{}".format(fold, thickness))
+    run_gen_surface(cylinder_r10_h27_box27,  # 3672 cells, little unevenness
+                    "{}cylinder_r10_h27_box27_t{}".format(fold, thickness))
 
 
 if __name__ == "__main__":
