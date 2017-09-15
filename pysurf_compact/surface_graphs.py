@@ -1433,7 +1433,7 @@ class TriangleGraph(SurfaceGraph):
             print "Error: T_3 has to be equal to the normal N_v or -N_v, but:"
             print "T_3 = %s" % T_3
             print "N_v = %s" % N_v
-            exit(1)
+            exit(0)
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
         kappa_2 = 3 * b_2 - b_1
