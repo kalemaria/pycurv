@@ -39,7 +39,7 @@ def close_holes(infile, cube_size, iterations, outfile):
     io.save_numpy(tomo_closed, outfile)
 
 
-def run_gen_surface(tomo, outfile_base, lbl=1, mask=True,
+def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
                     save_input_as_vti=False, verbose=False):
     """
     Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle
@@ -58,6 +58,8 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True,
             default 1
         mask (boolean, optional): if True (default), a mask of the binary
             objects is applied on the resulting surface to reduce artifacts
+        other_mask (numpy.ndarray, optional): if given (default None), this
+            segmentation is used as mask for the surface
         save_input_as_vti (boolean, optional): if True (default False), the
             input is saved as a '.vti' file ('<outfile_base>.vti')
         verbose (boolean, optional): if True (default False), some extra
@@ -69,7 +71,8 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True,
     t_begin = time.time()
 
     # Generating the surface (vtkPolyData object)
-    surface = io.gen_surface(tomo, lbl=lbl, mask=mask, verbose=verbose)
+    surface = io.gen_surface(tomo, lbl=lbl, mask=mask, other_mask=other_mask,
+                             verbose=verbose)
 
     # Filter out triangles with area=0, if any are present
     surface = __filter_null_triangles(surface, verbose=verbose)

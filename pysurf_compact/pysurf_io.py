@@ -253,8 +253,8 @@ def load_poly(fname):
     return reader.GetOutput()
 
 
-def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False,
-                mode_2d=False, verbose=False):
+def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
+                field=False, mode_2d=False, verbose=False):
     """
     Generates a VTK PolyData surface from a segmented tomogram.
 
@@ -264,6 +264,8 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False,
         lbl (int, optional): label for the foreground, default 1
         mask (boolean, optional): if True (default), the input segmentation is
             used as mask for the surface
+        other_mask (numpy.ndarray, optional): if given (default None), this
+            segmentation is used as mask for the surface
         purge_ratio (int, optional): if greater than 1 (default), then 1 every
             purge_ratio points of the segmentation are randomly deleted
         field (boolean, optional): if True (default False), additionally returns
@@ -383,8 +385,16 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False,
 
     # Masking according to distance to the original segmentation
     if mask:
-        tomod = scipy.ndimage.morphology.distance_transform_edt(
-            np.invert(tomo == lbl))
+        if other_mask is None:
+            tomod = scipy.ndimage.morphology.distance_transform_edt(
+                np.invert(tomo == lbl))
+        elif isinstance(other_mask, np.ndarray):
+            tomod = scipy.ndimage.morphology.distance_transform_edt(
+                np.invert(other_mask == lbl))
+        else:
+            error_msg = 'Other mask must be a ndarray.'
+            raise pexceptions.PySegInputError(expr='gen_surface', msg=error_msg)
+
         for i in range(tsurf.GetNumberOfCells()):
 
             # Check if all points which made up the polygon are in the mask
@@ -392,8 +402,8 @@ def gen_surface(tomo, lbl=1, mask=True, purge_ratio=1, field=False,
             count = 0
             for j in range(0, points_cell.GetNumberOfPoints()):
                 x, y, z = points_cell.GetPoint(j)
-                if (tomod[int(round(x)), int(round(y)), int(round(z))]
-                        > MAX_DIST_SURF):
+                if (tomod[int(round(x)), int(round(y)), int(round(z))] >
+                        MAX_DIST_SURF):
                     count += 1
 
             if count > 0:
