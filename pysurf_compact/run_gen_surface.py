@@ -83,7 +83,7 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
 
     # Writing the vtkPolyData surface into a VTP file
     io.save_vtp(surface, outfile_base + '.surface.vtp')
-    print 'Surface was written to the file %s.vtp' % outfile_base
+    print 'Surface was written to the file %s.surface.vtp' % outfile_base
 
     if save_input_as_vti is True:
         # If input is a file name, read in the segmentation array from the file:
