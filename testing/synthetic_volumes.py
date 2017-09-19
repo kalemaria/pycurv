@@ -15,7 +15,16 @@ class SphereMask(object):
     """
     @staticmethod
     def generate_sphere_mask(r=10, box=23, t=0):
-        # TODO docstring
+        """
+
+        Args:
+            r:
+            box:
+            t:
+
+        Returns:
+
+        """
         if 2 * r + 1 > box:
             error_msg = "Sphere diameter has to fit into the box."
             raise pexceptions.PySegInputError(
@@ -48,7 +57,18 @@ class CylinderMask(object):
     """
     @staticmethod
     def generate_cylinder_mask(r=10, h=21, box=27, t=0, opened=False):
-        # TODO docstring
+        """
+
+        Args:
+            r:
+            h:
+            box:
+            t:
+            opened:
+
+        Returns:
+
+        """
         if 2 * r + 1 > box:
             error_msg = "Cylinder diameter has to fit into the box."
             raise pexceptions.PySegInputError(

@@ -420,15 +420,15 @@ class VectorVotingTestCase(unittest.TestCase):
     #     self.parametric_test_sphere_curvatures_old(
     #         radius=5, res=50, inverse=True, g_max=1, epsilon=0, eta=0)
 
-    def test_sphere_radius20_g_max3_curvatures(self):
+    def test_sphere_curvatures(self):
         """
-        Tests whether curvatures for a sphere with radius 20 are correctly
-        estimated using NVV with g_max = 3:
+        Tests whether curvatures for a sphere with a certain radius are
+        correctly estimated using NVV with a certain g_max:
 
         kappa1 = kappa2 = 1/20 = 0.05; 30% of difference is allowed
         """
         self.parametric_test_sphere_curvatures(
-            radius=20, g_max=3, epsilon=0, eta=0)
+            radius=20, g_max=14, epsilon=0, eta=0)
 
     # def test_inverse_sphere_radius20_g_max3_curvatures(self):
     #     """
