@@ -253,13 +253,13 @@ class VectorVotingTestCase(unittest.TestCase):
         scale_x = 2 * radius
         scale_y = 2 * radius
         scale_z = 2 * radius
-        fold2 = '{}files4plotting/'.format(fold)
+        files_fold = '{}files4plotting/'.format(fold)
         if inverse:
             inverse_str = "inverse_"
         else:
             inverse_str = ""
         base_filename = "{}{}sphere_r{}".format(
-            fold2, inverse_str, radius)
+            files_fold, inverse_str, radius)
         if g_max > 0:
             surf_VV_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
@@ -357,16 +357,16 @@ class VectorVotingTestCase(unittest.TestCase):
             correct_curvature *= -1
         kappa_1_errors = np.array(map(
             lambda x: abs(x - correct_curvature) /
-            correct_curvature * 100.0, kappa_1_values))
+            abs(correct_curvature) * 100.0, kappa_1_values))
         kappa_2_errors = np.array(map(
             lambda x: abs(x - correct_curvature) /
-            correct_curvature * 100.0, kappa_2_values))
+            abs(correct_curvature) * 100.0, kappa_2_values))
         vtk_max_curvature_errors = np.array(map(
             lambda x: abs(x - correct_curvature) /
-            correct_curvature * 100.0, vtk_max_curvature_values))
+            abs(correct_curvature) * 100.0, vtk_max_curvature_values))
         vtk_min_curvature_errors = np.array(map(
             lambda x: abs(x - correct_curvature) /
-            correct_curvature * 100.0, vtk_min_curvature_values))
+            abs(correct_curvature) * 100.0, vtk_min_curvature_values))
 
         # Writing all the curvature values and errors into files:
         io.write_values_to_file(kappa_1_values, kappa_1_file)

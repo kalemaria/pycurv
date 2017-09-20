@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import pexceptions
 
 
 def plot_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
-              value_range=None):
+              value_range=None, outfile=None):
     """
     Plots a histogram of the values with the given number of bins and plot
     title.
@@ -18,10 +19,12 @@ def plot_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
         xlabel:
         ylabel:
         value_range:
+        outfile:
 
     Returns:
 
     """
+    fig = plt.figure()
     if value_range is None:
         plt.hist(value_list, bins=num_bins)
     elif isinstance(value_range, tuple) and len(value_range) == 2:
@@ -32,11 +35,14 @@ def plot_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.show()
+    if outfile is None:
+        plt.show()
+    elif isinstance(outfile, str):
+        fig.savefig(outfile)
 
 
 def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
-                   value_range=None):
+                   value_range=None, outfile=None):
     """
     Plots a line histogram of the values with the given number of bins and plot
     title.
@@ -48,10 +54,12 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
         xlabel:
         ylabel:
         value_range:
+        outfile:
 
     Returns:
 
     """
+    fig = plt.figure()
     counts = []
     bin_edges = []
     if value_range is None:
@@ -67,15 +75,18 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.show()
+    if outfile is None:
+        plt.show()
+    elif isinstance(outfile, str):
+        fig.savefig(outfile)
 
 
 def plot_double_line_hist(value_list1, value_list2, num_bins, title,
                           xlabel="Value", ylabel="Counts", value_range=None,
-                          label1="values 1", label2="values 2"):
+                          label1="values 1", label2="values 2", outfile=None):
     """
     Plots a line histogram of two value lists with the given number of bins and
-    plot title. # TODO ADD A LEGEND!
+    plot title.
 
     Args:
         value_list1:
@@ -87,10 +98,12 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
         value_range:
         label1:
         label2:
+        outfile:
 
     Returns:
 
     """
+    fig = plt.figure()
     counts1 = []
     bin_edges1 = []
     counts2 = []
@@ -114,7 +127,10 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.legend(loc='upper right')
-    plt.show()
+    if outfile is None:
+        plt.show()
+    elif isinstance(outfile, str):
+        fig.savefig(outfile)
 
 
 # Plotting for vector voting tests
@@ -126,12 +142,13 @@ def main():
     eta = 0
 
     fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/good/'
-    fold2 = '{}files4plotting/'.format(fold)
+    files_fold = '{}files4plotting/'.format(fold)
+    plots_fold = '{}plots/'.format(fold)
     if inverse:
         inverse_str = "inverse_"
     else:
         inverse_str = ""
-    base_filename = "{}{}sphere_r{}".format(fold2, inverse_str, radius)
+    base_filename = "{}{}sphere_r{}".format(files_fold, inverse_str, radius)
     kappa_1_file = '{}.VV_g_max{}_epsilon{}_eta{}.kappa_1.txt'.format(
         base_filename, g_max, epsilon, eta)
     kappa_2_file = '{}.VV_g_max{}_epsilon{}_eta{}.kappa_2.txt'.format(
@@ -163,34 +180,54 @@ def main():
         vtk_min_curvature_errors_file)
 
     # Plotting:
+    root, ext = os.path.splitext(kappa_1_file)
+    head, tail = os.path.split(root)
+    kappa_1_plot = "{}{}.png".format(plots_fold, tail)
+    # print len(kappa_1_values)  # debug
     plot_hist(kappa_1_values, 30,
-              "Sphere with radius {}, NVV with g_max={}, epsilon={}, eta={}"
+              "Sphere with radius {}, VV with g_max={}, epsilon={}, eta={}"
               .format(radius, g_max, epsilon, eta),
-              xlabel="Maximal principal curvature", ylabel="Number of vertices")
+              xlabel="Maximal principal curvature", ylabel="Number of vertices",
+              outfile=kappa_1_plot)
+    root, ext = os.path.splitext(kappa_1_errors_file)
+    head, tail = os.path.split(root)
+    kappa_1_errors_plot = "{}{}.png".format(plots_fold, tail)
+    # print len(kappa_1_errors)  # debug
     plot_hist(kappa_1_errors, 10,
-              "Sphere with radius={}, NVV with g_max={}, epsilon={}, eta={}"
+              "Sphere with radius={}, VV with g_max={}, epsilon={}, eta={}"
               .format(radius, g_max, epsilon, eta),
               xlabel="Maximal principal curvature error (%)",
-              ylabel="Number of vertices", value_range=(0, 100))
+              ylabel="Number of vertices", value_range=(0, 100),
+              outfile=kappa_1_errors_plot)
     # plot_hist(kappa_2_values, 30,
-    #           "Sphere with radius={}, NVV with g_max={}, epsilon={}, eta={}"
+    #           "Sphere with radius={}, VV with g_max={}, epsilon={}, eta={}"
     #           .format(radius, g_max, epsilon, eta),
     #           xlabel="Minimal principal curvature", ylabel="Number of vertices")
     # plot_hist(kappa_2_errors, 10,
-    #           "Sphere with radius={}, NVV with g_max={}, epsilon={}, eta={}"
+    #           "Sphere with radius={}, VV with g_max={}, epsilon={}, eta={}"
     #           .format(radius, g_max, epsilon, eta),
     #           xlabel="Minimal principal curvature error (%)",
     #           ylabel="Number of vertices", value_range=(0, 100))
 
-    # plot_hist(vtk_max_curvature_values, 30,
-    #           "Sphere with radius={}, averaging of VTK values for triangle "
-    #           "vertices".format(radius),
-    #           xlabel="Maximal principal curvature", ylabel="Number of vertices")
+    root, ext = os.path.splitext(vtk_max_curvature_file)
+    head, tail = os.path.split(root)
+    vtk_max_curvature_plot = "{}{}.png".format(plots_fold, tail)
+    # print len(vtk_max_curvature_values)  # debug
+    plot_hist(vtk_max_curvature_values, 30,
+              "Sphere with radius={}, averaging of VTK values for triangle "
+              "vertices".format(radius),
+              xlabel="Maximal principal curvature", ylabel="Number of vertices",
+              outfile=vtk_max_curvature_plot)
+    root, ext = os.path.splitext(vtk_max_curvature_errors_file)
+    head, tail = os.path.split(root)
+    vtk_max_curvature_errors_plot = "{}{}.png".format(plots_fold, tail)
+    # print len(vtk_max_curvature_errors)  # debug
     plot_hist(vtk_max_curvature_errors, 10,
               "Sphere with radius={}, averaging of VTK values for triangle "
               "vertices".format(radius),
               xlabel="Maximal principal curvature error (%)",
-              ylabel="Number of vertices", value_range=(0, 100))
+              ylabel="Number of vertices", value_range=(0, 100),
+              outfile=vtk_max_curvature_errors_plot)
     # plot_hist(vtk_min_curvature_values, 30,
     #           "Sphere with radius={}, averaging of VTK values for triangle "
     #           "vertices".format(radius),
@@ -200,15 +237,18 @@ def main():
     #           "vertices".format(radius),
     #           xlabel="Minimal principal curvature error (%)",
     #           ylabel="Number of vertices", value_range=(0, 100))
-    
+
+    tail = "{}sphere_r{}.VV_g_max{}_epsilon{}_eta{}vsVTK.kappa_1_errors".format(
+        inverse_str, radius, g_max, epsilon, eta)
+    vv_vtk_kappa_1_errors_plot = "{}{}.png".format(plots_fold, tail)
     plot_double_line_hist(
         kappa_1_errors, vtk_max_curvature_errors, 10,
-        "Sphere with radius={}, NVV with g_max={}, epsilon={}, eta={}\n"
+        "Sphere with radius={}, VV with g_max={}, epsilon={}, eta={}\n"
         "vs. averaging of VTK values for triangle vertices".format(
             radius, g_max, epsilon, eta),
         xlabel="Maximal principal curvature error (%)",
         ylabel="Number of vertices", value_range=(0, 100),
-        label1="NVV", label2="VTK")
+        label1="VV", label2="VTK", outfile=vv_vtk_kappa_1_errors_plot)
 
 if __name__ == "__main__":
     main()
