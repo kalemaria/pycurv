@@ -10,6 +10,19 @@ from synthetic_surfaces import SphereGenerator
 from synthetic_volumes import SphereMask
 
 
+def percent_error(true_value, estimated_value):
+    """
+    Calculates the "percent error": relative error as measure of accuracy.
+    Args:
+        true_value: true / accepted value
+        estimated_value: estimated / measures / experimental value
+
+    Returns:
+        abs((true_value - estimated_value) / true_value) * 100.0
+    """
+    return abs((true_value - estimated_value) / true_value) * 100.0
+
+
 class VectorVotingTestCase(unittest.TestCase):
     """
     Tests for vector_voting.py, assuming that other used functions are correct.
@@ -21,7 +34,7 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius and resolution. Tests whether the curvatures are
-        correctly estimated using NVV with a given g_max:
+        correctly estimated using Normal Vector Voting (VV) with a given g_max:
 
         kappa_1 = kappa_2 = 1/r; 30% of difference is allowed.
 
@@ -215,9 +228,9 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
-        estimated using NVV with a given g_max:
+        estimated using Normal Vector Voting (VV) with a given g_max:
 
-        kappa_1 = kappa_2 = 1/r; 30% of difference is allowed.
+        kappa_1 = kappa_2 = 1/r; allowing some error.
 
         Args:
             radius (int): radius of the sphere
@@ -290,14 +303,12 @@ class VectorVotingTestCase(unittest.TestCase):
                          "positive, the specified g_max will be used).")
             raise pexceptions.PySegInputError(
                 expr='parametric_test_sphere_curvatures', msg=error_msg)
-        vtk_max_curvature_file = ('{}.VTK.max_curvature.txt'
-                                  .format(base_filename))
-        vtk_min_curvature_file = ('{}.VTK.min_curvature.txt'
-                                  .format(base_filename))
-        vtk_max_curvature_errors_file = ('{}.VTK.max_curvature_errors.txt'
-                                         .format(base_filename))
-        vtk_min_curvature_errors_file = ('{}.VTK.min_curvature_errors.txt'
-                                         .format(base_filename))
+        vtk_kappa_1_file = ('{}.VTK.kappa_1.txt'.format(base_filename))
+        vtk_kappa_2_file = ('{}.VTK.kappa_2.txt'.format(base_filename))
+        vtk_kappa_1_errors_file = ('{}.VTK.kappa_1_errors.txt'
+                                   .format(base_filename))
+        vtk_kappa_2_errors_file = ('{}.VTK.kappa_2_errors.txt'
+                                   .format(base_filename))
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
@@ -348,57 +359,71 @@ class VectorVotingTestCase(unittest.TestCase):
         # Getting principal curvatures from NVV and VTK from the output graph:
         kappa_1_values = tg.get_vertex_property_array("kappa_1")
         kappa_2_values = tg.get_vertex_property_array("kappa_2")
-        vtk_max_curvature_values = tg.get_vertex_property_array("max_curvature")
-        vtk_min_curvature_values = tg.get_vertex_property_array("min_curvature")
+        vtk_kappa_1_values = tg.get_vertex_property_array("max_curvature")
+        vtk_kappa_2_values = tg.get_vertex_property_array("min_curvature")
 
-        # Calculating the errors of the principal curvatures in percents:
+        # Calculating average principal curvatures
+        kappa_1_avg = np.mean(kappa_1_values)
+        kappa_2_avg = np.mean(kappa_2_values)
+
+        # Correct principal curvatures
         correct_curvature = 1.0 / radius
         if inverse:
             correct_curvature *= -1
+
+        # Calculating the percent errors of the principal curvatures:
         kappa_1_errors = np.array(map(
-            lambda x: abs(x - correct_curvature) /
-            abs(correct_curvature) * 100.0, kappa_1_values))
+            lambda x: percent_error(correct_curvature, x), kappa_1_values))
         kappa_2_errors = np.array(map(
-            lambda x: abs(x - correct_curvature) /
-            abs(correct_curvature) * 100.0, kappa_2_values))
-        vtk_max_curvature_errors = np.array(map(
-            lambda x: abs(x - correct_curvature) /
-            abs(correct_curvature) * 100.0, vtk_max_curvature_values))
-        vtk_min_curvature_errors = np.array(map(
-            lambda x: abs(x - correct_curvature) /
-            abs(correct_curvature) * 100.0, vtk_min_curvature_values))
+            lambda x: percent_error(correct_curvature, x), kappa_2_values))
+        vtk_kappa_1_errors = np.array(map(
+            lambda x: percent_error(correct_curvature, x), vtk_kappa_1_values))
+        vtk_kappa_2_errors = np.array(map(
+            lambda x: percent_error(correct_curvature, x), vtk_kappa_2_values))
 
         # Writing all the curvature values and errors into files:
         io.write_values_to_file(kappa_1_values, kappa_1_file)
         io.write_values_to_file(kappa_1_errors, kappa_1_errors_file)
         io.write_values_to_file(kappa_2_values, kappa_2_file)
         io.write_values_to_file(kappa_2_errors, kappa_2_errors_file)
-        io.write_values_to_file(vtk_max_curvature_values,
-                                vtk_max_curvature_file)
-        io.write_values_to_file(vtk_max_curvature_errors,
-                                vtk_max_curvature_errors_file)
-        io.write_values_to_file(vtk_min_curvature_values,
-                                vtk_min_curvature_file)
-        io.write_values_to_file(vtk_min_curvature_errors,
-                                vtk_min_curvature_errors_file)
+        io.write_values_to_file(vtk_kappa_1_values, vtk_kappa_1_file)
+        io.write_values_to_file(vtk_kappa_1_errors, vtk_kappa_1_errors_file)
+        io.write_values_to_file(vtk_kappa_2_values, vtk_kappa_2_file)
+        io.write_values_to_file(vtk_kappa_2_errors, vtk_kappa_2_errors_file)
 
-        # Asserting that all values of both principal curvatures are close to
-        # the correct value, 30% of difference is allowed:
+        # # Asserting that all values of both principal curvatures are close to
+        # # the correct value, allowing percent error of +-30%:
+        # allowed_error = 0.3 * abs(correct_curvature)
+        # print "Testing the maximal principal curvatures (kappa_1)..."
+        # for kappa_1 in kappa_1_values:
+        #     msg = '{} is not in [{}, {}]!'.format(
+        #         kappa_1, correct_curvature - allowed_error,
+        #         correct_curvature + allowed_error)
+        #     self.assertAlmostEqual(kappa_1, correct_curvature,
+        #                            delta=allowed_error, msg=msg)
+        # print "Testing the minimal principal curvatures (kappa_2)..."
+        # for kappa_2 in kappa_2_values:
+        #     msg = '{} is not in [{}, {}]!'.format(
+        #         kappa_2, correct_curvature - allowed_error,
+        #         correct_curvature + allowed_error)
+        #     self.assertAlmostEqual(kappa_2, correct_curvature,
+        #                            delta=allowed_error, msg=msg)
+
+        # Asserting that average principal curvatures are close to the correct
+        # ones allowing percent error of +-30%
         allowed_error = 0.3 * abs(correct_curvature)
-        print "Testing the maximal principal curvatures (kappa_1)..."
-        for kappa_1 in kappa_1_values:
-            msg = '{} is not in [{}, {}]!'.format(
-                kappa_1, correct_curvature - allowed_error,
-                correct_curvature + allowed_error)
-            self.assertAlmostEqual(kappa_1, correct_curvature,
-                                   delta=allowed_error, msg=msg)
-        print "Testing the minimal principal curvatures (kappa_2)..."
-        for kappa_2 in kappa_2_values:
-            msg = '{} is not in [{}, {}]!'.format(
-                kappa_2, correct_curvature - allowed_error,
-                correct_curvature + allowed_error)
-            self.assertAlmostEqual(kappa_2, correct_curvature,
-                                   delta=allowed_error, msg=msg)
+        print "Testing the average maximal principal curvature (kappa_1)..."
+        msg = '{} is not in [{}, {}]!'.format(
+            kappa_1_avg, correct_curvature - allowed_error,
+            correct_curvature + allowed_error)
+        self.assertAlmostEqual(kappa_1_avg, correct_curvature,
+                               delta=allowed_error, msg=msg)
+        print "Testing the average minimal principal curvature (kappa_2)..."
+        msg = '{} is not in [{}, {}]!'.format(
+            kappa_2_avg, correct_curvature - allowed_error,
+            correct_curvature + allowed_error)
+        self.assertAlmostEqual(kappa_2_avg, correct_curvature,
+                               delta=allowed_error, msg=msg)
 
     # def test_sphere_radius5_res50_g_max1_curvatures(self):
     #     """
@@ -428,7 +453,7 @@ class VectorVotingTestCase(unittest.TestCase):
         kappa1 = kappa2 = 1/20 = 0.05; 30% of difference is allowed
         """
         self.parametric_test_sphere_curvatures(
-            radius=20, g_max=14, epsilon=0, eta=0)
+            radius=20, g_max=7, epsilon=0, eta=0)
 
     # def test_inverse_sphere_radius20_g_max3_curvatures(self):
     #     """

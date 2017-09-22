@@ -593,12 +593,14 @@ class SegmentationGraph(object):
         if (isinstance(property_name, str) and
                 property_name in self.graph.vertex_properties):
             values = self.graph.vertex_properties[property_name].get_array()
-            print '%s "%s" values' % (len(values), property_name)
-            print 'min = %s, max = %s' % (min(values), max(values))
+            print '{} "{}" values'.format(len(values), property_name)
+            print 'min = {}, max = {}, mean = {}'.format(
+                min(values), max(values), np.mean(values))
             return values
         else:
-            error_msg = ('The input "%s" is not a str object or is not found '
-                         'in vertex properties of the graph.' % property_name)
+            error_msg = ('The input "{}" is not a str object or is not found '
+                         'in vertex properties of the graph.'.format(
+                          property_name))
             raise pexceptions.PySegInputError(
                 expr='get_vertex_property_array (SegmentationGraph)',
                 msg=error_msg)
