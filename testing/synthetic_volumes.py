@@ -16,14 +16,17 @@ class SphereMask(object):
     @staticmethod
     def generate_sphere_mask(r=10, box=23, t=0):
         """
+        Generates a 3D volume with a sphere binary mask.
 
         Args:
-            r:
-            box:
-            t:
+            r (int): radius in voxels (default 10)
+            box (int): size of the box in x, y, and z dimensions in voxels, has
+                to be at least 2 * r + 1 (default 23)
+            t (int): thickness of a hollow sphere in voxels, if 0 (default) a
+                filled sphere is generated
 
         Returns:
-
+            3D volume with the sphere mask (numpy.ndarray)
         """
         if 2 * r + 1 > box:
             error_msg = "Sphere diameter has to fit into the box."
@@ -58,16 +61,20 @@ class CylinderMask(object):
     @staticmethod
     def generate_cylinder_mask(r=10, h=21, box=27, t=0, opened=False):
         """
+        Generates a 3D volume with a cylinder binary mask.
 
         Args:
-            r:
-            h:
-            box:
-            t:
-            opened:
+            r (int): radius in voxels (default 10)
+            h (int): height in voxels (default 21)
+            box (int): size of the box in x, y, and z dimensions in voxels, has
+                to be at least 2 * r + 1 or h (the bigger of them, default 27)
+            t (int): thickness of a hollow cylinder in voxels, if 0 (default) a
+                filled cylinder is generated
+            opened (boolean): if True (default False) and t>0, an "opened"
+                cylinder mask without the circular planes is generated
 
         Returns:
-
+            3D volume with the cylinder mask (numpy.ndarray)
         """
         if 2 * r + 1 > box:
             error_msg = "Cylinder diameter has to fit into the box."
@@ -102,7 +109,7 @@ class CylinderMask(object):
             if opened is True:  # ... in radius only ("open" cylinder)
                 inner_cylinder = CylinderMask.generate_cylinder_mask(
                     r=r-t, h=h, box=box)
-            else:  # ... in radius and by 2t in high ("closed" cylinder)
+            else:  # ... in radius and by 2t in height ("closed" cylinder)
                 inner_cylinder = CylinderMask.generate_cylinder_mask(
                     r=r-t, h=h-2*t, box=box)
 

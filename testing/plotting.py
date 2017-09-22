@@ -13,16 +13,17 @@ def plot_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
     title.
 
     Args:
-        value_list:
-        num_bins:
-        title:
-        xlabel:
-        ylabel:
-        value_range:
-        outfile:
+        value_list: a list of numerical values
+        num_bins (int): number of bins for the histogram
+        title (str): title of the plot
+        xlabel (str): X axis label
+        ylabel (str): Y axis label
+        value_range: a tuple of two values to limit the range at X axis
+        outfile (str): if given (default None), the plot with be saved as a file
+            under this path
 
     Returns:
-
+        None
     """
     fig = plt.figure()
     if value_range is None:
@@ -48,16 +49,17 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
     title.
 
     Args:
-        value_list:
-        num_bins:
-        title:
-        xlabel:
-        ylabel:
-        value_range:
-        outfile:
+        value_list: a list of numerical values
+        num_bins (int): number of bins for the histogram
+        title (str): title of the plot
+        xlabel (str): X axis label
+        ylabel (str): Y axis label
+        value_range: a tuple of two values to limit the range at X axis
+        outfile (str): if given (default None), the plot with be saved as a file
+            under this path
 
     Returns:
-
+        None
     """
     fig = plt.figure()
     counts = []
@@ -89,19 +91,20 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
     plot title.
 
     Args:
-        value_list1:
-        value_list2:
-        num_bins:
-        title:
-        xlabel:
-        ylabel:
-        value_range:
-        label1:
-        label2:
-        outfile:
+        value_list1: first list of numerical values
+        value_list2: second list of numerical values
+        num_bins (int): number of bins for the histogram
+        title (str): title of the plot
+        xlabel (str): X axis label
+        ylabel (str): Y axis label
+        value_range: a tuple of two values to limit the range at X axis
+        label1 (str): legend label for the first value list
+        label2 (str): legend label for the second value list
+        outfile (str): if given (default None), the plot with be saved as a file
+            under this path
 
     Returns:
-
+        None
     """
     fig = plt.figure()
     counts1 = []
@@ -133,8 +136,13 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
         fig.savefig(outfile)
 
 
-# Plotting for vector voting tests
 def main():
+    """
+    Main method for plotting Normal Vector Voting test results.
+
+    Returns:
+        None
+    """
     radius = 20
     inverse = False
     g_max = 13
