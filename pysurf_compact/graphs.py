@@ -343,8 +343,7 @@ class SegmentationGraph(object):
                     num_components = 1
                 else:  # vector
                     num_components = len(
-                        self.graph.vp[prop_key][self.graph.vertex(0)]
-                    )
+                        self.graph.vp[prop_key][self.graph.vertex(0)])
                 array = TypesConverter().gt_to_vtk(data_type)
                 array.SetName(prop_key)
                 if verbose:
@@ -362,8 +361,7 @@ class SegmentationGraph(object):
                     num_components = 1
                 else:  # vector (all edge properties so far are scalars)
                     # num_components = len(
-                    #     self.graph.ep[prop_key][self.graph.edge(0, 1)]
-                    # )
+                    #     self.graph.ep[prop_key][self.graph.edge(0, 1)])
                     num_components = 3
                     if verbose:
                         print ('Sorry, not implemented yet, assuming a vector '
@@ -521,10 +519,9 @@ class SegmentationGraph(object):
         average_edge_length = None
         if prop_e is None:
             print "Considering all edges:"
-            for ed in self.graph.edges():
-                total_edge_length += self.graph.ep.distance[ed]
             if self.graph.num_edges() > 0:
-                average_edge_length = total_edge_length / self.graph.num_edges()
+                print ("{} edges".format(self.graph.num_edges()))
+                average_edge_length = np.mean(self.graph.ep.distance.a)
             else:
                 print "There are no edges in the graph!"
         elif prop_e in self.graph.edge_properties:
@@ -536,6 +533,7 @@ class SegmentationGraph(object):
                     num_special_edges += 1
                     total_edge_length += self.graph.ep.distance[ed]
             if num_special_edges > 0:
+                print ("{} such edges".format(num_special_edges))
                 average_edge_length = total_edge_length / num_special_edges
             else:
                 print ("There are no edges with the property %s equaling value "

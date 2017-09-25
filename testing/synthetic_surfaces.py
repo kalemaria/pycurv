@@ -1,6 +1,9 @@
 import vtk
+import math
+import numpy as np
+
 from pysurf_compact import pysurf_io as io
-from pysurf_compact import pexceptions
+from pysurf_compact import pexceptions, PointGraph
 
 """A set of functions and classes for generating artificial surfaces of
 geometrical objects."""
@@ -47,6 +50,52 @@ def remove_non_triangle_cells(surface):
     print('{} cells after deleting non-triangle cells'.format(
         surface.GetNumberOfCells()))
     return surface
+
+
+def add_gaussian_noise_to_surface(surface, percent=10, only_z=True):
+    """
+    Adds Gaussian noise to a surface by moving points coordinates.
+    Args:
+        surface (vtk.vtkPolyData): input surface
+        percent (int, optional): determines variance of the Gaussian noise in
+            percents of average triangle edge length (default 10)
+        only_z (boolean, optional): if True (default), noise will be added only
+            in the z dimension, otherwise in all dimensions
+
+    Returns:
+        noisy surface (vtk.vtkPolyData)
+    """
+    # Find the average triangle edge length (l_ave)
+    pg = PointGraph(scale_factor_to_nm=1, scale_x=1, scale_y=1, scale_z=1)
+    pg.build_graph_from_vtk_surface(surface)
+    l_ave = pg.calculate_average_edge_length()
+
+    # Variance of the noise is the given percent of l_ave
+    var = percent / 100.0 * l_ave
+    print ("variance = {}".format(var))
+    std = math.sqrt(var)  # standard deviation
+
+    # Copy the surface and initialize vtkPoints data structure
+    new_surface = vtk.vtkPolyData()
+    new_surface.DeepCopy(surface)
+    points = vtk.vtkPoints()
+
+    # For each point, randomly add noise from Gaussian distribution with the
+    # wanted variance
+    for i in xrange(surface.GetNumberOfPoints()):
+        x, y, z = surface.GetPoint(i)
+        if only_z:
+            new_z = np.random.normal(loc=z, scale=std)
+            points.InsertPoint(i, x, y, new_z)
+        else:
+            new_x = np.random.normal(loc=x, scale=std)
+            new_y = np.random.normal(loc=y, scale=std)
+            new_z = np.random.normal(loc=z, scale=std)
+            points.InsertPoint(i, new_x, new_y, new_z)
+    # Set the points of the surface copy
+    new_surface.SetPoints(points)
+
+    return new_surface
 
 
 class PlaneGenerator(object):
@@ -202,18 +251,20 @@ def main():
     # Plane
     pg = PlaneGenerator()
     plane = pg.generate_plane_surface(half_size=10, res=30)
-    io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
+    # io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
+    noisy_plane = add_gaussian_noise_to_surface(plane, percent=10, only_z=True)
+    io.save_vtp(noisy_plane, fold + "plane_half_size10_res30_noise10%z.vtp")
 
-    # Sphere
-    sg = SphereGenerator()
-    sphere_r10 = sg.generate_sphere_surface(r=10, latitude_res=50,
-                                            longitude_res=50)
-    io.save_vtp(sphere_r10, fold + "sphere_r10_res50.vtp")
-
-    # Cylinder
-    cg = CylinderGenerator()
-    cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
-    io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
+    # # Sphere
+    # sg = SphereGenerator()
+    # sphere_r10 = sg.generate_sphere_surface(r=10, latitude_res=50,
+    #                                         longitude_res=50)
+    # io.save_vtp(sphere_r10, fold + "sphere_r10_res50.vtp")
+    #
+    # # Cylinder
+    # cg = CylinderGenerator()
+    # cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
+    # io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
 
 
 if __name__ == "__main__":

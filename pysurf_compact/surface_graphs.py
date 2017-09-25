@@ -134,6 +134,65 @@ class SurfaceGraph(graphs.SegmentationGraph):
         pass
 
 
+# Class defining the PointGraph object, its attributes and methods.
+class PointGraph(SurfaceGraph):
+    # TODO docstring, split lines, throw exceptions
+    # Builds the graph from a vtkPolyData surface.
+    def build_graph_from_vtk_surface(self, surface, verbose=False):
+        if isinstance(surface, vtk.vtkPolyData):
+            surface = rescale_surface(surface, self.scale_factor_to_nm)  # rescale the surface to nm
+
+            # 0. Check numbers of cells (polygons or triangles) and all points.
+            print '%s cells' % surface.GetNumberOfCells()
+            print '%s points' % surface.GetNumberOfPoints()
+
+            # 1. Iterate over all cells, adding their points as vertices to the graph and connecting them by edges.
+            for i in xrange(surface.GetNumberOfCells()):
+                if verbose:
+                    print 'Cell number %s:' % i
+
+                # Get all points which made up the cell and check that they are 3.
+                points_cell = surface.GetCell(i).GetPoints()
+                if points_cell.GetNumberOfPoints() == 3:
+                    # 1a) Add each of the 3 points as vertex to the graph, if it has not been added yet.
+                    for j in range(0, 3):
+                        x, y, z = points_cell.GetPoint(j)
+                        p = (x, y, z)
+                        if p not in self.coordinates_to_vertex_index:
+                            vd = self.graph.add_vertex()  # vertex descriptor
+                            self.graph.vp.xyz[vd] = [x, y, z]
+                            self.coordinates_to_vertex_index[p] = self.graph.vertex_index[vd]
+                            if verbose:
+                                print '\tThe point (%s, %s, %s) has been added to the graph as a vertex.' % (x, y, z)
+
+                    # 1b) Add an edge with a distance between all 3 pairs of vertices, if it has not been added yet.
+                    for k in range(0, 2):
+                        x1, y1, z1 = points_cell.GetPoint(k)
+                        p1 = (x1, y1, z1)
+                        vd1 = self.graph.vertex(self.coordinates_to_vertex_index[p1])  # vertex descriptor of the 1st point
+                        for l in range(k + 1, 3):
+                            x2, y2, z2 = points_cell.GetPoint(l)
+                            p2 = (x2, y2, z2)
+                            vd2 = self.graph.vertex(self.coordinates_to_vertex_index[p2])  # vertex descriptor of the 2nd point
+                            if not (((p1, p2) in self.coordinates_pair_connected) or ((p2, p1) in self.coordinates_pair_connected)):
+                                ed = self.graph.add_edge(vd1, vd2)  # edge descriptor
+                                self.graph.ep.distance[ed] = self.distance_between_voxels(p1, p2)
+                                self.coordinates_pair_connected[(p1, p2)] = True
+                                if verbose:
+                                    print '\tThe neighbor points (%s, %s, %s) and (%s, %s, %s) have been connected by an edge with a distance of %s pixels.' \
+                                          % (x1, y1, z1, x2, y2, z2, self.graph.ep.distance[ed])
+                else:
+                    print 'Oops, there are %s points in cell number %s' % points_cell.GetNumberOfPoints(), i
+
+            # 2. Check if the numbers of vertices and edges are as they should be:
+            assert self.graph.num_vertices() == len(self.coordinates_to_vertex_index)  # surface.GetNumberOfPoints() is higher for some reason
+            assert self.graph.num_edges() == len(self.coordinates_pair_connected)
+            print '%s triangle vertices' % self.graph.num_vertices()
+        else:
+            print 'Error: Wrong input data type, \'surface\' has to be a vtkPolyData object.'
+            exit(1)
+
+
 class TriangleGraph(SurfaceGraph):
     """
     Class defining the TriangleGraph object, its attributes and methods.
