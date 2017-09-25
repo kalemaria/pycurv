@@ -68,6 +68,8 @@ class PlaneGenerator(object):
         Returns:
             a plane surface (vtk.vtkPolyData)
         """
+        print("Generating a plane with half size={} and resolution={}".format(
+            half_size, res))
         plane = vtk.vtkPlaneSource()
         # plane.SetCenter(0, 0, 0)
         plane.SetNormal(0, 0, 1)
@@ -118,8 +120,7 @@ class SphereGenerator(object):
         sphere.SetThetaResolution(longitude_res)
         # the radius of the sphere
         sphere.SetRadius(r)
-        print sphere.GetLatLongTessellation()
-        # sphere.LatLongTessellationOn()
+        # sphere.LatLongTessellationOn() #doesn't work as expected (default Off)
         # print sphere.GetLatLongTessellation()
 
         # The sphere is made of strips, so pass it through a triangle filter
@@ -135,6 +136,7 @@ class SphereGenerator(object):
         cleaner.SetTolerance(0.0005)
         cleaner.Update()
 
+        # Might contain non-triangle cells after cleaning - remove them
         sphere_surface = remove_non_triangle_cells(cleaner.GetOutput())
         return sphere_surface
 
@@ -183,6 +185,7 @@ class CylinderGenerator(object):
         cleaner.SetTolerance(0.005)
         cleaner.Update()
 
+        # Might contain non-triangle cells after cleaning - remove them
         cylinder_surface = remove_non_triangle_cells(cleaner.GetOutput())
         return cylinder_surface
 
@@ -202,15 +205,15 @@ def main():
     io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
 
     # Sphere
-    # sg = SphereGenerator()
-    # sphere_r10 = sg.generate_sphere_surface(r=10, latitude_res=50,
-    #                                         longitude_res=50)
-    # io.save_vtp(sphere_r10, fold + "sphere_r10_res50.vtp")
+    sg = SphereGenerator()
+    sphere_r10 = sg.generate_sphere_surface(r=10, latitude_res=50,
+                                            longitude_res=50)
+    io.save_vtp(sphere_r10, fold + "sphere_r10_res50.vtp")
 
     # Cylinder
-    # cg = CylinderGenerator()
-    # cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
-    # io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
+    cg = CylinderGenerator()
+    cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
+    io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
 
 
 if __name__ == "__main__":
