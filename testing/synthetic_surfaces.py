@@ -1,8 +1,30 @@
 import vtk
 from pysurf_compact import pysurf_io as io
+from pysurf_compact import pexceptions
 
 """A set of functions and classes for generating artificial surfaces of
 geometrical objects."""
+
+
+def is_positive_number(arg, input_error=True):
+    """
+    Checks whether an argument is a positive number.
+
+    Args:
+        arg: argument
+        input_error (boolean): if True (default), raises PySegInputError
+
+    Returns:
+        True if the argument if a positive number, False otherwise
+    """
+    if (isinstance(arg, int) or isinstance(arg, float)) and arg > 0:
+        return True
+    else:
+        if input_error:
+            error_msg = "Argument must be a positive integer or float number."
+            raise pexceptions.PySegInputError(expr='is_positive_number',
+                                              msg=error_msg)
+        return False
 
 
 def remove_non_triangle_cells(surface):
@@ -27,61 +49,90 @@ def remove_non_triangle_cells(surface):
     return surface
 
 
+class PlaneGenerator(object):
+    """
+    A class for generating triangular-mesh surface of a plane.
+    """
+    @staticmethod
+    def generate_plane_surface(half_size=10, res=40):
+        """
+        Generates a square plane surface with triangular cells.
+
+        The sphere will have a center at (0, 0, 0) and normals (0, 0, 1) -
+        parallel to X and Y axes.
+
+        Args:
+            half_size (int): half size of the plane (from center to an edge)
+            res (int): resolution (number of divisions) in X and Y axes
+
+        Returns:
+            a plane surface (vtk.vtkPolyData)
+        """
+        plane = vtk.vtkPlaneSource()
+        # plane.SetCenter(0, 0, 0)
+        plane.SetNormal(0, 0, 1)
+        plane.SetOrigin(-half_size, -half_size, 0)
+        plane.SetPoint1(half_size, -half_size, 0)
+        plane.SetPoint2(-half_size, half_size, 0)
+        plane.SetResolution(res, res)
+
+        # The plane is made of strips, so pass it through a triangle filter
+        # to get a triangle mesh
+        tri = vtk.vtkTriangleFilter()
+        tri.SetInputConnection(plane.GetOutputPort())
+        tri.Update()
+
+        plane_surface = tri.GetOutput()
+        print('{} cells'.format(plane_surface.GetNumberOfCells()))
+        return plane_surface
+
+
 class SphereGenerator(object):
     """
     A class for generating triangular-mesh surface of a sphere.
     """
     @staticmethod
-    def generate_sphere_surface(radius=10.0, latitude_res=100,
+    def generate_sphere_surface(r=10.0, latitude_res=100,
                                 longitude_res=100):
         """
         Generates a sphere surface with only triangular cells.
 
         Args:
-            radius (float, optional): sphere radius (default 10.0)
+            r (float, optional): sphere radius (default 10.0)
             latitude_res (int, optional): latitude resolution (default 100)
-            longitude_res  (int, optional): latitude resolution (default 100)
+            longitude_res (int, optional): latitude resolution (default 100)
 
         Returns:
             a sphere surface (vtk.vtkPolyData)
         """
         print("Generating a sphere with radius={}, latitude resolution={} and "
-              "longitude resolution={}".format(radius, latitude_res,
+              "longitude resolution={}".format(r, latitude_res,
                                                longitude_res))
-        # TODO write a function asserting that an argument is a positive number
-        # (int / float) and throw an InputError if it is not
-        if not (isinstance(radius, int) or isinstance(radius, float)):
-            print "Type error: radius has to be an integer or a float number."
-            exit(0)
-        if radius <= 0:
-            print "Input error: radius has to be positive."
-            exit(0)
-        sphere = vtk.vtkSuperquadricSource()
-        # the origin around which the superquadric should be centered
+        is_positive_number(r)
+        sphere = vtk.vtkSphereSource()
+        # the origin around which the sphere should be centered
         sphere.SetCenter(0.0, 0.0, 0.0)
-        # allow the superquadric to be scaled in x, y, and z
-        sphere.SetScale(1.0, 1.0, 1.0)
         # polygonal discretization in latitude direction
         sphere.SetPhiResolution(latitude_res)
         # polygonal discretization in longitude direction
         sphere.SetThetaResolution(longitude_res)
-        # controls size of the superquadric (radius)
-        sphere.SetSize(radius)
-        # boolean, controls whether a toroidal superquadric is produced
-        # (if 0. a sphere is produced)
-        sphere.SetToroidal(0)
+        # the radius of the sphere
+        sphere.SetRadius(r)
+        print sphere.GetLatLongTessellation()
+        # sphere.LatLongTessellationOn()
+        # print sphere.GetLatLongTessellation()
 
-        # The quadric is made of strips, so pass it through a triangle filter
-        # to get a PolyData
+        # The sphere is made of strips, so pass it through a triangle filter
+        # to get a triangle mesh
         tri = vtk.vtkTriangleFilter()
         tri.SetInputConnection(sphere.GetOutputPort())
 
-        # The quadric has nasty discontinuities from the way the edges are
+        # The sphere has nasty discontinuities from the way the edges are
         # generated, so pass it though a CleanPolyDataFilter to merge any
         # points which are coincident or very close
         cleaner = vtk.vtkCleanPolyData()
         cleaner.SetInputConnection(tri.GetOutputPort())
-        cleaner.SetTolerance(0.005)
+        cleaner.SetTolerance(0.0005)
         cleaner.Update()
 
         sphere_surface = remove_non_triangle_cells(cleaner.GetOutput())
@@ -93,41 +144,34 @@ class CylinderGenerator(object):
     A class for generating triangular-mesh surface of a cylinder.
     """
     @staticmethod
-    def generate_cylinder_surface(radius=10.0, height=20.0, res=100):
+    def generate_cylinder_surface(r=10.0, h=20.0, res=100):
         """
         Generates a cylinder surface with only triangular cells.
 
         Args:
-            radius (float, optional): cylinder radius (default 10.0)
-            height (float, optional): cylinder high (default 20.0)
+            r (float, optional): cylinder radius (default 10.0)
+            h (float, optional): cylinder high (default 20.0)
             res (int, optional): resolution (default 100)
 
         Returns:
             a cylinder surface (vtk.vtkPolyData)
         """
         print("Generating a cylinder with radius={}, height={} and "
-              "resolution={}".format(radius, height, res))
-        # TODO write a function asserting that an argument is a positive number
-        # (int / float) and throw an InputError if it is not
-        if not (isinstance(radius, int) or isinstance(radius, float)):
-            print "Type error: radius has to be an integer or a float number."
-            exit(0)
-        if radius <= 0:
-            print "Input error: radius has to be positive."
-            exit(0)
-        # TODO the same test for high
+              "resolution={}".format(r, h, res))
+        is_positive_number(r)
+        is_positive_number(h)
         cylinder = vtk.vtkCylinderSource()
         # the origin around which the cylinder should be centered
         cylinder.SetCenter(0, 0, 0)
         # the radius of the cylinder
-        cylinder.SetRadius(radius)
+        cylinder.SetRadius(r)
         # the high of the cylinder
-        cylinder.SetHeight(height)
+        cylinder.SetHeight(h)
         # polygonal discretization
         cylinder.SetResolution(res)
 
         # The cylinder is made of strips, so pass it through a triangle filter
-        # to get a PolyData
+        # to get a triangle mesh
         tri = vtk.vtkTriangleFilter()
         tri.SetInputConnection(cylinder.GetOutputPort())
 
@@ -152,23 +196,21 @@ def main():
     """
     fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
 
+    # Plane
+    pg = PlaneGenerator()
+    plane = pg.generate_plane_surface(half_size=10, res=30)
+    io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
+
     # Sphere
     # sg = SphereGenerator()
-    # sphere_r1 = sg.generate_sphere_surface(radius=1, latitude_res=10,
-    #                                        longitude_res=10)
-    # io.save_vtp(sphere_r1, fold + "sphere_r1_res10.vtp")
-    #
-    # sphere_r5 = sg.generate_sphere_surface(radius=5, latitude_res=50,
-    #                                        longitude_res=50)
-    # io.save_vtp(sphere_r5, fold + "sphere_r5_res50.vtp")
-    #
-    # sphere_r10 = sg.generate_sphere_surface()
-    # io.save_vtp(sphere_r10, fold + "sphere_r10_res100.vtp")
+    # sphere_r10 = sg.generate_sphere_surface(r=10, latitude_res=50,
+    #                                         longitude_res=50)
+    # io.save_vtp(sphere_r10, fold + "sphere_r10_res50.vtp")
 
     # Cylinder
-    cg = CylinderGenerator()
-    cylinder_r10_h20 = cg.generate_cylinder_surface(res=50)
-    io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
+    # cg = CylinderGenerator()
+    # cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
+    # io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
 
 
 if __name__ == "__main__":

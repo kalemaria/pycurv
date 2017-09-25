@@ -145,7 +145,7 @@ class VectorVotingTestCase(unittest.TestCase):
             else:
                 sg = SphereGenerator()
                 sphere = sg.generate_sphere_surface(
-                    radius=radius, latitude_res=res, longitude_res=res)
+                    r=radius, latitude_res=res, longitude_res=res)
                 io.save_vtp(sphere, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
