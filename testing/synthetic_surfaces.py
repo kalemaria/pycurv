@@ -52,7 +52,8 @@ def remove_non_triangle_cells(surface):
     return surface
 
 
-def add_gaussian_noise_to_surface(surface, percent=10, only_z=True):
+def add_gaussian_noise_to_surface(surface, percent=10, only_z=True,
+                                  verbose=False):
     """
     Adds Gaussian noise to a surface by moving points coordinates.
     Args:
@@ -61,6 +62,8 @@ def add_gaussian_noise_to_surface(surface, percent=10, only_z=True):
             percents of average triangle edge length (default 10)
         only_z (boolean, optional): if True (default), noise will be added only
             in the z dimension, otherwise in all dimensions
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
 
     Returns:
         noisy surface (vtk.vtkPolyData)
@@ -68,12 +71,13 @@ def add_gaussian_noise_to_surface(surface, percent=10, only_z=True):
     # Find the average triangle edge length (l_ave)
     pg = PointGraph(scale_factor_to_nm=1, scale_x=1, scale_y=1, scale_z=1)
     pg.build_graph_from_vtk_surface(surface)
-    l_ave = pg.calculate_average_edge_length()
+    l_ave = pg.calculate_average_edge_length(verbose=verbose)
 
     # Variance of the noise is the given percent of l_ave
     var = percent / 100.0 * l_ave
-    print ("variance = {}".format(var))
     std = math.sqrt(var)  # standard deviation
+    if verbose:
+        print ("variance = {}".format(var))
 
     # Copy the surface and initialize vtkPoints data structure
     new_surface = vtk.vtkPolyData()
@@ -103,7 +107,7 @@ class PlaneGenerator(object):
     A class for generating triangular-mesh surface of a plane.
     """
     @staticmethod
-    def generate_plane_surface(half_size=10, res=40):
+    def generate_plane_surface(half_size=10, res=30):
         """
         Generates a square plane surface with triangular cells.
 

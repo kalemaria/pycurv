@@ -40,16 +40,12 @@ def add_curvature_to_vtk_surface(surface, curvature_type):
         curvature_filter = vtk.vtkCurvatures()
         curvature_filter.SetInputData(surface)
         if curvature_type == "Gaussian":
-            print "Gaussian curvature"
             curvature_filter.SetCurvatureTypeToGaussian()
         elif curvature_type == "Mean":
-            print "Mean curvature"
             curvature_filter.SetCurvatureTypeToMean()
         elif curvature_type == "Maximum":
-            print "Maximum curvature"
             curvature_filter.SetCurvatureTypeToMaximum()
         elif curvature_type == "Minimum":
-            print "Minimum curvature"
             curvature_filter.SetCurvatureTypeToMinimum()
         else:
             error_msg = ("One of the following strings required as the second "
@@ -146,9 +142,10 @@ class PointGraph(SurfaceGraph):
             # rescale the surface to nm
             surface = rescale_surface(surface, self.scale_factor_to_nm)
 
-            # 0. Check numbers of cells (polygons or triangles) and all points.
-            print '%s cells' % surface.GetNumberOfCells()
-            print '%s points' % surface.GetNumberOfPoints()
+            if verbose:
+                # 0. Check numbers of cells and all points.
+                print '%s cells' % surface.GetNumberOfCells()
+                print '%s points' % surface.GetNumberOfPoints()
 
             # 1. Iterate over all cells, adding their points as vertices to the
             # graph and connecting them by edges.
@@ -301,6 +298,8 @@ class TriangleGraph(SurfaceGraph):
             surface (vtk.vtkPolyData): a surface of triangles
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
+            reverse_normals (boolean, optional): if True (default False), the
+                triangle normals are reversed
 
         Returns:
             the rescaled surface to nanometers (vtk.vtkPolyData)
@@ -314,9 +313,9 @@ class TriangleGraph(SurfaceGraph):
             # rescale the surface to nm
             surface = rescale_surface(surface, self.scale_factor_to_nm)
 
-            # 0. Check numbers of cells (and all points).
-            print '%s cells' % surface.GetNumberOfCells()
             if verbose:
+                # 0. Check numbers of cells and all points.
+                print '%s cells' % surface.GetNumberOfCells()
                 print '%s points' % surface.GetNumberOfPoints()
 
             point_data = surface.GetPointData()
@@ -1430,8 +1429,11 @@ class TriangleGraph(SurfaceGraph):
                 tetha = acos(cos_tetha)
             s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
             kappa_i = tetha / s
-            # kappa_i_sign = signum(dot(T_i, n_i))  # has to be like this according to Page's paper
-            kappa_i_sign = -1 * signum(dot(T_i, n_i))  # but negated according to Tang & Medioni's definition (more suitable for our surface)
+            # has to be like this according to Page's paper
+            # kappa_i_sign = signum(dot(T_i, n_i))
+            # but negated according to Tang & Medioni's definition (more
+            # suitable for our surface)
+            kappa_i_sign = -1 * signum(dot(T_i, n_i))
             if kappa_i_sign < 0:
                 num_negative_kappa_i += 1
 
@@ -1551,7 +1553,10 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.kappa_2[vertex_v] = kappa_2
         self.graph.vp.gauss_curvature_VV[vertex_v] = kappa_1 * kappa_2
         self.graph.vp.mean_curvature_VV[vertex_v] = (kappa_1 + kappa_2) / 2
-        self.graph.vp.shape_index_VV[vertex_v] = 2 / math.pi * math.atan(
-            (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
+        if kappa_1 == 0 and kappa_2 == 0:
+            self.graph.vp.shape_index_VV[vertex_v] = 0
+        else:
+            self.graph.vp.shape_index_VV[vertex_v] = 2 / math.pi * math.atan(
+                (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
         self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)

@@ -497,7 +497,8 @@ class SegmentationGraph(object):
     # * The following SegmentationGraph methods are needed for the normal vector
     # voting algorithm. *
 
-    def calculate_average_edge_length(self, prop_e=None, value=1):
+    def calculate_average_edge_length(self, prop_e=None, value=1,
+                                      verbose=False):
         """
         Calculates the average edge length in the graph.
 
@@ -511,6 +512,8 @@ class SegmentationGraph(object):
                 this property equals the given value will be considered
             value (int, optional): value of the specified edge property an edge
                 has to have in order to be considered (default 1)
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
 
         Returns:
             the average edge length in the graph (float) or None
@@ -518,27 +521,32 @@ class SegmentationGraph(object):
         total_edge_length = 0
         average_edge_length = None
         if prop_e is None:
-            print "Considering all edges:"
+            if verbose:
+                print "Considering all edges:"
             if self.graph.num_edges() > 0:
-                print ("{} edges".format(self.graph.num_edges()))
+                if verbose:
+                    print ("{} edges".format(self.graph.num_edges()))
                 average_edge_length = np.mean(self.graph.ep.distance.a)
             else:
                 print "There are no edges in the graph!"
         elif prop_e in self.graph.edge_properties:
-            print ("Considering only edges with property %s equaling value %s "
-                   % (prop_e, value))
+            if verbose:
+                print ("Considering only edges with property %s equaling value "
+                       "%s " % (prop_e, value))
             num_special_edges = 0
             for ed in self.graph.edges():
                 if self.graph.edge_properties[prop_e][ed] == value:
                     num_special_edges += 1
                     total_edge_length += self.graph.ep.distance[ed]
             if num_special_edges > 0:
-                print ("{} such edges".format(num_special_edges))
+                if verbose:
+                    print ("{} such edges".format(num_special_edges))
                 average_edge_length = total_edge_length / num_special_edges
             else:
                 print ("There are no edges with the property %s equaling value "
                        "%s!" % (prop_e, value))
-        print "Average length: %s" % average_edge_length
+        if verbose:
+            print "Average length: %s" % average_edge_length
         return average_edge_length
 
     def find_geodesic_neighbors(self, v, g_max, verbose=False):
