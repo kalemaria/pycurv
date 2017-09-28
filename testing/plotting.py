@@ -167,7 +167,7 @@ def plot_plane_normal_errors(half_size, res=30, noise=10,
     if res == 0:
         fold = '{}synthetic_volumes/plane/noise{}/'.format(base_fold, noise)
     else:
-        fold = '{}synthetic_surfaces/plane/res{}_noiseXYZ{}/'.format(
+        fold = '{}synthetic_surfaces/plane/res{}_noise{}/'.format(
             base_fold, res, noise)
     files_fold = '{}files4plotting/'.format(fold)
     base_filename = "{}plane_half_size{}".format(files_fold, half_size)
@@ -197,7 +197,7 @@ def plot_plane_normal_errors(half_size, res=30, noise=10,
     vv_vtk_normal_errors_plot = "{}{}.png".format(plots_fold, base)
     plot_double_line_hist(
         vv_normal_errors, vtk_normal_errors, 10,
-        "Comparison for Plane ({}% noise in XYZ)".format(noise),
+        "Comparison for Plane ({}% noise)".format(noise),
         # "Plane with half-size={}, VV with g_max={}, epsilon={}, eta={}\n"
         # "vs. averaging of VTK values for triangle vertices".format(
         #     half_size, g_max, epsilon, eta),

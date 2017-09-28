@@ -52,16 +52,15 @@ def remove_non_triangle_cells(surface):
     return surface
 
 
-def add_gaussian_noise_to_surface(surface, percent=10, only_z=True,
-                                  verbose=False):
+def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     """
-    Adds Gaussian noise to a surface by moving points coordinates.
+    Adds Gaussian noise to a surface by moving each triangle point in the
+    direction of its normal vector.
+
     Args:
         surface (vtk.vtkPolyData): input surface
         percent (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 10)
-        only_z (boolean, optional): if True (default), noise will be added only
-            in the z dimension, otherwise in all dimensions
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -84,19 +83,29 @@ def add_gaussian_noise_to_surface(surface, percent=10, only_z=True,
     new_surface.DeepCopy(surface)
     points = vtk.vtkPoints()
 
-    # For each point, randomly add noise from Gaussian distribution with the
-    # wanted variance
+    # Get the Normals points array:
+    point_data = surface.GetPointData()
+    n = point_data.GetNumberOfArrays()
+    point_normals = None
+    for i in range(n):
+        if point_data.GetArrayName(i) == "Normals":
+            point_normals = point_data.GetArray(i)
+            print ("Point normals found")
+
+    # For each point, get its normal and randomly add noise from Gaussian
+    # distribution with the wanted variance in the normal direction
     for i in xrange(surface.GetNumberOfPoints()):
-        x, y, z = surface.GetPoint(i)
-        if only_z:
-            new_z = np.random.normal(loc=z, scale=std)
-            points.InsertPoint(i, x, y, new_z)
-        else:
-            new_x = np.random.normal(loc=x, scale=std)
-            new_y = np.random.normal(loc=y, scale=std)
-            new_z = np.random.normal(loc=z, scale=std)
-            # new_p = old_p + np.random.normal(scale=std) * normal  TODO!
-            points.InsertPoint(i, new_x, new_y, new_z)
+        old_p = np.asarray(surface.GetPoint(i))
+        # print "type(old_p) == {}".format(type(old_p))  # test
+        # print old_p
+        normal_p = np.asarray(point_normals.GetTuple3(i))
+        # print "type(normal_p) == {}".format(type(normal_p))  # test
+        # print normal_p
+        new_p = old_p + np.random.normal(scale=std) * normal_p
+        # print "type(new_p) == {}".format(type(new_p))  # test
+        # print new_p
+        new_x, new_y, new_z = new_p
+        points.InsertPoint(i, new_x, new_y, new_z)
     # Set the points of the surface copy
     new_surface.SetPoints(points)
 
@@ -257,8 +266,9 @@ def main():
     pg = PlaneGenerator()
     plane = pg.generate_plane_surface(half_size=10, res=30)
     # io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
-    noisy_plane = add_gaussian_noise_to_surface(plane, percent=10, only_z=True)
-    io.save_vtp(noisy_plane, fold + "plane_half_size10_res30_noise10%z.vtp")
+    noisy_plane = add_gaussian_noise_to_surface(plane, percent=10)
+    io.save_vtp(noisy_plane,
+                "{}plane_half_size10_res30_noise10%normal.vtp".format(fold))
 
     # # Sphere
     # sg = SphereGenerator()

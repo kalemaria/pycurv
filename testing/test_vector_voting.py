@@ -78,7 +78,7 @@ class VectorVotingTestCase(unittest.TestCase):
         if res == 0:
             fold = '{}synthetic_volumes/plane/noise{}/'.format(base_fold, noise)
         else:
-            fold = '{}synthetic_surfaces/plane/res{}_noiseXYZ{}/'.format(
+            fold = '{}synthetic_surfaces/plane/res{}_noise{}/'.format(
                 base_fold, res, noise)
         if not os.path.exists(fold):
             os.makedirs(fold)
@@ -114,7 +114,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 plane = pg.generate_plane_surface(half_size, res)
                 if noise > 0:
                     plane = add_gaussian_noise_to_surface(
-                        plane, percent=noise, only_z=False)
+                        plane, percent=noise)
                 io.save_vtp(plane, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
