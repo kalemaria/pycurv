@@ -78,7 +78,7 @@ class VectorVotingTestCase(unittest.TestCase):
         if res == 0:
             fold = '{}synthetic_volumes/plane/noise{}/'.format(base_fold, noise)
         else:
-            fold = '{}synthetic_surfaces/plane/res{}_noise{}/'.format(
+            fold = '{}synthetic_surfaces/plane/res{}_noiseXYZ{}/'.format(
                 base_fold, res, noise)
         if not os.path.exists(fold):
             os.makedirs(fold)
@@ -114,7 +114,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 plane = pg.generate_plane_surface(half_size, res)
                 if noise > 0:
                     plane = add_gaussian_noise_to_surface(
-                        plane, percent=noise, only_z=True)
+                        plane, percent=noise, only_z=False)
                 io.save_vtp(plane, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
@@ -405,13 +405,17 @@ class VectorVotingTestCase(unittest.TestCase):
         self.assertAlmostEqual(kappa_2_avg, true_curvature,
                                delta=allowed_error, msg=msg)
 
-    # def test_plane_normals(self):
-    #     """
-    #     Tests whether normals are correctly estimated using Normal Vector Voting
-    #     with a certain g_max for a plane surface with known orientation
-    #     (parallel to to X and Y axes), certain size, resolution and noise level.
-    #     """
-    #     self.parametric_test_plane_normals(10, res=30, noise=5, g_max=5)
+    # *** The following tests will be run by unittest ***
+
+    def test_plane_normals(self):
+        """
+        Tests whether normals are correctly estimated using Normal Vector Voting
+        with a certain g_max for a plane surface with known orientation
+        (parallel to to X and Y axes), certain size, resolution and noise level.
+        """
+        for n in [5, 10]:
+            for g in [5, 3]:
+                self.parametric_test_plane_normals(10, res=30, noise=n, g_max=g)
 
     # def test_sphere_curvatures(self):
     #     """
@@ -424,16 +428,16 @@ class VectorVotingTestCase(unittest.TestCase):
     #     self.parametric_test_sphere_curvatures(
     #         5, res=50, g_max=1, epsilon=0, eta=0)
     #
-    def test_inverse_sphere_curvatures(self):
-        """
-        Tests whether curvatures for an inverse sphere with a certain radius
-        and resolution are correctly estimated using Normal Vector Voting with
-        a certain g_max:
-
-        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-        """
-        self.parametric_test_sphere_curvatures(
-            5, inverse=True, res=50, g_max=1, epsilon=0, eta=0)
+    # def test_inverse_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures for an inverse sphere with a certain radius
+    #     and resolution are correctly estimated using Normal Vector Voting with
+    #     a certain g_max:
+    #
+    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+    #     """
+    #     self.parametric_test_sphere_curvatures(
+    #         5, inverse=True, res=50, g_max=1, epsilon=0, eta=0)
     #
     # def test_sphere_from_volume_curvatures(self):
     #     """

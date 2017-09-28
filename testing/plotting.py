@@ -167,7 +167,7 @@ def plot_plane_normal_errors(half_size, res=30, noise=10,
     if res == 0:
         fold = '{}synthetic_volumes/plane/noise{}/'.format(base_fold, noise)
     else:
-        fold = '{}synthetic_surfaces/plane/res{}_noise{}/'.format(
+        fold = '{}synthetic_surfaces/plane/res{}_noiseXYZ{}/'.format(
             base_fold, res, noise)
     files_fold = '{}files4plotting/'.format(fold)
     base_filename = "{}plane_half_size{}".format(files_fold, half_size)
@@ -197,7 +197,7 @@ def plot_plane_normal_errors(half_size, res=30, noise=10,
     vv_vtk_normal_errors_plot = "{}{}.png".format(plots_fold, base)
     plot_double_line_hist(
         vv_normal_errors, vtk_normal_errors, 10,
-        "Comparison for Plane ({}% noise)".format(noise),
+        "Comparison for Plane ({}% noise in XYZ)".format(noise),
         # "Plane with half-size={}, VV with g_max={}, epsilon={}, eta={}\n"
         # "vs. averaging of VTK values for triangle vertices".format(
         #     half_size, g_max, epsilon, eta),
@@ -378,8 +378,8 @@ def plot_sphere_curv_errors(radius, inverse=False, res=50,
     print ("The plot was saved as {}".format(kappa_2_errors_plot))
 
 if __name__ == "__main__":
-    # for n in [5, 10]:
-    #     for g in [3, 5]:
-    #         plot_plane_normal_errors(10, res=30, noise=n, g_max=g)
-    plot_sphere_curv_errors(5, inverse=False, res=50, g_max=1)
-    plot_sphere_curv_errors(5, inverse=True, res=50, g_max=1)
+    for n in [5, 10]:
+        for g in [3, 5]:
+            plot_plane_normal_errors(10, res=30, noise=n, g_max=g)
+    # plot_sphere_curv_errors(5, inverse=False, res=50, g_max=1)
+    # plot_sphere_curv_errors(5, inverse=True, res=50, g_max=1)
