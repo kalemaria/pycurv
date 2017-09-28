@@ -47,7 +47,7 @@ class VectorVotingTestCase(unittest.TestCase):
     Tests for vector_voting.py, assuming that other used functions are correct.
     """
 
-    def parametric_test_plane_normals(self, half_size, res, noise=10,
+    def parametric_test_plane_normals(self, half_size, res=30, noise=10,
                                       g_max=5, epsilon=0, eta=0):
         """
         Tests whether normals are correctly estimated for a plane surface with
@@ -55,7 +55,8 @@ class VectorVotingTestCase(unittest.TestCase):
 
         Args:
             half_size (int): half size of the plane (from center to an edge)
-            res (int): resolution (number of divisions) in X and Y axes
+            res (int, optional): resolution (number of divisions) in X and Y
+                axes (default 30)
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 10), the noise
                 is added on triangle vertex coordinates in Z dimension
@@ -67,8 +68,8 @@ class VectorVotingTestCase(unittest.TestCase):
                 junction" (class 2), default 0
             eta (int, optional): parameter of Normal Vector Voting algorithm
                 influencing the number of triangles classified as "crease
-                junction" (class 2) and "no preferred orientation" (class 3, see
-                Notes), default 0
+                junction" (class 2) and "no preferred orientation" (class 3),
+                default 0
 
         Returns:
             None
@@ -146,7 +147,7 @@ class VectorVotingTestCase(unittest.TestCase):
         pos = [0, 1, 2]  # vector-property value positions
         vtk_normals = tg.graph.vertex_properties["normal"].get_2d_array(pos)
         vv_normals = tg.graph.vertex_properties["N_v"].get_2d_array(pos)
-        # The shape is (3, <num_vertices>) - have to reshape to group the
+        # The shape is (3, <num_vertices>) - have to transpose to group the
         # respective x, y, z components to sub-arrays
         vtk_normals = np.transpose(vtk_normals)  # shape (<num_vertices>, 3)
         vv_normals = np.transpose(vv_normals)
@@ -171,7 +172,7 @@ class VectorVotingTestCase(unittest.TestCase):
             msg = '{} is > {}%!'.format(error, 30)
             self.assertLessEqual(error, 30, msg=msg)
 
-    def parametric_test_sphere_curvatures(self, radius=5, res=50, inverse=False,
+    def parametric_test_sphere_curvatures(self, radius, inverse=False, res=50,
                                           k=3, g_max=0, epsilon=0, eta=0):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
@@ -410,8 +411,7 @@ class VectorVotingTestCase(unittest.TestCase):
         with a certain g_max for a plane surface with known orientation
         (parallel to to X and Y axes), certain size, resolution and noise level.
         """
-        self.parametric_test_plane_normals(half_size=10, res=30, noise=10,
-                                           g_max=5)
+        self.parametric_test_plane_normals(10, res=30, noise=5, g_max=5)
 
     # def test_sphere_curvatures(self):
     #     """
@@ -422,7 +422,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
     #     self.parametric_test_sphere_curvatures(
-    #         radius=5, res=50, g_max=1, epsilon=0, eta=0)
+    #         5, res=50, g_max=1, epsilon=0, eta=0)
     #
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -433,7 +433,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
     #     """
     #     self.parametric_test_sphere_curvatures(
-    #         radius=5, res=50, inverse=True, g_max=1, epsilon=0, eta=0)
+    #         5, inverse=True, res=50, g_max=1, epsilon=0, eta=0)
     #
     # def test_sphere_from_volume_curvatures(self):
     #     """
@@ -443,7 +443,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = 1/20 = 0.05; 30% of difference is allowed
     #     """
     #     self.parametric_test_sphere_curvatures(
-    #         radius=20, res=0, g_max=7, epsilon=0, eta=0)
+    #         20, res=0, g_max=7, epsilon=0, eta=0)
     #
     # def test_inverse_sphere_from_volume_radius20_g_max3_curvatures(self):
     #     """
@@ -454,7 +454,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = -1/20 = -0.05; 30% of difference is allowed
     #     """
     #     self.parametric_test_sphere_curvatures(
-    #         radius=20, res=0, inverse=True, g_max=7, epsilon=0, eta=0)
+    #         20, inverse=True, res=0,  g_max=7, epsilon=0, eta=0)
 
 if __name__ == '__main__':
     unittest.main()
