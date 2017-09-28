@@ -95,6 +95,7 @@ def add_gaussian_noise_to_surface(surface, percent=10, only_z=True,
             new_x = np.random.normal(loc=x, scale=std)
             new_y = np.random.normal(loc=y, scale=std)
             new_z = np.random.normal(loc=z, scale=std)
+            # new_p = old_p + np.random.normal(scale=std) * normal  TODO!
             points.InsertPoint(i, new_x, new_y, new_z)
     # Set the points of the surface copy
     new_surface.SetPoints(points)

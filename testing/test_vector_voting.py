@@ -405,13 +405,13 @@ class VectorVotingTestCase(unittest.TestCase):
         self.assertAlmostEqual(kappa_2_avg, true_curvature,
                                delta=allowed_error, msg=msg)
 
-    def test_plane_normals(self):
-        """
-        Tests whether normals are correctly estimated using Normal Vector Voting
-        with a certain g_max for a plane surface with known orientation
-        (parallel to to X and Y axes), certain size, resolution and noise level.
-        """
-        self.parametric_test_plane_normals(10, res=30, noise=5, g_max=5)
+    # def test_plane_normals(self):
+    #     """
+    #     Tests whether normals are correctly estimated using Normal Vector Voting
+    #     with a certain g_max for a plane surface with known orientation
+    #     (parallel to to X and Y axes), certain size, resolution and noise level.
+    #     """
+    #     self.parametric_test_plane_normals(10, res=30, noise=5, g_max=5)
 
     # def test_sphere_curvatures(self):
     #     """
@@ -424,16 +424,16 @@ class VectorVotingTestCase(unittest.TestCase):
     #     self.parametric_test_sphere_curvatures(
     #         5, res=50, g_max=1, epsilon=0, eta=0)
     #
-    # def test_inverse_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures for an inverse sphere with a certain radius
-    #     and resolution are correctly estimated using Normal Vector Voting with
-    #     a certain g_max:
-    #
-    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-    #     """
-    #     self.parametric_test_sphere_curvatures(
-    #         5, inverse=True, res=50, g_max=1, epsilon=0, eta=0)
+    def test_inverse_sphere_curvatures(self):
+        """
+        Tests whether curvatures for an inverse sphere with a certain radius
+        and resolution are correctly estimated using Normal Vector Voting with
+        a certain g_max:
+
+        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+        """
+        self.parametric_test_sphere_curvatures(
+            5, inverse=True, res=50, g_max=1, epsilon=0, eta=0)
     #
     # def test_sphere_from_volume_curvatures(self):
     #     """

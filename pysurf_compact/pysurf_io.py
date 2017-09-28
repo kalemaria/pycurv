@@ -346,7 +346,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
 
     # Sometimes the contouring algorithm can create a volume whose gradient
     # vector and ordering of polygon (using the right hand rule) are
-    # inconsistent. vtkReverseSense cures    this problem.
+    # inconsistent. vtkReverseSense cures this problem.
     reverse = vtk.vtkReverseSense()
     reverse.SetInputConnection(contf.GetOutputPort())
     reverse.ReverseCellsOn()

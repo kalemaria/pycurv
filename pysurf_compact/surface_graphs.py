@@ -22,7 +22,7 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 __author__ = 'kalemanov'
 
 
-def add_curvature_to_vtk_surface(surface, curvature_type):
+def add_curvature_to_vtk_surface(surface, curvature_type, invert=False):
     """
     Adds curvatures (Gaussian, mean, maximum or minimum) to each triangle vertex
     of a vtkPolyData surface calculated by VTK.
@@ -31,6 +31,9 @@ def add_curvature_to_vtk_surface(surface, curvature_type):
         surface (vtk.vtkPolyData): a surface of triangles
         curvature_type (str): type of curvature to add: 'Gaussian', 'Mean',
             'Maximum' or 'Minimum'
+        invert (boolean, optional): if True (default False), VTK will calculate
+            curvatures as for meshes with inward pointing normals (their
+            convention is outwards pointing normals, opposite from ours)
 
     Returns:
         the vtkPolyData surface with '<type>_Curvature' property added to each
@@ -51,8 +54,9 @@ def add_curvature_to_vtk_surface(surface, curvature_type):
             error_msg = ("One of the following strings required as the second "
                          "input: 'Gaussian', 'Mean', 'Maximum' or 'Minimum'.")
             raise pexceptions.PySegInputError(
-                expr='add_curvature_to_vtk_surface', msg=error_msg
-            )
+                expr='add_curvature_to_vtk_surface', msg=error_msg)
+        if invert:
+            curvature_filter.InvertMeanCurvatureOn()  # default Off
         curvature_filter.Update()
         surface_curvature = curvature_filter.GetOutput()
         return surface_curvature
@@ -299,7 +303,7 @@ class TriangleGraph(SurfaceGraph):
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
             reverse_normals (boolean, optional): if True (default False), the
-                triangle normals are reversed
+                triangle normals are reversed during graph generation
 
         Returns:
             the rescaled surface to nanometers (vtk.vtkPolyData)
@@ -307,11 +311,17 @@ class TriangleGraph(SurfaceGraph):
         if isinstance(surface, vtk.vtkPolyData):
             t_begin = time.time()
 
-            print 'Adding curvatures to the vtkPolyData surface...'
-            surface = add_curvature_to_vtk_surface(surface, "Minimum")
-            surface = add_curvature_to_vtk_surface(surface, "Maximum")
-            # rescale the surface to nm
+            # rescale the surface to nm  # TODO try before adding curvatures
             surface = rescale_surface(surface, self.scale_factor_to_nm)
+            print 'Adding curvatures to the vtkPolyData surface...'
+            # because VTK and we (gen_surface) have the opposite normal
+            # convention: VTK outwards pointing normals, we: inwards pointing
+            if reverse_normals:
+                invert = False
+            else:
+                invert = True
+            surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
+            surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
 
             if verbose:
                 # 0. Check numbers of cells and all points.
@@ -423,13 +433,11 @@ class TriangleGraph(SurfaceGraph):
                     avg_max_curvature += max_curvature_point_j
 
                     gauss_curvature_point_j = gauss_curvatures.GetTuple1(
-                        point_j_id
-                    )
+                        point_j_id)
                     avg_gauss_curvature += gauss_curvature_point_j
 
                     mean_curvature_point_j = mean_curvatures.GetTuple1(
-                        point_j_id
-                    )
+                        point_j_id)
                     avg_mean_curvature += mean_curvature_point_j
 
                 avg_min_curvature /= 3
