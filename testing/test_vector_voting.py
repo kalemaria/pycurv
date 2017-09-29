@@ -64,7 +64,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 determining the geodesic neighborhood radius:
                 g_max = k * average weak triangle graph edge length (default 3)
             g_max (float, optional): geodesic neighborhood radius in length unit
-                of the graph, here voxels; if positive (default 0.0) this g_max
+                of the graph, here voxels; if positive (default 0) this g_max
                 will be used and k will be ignored
             epsilon (int, optional): parameter of Normal Vector Voting algorithm
                 influencing the number of triangles classified as "crease
@@ -103,19 +103,17 @@ class VectorVotingTestCase(unittest.TestCase):
         if not os.path.exists(files_fold):
             os.makedirs(files_fold)
         base_filename = "{}plane_half_size{}".format(files_fold, half_size)
+        vtk_normal_errors_file = '{}.VTK.normal_errors.txt'.format(
+            base_filename)
         if g_max > 0:
             surf_vv_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
-            vtk_normal_errors_file = '{}.VTK.normal_errors.txt'.format(
-                base_filename)
             vv_normal_errors_file = (
                 '{}.VV_g_max{}_epsilon{}_eta{}.normal_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
         elif k > 0:
             surf_vv_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, k, epsilon, eta)
-            vtk_normal_errors_file = '{}.VTK.normal_errors.txt'.format(
-                base_filename)
             vv_normal_errors_file = (
                 '{}.VV_k{}_epsilon{}_eta{}.normal_errors.txt'.format(
                     base_filename, k, epsilon, eta))
@@ -153,6 +151,7 @@ class VectorVotingTestCase(unittest.TestCase):
         print tg.graph
 
         if k > 0:
+            print "k = {}".format(k)
             # Find the average triangle edge length (l_ave) and calculate g_max:
             # (Do this here because in vector_voting average weak edge length of
             # the triangle graph is used, since the surface not passed)
@@ -230,7 +229,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 determining the geodesic neighborhood radius:
                 g_max = k * average weak triangle graph edge length (default 3)
             g_max (float, optional): geodesic neighborhood radius in length unit
-                of the graph, here voxels; if positive (default 0.0) this g_max
+                of the graph, here voxels; if positive (default 0) this g_max
                 will be used and k will be ignored
             epsilon (int, optional): parameter of Normal Vector Voting algorithm
                 influencing the number of triangles classified as "crease
@@ -289,7 +288,8 @@ class VectorVotingTestCase(unittest.TestCase):
                 '{}.VV_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
         elif k > 0:
-            surf_VV_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'
+            surf_VV_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, k, epsilon, eta)
             kappa_1_file = '{}.VV_k{}_epsilon{}_eta{}.kappa_1.txt'.format(
                 base_filename, k, epsilon, eta)
             kappa_2_file = '{}.VV_k{}_epsilon{}_eta{}.kappa_2.txt'.format(
@@ -369,6 +369,7 @@ class VectorVotingTestCase(unittest.TestCase):
         print tg.graph
 
         if k > 0:
+            print "k = {}".format(k)
             # Find the average triangle edge length (l_ave) and calculate g_max:
             # (Do this here because in vector_voting average weak edge length of
             # the triangle graph is used, since the surface not passed)
@@ -463,46 +464,52 @@ class VectorVotingTestCase(unittest.TestCase):
 
     # *** The following tests will be run by unittest ***
 
-    def test_plane_normals(self):
-        """
-        Tests whether normals are correctly estimated using Normal Vector Voting
-        with a certain g_max for a plane surface with known orientation
-        (parallel to to X and Y axes), certain size, resolution and noise level.
-        """
-        for n in [5, 10]:
-            # for g in [5, 3]:
-            #     self.parametric_test_plane_normals(10, res=30, noise=n, g_max=g)
-            for k in [5, 3]:
-                self.parametric_test_plane_normals(10, res=30, noise=n, k=k)
+    # def test_plane_normals(self):
+    #     """
+    #     Tests whether normals are correctly estimated using Normal Vector Voting
+    #     with a certain g_max for a plane surface with known orientation
+    #     (parallel to to X and Y axes), certain size, resolution and noise level.
+    #     """
+    #     for n in [5, 10]:
+    #         # for g in [5, 3]:
+    #         #     self.parametric_test_plane_normals(10, res=30, noise=n, g_max=g)
+    #         for k in [5, 3]:
+    #             self.parametric_test_plane_normals(10, res=30, noise=n, k=k)
 
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures for a sphere with a certain radius and
-    #     resolution are correctly estimated using Normal Vector Voting with a
-    #     certain g_max:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-    #     """
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=0, g_max=3)
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=3)
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=5)
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=5)
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=3)
-    #     self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5)
-    #     self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=3)
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures for a sphere with a certain radius and
+        resolution are correctly estimated using Normal Vector Voting with a
+        certain g_max:
 
-    # def test_inverse_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures for an inverse sphere with a certain radius
-    #     and resolution are correctly estimated using Normal Vector Voting with
-    #     a certain g_max:
-    #
-    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-    #     """
-    #     self.parametric_test_sphere_curvatures(
-    #         10, inverse=True, res=30, noise=0, g_max=3)
-    #     self.parametric_test_sphere_curvatures(
-    #         10, inverse=True, res=30, noise=10, g_max=5)
+        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+        """
+        # self.parametric_test_sphere_curvatures(10, res=30, noise=0, g_max=3)
+        # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=3)
+        # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=5)
+        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=5)
+        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=3)
+        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=3)
+        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=5)
+        # self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5)
+        self.parametric_test_sphere_curvatures(10, res=50, noise=10, k=5)
+
+    def test_inverse_sphere_curvatures(self):
+        """
+        Tests whether curvatures for an inverse sphere with a certain radius
+        and resolution are correctly estimated using Normal Vector Voting with
+        a certain g_max:
+
+        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+        """
+        # self.parametric_test_sphere_curvatures(
+        #     10, inverse=True, res=30, noise=0, g_max=3)
+        # self.parametric_test_sphere_curvatures(
+        #     10, inverse=True, res=30, noise=10, g_max=5)
+        # self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5,
+        #                                        inverse=True)
+        self.parametric_test_sphere_curvatures(10, res=50, noise=10, k=5,
+                                               inverse=True)
 
     # def test_sphere_from_volume_curvatures(self):
     #     """
