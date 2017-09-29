@@ -59,7 +59,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 axes (default 30)
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 10), the noise
-                is added on triangle vertex coordinates in Z dimension
+                is added on triangle vertex coordinates in its normal direction
             g_max (float, optional): geodesic neighborhood radius in length unit
                 of the graph, here voxels; if positive (default 0.0) this g_max
                 will be used and k will be ignored
@@ -103,7 +103,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 base_filename, g_max, epsilon, eta))
 
         print ("\n*** Generating a surface and a graph for a plane with half-"
-               "size {} ***".format(half_size))
+               "size {} and {}% noise ***".format(half_size, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             if res == 0:
@@ -113,8 +113,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 pg = PlaneGenerator()
                 plane = pg.generate_plane_surface(half_size, res)
                 if noise > 0:
-                    plane = add_gaussian_noise_to_surface(
-                        plane, percent=noise)
+                    plane = add_gaussian_noise_to_surface(plane, percent=noise)
                 io.save_vtp(plane, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
@@ -172,8 +171,9 @@ class VectorVotingTestCase(unittest.TestCase):
             msg = '{} is > {}%!'.format(error, 30)
             self.assertLessEqual(error, 30, msg=msg)
 
-    def parametric_test_sphere_curvatures(self, radius, inverse=False, res=50,
-                                          k=3, g_max=0, epsilon=0, eta=0):
+    def parametric_test_sphere_curvatures(
+            self, radius, inverse=False, res=50, noise=10,
+            k=3, g_max=0, epsilon=0, eta=0):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
@@ -190,6 +190,9 @@ class VectorVotingTestCase(unittest.TestCase):
                 triangles) the sphere has (longitude and latitude), the surface
                 is generated directly using VTK; If 0 first a sphere mask is
                 generated and then surface using gen_surface function
+            noise (int, optional): determines variance of the Gaussian noise in
+                percents of average triangle edge length (default 10), the noise
+                is added on triangle vertex coordinates in its normal direction
             k (int, optional): parameter of Normal Vector Voting algorithm
                 determining the geodesic neighborhood radius:
                 g_max = k * average weak triangle graph edge length (default 3)
@@ -212,9 +215,11 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res == 0:
-            fold = '{}synthetic_volumes/sphere/'.format(base_fold)
+            fold = '{}synthetic_volumes/sphere/noise{}/'.format(
+                base_fold, noise)
         else:
-            fold = '{}synthetic_surfaces/sphere/res{}/'.format(base_fold, res)
+            fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
+                base_fold, res, noise)
         if not os.path.exists(fold):
             os.makedirs(fold)
         surf_file = '{}sphere_r{}.surface.vtp'.format(fold, radius)
@@ -273,10 +278,11 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
-                   "sphere with radius {} ***".format(radius))
+                   "sphere with radius {} and {}% noise ***".format(
+                    radius, noise))
         else:
             print ("\n*** Generating a surface and a graph for a sphere "
-                   "with radius {} ***".format(radius))
+                   "with radius {} and {}% noise ***".format(radius, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             if res == 0:
@@ -284,11 +290,15 @@ class VectorVotingTestCase(unittest.TestCase):
                 sphere_mask = sm.generate_sphere_mask(
                     r=radius, box=(radius * 2 + 3), t=1)
                 run_gen_surface(
-                    sphere_mask, '{}sphere_r{}'.format(fold, radius))
+                    sphere_mask, '{}sphere_r{}'.format(fold, radius),
+                    noise=noise)
             else:
                 sg = SphereGenerator()
                 sphere = sg.generate_sphere_surface(
                     r=radius, latitude_res=res, longitude_res=res)
+                if noise > 0:
+                    sphere = add_gaussian_noise_to_surface(sphere,
+                                                           percent=noise)
                 io.save_vtp(sphere, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
@@ -407,38 +417,43 @@ class VectorVotingTestCase(unittest.TestCase):
 
     # *** The following tests will be run by unittest ***
 
-    def test_plane_normals(self):
-        """
-        Tests whether normals are correctly estimated using Normal Vector Voting
-        with a certain g_max for a plane surface with known orientation
-        (parallel to to X and Y axes), certain size, resolution and noise level.
-        """
-        for n in [5, 10]:
-            for g in [5, 3]:
-                self.parametric_test_plane_normals(10, res=30, noise=n, g_max=g)
+    # def test_plane_normals(self):
+    #     """
+    #     Tests whether normals are correctly estimated using Normal Vector Voting
+    #     with a certain g_max for a plane surface with known orientation
+    #     (parallel to to X and Y axes), certain size, resolution and noise level.
+    #     """
+    #     for n in [5, 10]:
+    #         for g in [5, 3]:
+    #             self.parametric_test_plane_normals(10, res=30, noise=n, g_max=g)
 
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures for a sphere with a certain radius and
-    #     resolution are correctly estimated using Normal Vector Voting with a
-    #     certain g_max:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-    #     """
-    #     self.parametric_test_sphere_curvatures(
-    #         5, res=50, g_max=1, epsilon=0, eta=0)
-    #
-    # def test_inverse_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures for an inverse sphere with a certain radius
-    #     and resolution are correctly estimated using Normal Vector Voting with
-    #     a certain g_max:
-    #
-    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-    #     """
-    #     self.parametric_test_sphere_curvatures(
-    #         5, inverse=True, res=50, g_max=1, epsilon=0, eta=0)
-    #
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures for a sphere with a certain radius and
+        resolution are correctly estimated using Normal Vector Voting with a
+        certain g_max:
+
+        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+        """
+        self.parametric_test_sphere_curvatures(10, res=30, noise=0, g_max=3)
+        self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=3)
+        self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=5)
+        self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=5)
+        self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=3)
+
+    def test_inverse_sphere_curvatures(self):
+        """
+        Tests whether curvatures for an inverse sphere with a certain radius
+        and resolution are correctly estimated using Normal Vector Voting with
+        a certain g_max:
+
+        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+        """
+        self.parametric_test_sphere_curvatures(
+            10, inverse=True, res=30, noise=0, g_max=3)
+        self.parametric_test_sphere_curvatures(
+            10, inverse=True, res=30, noise=10, g_max=5)
+
     # def test_sphere_from_volume_curvatures(self):
     #     """
     #     Tests whether curvatures for a sphere with a certain radius are
@@ -459,6 +474,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     """
     #     self.parametric_test_sphere_curvatures(
     #         20, inverse=True, res=0,  g_max=7, epsilon=0, eta=0)
+
 
 if __name__ == '__main__':
     unittest.main()

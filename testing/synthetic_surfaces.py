@@ -71,6 +71,7 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     pg = PointGraph(scale_factor_to_nm=1, scale_x=1, scale_y=1, scale_z=1)
     pg.build_graph_from_vtk_surface(surface)
     l_ave = pg.calculate_average_edge_length(verbose=verbose)
+    # print "average triangle edge length = {}".format(l_ave)
 
     # Variance of the noise is the given percent of l_ave
     var = percent / 100.0 * l_ave
@@ -90,25 +91,17 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     for i in range(n):
         if point_data.GetArrayName(i) == "Normals":
             point_normals = point_data.GetArray(i)
-            print ("Point normals found")
 
     # For each point, get its normal and randomly add noise from Gaussian
     # distribution with the wanted variance in the normal direction
     for i in xrange(surface.GetNumberOfPoints()):
         old_p = np.asarray(surface.GetPoint(i))
-        # print "type(old_p) == {}".format(type(old_p))  # test
-        # print old_p
         normal_p = np.asarray(point_normals.GetTuple3(i))
-        # print "type(normal_p) == {}".format(type(normal_p))  # test
-        # print normal_p
         new_p = old_p + np.random.normal(scale=std) * normal_p
-        # print "type(new_p) == {}".format(type(new_p))  # test
-        # print new_p
         new_x, new_y, new_z = new_p
         points.InsertPoint(i, new_x, new_y, new_z)
     # Set the points of the surface copy
     new_surface.SetPoints(points)
-
     return new_surface
 
 

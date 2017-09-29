@@ -62,8 +62,6 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
         None
     """
     fig = plt.figure()
-    counts = []
-    bin_edges = []
     if value_range is None:
         counts, bin_edges = np.histogram(value_list, bins=num_bins)
     elif isinstance(value_range, tuple) and len(value_range) == 2:
@@ -107,10 +105,6 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
         None
     """
     fig = plt.figure()
-    counts1 = []
-    bin_edges1 = []
-    counts2 = []
-    bin_edges2 = []
     if value_range is None:
         counts1, bin_edges1 = np.histogram(value_list1, bins=num_bins)
         counts2, bin_edges2 = np.histogram(value_list2, bins=num_bins)
@@ -148,7 +142,7 @@ def plot_plane_normal_errors(half_size, res=30, noise=10,
             axes (default 30)
         noise (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 10), the noise
-            is added on triangle vertex coordinates in Z dimension
+            is added on triangle vertex coordinates in its normal direction
         g_max (float, optional): geodesic neighborhood radius in length unit
             of the graph, here voxels; if positive (default 0.0) this g_max
             will be used and k will be ignored
@@ -208,7 +202,7 @@ def plot_plane_normal_errors(half_size, res=30, noise=10,
     print ("The plot was saved as {}".format(vv_vtk_normal_errors_plot))
 
 
-def plot_sphere_curv_errors(radius, inverse=False, res=50,
+def plot_sphere_curv_errors(radius, inverse=False, res=50, noise=10,
                             g_max=5, epsilon=0, eta=0):
     """
     A method for plotting sphere principal curvature errors as estimated by a
@@ -223,6 +217,9 @@ def plot_sphere_curv_errors(radius, inverse=False, res=50,
             triangles) the sphere has (longitude and latitude), the surface
             is generated directly using VTK; If 0 first a sphere mask is
             generated and then surface using gen_surface function
+        noise (int, optional): determines variance of the Gaussian noise in
+            percents of average triangle edge length (default 10), the noise
+            is added on triangle vertex coordinates in its normal direction
         g_max (float, optional): geodesic neighborhood radius in length unit
             of the graph, here voxels; if positive (default 5) this g_max
             will be used and k will be ignored
@@ -239,9 +236,10 @@ def plot_sphere_curv_errors(radius, inverse=False, res=50,
     """
     base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
     if res == 0:
-        fold = '{}synthetic_volumes/sphere/'.format(base_fold)
+        fold = '{}synthetic_volumes/sphere/noise{}/'.format(base_fold, noise)
     else:
-        fold = '{}synthetic_surfaces/sphere/res{}/'.format(base_fold, res)
+        fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
+            base_fold, res, noise)
     files_fold = '{}files4plotting/'.format(fold)
     if inverse:
         inverse_str = "inverse_"
@@ -355,9 +353,9 @@ def plot_sphere_curv_errors(radius, inverse=False, res=50,
     kappa_1_errors_plot = "{}{}.kappa_1_errors.png".format(plots_fold, base)
     kappa_2_errors_plot = "{}{}.kappa_2_errors.png".format(plots_fold, base)
     if inverse is True:
-        title = "Comparison for Inverse Sphere (0% noise)"
+        title = "Comparison for Inverse Sphere ({}% noise)".format(noise)
     else:
-        title = "Comparison for Sphere (0% noise)"
+        title = "Comparison for Sphere ({}% noise)".format(noise)
     # old title:
     # "Sphere with radius={}, VV with g_max={}, epsilon={}, eta={}\n"
     # "vs. averaging of VTK values for triangle vertices".format(
@@ -377,9 +375,16 @@ def plot_sphere_curv_errors(radius, inverse=False, res=50,
         outfile=kappa_2_errors_plot)
     print ("The plot was saved as {}".format(kappa_2_errors_plot))
 
+
 if __name__ == "__main__":
-    for n in [5, 10]:
-        for g in [3, 5]:
-            plot_plane_normal_errors(10, res=30, noise=n, g_max=g)
-    # plot_sphere_curv_errors(5, inverse=False, res=50, g_max=1)
-    # plot_sphere_curv_errors(5, inverse=True, res=50, g_max=1)
+    # for n in [5, 10, 0]:
+        # for g in [5, 3]:
+            # plot_plane_normal_errors(10, res=30, noise=n, g_max=g)
+    plot_sphere_curv_errors(10, inverse=False, res=30, noise=0, g_max=3)
+    plot_sphere_curv_errors(10, inverse=False, res=30, noise=5, g_max=3)
+    plot_sphere_curv_errors(10, inverse=False, res=30, noise=5, g_max=5)
+    plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, g_max=3)
+    plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, g_max=5)
+
+    plot_sphere_curv_errors(10, inverse=True, res=30, noise=0, g_max=3)
+    plot_sphere_curv_errors(10, inverse=True, res=30, noise=10, g_max=5)
