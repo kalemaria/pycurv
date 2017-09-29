@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 from pysurf_compact import pysurf_io as io
-from pysurf_compact import pexceptions, PointGraph
+from pysurf_compact import pexceptions, surface_graphs
 
 """A set of functions and classes for generating artificial surfaces of
 geometrical objects."""
@@ -68,10 +68,10 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
         noisy surface (vtk.vtkPolyData)
     """
     # Find the average triangle edge length (l_ave)
-    pg = PointGraph(scale_factor_to_nm=1, scale_x=1, scale_y=1, scale_z=1)
+    pg = surface_graphs.PointGraph(scale_factor_to_nm=1, scale_x=1, scale_y=1,
+                                   scale_z=1)
     pg.build_graph_from_vtk_surface(surface)
     l_ave = pg.calculate_average_edge_length(verbose=verbose)
-    # print "average triangle edge length = {}".format(l_ave)
 
     # Variance of the noise is the given percent of l_ave
     var = percent / 100.0 * l_ave
