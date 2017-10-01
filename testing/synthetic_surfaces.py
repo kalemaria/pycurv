@@ -214,6 +214,8 @@ class CylinderGenerator(object):
         Returns:
             a cylinder surface (vtk.vtkPolyData)
         """
+        # TODO generate more triangles on the curved surface
+        # TODO remove the two circular planes
         print("Generating a cylinder with radius={}, height={} and "
               "resolution={}".format(r, h, res))
         is_positive_number(r)

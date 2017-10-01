@@ -6,9 +6,10 @@ import numpy as np
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
     TriangleGraph, PointGraph, vector_voting, pexceptions, run_gen_surface)
-from synthetic_surfaces import (PlaneGenerator, SphereGenerator,
-                                add_gaussian_noise_to_surface)
-from synthetic_volumes import SphereMask
+from synthetic_surfaces import (
+    PlaneGenerator, SphereGenerator, CylinderGenerator,
+    add_gaussian_noise_to_surface)
+from synthetic_volumes import SphereMask, CylinderMask
 
 
 def percent_error_scalar(true_value, estimated_value):
@@ -174,7 +175,6 @@ class VectorVotingTestCase(unittest.TestCase):
         io.save_vtp(surf_vv, surf_vv_file)
 
         # Getting the initial and the estimated normals
-        # pos = range(tg.graph.num_vertices())
         pos = [0, 1, 2]  # vector-property value positions
         vtk_normals = tg.graph.vertex_properties["normal"].get_2d_array(pos)
         vv_normals = tg.graph.vertex_properties["N_v"].get_2d_array(pos)
@@ -200,6 +200,166 @@ class VectorVotingTestCase(unittest.TestCase):
         # Asserting that all estimated normals are close to the true normal,
         # allowing error of 30%:
         for error in vv_normal_errors:
+            msg = '{} is > {}%!'.format(error, 30)
+            self.assertLessEqual(error, 30, msg=msg)
+
+    def parametric_test_cylinder_T_2(self, r, h, res=0, noise=0,
+                                     k=3, g_max=0, epsilon=0, eta=0):
+        """
+        Tests whether minimal principal directions (T_2) are correctly estimated
+        for an opened cylinder surface (without the circular planes) with known
+        orientation (height, i.e. T_2, parallel to the Z axis).
+
+        Args:
+            r (int): cylinder radius in voxels (default 10)
+            h (int): cylinder height in voxels (default 21)
+            res (int, optional): if > 0 determines how many stripes around both
+                approximate circles (and then triangles) the cylinder has, the
+                surface is generated directly using VTK; If 0 (default) first a
+                cylinder mask is generated and then surface using gen_surface
+                function
+            noise (int, optional): determines variance of the Gaussian noise in
+                percents of average triangle edge length (default 0), the noise
+                is added on triangle vertex coordinates in its normal direction
+            k (int, optional): parameter of Normal Vector Voting algorithm
+                determining the geodesic neighborhood radius:
+                g_max = k * average weak triangle graph edge length (default 3)
+            g_max (float, optional): geodesic neighborhood radius in length unit
+                of the graph, here voxels; if positive (default 0) this g_max
+                will be used and k will be ignored
+            epsilon (int, optional): parameter of Normal Vector Voting algorithm
+                influencing the number of triangles classified as "crease
+                junction" (class 2), default 0
+            eta (int, optional): parameter of Normal Vector Voting algorithm
+                influencing the number of triangles classified as "crease
+                junction" (class 2) and "no preferred orientation" (class 3),
+                default 0
+
+        Notes:
+            * Either g_max or k must be positive (if both are positive, the
+              specified g_max will be used).
+            * If epsilon = 0 and eta = 0 (default), all triangles will be
+              classified as "surface patch" (class 1).
+
+        Returns:
+            None
+        """
+        base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
+        if res == 0:
+            fold = '{}synthetic_volumes/cylinder/noise{}/'.format(
+                base_fold, noise)
+        else:
+            fold = '{}synthetic_surfaces/cylinder/res{}_noise{}/'.format(
+                base_fold, res, noise)
+        if not os.path.exists(fold):
+            os.makedirs(fold)
+        surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
+        surf_file = '{}.surface.vtp'.format(surf_filebase)
+        scale_factor_to_nm = 1  # assume it's already in nm
+        # Actually can just give in any number for the scales, because they are
+        # only used for ribosome density calculation or volumes / .mrc files
+        # creation.
+        scale_x = 2 * r
+        scale_y = scale_x
+        scale_z = h
+        files_fold = '{}files4plotting/'.format(fold)
+        if not os.path.exists(files_fold):
+            os.makedirs(files_fold)
+        base_filename = "{}cylinder_r{}_h{}".format(files_fold, r, h)
+        if g_max > 0:
+            surf_vv_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, g_max, epsilon, eta)
+            vv_T_2_errors_file = (
+                '{}.VV_g_max{}_epsilon{}_eta{}.T_2_errors.txt'.format(
+                    base_filename, g_max, epsilon, eta))
+        elif k > 0:
+            surf_vv_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, k, epsilon, eta)
+            vv_T_2_errors_file = (
+                '{}.VV_k{}_epsilon{}_eta{}.T_2_errors.txt'.format(
+                    base_filename, k, epsilon, eta))
+        else:
+            error_msg = ("Either g_max or k must be positive (if both are "
+                         "positive, the specified g_max will be used).")
+            raise pexceptions.PySegInputError(
+                expr='parametric_test_plane_normals', msg=error_msg)
+
+        print ("\n*** Generating a surface and a graph for a cylinder with "
+               "radius {}, height {} and {}% noise ***".format(r, h, noise))
+        # If the .vtp file with the test surface does not exist, create it:
+        if not os.path.isfile(surf_file):
+            if res == 0:
+                cm = CylinderMask()
+                box = max(2 * r + 1, h) + 2
+                cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=1,
+                                                          opened=True)
+                run_gen_surface(cylinder_mask, surf_filebase, noise=noise)
+            else:
+                print "Warning: cylinder contains planes!"
+                cg = CylinderGenerator()
+                cylinder = cg.generate_cylinder_surface(r, h, res=50)
+                if noise > 0:
+                    cylinder = add_gaussian_noise_to_surface(cylinder,
+                                                             percent=noise)
+                io.save_vtp(cylinder, surf_file)
+
+        # Reading in the .vtp file with the test triangle mesh and transforming
+        # it into a triangle graph:
+        t_begin = time.time()
+
+        print '\nReading in the surface file to get a vtkPolyData surface...'
+        surf = io.load_poly(surf_file)
+        print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+               'curvatures...')
+        tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg.build_graph_from_vtk_surface(surf, verbose=False,
+                                        reverse_normals=False)
+        print tg.graph
+
+        if k > 0:
+            print "k = {}".format(k)
+            # Find the average triangle edge length (l_ave) and calculate g_max:
+            # (Do this here because in vector_voting average weak edge length of
+            # the triangle graph is used, since the surface not passed)
+            pg = PointGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+            pg.build_graph_from_vtk_surface(surf)
+            l_ave = pg.calculate_average_edge_length()
+            print "average triangle edge length = {}".format(l_ave)
+            g_max = k * l_ave
+
+        t_end = time.time()
+        duration = t_end - t_begin
+        print ('Graph construction from surface took: {} min {} s'.format(
+            divmod(duration, 60)[0], divmod(duration, 60)[1]))
+
+        # Running the modified Normal Vector Voting algorithm:
+        surf_vv = vector_voting(tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                                exclude_borders=False)
+        # Saving the output (TriangleGraph object) for later inspection in
+        # ParaView:
+        io.save_vtp(surf_vv, surf_vv_file)
+
+        # Getting the estimated (by VV) minimal principal directions (T_2)
+        pos = [0, 1, 2]  # vector-property value positions
+        vv_T_2s = tg.graph.vertex_properties["T_2"].get_2d_array(pos)
+        # The shape is (3, <num_vertices>) - have to transpose to group the
+        # respective x, y, z components to sub-arrays
+        vv_T_2s = np.transpose(vv_T_2s)  # shape (<num_vertices>, 3)
+
+        # Ground-truth normal is parallel to Z axis
+        true_T_2 = np.array([0, 0, 1])
+
+        # Compute the percentage errors of the estimated T_2 vectors wrt the
+        # true one:
+        vv_T_2_errors = np.array(map(
+            lambda x: percent_error_vector(true_T_2, x), vv_T_2s))
+
+        # Writing the errors into a file:
+        io.write_values_to_file(vv_T_2_errors, vv_T_2_errors_file)
+
+        # Asserting that all estimated T_2 vectors are close to the true vector,
+        # allowing error of 30%:
+        for error in vv_T_2_errors:
             msg = '{} is > {}%!'.format(error, 30)
             self.assertLessEqual(error, 30, msg=msg)
 
@@ -257,7 +417,8 @@ class VectorVotingTestCase(unittest.TestCase):
                 base_fold, res, noise)
         if not os.path.exists(fold):
             os.makedirs(fold)
-        surf_file = '{}sphere_r{}.surface.vtp'.format(fold, radius)
+        surf_filebase = '{}sphere_r{}'.format(fold, radius)
+        surf_file = '{}.surface.vtp'.format(surf_filebase)
         scale_factor_to_nm = 1  # assume it's already in nm
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
@@ -325,9 +486,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 sm = SphereMask()
                 sphere_mask = sm.generate_sphere_mask(
                     r=radius, box=(radius * 2 + 3), t=1)
-                run_gen_surface(
-                    sphere_mask, '{}sphere_r{}'.format(fold, radius),
-                    noise=noise)
+                run_gen_surface(sphere_mask, surf_filebase, noise=noise)
             else:
                 sg = SphereGenerator()
                 sphere = sg.generate_sphere_surface(
@@ -466,55 +625,67 @@ class VectorVotingTestCase(unittest.TestCase):
 
     # def test_plane_normals(self):
     #     """
-    #     Tests whether normals are correctly estimated using Normal Vector Voting
-    #     with a certain g_max for a plane surface with known orientation
-    #     (parallel to to X and Y axes), certain size, resolution and noise level.
+    #     Tests whether normals are correctly estimated using Normal Vector
+    #     Voting with a certain g_max for a plane surface with known orientation
+    #     (parallel to to X and Y axes), certain size, resolution and noise
+    #     level.
     #     """
     #     for n in [5, 10]:
     #         # for g in [5, 3]:
-    #         #     self.parametric_test_plane_normals(10, res=30, noise=n, g_max=g)
+    #         #     self.parametric_test_plane_normals(
+    #         #         10, res=30, noise=n, g_max=g)
     #         for k in [5, 3]:
     #             self.parametric_test_plane_normals(10, res=30, noise=n, k=k)
 
-    def test_sphere_curvatures(self):
+    def test_cylinder_from_volume_T_2(self):
         """
-        Tests whether curvatures for a sphere with a certain radius and
-        resolution are correctly estimated using Normal Vector Voting with a
-        certain g_max:
+        Tests whether minimal principal directions (T_2) are correctly estimated
+        using Normal Vector Voting with a certain g_max for an opened cylinder
+        surface (without the circular planes) with known orientation (height,
+        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+        and noise level.
+        """
+        self.parametric_test_cylinder_T_2(20, 10, res=0, noise=0, k=5)
 
-        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-        """
-        # self.parametric_test_sphere_curvatures(10, res=30, noise=0, g_max=3)
-        # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=3)
-        # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=5)
-        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=5)
-        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=3)
-        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=3)
-        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=5)
-        # self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5)
-        self.parametric_test_sphere_curvatures(10, res=50, noise=10, k=5)
-
-    def test_inverse_sphere_curvatures(self):
-        """
-        Tests whether curvatures for an inverse sphere with a certain radius
-        and resolution are correctly estimated using Normal Vector Voting with
-        a certain g_max:
-
-        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-        """
-        # self.parametric_test_sphere_curvatures(
-        #     10, inverse=True, res=30, noise=0, g_max=3)
-        # self.parametric_test_sphere_curvatures(
-        #     10, inverse=True, res=30, noise=10, g_max=5)
-        # self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5,
-        #                                        inverse=True)
-        self.parametric_test_sphere_curvatures(10, res=50, noise=10, k=5,
-                                               inverse=True)
+    # def test_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated using Normal Vector
+    #     Voting with a certain g_max for a sphere with a certain radius,
+    #     resolution and noise level:
+    #
+    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+    #     """
+    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=0, g_max=3)
+    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=3)
+    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=5)
+    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=5)
+    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=3)
+    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=3)
+    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=5)
+    #     # self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5)
+    #     self.parametric_test_sphere_curvatures(10, res=50, noise=10, k=5)
+    #
+    # def test_inverse_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated using Normal Vector
+    #     Voting with a certain g_max for an inverse sphere with a certain
+    #     radius, resolution and noise level:
+    #
+    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+    #     """
+    #     # self.parametric_test_sphere_curvatures(
+    #     #     10, inverse=True, res=30, noise=0, g_max=3)
+    #     # self.parametric_test_sphere_curvatures(
+    #     #     10, inverse=True, res=30, noise=10, g_max=5)
+    #     # self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5,
+    #     #                                        inverse=True)
+    #     self.parametric_test_sphere_curvatures(10, res=50, noise=10, k=5,
+    #                                            inverse=True)
 
     # def test_sphere_from_volume_curvatures(self):
     #     """
-    #     Tests whether curvatures for a sphere with a certain radius are
-    #     correctly estimated using Normal Vector Voting with a certain g_max:
+    #     Tests whether curvatures are correctly estimated using Normal Vector
+    #     Voting with a certain g_max for a sphere with a certain radius:
     #
     #     kappa1 = kappa2 = 1/20 = 0.05; 30% of difference is allowed
     #     """
@@ -523,9 +694,9 @@ class VectorVotingTestCase(unittest.TestCase):
     #
     # def test_inverse_sphere_from_volume_radius20_g_max3_curvatures(self):
     #     """
-    #     Tests whether curvatures for an inverse sphere with a certain radius
-    #     are correctly estimated using Normal Vector Voting with a certain
-    #     g_max:
+    #     Tests whether curvatures are correctly estimated using Normal Vector
+    #     Voting with a certain g_max for an inverse sphere with a certain
+    #     radius:
     #
     #     kappa1 = kappa2 = -1/20 = -0.05; 30% of difference is allowed
     #     """
