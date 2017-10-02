@@ -16,11 +16,12 @@ def plot_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
         value_list: a list of numerical values
         num_bins (int): number of bins for the histogram
         title (str): title of the plot
-        xlabel (str): X axis label
-        ylabel (str): Y axis label
-        value_range: a tuple of two values to limit the range at X axis
-        outfile (str): if given (default None), the plot with be saved as a file
-            under this path
+        xlabel (str, optional): X axis label (default "Value")
+        ylabel (str, optional): Y axis label (default "Counts")
+        value_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        outfile (str, optional): if given (default None), the plot will be saved
+            as a file under this path
 
     Returns:
         None
@@ -43,7 +44,7 @@ def plot_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
 
 
 def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
-                   value_range=None, outfile=None):
+                   value_range=None, label=None, outfile=None):
     """
     Plots a line histogram of the values with the given number of bins and plot
     title.
@@ -52,11 +53,13 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
         value_list: a list of numerical values
         num_bins (int): number of bins for the histogram
         title (str): title of the plot
-        xlabel (str): X axis label
-        ylabel (str): Y axis label
-        value_range: a tuple of two values to limit the range at X axis
-        outfile (str): if given (default None), the plot with be saved as a file
-            under this path
+        xlabel (str, optional): X axis label (default "Value")
+        ylabel (str, optional): Y axis label (default "Counts")
+        value_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        label (str, optional): legend label for the value list (default None)
+        outfile (str, optional): if given (default None), the plot will be saved
+            as a file under this path
 
     Returns:
         None
@@ -71,7 +74,7 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
         error_msg = "Range has to be a tuple of two numbers (min, max)."
         raise pexceptions.PySegInputError(expr='plot_hist', msg=error_msg)
     bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
-    plt.plot(bincenters, counts, ls='-', marker='.')
+    plt.plot(bincenters, counts, ls='-', marker='.', label=label)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -93,13 +96,16 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
         value_list2: second list of numerical values
         num_bins (int): number of bins for the histogram
         title (str): title of the plot
-        xlabel (str): X axis label
-        ylabel (str): Y axis label
-        value_range: a tuple of two values to limit the range at X axis
-        label1 (str): legend label for the first value list
-        label2 (str): legend label for the second value list
-        outfile (str): if given (default None), the plot with be saved as a file
-            under this path
+        xlabel (str, optional): X axis label (default "Value")
+        ylabel (str, optional): Y axis label (default "Counts")
+        value_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        label1 (str, optional): legend label for the first value list (default
+            "values 1")
+        label2 (str, optional): legend label for the second value list (default
+            "values 2")
+        outfile (str, optional): if given (default None), the plot will be saved
+            as a file under this path
 
     Returns:
         None
@@ -213,6 +219,87 @@ def plot_plane_normal_errors(half_size, res=30, noise=10,
         label1=label_vv, label2="VTK",
         outfile=vv_vtk_normal_errors_plot)
     print ("The plot was saved as {}".format(vv_vtk_normal_errors_plot))
+
+
+def plot_cylinder_T_2_errors(r, h, res=0, noise=0,
+                             k=3, g_max=0, epsilon=0, eta=0):
+    """
+    A method for plotting cylinder minimal principal direction errors as
+    estimated by a modification of Normal Vector Voting (VV) algorithm.
+
+    Args:
+        r (int): cylinder radius in voxels
+        h (int): cylinder height in voxels
+        res (int, optional): if > 0 determines how many stripes around both
+            approximate circles (and then triangles) the cylinder has, the
+            surface is generated directly using VTK; If 0 (default) first a
+            cylinder mask is generated and then surface using gen_surface
+            function
+        noise (int, optional): determines variance of the Gaussian noise in
+            percents of average triangle edge length (default 0), the noise
+            is added on triangle vertex coordinates in its normal direction
+        k (int, optional): parameter of Normal Vector Voting algorithm
+            determining the geodesic neighborhood radius:
+            g_max = k * average weak triangle graph edge length (default 3)
+        g_max (float, optional): geodesic neighborhood radius in length unit
+            of the graph, here voxels; if positive (default 0) this g_max
+            will be used and k will be ignored
+        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease
+            junction" (class 2), default 0
+        eta (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease
+            junction" (class 2) and "no preferred orientation" (class 3),
+            default 0
+
+    Returns:
+        None
+    """
+    base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
+    if res == 0:
+        fold = '{}synthetic_volumes/cylinder/noise{}/'.format(
+            base_fold, noise)
+    else:
+        fold = '{}synthetic_surfaces/cylinder/res{}_noise{}/'.format(
+            base_fold, res, noise)
+    files_fold = '{}files4plotting/'.format(fold)
+    base_filename = "{}cylinder_r{}_h{}".format(files_fold, r, h)
+    if g_max > 0:
+        vv_T_2_errors_file = (
+            '{}.VV_g_max{}_epsilon{}_eta{}.T_2_errors.txt'.format(
+                base_filename, g_max, epsilon, eta))
+        label_vv = "VV ({})".format(g_max)
+    elif k > 0:
+        vv_T_2_errors_file = (
+            '{}.VV_k{}_epsilon{}_eta{}.T_2_errors.txt'.format(
+                base_filename, k, epsilon, eta))
+        label_vv = "VV ({})".format(k)
+    else:
+        error_msg = ("Either g_max or k must be positive (if both are "
+                     "positive, the specified g_max will be used).")
+        raise pexceptions.PySegInputError(
+            expr='plot_cylinder_T_2_errors', msg=error_msg)
+
+    # Reading in the error values from files:
+    if not os.path.exists(vv_T_2_errors_file):
+        print ("File {} not found!".format(vv_T_2_errors_file))
+        exit(0)
+    vv_T_2_errors = io.read_values_from_file(vv_T_2_errors_file)
+
+    # Plotting:
+    plots_fold = '{}plots/'.format(fold)
+    if not os.path.exists(plots_fold):
+        os.makedirs(plots_fold)
+    root, ext = os.path.splitext(vv_T_2_errors_file)
+    head, tail = os.path.split(root)
+    vv_T_2_errors_plot = "{}{}.png".format(plots_fold, tail)
+    plot_line_hist(vv_T_2_errors, 10,
+                   "Comparison for Cylinder ({}% noise)".format(noise),
+                   xlabel="Minimal Principal Direction Error (%)",
+                   ylabel="Number of Vertices", value_range=(0, 100),
+                   label=label_vv,
+                   outfile=vv_T_2_errors_plot)
+    print ("The plot was saved as {}".format(vv_T_2_errors_plot))
 
 
 def plot_sphere_curv_errors(radius, inverse=False, res=50, noise=10,
@@ -345,6 +432,8 @@ if __name__ == "__main__":
     #     for k in [5, 3]:
     #         plot_plane_normal_errors(10, res=30, noise=n, k=k)
 
+    plot_cylinder_T_2_errors(20, 10, res=0, noise=0, k=3)
+
     # plot_sphere_curv_errors(10, inverse=False, res=30, noise=0, g_max=3)
     # plot_sphere_curv_errors(10, inverse=False, res=30, noise=5, g_max=3)
     # plot_sphere_curv_errors(10, inverse=False, res=30, noise=5, g_max=5)
@@ -354,10 +443,10 @@ if __name__ == "__main__":
     # plot_sphere_curv_errors(10, inverse=True, res=30, noise=0, g_max=3)
     # plot_sphere_curv_errors(10, inverse=True, res=30, noise=10, g_max=5)
 
-    plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, k=3)
-    plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, k=5)
-    plot_sphere_curv_errors(10, inverse=False, res=40, noise=10, k=5)
-    plot_sphere_curv_errors(10, inverse=False, res=50, noise=10, k=5)
-
-    plot_sphere_curv_errors(10, inverse=True, res=40, noise=10, k=5)
-    plot_sphere_curv_errors(10, inverse=True, res=50, noise=10, k=5)
+    # plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, k=3)
+    # plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, k=5)
+    # plot_sphere_curv_errors(10, inverse=False, res=40, noise=10, k=5)
+    # plot_sphere_curv_errors(10, inverse=False, res=50, noise=10, k=5)
+    #
+    # plot_sphere_curv_errors(10, inverse=True, res=40, noise=10, k=5)
+    # plot_sphere_curv_errors(10, inverse=True, res=50, noise=10, k=5)

@@ -211,8 +211,8 @@ class VectorVotingTestCase(unittest.TestCase):
         orientation (height, i.e. T_2, parallel to the Z axis).
 
         Args:
-            r (int): cylinder radius in voxels (default 10)
-            h (int): cylinder height in voxels (default 21)
+            r (int): cylinder radius in voxels
+            h (int): cylinder height in voxels
             res (int, optional): if > 0 determines how many stripes around both
                 approximate circles (and then triangles) the cylinder has, the
                 surface is generated directly using VTK; If 0 (default) first a
@@ -645,7 +645,7 @@ class VectorVotingTestCase(unittest.TestCase):
         i.e. T_2, parallel to the Z axis), certain radius, height, resolution
         and noise level.
         """
-        self.parametric_test_cylinder_T_2(20, 10, res=0, noise=0, k=5)
+        self.parametric_test_cylinder_T_2(20, 10, res=0, noise=0, k=3)
 
     # def test_sphere_curvatures(self):
     #     """
