@@ -41,7 +41,8 @@ def close_holes(infile, cube_size, iterations, outfile):
 
 
 def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
-                    noise=0, save_input_as_vti=False, verbose=False):
+                    purge_ratio=1, noise=0, save_input_as_vti=False,
+                    verbose=False):
     """
     Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle
     surface for objects in a segmented volume with a given label.
@@ -61,6 +62,8 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
             objects is applied on the resulting surface to reduce artifacts
         other_mask (numpy.ndarray, optional): if given (default None), this
             segmentation is used as mask for the surface
+        purge_ratio (int, optional): if greater than 1 (default 1), then 1 every
+            purge_ratio points of the segmentation are randomly deleted
         noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 0), the noise
                 is added on triangle vertex coordinates in its normal direction
@@ -76,7 +79,7 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
 
     # Generating the surface (vtkPolyData object)
     surface = io.gen_surface(tomo, lbl=lbl, mask=mask, other_mask=other_mask,
-                             verbose=verbose)
+                             purge_ratio=purge_ratio, verbose=verbose)
 
     # Filter out triangles with area=0, if any are present
     surface = __filter_null_triangles(surface, verbose=verbose)

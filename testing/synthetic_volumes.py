@@ -140,55 +140,64 @@ def main():
     # # From the mask, generate a surface (is correct)
     # run_gen_surface(sphere, "{}sphere_r{}".format(fold, r))
 
-    # Generate a hollow sphere mask
-    sm = SphereMask()
-    r = 20  # r=10: 1856 cells, r=15: 4582 cells, r=20: 8134 cells
-    thickness = 1
-    sphere = sm.generate_sphere_mask(r, box=(2 * r + 3), t=thickness)
-    io.save_numpy(sphere, "{}sphere_r{}_t{}.mrc".format(fold, r, thickness))
-
-    # From the mask, generate a surface (is correct)
-    run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
+    # # Generate a hollow sphere mask
+    # sm = SphereMask()
+    # r = 20  # r=10: 1856 cells, r=15: 4582 cells, r=20: 8134 cells
+    # thickness = 1
+    # sphere = sm.generate_sphere_mask(r, box=(2 * r + 3), t=thickness)
+    # io.save_numpy(sphere, "{}sphere_r{}_t{}.mrc".format(fold, r, thickness))
+    #
+    # # From the mask, generate a surface (is correct)
+    # run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
 
     # Generate a hollow cylinder mask
+    r = 10
+    h = 20
+    purge_ratio = 3
+    surf_filebase = '{}cylinder_r{}_h{}_pr{}'.format(fold, r, h, purge_ratio)
     cm = CylinderMask()
-    thickness = 1
-    # cylinder_r10_h21_box27 = cm.generate_cylinder_mask(
-    #     r=10, h=21, box=27, t=thickness)
-    # io.save_numpy(cylinder_r10_h21_box27,
-    #              "{}cylinder_r10_h21_box27_t{}.mrc".format(fold, thickness))
-    cylinder_r10_h21_box27_open = cm.generate_cylinder_mask(
-        r=10, h=21, box=27, t=thickness, opened=True)
-    io.save_numpy(
-        cylinder_r10_h21_box27_open,
-        "{}cylinder_r10_h21_box27_t{}_open.mrc".format(fold, thickness))
-    cylinder_r10_h27_box27 = cm.generate_cylinder_mask(
-        r=10, h=27, box=27, t=thickness)
-    io.save_numpy(cylinder_r10_h27_box27,
-                  "{}cylinder_r10_h27_box27_t{}.mrc".format(fold, thickness))
-    # cylinder_r10_h27_box27_open = cm.generate_cylinder_mask(
-    #     r=10, h=27, box=27, t=thickness, open=True)
-    # io.save_numpy(
-    #     cylinder_r10_h27_box27_open,
-    #     "{}cylinder_r10_h27_box27_t{}_open.mrc".format(fold, thickness))
+    box = max(2 * r + 1, h) + 2
+    cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=1, opened=True)
+    run_gen_surface(cylinder_mask, surf_filebase, purge_ratio=purge_ratio)
 
-    # From the mask, generate a surface
-    # run_gen_surface(cylinder_r10_h21_box27,  # 3592 cells
-    #                 "{}cylinder_r10_h21_box27_t{}".format(fold, thickness))
+    # cm = CylinderMask()
+    # thickness = 1
+    # # cylinder_r10_h21_box27 = cm.generate_cylinder_mask(
+    # #     r=10, h=21, box=27, t=thickness)
+    # # io.save_numpy(cylinder_r10_h21_box27,
+    # #              "{}cylinder_r10_h21_box27_t{}.mrc".format(fold, thickness))
+    # cylinder_r10_h21_box27_open = cm.generate_cylinder_mask(
+    #     r=10, h=21, box=27, t=thickness, opened=True)
+    # io.save_numpy(
+    #     cylinder_r10_h21_box27_open,
+    #     "{}cylinder_r10_h21_box27_t{}_open.mrc".format(fold, thickness))
+    # cylinder_r10_h27_box27 = cm.generate_cylinder_mask(
+    #     r=10, h=27, box=27, t=thickness)
+    # io.save_numpy(cylinder_r10_h27_box27,
+    #               "{}cylinder_r10_h27_box27_t{}.mrc".format(fold, thickness))
+    # # cylinder_r10_h27_box27_open = cm.generate_cylinder_mask(
+    # #     r=10, h=27, box=27, t=thickness, open=True)
+    # # io.save_numpy(
+    # #     cylinder_r10_h27_box27_open,
+    # #     "{}cylinder_r10_h27_box27_t{}_open.mrc".format(fold, thickness))
+    #
+    # # From the mask, generate a surface
+    # # run_gen_surface(cylinder_r10_h21_box27,  # 3592 cells
+    # #                 "{}cylinder_r10_h21_box27_t{}".format(fold, thickness))
+    # # run_gen_surface(
+    # #     cylinder_r10_h21_box27_open,  # 2880 cells
+    # #     "{}cylinder_r10_h21_box27_t{}_open".format(fold, thickness))
+    # # run_gen_surface(cylinder_r10_h27_box27,  # 4310 cells
+    # #                 "{}cylinder_r10_h27_box27_t{}".format(fold, thickness))
+    # # run_gen_surface(
+    # #     cylinder_r10_h27_box27_open,  # 3672 cells, little unevenness
+    # #     "{}cylinder_r10_h27_box27_t{}_open".format(fold, thickness))
     # run_gen_surface(
-    #     cylinder_r10_h21_box27_open,  # 2880 cells
-    #     "{}cylinder_r10_h21_box27_t{}_open".format(fold, thickness))
-    # run_gen_surface(cylinder_r10_h27_box27,  # 4310 cells
-    #                 "{}cylinder_r10_h27_box27_t{}".format(fold, thickness))
-    # run_gen_surface(
-    #     cylinder_r10_h27_box27_open,  # 3672 cells, little unevenness
-    #     "{}cylinder_r10_h27_box27_t{}_open".format(fold, thickness))
-    run_gen_surface(
-        cylinder_r10_h27_box27,
-        "{}cylinder_r10_h27_box27_t{}_open2".format(fold, thickness),
-        other_mask=cylinder_r10_h21_box27_open)  # 3107 cells
-    # cylinder_r10_h25_box27_t1_open2.surface.vtp with MAX_DIST_SURF=1.5 and
-    # delete cell if all points outside mask (count > 2), 2879 cells
+    #     cylinder_r10_h27_box27,
+    #     "{}cylinder_r10_h27_box27_t{}_open2".format(fold, thickness),
+    #     other_mask=cylinder_r10_h21_box27_open)  # 3107 cells
+    # # cylinder_r10_h25_box27_t1_open2.surface.vtp with MAX_DIST_SURF=1.5 and
+    # # delete cell if all points outside mask (count > 2), 2879 cells
 
 
 if __name__ == "__main__":

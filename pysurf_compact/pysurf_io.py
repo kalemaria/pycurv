@@ -266,7 +266,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
             used as mask for the surface
         other_mask (numpy.ndarray, optional): if given (default None), this
             segmentation is used as mask for the surface
-        purge_ratio (int, optional): if greater than 1 (default), then 1 every
+        purge_ratio (int, optional): if greater than 1 (default 1), then 1 every
             purge_ratio points of the segmentation are randomly deleted
         field (boolean, optional): if True (default False), additionally returns
             the polarity distance scalar field

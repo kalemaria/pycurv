@@ -745,7 +745,7 @@ class VectorVotingTestCase(unittest.TestCase):
         and noise level.
         """
         self.parametric_test_cylinder_T_2_curvatures(10, 10, res=0, noise=0,
-                                                     k=9)
+                                                     k=10)
 
     def test_inverse_cylinder_from_volume_T_2(self):
         """
@@ -756,7 +756,7 @@ class VectorVotingTestCase(unittest.TestCase):
         and noise level.
         """
         self.parametric_test_cylinder_T_2_curvatures(10, 10, res=0, noise=0,
-                                                     k=9, inverse=True)
+                                                     k=10, inverse=True)
 
     # def test_sphere_curvatures(self):
     #     """
