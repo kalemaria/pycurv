@@ -736,27 +736,27 @@ class VectorVotingTestCase(unittest.TestCase):
     #         for k in [5, 3]:
     #             self.parametric_test_plane_normals(10, res=30, noise=n, k=k)
 
-    def test_cylinder_from_volume_T_2(self):
-        """
-        Tests whether minimal principal directions (T_2) are correctly estimated
-        using Normal Vector Voting with a certain g_max for an opened cylinder
-        surface (without the circular planes) with known orientation (height,
-        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-        and noise level.
-        """
-        self.parametric_test_cylinder_T_2_curvatures(10, 10, res=0, noise=0,
-                                                     k=10)
-
-    def test_inverse_cylinder_from_volume_T_2(self):
-        """
-        Tests whether minimal principal directions (T_2) are correctly estimated
-        using Normal Vector Voting with a certain g_max for an opened cylinder
-        surface (without the circular planes) with known orientation (height,
-        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-        and noise level.
-        """
-        self.parametric_test_cylinder_T_2_curvatures(10, 10, res=0, noise=0,
-                                                     k=10, inverse=True)
+    # def test_cylinder_from_volume_T_2(self):
+    #     """
+    #     Tests whether minimal principal directions (T_2) are correctly estimated
+    #     using Normal Vector Voting with a certain g_max for an opened cylinder
+    #     surface (without the circular planes) with known orientation (height,
+    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+    #     and noise level.
+    #     """
+    #     self.parametric_test_cylinder_T_2_curvatures(10, 10, res=0, noise=0,
+    #                                                  k=10)
+    #
+    # def test_inverse_cylinder_from_volume_T_2(self):
+    #     """
+    #     Tests whether minimal principal directions (T_2) are correctly estimated
+    #     using Normal Vector Voting with a certain g_max for an opened cylinder
+    #     surface (without the circular planes) with known orientation (height,
+    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+    #     and noise level.
+    #     """
+    #     self.parametric_test_cylinder_T_2_curvatures(10, 10, res=0, noise=0,
+    #                                                  k=10, inverse=True)
 
     # def test_sphere_curvatures(self):
     #     """
@@ -766,32 +766,21 @@ class VectorVotingTestCase(unittest.TestCase):
     #
     #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=0, g_max=3)
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=3)
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=5, g_max=5)
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=5)
-    #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, g_max=3)
     #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=3)
     #     # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=5)
-    #     # self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5)
-    #     self.parametric_test_sphere_curvatures(10, res=50, noise=10, k=5)
-    #
-    # def test_inverse_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated using Normal Vector
-    #     Voting with a certain g_max for an inverse sphere with a certain
-    #     radius, resolution and noise level:
-    #
-    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-    #     """
-    #     # self.parametric_test_sphere_curvatures(
-    #     #     10, inverse=True, res=30, noise=0, g_max=3)
-    #     # self.parametric_test_sphere_curvatures(
-    #     #     10, inverse=True, res=30, noise=10, g_max=5)
-    #     # self.parametric_test_sphere_curvatures(10, res=40, noise=10, k=5,
-    #     #                                        inverse=True)
-    #     self.parametric_test_sphere_curvatures(10, res=50, noise=10, k=5,
-    #                                            inverse=True)
+
+    def test_inverse_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated using Normal Vector
+        Voting with a certain g_max for an inverse sphere with a certain
+        radius, resolution and noise level:
+
+        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+        """
+        # self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=5,
+        #                                        inverse=True)
+        self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=3,
+                                               inverse=True)
 
     # def test_sphere_from_volume_curvatures(self):
     #     """
