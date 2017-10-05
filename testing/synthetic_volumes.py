@@ -19,7 +19,7 @@ class SphereMask(object):
         Generates a 3D volume with a sphere binary mask.
 
         Args:
-            r (int): radius in voxels (default 10)
+            r (int): radius in voxels difference (default 10)
             box (int): size of the box in x, y, and z dimensions in voxels, has
                 to be at least 2 * r + 1 (default 23)
             t (int): thickness of a hollow sphere in voxels, if 0 (default) a
@@ -64,10 +64,11 @@ class CylinderMask(object):
         Generates a 3D volume with a cylinder binary mask.
 
         Args:
-            r (int): radius in voxels (default 10)
-            h (int): height in voxels (default 21)
+            r (int): radius in voxels difference (default 10)
+            h (int): height in voxels difference (default 20)
             box (int): size of the box in x, y, and z dimensions in voxels, has
-                to be at least 2 * r + 1 or h (the bigger of them, default 27)
+                to be at least 2 * r + 1 or h + 1 (the bigger of them, default
+                23)
             t (int): thickness of a hollow cylinder in voxels, if 0 (default) a
                 filled cylinder is generated
             opened (boolean): if True (default False) and t>0, an "opened"
@@ -80,8 +81,8 @@ class CylinderMask(object):
             error_msg = "Cylinder diameter has to fit into the box."
             raise pexceptions.PySegInputError(
                 expr='CylinderMask.generate_cylinder_mask', msg=error_msg)
-        if h > box:
-            error_msg = "Cylinder high has to be maximum the box size."
+        if h + 1 > box:
+            error_msg = "Cylinder high has to fit into the box."
             raise pexceptions.PySegInputError(
                 expr='CylinderMask.generate_cylinder_mask', msg=error_msg)
 
@@ -99,8 +100,8 @@ class CylinderMask(object):
 
         # Generate a cylinder consisting of N=box circles stacked in Z dimension
         cylinder = np.zeros(shape=(box, box, box))
-        bottom = int(math.floor((box - h) / 2.0))
-        top = bottom + h
+        bottom = int(math.floor((box - h - 1) / 2.0))
+        top = bottom + h + 1  # not including
         for zz in range(bottom, top):
             cylinder[:, :, zz] = circle
 
@@ -153,10 +154,10 @@ def main():
     # Generate a hollow cylinder mask
     r = 10
     h = 20
-    purge_ratio = 3
-    surf_filebase = '{}cylinder_r{}_h{}_pr{}'.format(fold, r, h, purge_ratio)
+    purge_ratio = 1
+    surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
     cm = CylinderMask()
-    box = max(2 * r + 1, h) + 2
+    box = max(2 * r + 1, h + 1) + 2
     cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=1, opened=True)
     run_gen_surface(cylinder_mask, surf_filebase, purge_ratio=purge_ratio)
 

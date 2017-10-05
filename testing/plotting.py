@@ -26,6 +26,7 @@ def plot_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
     Returns:
         None
     """
+    plt.rcParams.update({'font.size': 16})
     fig = plt.figure()
     if value_range is None:
         plt.hist(value_list, bins=num_bins)
@@ -64,6 +65,7 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
     Returns:
         None
     """
+    plt.rcParams.update({'font.size': 16})
     fig = plt.figure()
     if value_range is None:
         counts, bin_edges = np.histogram(value_list, bins=num_bins)
@@ -74,7 +76,8 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
         error_msg = "Range has to be a tuple of two numbers (min, max)."
         raise pexceptions.PySegInputError(expr='plot_hist', msg=error_msg)
     bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
-    plt.plot(bincenters, counts, ls='-', marker='.', label=label)
+    plt.plot(bincenters, counts, ls='-', marker='^', c="b", label=label,
+             linewidth=2)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -110,6 +113,7 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
     Returns:
         None
     """
+    plt.rcParams.update({'font.size': 16})
     fig = plt.figure()
     if value_range is None:
         counts1, bin_edges1 = np.histogram(value_list1, bins=num_bins)
@@ -124,8 +128,10 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
         raise pexceptions.PySegInputError(expr='plot_hist', msg=error_msg)
     bincenters1 = 0.5 * (bin_edges1[1:] + bin_edges1[:-1])
     bincenters2 = 0.5 * (bin_edges2[1:] + bin_edges2[:-1])
-    plt.plot(bincenters1, counts1, ls='-', marker='.', c="blue", label=label1)
-    plt.plot(bincenters2, counts2, ls='--', marker='.', c="red", label=label2)
+    plt.plot(bincenters1, counts1, ls='-', marker='^', c="b", label=label1,
+             linewidth=2)
+    plt.plot(bincenters2, counts2, ls=':', marker='s', c="r", label=label2,
+             linewidth=2)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -570,14 +576,11 @@ def plot_sphere_curv_errors(radius, inverse=False, res=50, noise=10,
 
 
 if __name__ == "__main__":
-    # for n in [5, 10]:
-    #     for k in [5, 3]:
-    #         plot_plane_normal_errors(10, res=30, noise=n, k=k)
+    # plot_plane_normal_errors(10, res=30, noise=0, k=1)
+    # plot_plane_normal_errors(10, res=30, noise=5, k=5, extra=-2)
     # plot_plane_normal_errors(10, res=30, noise=10, k=5, extra=-2)
 
     # plot_cylinder_T_2_errors(20, 10, res=0, noise=0, k=3)
 
-    # plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, k=3)
-    # plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, k=5)
-    # plot_sphere_curv_errors(10, inverse=False, res=30, noise=10, k=5, extra=-2)
-    plot_sphere_curv_errors(10, inverse=True, res=30, noise=10, k=5, extra=-2)
+    plot_sphere_curv_errors(10, inverse=False, res=30, noise=0, k=5, extra=-2)
+    plot_sphere_curv_errors(10, inverse=True, res=30, noise=0, k=5, extra=-2)
