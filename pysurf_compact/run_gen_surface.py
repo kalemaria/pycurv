@@ -168,3 +168,55 @@ def __filter_null_triangles(surface, verbose=False):
                                           msg=error_msg)
 
     return surface
+
+
+def tomo_smooth_surf(seg, sg, th):
+    """
+    Gets a smooth surface from a segmented region.
+
+    Args:
+        seg (numpy.ndarray): 3D segmentation array
+        sg (int): sigma for gaussian smoothing (in voxels)
+        th (float): iso-surface threshold
+
+    Returns:
+        a vtkPolyData with the surface found
+    """
+
+    # Smoothing
+    seg_s = ndimage.filters.gaussian_filter(seg.astype(np.float), sg)
+    seg_vti = io.numpy_to_vti(seg_s)
+
+    # Iso-surface
+    surfaces = vtk.vtkMarchingCubes()
+    surfaces.SetInputData(seg_vti)
+    surfaces.ComputeNormalsOn()
+    surfaces.ComputeGradientsOn()
+    surfaces.SetValue(0, th)
+    surfaces.Update()
+
+    # # Keep just the largest surface
+    # con_filter = vtk.vtkPolyDataConnectivityFilter()
+    # con_filter.SetInputData(surfaces.GetOutput())
+    # con_filter.SetExtractionModeToLargestRegion()
+
+    # return con_filter.GetOutput()
+
+    return surfaces.GetOutput()
+
+
+if __name__ == "__main__":
+    in_seg = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
+              "cylinder_r10_h20.mrc")
+    tomo_seg = io.load_tomo(in_seg)
+    for seg_sg in [2]:  # in voxels (Johannes: 2)
+        print "sigma = {}".format(seg_sg)
+        for seg_th in [0.49]:  # (Johannes: 0.45)
+            print "threshold = {}".format(seg_th)
+            out_surf = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
+                        "cylinder_r10_h20.smooth_surface_sg{}_th{}.vtp".format(
+                         seg_sg, seg_th))
+            surf = tomo_smooth_surf(tomo_seg, seg_sg, seg_th)
+            print "The surface has %s cells" % surf.GetNumberOfCells()
+            print "%s points" % surf.GetNumberOfPoints()
+            io.save_vtp(surf, out_surf)

@@ -151,15 +151,28 @@ def main():
     # # From the mask, generate a surface (is correct)
     # run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
 
-    # Generate a hollow cylinder mask
+    # Generate a filled cylinder mask
     r = 10
     h = 20
+    t = 0
     purge_ratio = 1
     surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
     cm = CylinderMask()
     box = max(2 * r + 1, h + 1) + 2
-    cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=1, opened=True)
-    run_gen_surface(cylinder_mask, surf_filebase, purge_ratio=purge_ratio)
+    cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t, opened=True)
+    io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
+
+    # Generate a hollow cylinder mask
+    # r = 10
+    # h = 20
+    # t = 1
+    # purge_ratio = 1
+    # surf_filebase = '{}cylinder_r{}_h{}_t{}'.format(fold, r, h, t)
+    # cm = CylinderMask()
+    # box = max(2 * r + 1, h + 1) + 2
+    # cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t, opened=True)
+    # io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
+    # # run_gen_surface(cylinder_mask, surf_filebase, purge_ratio=purge_ratio)
 
     # cm = CylinderMask()
     # thickness = 1
