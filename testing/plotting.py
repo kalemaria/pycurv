@@ -45,7 +45,7 @@ def plot_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
 
 
 def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
-                   value_range=None, label=None, outfile=None):
+                   value_range=None, label=None, outfile=None, max_val=None):
     """
     Plots a line histogram of the values with the given number of bins and plot
     title.
@@ -61,12 +61,16 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
         label (str, optional): legend label for the value list (default None)
         outfile (str, optional): if given (default None), the plot will be saved
             as a file under this path
+        max_val (float, optional): if given (default None), values higher than
+            this value will be set to this value
 
     Returns:
         None
     """
     plt.rcParams.update({'font.size': 16})
     fig = plt.figure()
+    if max_val is not None:
+        value_list = [max_val if val > max_val else val for val in value_list]
     if value_range is None:
         counts, bin_edges = np.histogram(value_list, bins=num_bins)
     elif isinstance(value_range, tuple) and len(value_range) == 2:
@@ -89,7 +93,8 @@ def plot_line_hist(value_list, num_bins, title, xlabel="Value", ylabel="Counts",
 
 def plot_double_line_hist(value_list1, value_list2, num_bins, title,
                           xlabel="Value", ylabel="Counts", value_range=None,
-                          label1="values 1", label2="values 2", outfile=None):
+                          label1="values 1", label2="values 2", outfile=None,
+                          max_val=None):
     """
     Plots a line histogram of two value lists with the given number of bins and
     plot title.
@@ -109,12 +114,17 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
             "values 2")
         outfile (str, optional): if given (default None), the plot will be saved
             as a file under this path
+        max_val (float, optional): if given (default None), values higher than
+            this value will be set to this value
 
     Returns:
         None
     """
     plt.rcParams.update({'font.size': 16})
     fig = plt.figure()
+    if max_val is not None:
+        value_list1 = [max_val if val > max_val else val for val in value_list1]
+        value_list2 = [max_val if val > max_val else val for val in value_list2]
     if value_range is None:
         counts1, bin_edges1 = np.histogram(value_list1, bins=num_bins)
         counts2, bin_edges2 = np.histogram(value_list2, bins=num_bins)
@@ -135,7 +145,7 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend(loc='upper right')
+    plt.legend(loc='best', fancybox=True, framealpha=0.5)
     if outfile is None:
         plt.show()
     elif isinstance(outfile, str):
@@ -145,7 +155,7 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
 def plot_triple_line_hist(
         value_list1, value_list2, value_list3, num_bins, title, xlabel="Value",
         ylabel="Counts", value_range=None, label1="values 1", label2="values 2",
-        label3="values 3", outfile=None):
+        label3="values 3", outfile=None, max_val=None):
     """
     Plots a line histogram of two value lists with the given number of bins and
     plot title.
@@ -168,12 +178,18 @@ def plot_triple_line_hist(
             "values 3")
         outfile (str, optional): if given (default None), the plot will be saved
             as a file under this path
+        max_val (float, optional): if given (default None), values higher than
+            this value will be set to this value
 
     Returns:
         None
     """
     plt.rcParams.update({'font.size': 16})
     fig = plt.figure()
+    if max_val is not None:
+        value_list1 = [max_val if val > max_val else val for val in value_list1]
+        value_list2 = [max_val if val > max_val else val for val in value_list2]
+        value_list3 = [max_val if val > max_val else val for val in value_list3]
     if value_range is None:
         counts1, bin_edges1 = np.histogram(value_list1, bins=num_bins)
         counts2, bin_edges2 = np.histogram(value_list2, bins=num_bins)
@@ -200,7 +216,7 @@ def plot_triple_line_hist(
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.legend(loc='upper right')
+    plt.legend(loc='best', fancybox=True, framealpha=0.5)
     if outfile is None:
         plt.show()
     elif isinstance(outfile, str):
@@ -551,13 +567,13 @@ def plot_sphere_curv_errors(radius, inverse=False, res=0, noise=10,
             xlabel="Maximal Principal Curvature Error (%)",
             ylabel="Number of Vertices", value_range=(0, 100),
             label1=label_vv, label2=label_vv2, label3="VTK",
-            outfile=kappa_1_errors_plot)
+            outfile=kappa_1_errors_plot, max_val=100)
         plot_triple_line_hist(
             kappa_2_errors, kappa_2_errors2, vtk_kappa_2_errors, 10, title,
             xlabel="Minimal Principal Curvature Error (%)",
             ylabel="Number of Vertices", value_range=(0, 100),
             label1=label_vv, label2=label_vv2, label3="VTK",
-            outfile=kappa_2_errors_plot)
+            outfile=kappa_2_errors_plot, max_val=100)
     else:
         plot_double_line_hist(
             kappa_1_errors, vtk_kappa_1_errors, 10, title,
