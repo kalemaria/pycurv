@@ -5,7 +5,6 @@ import time
 
 import pexceptions
 import pysurf_io as io
-import testing
 
 """
 Set of functions for running single-layer, signed surface generation from a
@@ -41,7 +40,7 @@ def close_holes(infile, cube_size, iterations, outfile):
 
 
 def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
-                    purge_ratio=1, noise=0, save_input_as_vti=False,
+                    purge_ratio=1, save_input_as_vti=False,
                     verbose=False):
     """
     Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle
@@ -64,9 +63,6 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
             segmentation is used as mask for the surface
         purge_ratio (int, optional): if greater than 1 (default 1), then 1 every
             purge_ratio points of the segmentation are randomly deleted
-        noise (int, optional): determines variance of the Gaussian noise in
-                percents of average triangle edge length (default 0), the noise
-                is added on triangle vertex coordinates in its normal direction
         save_input_as_vti (boolean, optional): if True (default False), the
             input is saved as a '.vti' file ('<outfile_base>.vti')
         verbose (boolean, optional): if True (default False), some extra
@@ -83,9 +79,6 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
 
     # Filter out triangles with area=0, if any are present
     surface = __filter_null_triangles(surface, verbose=verbose)
-
-    if noise > 0:
-        surface = testing.add_gaussian_noise_to_surface(surface, percent=noise)
 
     t_end = time.time()
     duration = t_end - t_begin

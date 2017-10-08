@@ -405,7 +405,7 @@ def plot_cylinder_T_2_errors(r, h, res=0, noise=0,
     print ("The plot was saved as {}".format(vv_T_2_errors_plot))
 
 
-def plot_sphere_curv_errors(radius, inverse=False, res=50, noise=10,
+def plot_sphere_curv_errors(radius, inverse=False, res=0, noise=10,
                             k=3, g_max=0, epsilon=0, eta=0, extra=0):
     """
     A method for plotting sphere principal curvature errors as estimated by a
@@ -416,10 +416,10 @@ def plot_sphere_curv_errors(radius, inverse=False, res=50, noise=10,
         inverse (boolean, optional): if True (default False), the sphere
             will have normals pointing outwards (negative curvature), else
             the other way around
-        res (int): if > 0 (default 50) determines how many stripes (and then
-            triangles) the sphere has (longitude and latitude), the surface
-            is generated directly using VTK; If 0 first a sphere mask is
-            generated and then surface using gen_surface function
+        res (int): if > 0 determines how many longitude and latitude stripes
+            the UV sphere from vtkSphereSource has, the surface was
+            triangulated; If 0 (default) first a gaussian sphere mask was
+            generated and then surface using vtkMarchingCubes
         noise (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 10), the noise
             is added on triangle vertex coordinates in its normal direction
@@ -444,7 +444,7 @@ def plot_sphere_curv_errors(radius, inverse=False, res=50, noise=10,
     """
     base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
     if res == 0:
-        fold = '{}synthetic_volumes/sphere/noise{}/'.format(base_fold, noise)
+        fold = '{}synthetic_surfaces/sphere/noise{}/'.format(base_fold, noise)
     else:
         fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
             base_fold, res, noise)
@@ -582,5 +582,5 @@ if __name__ == "__main__":
 
     # plot_cylinder_T_2_errors(20, 10, res=0, noise=0, k=3)
 
-    plot_sphere_curv_errors(10, inverse=False, res=30, noise=0, k=5, extra=-2)
-    plot_sphere_curv_errors(10, inverse=True, res=30, noise=0, k=5, extra=-2)
+    plot_sphere_curv_errors(10, inverse=False, res=0, noise=0, k=5, extra=-2)
+    plot_sphere_curv_errors(10, inverse=True, res=0, noise=0, k=5, extra=-2)

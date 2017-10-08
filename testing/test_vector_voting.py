@@ -463,7 +463,7 @@ class VectorVotingTestCase(unittest.TestCase):
             self.assertLessEqual(error, 30, msg=msg)
 
     def parametric_test_sphere_curvatures(
-            self, radius, inverse=False, res=50, noise=10,
+            self, radius, inverse=False, res=0, noise=10,
             k=3, g_max=0, epsilon=0, eta=0):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
@@ -477,10 +477,10 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
                 the other way around
-            res (int): if > 0 (default 50) determines how many stripes (and then
-                triangles) the sphere has (longitude and latitude), the surface
-                is generated directly using VTK; If 0 first a sphere mask is
-                generated and then surface using gen_surface function
+            res (int): if > 0 determines how many longitude and latitude stripes
+                the UV sphere from vtkSphereSource has, the surface is
+                triangulated; If 0 (default) first a gaussian sphere mask is
+                generated and then surface using vtkMarchingCubes
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 10), the noise
                 is added on triangle vertex coordinates in its normal direction
@@ -509,7 +509,7 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res == 0:
-            fold = '{}synthetic_volumes/sphere/noise{}/'.format(
+            fold = '{}synthetic_surfaces/sphere/noise{}/'.format(
                 base_fold, noise)
         else:
             fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
@@ -581,19 +581,16 @@ class VectorVotingTestCase(unittest.TestCase):
                    "with radius {} and {}% noise ***".format(radius, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
-            if res == 0:  # generate surface from a mask with gen_surface
-                sm = SphereMask()
-                sphere_mask = sm.generate_sphere_mask(
-                    r=radius, box=(radius * 2 + 3), t=1)
-                run_gen_surface(sphere_mask, surf_filebase, noise=noise)
+            sg = SphereGenerator()
+            if res == 0:  # generate surface from a gaussian mask
+                sphere = sg.generate_gauss_sphere_surface(radius)
             else:  # generate surface directly with VTK
-                sg = SphereGenerator()
                 sphere = sg.generate_UV_sphere_surface(
                     r=radius, latitude_res=res, longitude_res=res)
-                if noise > 0:
-                    sphere = add_gaussian_noise_to_surface(sphere,
-                                                           percent=noise)
-                io.save_vtp(sphere, surf_file)
+            if noise > 0:
+                sphere = add_gaussian_noise_to_surface(sphere,
+                                                       percent=noise)
+            io.save_vtp(sphere, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
         # it into a triangle graph:
@@ -604,24 +601,15 @@ class VectorVotingTestCase(unittest.TestCase):
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
         tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-        if res == 0:  # surface generated from a mask with gen_surface
-            # a graph with normals pointing outwards is generated (negative
-            # curvatures)
-            if inverse:
-                reverse_normals = True
-            # a graph with normals pointing inwards is generated (normal case
-            # for this method; positive curvatures)
-            else:
-                reverse_normals = False
-        else:  # surface generated directly with VTK
-            # a graph with normals pointing outwards is generated (normal case
-            # for this method; negative curvatures)
-            if inverse:
-                reverse_normals = False
-            # a graph with normals pointing inwards is generated (positive
-            # curvatures)
-            else:
-                reverse_normals = True
+        # VTK has opposite surface normals convention than we use
+        # a graph with normals pointing outwards is generated (normal case
+        # for VTK; negative curvatures)
+        if inverse:
+            reverse_normals = False
+        # a graph with normals pointing inwards is generated (VTK normals have
+        # to be flipped, positive curvatures)
+        else:
+            reverse_normals = True
         tg.build_graph_from_vtk_surface(surf, verbose=False,
                                         reverse_normals=reverse_normals)
         print tg.graph
@@ -763,7 +751,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
         kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
         """
-        self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=5)
+        self.parametric_test_sphere_curvatures(10, res=0, noise=0, k=5)
 
     def test_inverse_sphere_curvatures(self):
         """
@@ -773,7 +761,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
         kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
         """
-        self.parametric_test_sphere_curvatures(10, res=30, noise=10, k=5,
+        self.parametric_test_sphere_curvatures(10, res=0, noise=0, k=5,
                                                inverse=True)
 
     # def test_sphere_from_volume_curvatures(self):
