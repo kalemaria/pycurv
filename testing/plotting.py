@@ -598,5 +598,7 @@ if __name__ == "__main__":
 
     # plot_cylinder_T_2_errors(20, 10, res=0, noise=0, k=3)
 
-    plot_sphere_curv_errors(10, inverse=False, res=0, noise=0, k=5, extra=-2)
-    plot_sphere_curv_errors(10, inverse=True, res=0, noise=0, k=5, extra=-2)
+    # plot_sphere_curv_errors(10, inverse=True, res=0, noise=0, k=5, extra=-2)
+    for n in [5, 10]:
+        plot_sphere_curv_errors(10, inverse=False, res=0, noise=n, k=5,
+                                extra=-2)

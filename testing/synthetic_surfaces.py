@@ -84,19 +84,26 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     new_surface = vtk.vtkPolyData()
     new_surface.DeepCopy(surface)
     points = vtk.vtkPoints()
+    new_surface.GetPointData().SetNormals(
+        __copy_and_name_array(surface.GetPointData().GetNormals(), 'Normals'))
 
     # Get the Normals points array:
-    point_data = surface.GetPointData()
+    point_data = new_surface.GetPointData()
     n = point_data.GetNumberOfArrays()
     point_normals = None
     for i in range(n):
         if point_data.GetArrayName(i) == "Normals":
             point_normals = point_data.GetArray(i)
+            break
+
+    if point_normals is None:
+        print "No normals array found."
+        exit(0)
 
     # For each point, get its normal and randomly add noise from Gaussian
     # distribution with the wanted variance in the normal direction
-    for i in xrange(surface.GetNumberOfPoints()):
-        old_p = np.asarray(surface.GetPoint(i))
+    for i in xrange(new_surface.GetNumberOfPoints()):
+        old_p = np.asarray(new_surface.GetPoint(i))
         normal_p = np.asarray(point_normals.GetTuple3(i))
         new_p = old_p + np.random.normal(scale=std) * normal_p
         new_x, new_y, new_z = new_p
@@ -104,6 +111,16 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     # Set the points of the surface copy
     new_surface.SetPoints(points)
     return new_surface
+
+
+def __copy_and_name_array(da, name):
+    if da is not None:
+        outda = da.NewInstance()
+        outda.DeepCopy(da)
+        outda.SetName(name)
+        return outda
+    else:
+        return None
 
 
 class PlaneGenerator(object):
