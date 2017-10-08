@@ -4,6 +4,7 @@ import numpy as np
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import pexceptions, surface_graphs
+from synthetic_volumes import SphereMask
 
 """A set of functions and classes for generating artificial surfaces of
 geometrical objects."""
@@ -150,10 +151,10 @@ class SphereGenerator(object):
     A class for generating triangular-mesh surface of a sphere.
     """
     @staticmethod
-    def generate_sphere_surface(r=10.0, latitude_res=100,
-                                longitude_res=100):
+    def generate_UV_sphere_surface(r=10.0, latitude_res=100,
+                                   longitude_res=100):
         """
-        Generates a sphere surface with only triangular cells.
+        Generates a UV sphere surface with only triangular cells.
 
         Args:
             r (float, optional): sphere radius (default 10.0)
@@ -195,6 +196,67 @@ class SphereGenerator(object):
         # Might contain non-triangle cells after cleaning - remove them
         sphere_surface = remove_non_triangle_cells(cleaner.GetOutput())
         return sphere_surface
+
+    @staticmethod
+    def generate_sphere_surface(r):
+        """
+        Generates a sphere surface with a given radius using a filled binary
+        sphere mask and the Marching Cubes method. The resulting surface tends
+        to follow the sharp voxels outline.
+
+        Args:
+            r (int): sphere radius
+
+        Returns:
+            a sphere surface (vtk.vtkPolyData)
+        """
+        # Generate a sphere mask with radius == r
+        box = int(math.ceil(r * 2.5))
+        sm = SphereMask()
+        mask_np = sm.generate_sphere_mask(r, box)
+        mask_vti = io.numpy_to_vti(mask_np)
+
+        # Iso-surface
+        surfaces = vtk.vtkMarchingCubes()
+        surfaces.SetInputData(mask_vti)
+        surfaces.ComputeNormalsOn()
+        surfaces.ComputeGradientsOn()
+        surfaces.SetValue(0, 1)
+        surfaces.Update()
+
+        return surfaces.GetOutput()
+
+    @staticmethod
+    def generate_gauss_sphere_surface(r):
+        """
+        Generates a sphere surface with a given radius using a gaussian sphere
+        mask and the Marching Cubes method. The resulting surface is smooth.
+
+        Args:
+            r (int): sphere radius
+
+        Returns:
+            a sphere surface (vtk.vtkPolyData)
+        """
+        # Generate a gauss sphere mask with 3 * sigma == radius r
+        sg = r / 3.0
+        box = int(math.ceil(r * 2.5))
+        sm = SphereMask()
+        mask_np = sm.generate_gauss_sphere_mask(sg, box)
+        mask_vti = io.numpy_to_vti(mask_np)
+
+        # Calculate threshold th to get the desired radius r
+        th = math.exp(-(r ** 2) / (2 * (sg ** 2)))
+
+        # Iso-surface
+        surfaces = vtk.vtkMarchingCubes()
+        surfaces.SetInputData(mask_vti)
+        surfaces.ComputeNormalsOn()
+        surfaces.ComputeGradientsOn()
+        surfaces.SetValue(0, th)
+        surfaces.Update()
+
+        return surfaces.GetOutput()
 
 
 class CylinderGenerator(object):
@@ -257,20 +319,25 @@ def main():
     """
     fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
 
-    # Plane
-    pg = PlaneGenerator()
-    plane = pg.generate_plane_surface(half_size=10, res=30)
-    # io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
-    noisy_plane = add_gaussian_noise_to_surface(plane, percent=10)
-    io.save_vtp(noisy_plane,
-                "{}plane_half_size10_res30_noise10%normal.vtp".format(fold))
+    # # Plane
+    # pg = PlaneGenerator()
+    # plane = pg.generate_plane_surface(half_size=10, res=30)
+    # # io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
+    # noisy_plane = add_gaussian_noise_to_surface(plane, percent=10)
+    # io.save_vtp(noisy_plane,
+    #             "{}plane_half_size10_res30_noise10%normal.vtp".format(fold))
 
-    # # Sphere
-    # sg = SphereGenerator()
-    # sphere_r10 = sg.generate_sphere_surface(r=10, latitude_res=50,
-    #                                         longitude_res=50)
+    # Sphere
+    sg = SphereGenerator()
+    # sphere_r10 = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
+    #                                            longitude_res=50)
     # io.save_vtp(sphere_r10, fold + "sphere_r10_res50.vtp")
-    #
+    rad = 10
+    sphere = sg.generate_sphere_surface(r=rad)
+    io.save_vtp(sphere, "{}sphere_r{}.vtp".format(fold, rad))
+    sphere = sg.generate_gauss_sphere_surface(r=rad)
+    io.save_vtp(sphere, "{}gauss_sphere_r{}.vtp".format(fold, rad))
+
     # # Cylinder
     # cg = CylinderGenerator()
     # cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)

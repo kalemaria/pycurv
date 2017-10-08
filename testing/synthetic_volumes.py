@@ -3,7 +3,7 @@ import math
 import os
 
 from pysurf_compact import pysurf_io as io
-from pysurf_compact import run_gen_surface, pexceptions
+from pysurf_compact import pexceptions  #, run_gen_surface
 
 """A set of functions and classes for generating artificial segmentation volumes
 (masks) of geometrical objects."""
@@ -52,6 +52,29 @@ class SphereMask(object):
             sphere = sphere - inner_sphere
 
         return sphere
+
+    @staticmethod
+    def generate_gauss_sphere_mask(sg, box):
+        """
+        Generates a 3D volume with a sphere binary mask.
+
+        Args:
+            sg (float): sigma of the gaussian formula
+            box (int): size of the box in x, y, and z dimensions in voxels
+
+        Returns:
+            3D volume with the gaussian sphere mask (numpy.ndarray)
+        """
+        # Create a 3D grid with center (0, 0, 0) in the middle of the box
+        low = - math.floor(box / 2.0)
+        high = math.ceil(box / 2.0)
+        xx, yy, zz = np.mgrid[low:high, low:high, low:high]
+
+        # Calculate the gaussian 3D function with center (0, 0, 0) and amplitude
+        # 1 at the center
+        gauss_sphere = np.exp(-(xx ** 2 + yy ** 2 + zz ** 2) / (2 * (sg ** 2)))
+
+        return gauss_sphere
 
 
 class CylinderMask(object):
@@ -132,6 +155,14 @@ def main():
     if not os.path.exists(fold):
         os.makedirs(fold)
 
+    # Generate a gaussian sphere mask
+    sm = SphereMask()
+    sm_sg = 33
+    sm_box = 251
+    gauss_sphere = sm.generate_gauss_sphere_mask(sm_sg, sm_box)
+    io.save_numpy(gauss_sphere, "{}gauss_sphere_sg{}_box{}.mrc".format(
+        fold, sm_sg, sm_box))
+
     # # Generate a filled sphere mask
     # sm = SphereMask()
     # r = 10  # r=10: 2088 cells, r=15: 60 cells, r=20: 0 cells
@@ -151,18 +182,18 @@ def main():
     # # From the mask, generate a surface (is correct)
     # run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
 
-    # Generate a filled cylinder mask
-    r = 10
-    h = 20
-    t = 0
-    purge_ratio = 1
-    surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
-    cm = CylinderMask()
-    box = max(2 * r + 1, h + 1) + 2
-    cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t, opened=True)
-    io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
+    # # Generate a filled cylinder mask
+    # r = 10
+    # h = 20
+    # t = 0
+    # purge_ratio = 1
+    # surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
+    # cm = CylinderMask()
+    # box = max(2 * r + 1, h + 1) + 2
+    # cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t)
+    # io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
 
-    # Generate a hollow cylinder mask
+    # # Generate a hollow cylinder mask
     # r = 10
     # h = 20
     # t = 1

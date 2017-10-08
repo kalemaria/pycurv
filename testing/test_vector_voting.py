@@ -588,7 +588,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 run_gen_surface(sphere_mask, surf_filebase, noise=noise)
             else:  # generate surface directly with VTK
                 sg = SphereGenerator()
-                sphere = sg.generate_sphere_surface(
+                sphere = sg.generate_UV_sphere_surface(
                     r=radius, latitude_res=res, longitude_res=res)
                 if noise > 0:
                     sphere = add_gaussian_noise_to_surface(sphere,
