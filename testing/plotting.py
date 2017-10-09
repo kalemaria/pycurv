@@ -140,7 +140,7 @@ def plot_double_line_hist(value_list1, value_list2, num_bins, title,
     bincenters2 = 0.5 * (bin_edges2[1:] + bin_edges2[:-1])
     plt.plot(bincenters1, counts1, ls='-', marker='^', c="b", label=label1,
              linewidth=2)
-    plt.plot(bincenters2, counts2, ls=':', marker='s', c="r", label=label2,
+    plt.plot(bincenters2, counts2, ls='--', marker='v', c="c", label=label2,
              linewidth=2)
     plt.title(title)
     plt.xlabel(xlabel)
@@ -340,8 +340,8 @@ def plot_plane_normal_errors(half_size, res=30, noise=10,
     print ("The plot was saved as {}".format(vv_vtk_normal_errors_plot))
 
 
-def plot_cylinder_T_2_errors(r, h, res=0, noise=0,
-                             k=3, g_max=0, epsilon=0, eta=0):
+def plot_cylinder_T_2_errors(r, h, inverse=False, res=0, noise=0,
+                             k=3, g_max=0, epsilon=0, eta=0, extra=0):
     """
     A method for plotting cylinder minimal principal direction errors as
     estimated by a modification of Normal Vector Voting (VV) algorithm.
@@ -349,11 +349,12 @@ def plot_cylinder_T_2_errors(r, h, res=0, noise=0,
     Args:
         r (int): cylinder radius in voxels
         h (int): cylinder height in voxels
-        res (int, optional): if > 0 determines how many stripes around both
-            approximate circles (and then triangles) the cylinder has, the
-            surface is generated directly using VTK; If 0 (default) first a
-            cylinder mask is generated and then surface using gen_surface
-            function
+        inverse (boolean, optional): if True (default False), the cylinder
+            will have normals pointing outwards (negative curvature), else
+            the other way around
+        res (int, optional): if > 0 the surface is generated using
+            vtkCylinderSource; If 0 (default) first a gaussian cylinder mask is
+            generated and then surface using vtkMarchingCubes
         noise (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 0), the noise
             is added on triangle vertex coordinates in its normal direction
@@ -370,29 +371,45 @@ def plot_cylinder_T_2_errors(r, h, res=0, noise=0,
             influencing the number of triangles classified as "crease
             junction" (class 2) and "no preferred orientation" (class 3),
             default 0
+        extra (int, optional); if != 0 (default 0), additional errors for k or
+            g_max greater by extra than the given one will be plotted
 
     Returns:
         None
     """
     base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
     if res == 0:
-        fold = '{}synthetic_volumes/cylinder/noise{}/'.format(
+        fold = '{}synthetic_surfaces/cylinder/noise{}/'.format(
             base_fold, noise)
     else:
         fold = '{}synthetic_surfaces/cylinder/res{}_noise{}/'.format(
             base_fold, res, noise)
     files_fold = '{}files4plotting/'.format(fold)
-    base_filename = "{}cylinder_r{}_h{}".format(files_fold, r, h)
+    if inverse:
+        inverse_str = "inverse_"
+    else:
+        inverse_str = ""
+    base_filename = "{}{}cylinder_r{}_h{}".format(files_fold, inverse_str, r, h)
     if g_max > 0:
         vv_T_2_errors_file = (
             '{}.VV_g_max{}_epsilon{}_eta{}.T_2_errors.txt'.format(
                 base_filename, g_max, epsilon, eta))
         label_vv = "VV ({})".format(g_max)
+        if extra != 0:
+            vv_T_2_errors_file2 = (
+                '{}.VV_g_max{}_epsilon{}_eta{}.T_2_errors.txt'.format(
+                    base_filename, g_max + extra, epsilon, eta))
+            label_vv2 = "VV ({})".format(g_max + extra)
     elif k > 0:
         vv_T_2_errors_file = (
             '{}.VV_k{}_epsilon{}_eta{}.T_2_errors.txt'.format(
                 base_filename, k, epsilon, eta))
         label_vv = "VV ({})".format(k)
+        if extra != 0:
+            vv_T_2_errors_file2 = (
+                '{}.VV_k{}_epsilon{}_eta{}.T_2_errors.txt'.format(
+                    base_filename, k + extra, epsilon, eta))
+            label_vv2 = "VV ({})".format(k + extra)
     else:
         error_msg = ("Either g_max or k must be positive (if both are "
                      "positive, the specified g_max will be used).")
@@ -404,6 +421,11 @@ def plot_cylinder_T_2_errors(r, h, res=0, noise=0,
         print ("File {} not found!".format(vv_T_2_errors_file))
         exit(0)
     vv_T_2_errors = io.read_values_from_file(vv_T_2_errors_file)
+    if extra != 0:
+        if not os.path.exists(vv_T_2_errors_file2):
+            print ("File {} not found!".format(vv_T_2_errors_file2))
+            exit(0)
+        vv_T_2_errors2 = io.read_values_from_file(vv_T_2_errors_file2)
 
     # Plotting:
     plots_fold = '{}plots/'.format(fold)
@@ -412,12 +434,32 @@ def plot_cylinder_T_2_errors(r, h, res=0, noise=0,
     root, ext = os.path.splitext(vv_T_2_errors_file)
     head, tail = os.path.split(root)
     vv_T_2_errors_plot = "{}{}.png".format(plots_fold, tail)
-    plot_line_hist(vv_T_2_errors, 10,
-                   "Comparison for Cylinder ({}% noise)".format(noise),
-                   xlabel="Minimal Principal Direction Error (%)",
-                   ylabel="Number of Vertices", value_range=(0, 100),
-                   label=label_vv,
-                   outfile=vv_T_2_errors_plot)
+    if inverse is True:
+        title = "Comparison for Inverse Cylinder ({}% noise)".format(noise)
+        xlabel = "Maximal Principal Direction Error (%)"
+    else:
+        title = "Comparison for Cylinder ({}% noise)".format(noise)
+        xlabel = "Minimal Principal Direction Error (%)"
+    if extra != 0:
+        if g_max > 0:
+            vv_T_2_errors_plot = vv_T_2_errors_plot.replace(
+                "g_max{}".format(g_max),
+                "g_max{}-{}".format(g_max, g_max + extra))
+        else:
+           vv_T_2_errors_plot = vv_T_2_errors_plot.replace(
+                "k{}".format(k),
+                "k{}-{}".format(k, k + extra))
+        plot_double_line_hist(vv_T_2_errors, vv_T_2_errors2, 10,
+                              title, xlabel=xlabel,
+                              ylabel="Number of Vertices", value_range=(0, 100),
+                              label1=label_vv, label2=label_vv2,
+                              outfile=vv_T_2_errors_plot, max_val=100)
+    else:
+        plot_line_hist(vv_T_2_errors, 10,
+                       title, xlabel=xlabel,
+                       ylabel="Number of Vertices", value_range=(0, 100),
+                       label=label_vv,
+                       outfile=vv_T_2_errors_plot, max_val=100)
     print ("The plot was saved as {}".format(vv_T_2_errors_plot))
 
 
@@ -580,13 +622,13 @@ def plot_sphere_curv_errors(radius, inverse=False, res=0, noise=10,
             xlabel="Maximal Principal Curvature Error (%)",
             ylabel="Number of Vertices", value_range=(0, 100),
             label1=label_vv, label2="VTK",
-            outfile=kappa_1_errors_plot)
+            outfile=kappa_1_errors_plot, max_val=100)
         plot_double_line_hist(
             kappa_2_errors, vtk_kappa_2_errors, 10, title,
             xlabel="Minimal Principal Curvature Error (%)",
             ylabel="Number of Vertices", value_range=(0, 100),
             label1=label_vv, label2="VTK",
-            outfile=kappa_2_errors_plot)
+            outfile=kappa_2_errors_plot, max_val=100)
     print ("The plot was saved as {}".format(kappa_1_errors_plot))
     print ("The plot was saved as {}".format(kappa_2_errors_plot))
 
@@ -596,9 +638,11 @@ if __name__ == "__main__":
     # plot_plane_normal_errors(10, res=30, noise=5, k=5, extra=-2)
     # plot_plane_normal_errors(10, res=30, noise=10, k=5, extra=-2)
 
-    # plot_cylinder_T_2_errors(20, 10, res=0, noise=0, k=3)
+    # for n in [0, 5, 10]:
+    #     plot_cylinder_T_2_errors(10, 25, noise=n, k=5, extra=-2)
+    plot_cylinder_T_2_errors(10, 25, inverse=True, noise=0, k=5, extra=-2)
 
     # plot_sphere_curv_errors(10, inverse=True, res=0, noise=0, k=5, extra=-2)
-    for n in [5, 10]:
-        plot_sphere_curv_errors(10, inverse=False, res=0, noise=n, k=5,
-                                extra=-2)
+    # for n in [5, 10]:
+    #     plot_sphere_curv_errors(10, inverse=False, res=0, noise=n, k=5,
+    #                             extra=-2)

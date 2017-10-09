@@ -2,14 +2,14 @@ import unittest
 import time
 import os.path
 import numpy as np
+import math
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
-    TriangleGraph, PointGraph, vector_voting, pexceptions, run_gen_surface)
+    TriangleGraph, PointGraph, vector_voting, pexceptions)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator,
     add_gaussian_noise_to_surface)
-from synthetic_volumes import SphereMask, CylinderMask
 
 
 def percent_error_scalar(true_value, estimated_value):
@@ -204,7 +204,7 @@ class VectorVotingTestCase(unittest.TestCase):
             self.assertLessEqual(error, 30, msg=msg)
 
     def parametric_test_cylinder_T_2_curvatures(
-            self, r, h, inverse=False, res=0, noise=0,
+            self, r, inverse=False, res=0, h=0, noise=0,
             k=3, g_max=0, epsilon=0, eta=0):
         """
         Tests whether minimal principal directions (T_2), as well as minimal and
@@ -214,15 +214,18 @@ class VectorVotingTestCase(unittest.TestCase):
 
         Args:
             r (int): cylinder radius in voxels
-            h (int): cylinder height in voxels
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
                 the other way around
             res (int, optional): if > 0 determines how many stripes around both
                 approximate circles (and then triangles) the cylinder has, the
-                surface is generated directly using VTK; If 0 (default) first a
-                cylinder mask is generated and then surface using gen_surface
-                function
+                surface is generated using vtkCylinderSource; If 0 (default)
+                first a gaussian cylinder mask is generated and then surface
+                using vtkMarchingCubes, in the latter case the cylinder is as
+                high as the used mask box (2.5 * r) and is open at both sides
+            h (int, optional): cylinder height in voxels, only needed if res > 0
+                for the method using vtkCylinderSource, if res is 0 or h is 0
+                (default), height will be set to 2.5 * r rounded up
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 0), the noise
                 is added on triangle vertex coordinates in its normal direction
@@ -251,13 +254,19 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res == 0:
-            fold = '{}synthetic_volumes/cylinder/noise{}/'.format(
+            fold = '{}synthetic_surfaces/cylinder/noise{}/'.format(
                 base_fold, noise)
         else:
             fold = '{}synthetic_surfaces/cylinder/res{}_noise{}/'.format(
                 base_fold, res, noise)
         if not os.path.exists(fold):
             os.makedirs(fold)
+
+        if res == 0 and h != 0:
+            h = 0  # h has to be also 0 if res is 0
+        if h == 0:
+            h = int(math.ceil(r * 2.5))  # set h to 2.5 * radius, if not given
+
         surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
         surf_file = '{}.surface.vtp'.format(surf_filebase)
         scale_factor_to_nm = 1  # assume it's already in nm
@@ -316,23 +325,20 @@ class VectorVotingTestCase(unittest.TestCase):
                    .format(r, h, noise))
         else:
             print ("\n*** Generating a surface and a graph for a cylinder with "
-                   "radius {}, height {} and {}% noise ***".format(r, h, noise))
+                   "radius {}, height {} and {}% noise ***".format(
+                    r, h, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
+            cg = CylinderGenerator()
             if res == 0:  # generate surface from a mask with gen_surface
-                cm = CylinderMask()
-                box = max(2 * r + 1, h) + 2
-                cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=1,
-                                                          opened=True)
-                run_gen_surface(cylinder_mask, surf_filebase, noise=noise)
+                cylinder = cg.generate_gauss_cylinder_surface(r)
             else:  # generate surface directly with VTK
                 print "Warning: cylinder contains planes!"
-                cg = CylinderGenerator()
                 cylinder = cg.generate_cylinder_surface(r, h, res=50)
-                if noise > 0:
-                    cylinder = add_gaussian_noise_to_surface(cylinder,
-                                                             percent=noise)
-                io.save_vtp(cylinder, surf_file)
+            if noise > 0:
+                cylinder = add_gaussian_noise_to_surface(cylinder,
+                                                         percent=noise)
+            io.save_vtp(cylinder, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
         # it into a triangle graph:
@@ -343,24 +349,15 @@ class VectorVotingTestCase(unittest.TestCase):
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
         tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-        if res == 0:  # surface generated from a mask with gen_surface
-            # a graph with normals pointing outwards is generated (negative
-            # curvatures)
-            if inverse:
-                reverse_normals = True
-            # a graph with normals pointing inwards is generated (normal case
-            # for this method; positive curvatures)
-            else:
-                reverse_normals = False
-        else:  # surface generated directly with VTK
-            # a graph with normals pointing outwards is generated (normal case
-            # for this method; negative curvatures)
-            if inverse:
-                reverse_normals = False
-            # a graph with normals pointing inwards is generated (positive
-            # curvatures)
-            else:
-                reverse_normals = True
+        # VTK has opposite surface normals convention than we use
+        # a graph with normals pointing outwards is generated (normal case
+        # for this method; negative curvatures)
+        if inverse:
+            reverse_normals = False
+        # a graph with normals pointing inwards is generated (positive
+        # curvatures)
+        else:
+            reverse_normals = True
         tg.build_graph_from_vtk_surface(surf, verbose=False,
                                         reverse_normals=reverse_normals)
         print tg.graph
@@ -390,18 +387,22 @@ class VectorVotingTestCase(unittest.TestCase):
 
         # Getting the estimated (by VV) minimal principal directions (T_2)
         pos = [0, 1, 2]  # vector-property value positions
-        T_2s = tg.graph.vertex_properties["T_2"].get_2d_array(pos)
+        if not inverse:
+            T_2s = tg.graph.vertex_properties["T_2"].get_2d_array(pos)
+        else:
+            T_2s = tg.graph.vertex_properties["T_1"].get_2d_array(pos)
         # The shape is (3, <num_vertices>) - have to transpose to group the
         # respective x, y, z components to sub-arrays
         T_2s = np.transpose(T_2s)  # shape (<num_vertices>, 3)
 
-        # Ground-truth normal is parallel to Z axis
+        # Ground-truth T_2 vector is parallel to Z axis
         true_T_2 = np.array([0, 0, 1])
 
         # Computing the percentage errors of the estimated T_2 vectors wrt the
-        # true one:
+        # true one and writing them into a file:
         T_2_errors = np.array(map(
             lambda x: percent_error_vector(true_T_2, x), T_2s))
+        io.write_values_to_file(T_2_errors, T_2_errors_file)
 
         # Getting principal curvatures from NVV and VTK from the output graph:
         kappa_1_values = tg.get_vertex_property_array("kappa_1")
@@ -421,46 +422,54 @@ class VectorVotingTestCase(unittest.TestCase):
             true_kappa_1 = 1.0 / r
             true_kappa_2 = 0.0
 
-        # Calculating the percentage errors of the principal curvatures:
-        kappa_1_errors = np.array(map(
-            lambda x: percent_error_scalar(true_kappa_1, x), kappa_1_values))
-        kappa_2_errors = np.array(map(
-            lambda x: percent_error_scalar(true_kappa_2, x), kappa_2_values))
-        vtk_kappa_1_errors = np.array(map(
-            lambda x: percent_error_scalar(true_kappa_1, x),
-            vtk_kappa_1_values))
-        vtk_kappa_2_errors = np.array(map(
-            lambda x: percent_error_scalar(true_kappa_2, x),
-            vtk_kappa_2_values))
+        # Calculating the percentage errors of the principal curvatures and
+        # writing them into files:
+        if true_kappa_1 != 0:
+            kappa_1_errors = np.array(map(
+                lambda x: percent_error_scalar(true_kappa_1, x),
+                kappa_1_values))
+            io.write_values_to_file(kappa_1_errors, kappa_1_errors_file)
+            vtk_kappa_1_errors = np.array(map(
+                lambda x: percent_error_scalar(true_kappa_1, x),
+                vtk_kappa_1_values))
+            io.write_values_to_file(vtk_kappa_1_errors, vtk_kappa_1_errors_file)
+        if true_kappa_2 != 0:
+            kappa_2_errors = np.array(map(
+                lambda x: percent_error_scalar(true_kappa_2, x),
+                kappa_2_values))
+            io.write_values_to_file(kappa_2_errors, kappa_2_errors_file)
+            vtk_kappa_2_errors = np.array(map(
+                lambda x: percent_error_scalar(true_kappa_2, x),
+                vtk_kappa_2_values))
+            io.write_values_to_file(vtk_kappa_2_errors, vtk_kappa_2_errors_file)
 
-        # Writing the errors into a file:
-        io.write_values_to_file(T_2_errors, T_2_errors_file)
-        io.write_values_to_file(kappa_1_errors, kappa_1_errors_file)
-        io.write_values_to_file(kappa_2_errors, kappa_2_errors_file)
-        io.write_values_to_file(vtk_kappa_1_errors, vtk_kappa_1_errors_file)
-        io.write_values_to_file(vtk_kappa_2_errors, vtk_kappa_2_errors_file)
+        # Asserting that all estimated T_2 vectors are close to the true vector,
+        # allowing error of 30%:
+        if not inverse:
+            print "Testing the minimal principal directions (T_2)..."
+        else:
+            print "Testing the maximal principal directions (T_1)..."
+        for error in T_2_errors:
+            msg = '{} is > {}%!'.format(error, 30)
+            self.assertLessEqual(error, 30, msg=msg)
 
         # Asserting that average principal curvatures are close to the correct
         # ones allowing percent error of +-30%
         allowed_error = 0.3 * max(abs(true_kappa_1), abs(true_kappa_2))
-        print "Testing the average maximal principal curvature (kappa_1)..."
-        msg = '{} is not in [{}, {}]!'.format(
-            kappa_1_avg, true_kappa_1 - allowed_error,
-            true_kappa_1 + allowed_error)
-        self.assertAlmostEqual(kappa_1_avg, true_kappa_1,
-                               delta=allowed_error, msg=msg)
-        print "Testing the average minimal principal curvature (kappa_2)..."
-        msg = '{} is not in [{}, {}]!'.format(
-            kappa_2_avg, true_kappa_2 - allowed_error,
-            true_kappa_2 + allowed_error)
-        self.assertAlmostEqual(kappa_2_avg, true_kappa_2,
-                               delta=allowed_error, msg=msg)
-
-        # Asserting that all estimated T_2 vectors are close to the true vector,
-        # allowing error of 30%:
-        for error in T_2_errors:
-            msg = '{} is > {}%!'.format(error, 30)
-            self.assertLessEqual(error, 30, msg=msg)
+        if true_kappa_1 != 0:
+            print "Testing the average maximal principal curvature (kappa_1)..."
+            msg = '{} is not in [{}, {}]!'.format(
+                kappa_1_avg, true_kappa_1 - allowed_error,
+                true_kappa_1 + allowed_error)
+            self.assertAlmostEqual(kappa_1_avg, true_kappa_1,
+                                   delta=allowed_error, msg=msg)
+        if true_kappa_2 != 0:
+            print "Testing the average minimal principal curvature (kappa_2)..."
+            msg = '{} is not in [{}, {}]!'.format(
+                kappa_2_avg, true_kappa_2 - allowed_error,
+                true_kappa_2 + allowed_error)
+            self.assertAlmostEqual(kappa_2_avg, true_kappa_2,
+                                   delta=allowed_error, msg=msg)
 
     def parametric_test_sphere_curvatures(
             self, radius, inverse=False, res=0, noise=10,
@@ -694,19 +703,19 @@ class VectorVotingTestCase(unittest.TestCase):
 
         # Asserting that average principal curvatures are close to the correct
         # ones allowing percent error of +-30%
-        # allowed_error = 0.3 * abs(true_curvature)
-        # print "Testing the average maximal principal curvature (kappa_1)..."
-        # msg = '{} is not in [{}, {}]!'.format(
-        #     kappa_1_avg, true_curvature - allowed_error,
-        #     true_curvature + allowed_error)
-        # self.assertAlmostEqual(kappa_1_avg, true_curvature,
-        #                        delta=allowed_error, msg=msg)
-        # print "Testing the average minimal principal curvature (kappa_2)..."
-        # msg = '{} is not in [{}, {}]!'.format(
-        #     kappa_2_avg, true_curvature - allowed_error,
-        #     true_curvature + allowed_error)
-        # self.assertAlmostEqual(kappa_2_avg, true_curvature,
-        #                        delta=allowed_error, msg=msg)
+        allowed_error = 0.3 * abs(true_curvature)
+        print "Testing the average maximal principal curvature (kappa_1)..."
+        msg = '{} is not in [{}, {}]!'.format(
+            kappa_1_avg, true_curvature - allowed_error,
+            true_curvature + allowed_error)
+        self.assertAlmostEqual(kappa_1_avg, true_curvature,
+                               delta=allowed_error, msg=msg)
+        print "Testing the average minimal principal curvature (kappa_2)..."
+        msg = '{} is not in [{}, {}]!'.format(
+            kappa_2_avg, true_curvature - allowed_error,
+            true_curvature + allowed_error)
+        self.assertAlmostEqual(kappa_2_avg, true_curvature,
+                               delta=allowed_error, msg=msg)
 
     # *** The following tests will be run by unittest ***
 
@@ -717,11 +726,25 @@ class VectorVotingTestCase(unittest.TestCase):
     #     (parallel to to X and Y axes), certain size, resolution and noise
     #     level.
     #     """
-    #     for n in [0]:  # 5, 10
-    #         for k in [1]:  # 5, 3
+    #     for n in [0, 5, 10]:
+    #         for k in [3, 5]:  # 1 for noise=0
     #             self.parametric_test_plane_normals(10, res=30, noise=n, k=k)
 
-    # def test_cylinder_from_volume_T_2(self):
+    def test_cylinder_T_2_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) are correctly estimated
+        using Normal Vector Voting with a certain g_max for an opened cylinder
+        surface (without the circular planes) with known orientation (height,
+        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+        and noise level.
+        """
+        # for k in [3, 5]:
+        #     self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k)
+        for n in [10, 5]:
+            for k in [3, 5]:
+                self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
+
+    # def test_inverse_cylinder_T_2_curvatures(self):
     #     """
     #     Tests whether minimal principal directions (T_2) are correctly estimated
     #     using Normal Vector Voting with a certain g_max for an opened cylinder
@@ -729,32 +752,22 @@ class VectorVotingTestCase(unittest.TestCase):
     #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
     #     and noise level.
     #     """
-    #     self.parametric_test_cylinder_T_2_curvatures(10, 10, res=0, noise=0,
-    #                                                  k=10)
+    #     for k in [3, 5]:
+    #         self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k,
+    #                                                      inverse=True)
+
+    # def test_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated using Normal Vector
+    #     Voting with a certain g_max for a sphere with a certain radius,
+    #     resolution and noise level:
     #
-    # def test_inverse_cylinder_from_volume_T_2(self):
+    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
-    #     Tests whether minimal principal directions (T_2) are correctly estimated
-    #     using Normal Vector Voting with a certain g_max for an opened cylinder
-    #     surface (without the circular planes) with known orientation (height,
-    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-    #     and noise level.
-    #     """
-    #     self.parametric_test_cylinder_T_2_curvatures(10, 10, res=0, noise=0,
-    #                                                  k=10, inverse=True)
-
-    def test_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated using Normal Vector
-        Voting with a certain g_max for a sphere with a certain radius,
-        resolution and noise level:
-
-        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-        """
-        self.parametric_test_sphere_curvatures(10, res=42, noise=5, k=3)
-        # for n in [5, 10]:
-        #     for k in [3, 5]:
-        #         self.parametric_test_sphere_curvatures(10, res=0, noise=n, k=k)
+    #     # self.parametric_test_sphere_curvatures(10, res=42, noise=5, k=3)
+    #     for n in [0, 5, 10]:
+    #         for k in [3, 5]:
+    #             self.parametric_test_sphere_curvatures(10, noise=n, k=k)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -764,29 +777,9 @@ class VectorVotingTestCase(unittest.TestCase):
     #
     #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
     #     """
-    #     self.parametric_test_sphere_curvatures(10, res=0, noise=0, k=5,
-    #                                            inverse=True)
-
-    # def test_sphere_from_volume_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated using Normal Vector
-    #     Voting with a certain g_max for a sphere with a certain radius:
-    #
-    #     kappa1 = kappa2 = 1/20 = 0.05; 30% of difference is allowed
-    #     """
-    #     self.parametric_test_sphere_curvatures(
-    #         20, res=0, g_max=7, epsilon=0, eta=0)
-    #
-    # def test_inverse_sphere_from_volume_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated using Normal Vector
-    #     Voting with a certain g_max for an inverse sphere with a certain
-    #     radius:
-    #
-    #     kappa1 = kappa2 = -1/20 = -0.05; 30% of difference is allowed
-    #     """
-    #     self.parametric_test_sphere_curvatures(
-    #         20, inverse=True, res=0,  g_max=7, epsilon=0, eta=0)
+    #     for k in [3, 5]:
+    #         self.parametric_test_sphere_curvatures(10, noise=0, k=k,
+    #                                                inverse=True)
 
 
 if __name__ == '__main__':

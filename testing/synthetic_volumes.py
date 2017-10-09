@@ -142,6 +142,29 @@ class CylinderMask(object):
 
         return cylinder
 
+    @staticmethod
+    def generate_gauss_cylinder_mask(sg, box):
+        """
+        Generates a 3D volume with a cylinder binary mask.
+
+        Args:
+            sg (float): sigma of the gaussian formula
+            box (int): size of the box in x, y, and z dimensions in voxels
+
+        Returns:
+            3D volume with the gaussian cylinder mask (numpy.ndarray)
+        """
+        # Create a 3D grid with center (0, 0, 0) in the middle of the box
+        low = - math.floor(box / 2.0)
+        high = math.ceil(box / 2.0)
+        xx, yy, zz = np.mgrid[low:high, low:high, low:high]
+
+        # Calculate the gaussian 3D function with center (0, 0, 0) and amplitude
+        # 1 at the center
+        gauss_cylinder = np.exp(-(xx ** 2 + yy ** 2) / (2 * (sg ** 2)))
+
+        return gauss_cylinder
+
 
 def main():
     """
@@ -182,6 +205,15 @@ def main():
     # # From the mask, generate a surface (is correct)
     # run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
 
+    # Generate a gaussian cylinder mask
+    cm = CylinderMask()
+    r = 100
+    sm_sg = 100 / 3.0
+    sm_box = r * 2.5
+    gauss_cylinder = cm.generate_gauss_cylinder_mask(sm_sg, sm_box)
+    io.save_numpy(gauss_cylinder, "{}gauss_cylinder_sg{}_box{}.mrc".format(
+        fold, sm_sg, sm_box))
+
     # # Generate a filled cylinder mask
     # r = 10
     # h = 20
@@ -204,45 +236,6 @@ def main():
     # cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t, opened=True)
     # io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
     # # run_gen_surface(cylinder_mask, surf_filebase, purge_ratio=purge_ratio)
-
-    # cm = CylinderMask()
-    # thickness = 1
-    # # cylinder_r10_h21_box27 = cm.generate_cylinder_mask(
-    # #     r=10, h=21, box=27, t=thickness)
-    # # io.save_numpy(cylinder_r10_h21_box27,
-    # #              "{}cylinder_r10_h21_box27_t{}.mrc".format(fold, thickness))
-    # cylinder_r10_h21_box27_open = cm.generate_cylinder_mask(
-    #     r=10, h=21, box=27, t=thickness, opened=True)
-    # io.save_numpy(
-    #     cylinder_r10_h21_box27_open,
-    #     "{}cylinder_r10_h21_box27_t{}_open.mrc".format(fold, thickness))
-    # cylinder_r10_h27_box27 = cm.generate_cylinder_mask(
-    #     r=10, h=27, box=27, t=thickness)
-    # io.save_numpy(cylinder_r10_h27_box27,
-    #               "{}cylinder_r10_h27_box27_t{}.mrc".format(fold, thickness))
-    # # cylinder_r10_h27_box27_open = cm.generate_cylinder_mask(
-    # #     r=10, h=27, box=27, t=thickness, open=True)
-    # # io.save_numpy(
-    # #     cylinder_r10_h27_box27_open,
-    # #     "{}cylinder_r10_h27_box27_t{}_open.mrc".format(fold, thickness))
-    #
-    # # From the mask, generate a surface
-    # # run_gen_surface(cylinder_r10_h21_box27,  # 3592 cells
-    # #                 "{}cylinder_r10_h21_box27_t{}".format(fold, thickness))
-    # # run_gen_surface(
-    # #     cylinder_r10_h21_box27_open,  # 2880 cells
-    # #     "{}cylinder_r10_h21_box27_t{}_open".format(fold, thickness))
-    # # run_gen_surface(cylinder_r10_h27_box27,  # 4310 cells
-    # #                 "{}cylinder_r10_h27_box27_t{}".format(fold, thickness))
-    # # run_gen_surface(
-    # #     cylinder_r10_h27_box27_open,  # 3672 cells, little unevenness
-    # #     "{}cylinder_r10_h27_box27_t{}_open".format(fold, thickness))
-    # run_gen_surface(
-    #     cylinder_r10_h27_box27,
-    #     "{}cylinder_r10_h27_box27_t{}_open2".format(fold, thickness),
-    #     other_mask=cylinder_r10_h21_box27_open)  # 3107 cells
-    # # cylinder_r10_h25_box27_t1_open2.surface.vtp with MAX_DIST_SURF=1.5 and
-    # # delete cell if all points outside mask (count > 2), 2879 cells
 
 
 if __name__ == "__main__":
