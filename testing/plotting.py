@@ -394,73 +394,134 @@ def plot_cylinder_T_2_errors(r, h, inverse=False, res=0, noise=0,
         vv_T_2_errors_file = (
             '{}.VV_g_max{}_epsilon{}_eta{}.T_2_errors.txt'.format(
                 base_filename, g_max, epsilon, eta))
+        if inverse:
+            kappa_errors_file = (
+                '{}.VV_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                    base_filename, g_max, epsilon, eta))
+        else:
+            kappa_errors_file = (
+                '{}.VV_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                    base_filename, g_max, epsilon, eta))
         label_vv = "VV ({})".format(g_max)
         if extra != 0:
             vv_T_2_errors_file2 = (
                 '{}.VV_g_max{}_epsilon{}_eta{}.T_2_errors.txt'.format(
                     base_filename, g_max + extra, epsilon, eta))
+            if inverse:
+                kappa_errors_file2 = (
+                    '{}.VV_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                        base_filename, g_max + extra, epsilon, eta))
+            else:
+                kappa_errors_file2 = (
+                    '{}.VV_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                        base_filename, g_max + extra, epsilon, eta))
             label_vv2 = "VV ({})".format(g_max + extra)
     elif k > 0:
         vv_T_2_errors_file = (
             '{}.VV_k{}_epsilon{}_eta{}.T_2_errors.txt'.format(
                 base_filename, k, epsilon, eta))
+        if inverse:
+            kappa_errors_file = (
+                '{}.VV_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                    base_filename, k, epsilon, eta))
+        else:
+            kappa_errors_file = (
+                '{}.VV_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                    base_filename, k, epsilon, eta))
         label_vv = "VV ({})".format(k)
         if extra != 0:
             vv_T_2_errors_file2 = (
                 '{}.VV_k{}_epsilon{}_eta{}.T_2_errors.txt'.format(
                     base_filename, k + extra, epsilon, eta))
+            if inverse:
+                kappa_errors_file2 = (
+                '{}.VV_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                    base_filename, k + extra, epsilon, eta))
+            else:
+                kappa_errors_file2 = (
+                    '{}.VV_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                        base_filename, k + extra, epsilon, eta))
             label_vv2 = "VV ({})".format(k + extra)
     else:
         error_msg = ("Either g_max or k must be positive (if both are "
                      "positive, the specified g_max will be used).")
         raise pexceptions.PySegInputError(
             expr='plot_cylinder_T_2_errors', msg=error_msg)
+    if inverse:
+        vtk_kappa_errors_file = ('{}.VTK.kappa_2_errors.txt'
+                                 .format(base_filename))
+    else:
+        vtk_kappa_errors_file = ('{}.VTK.kappa_1_errors.txt'
+                                 .format(base_filename))
 
     # Reading in the error values from files:
     if not os.path.exists(vv_T_2_errors_file):
         print ("File {} not found!".format(vv_T_2_errors_file))
         exit(0)
     vv_T_2_errors = io.read_values_from_file(vv_T_2_errors_file)
+    kappa_errors = io.read_values_from_file(kappa_errors_file)
     if extra != 0:
         if not os.path.exists(vv_T_2_errors_file2):
             print ("File {} not found!".format(vv_T_2_errors_file2))
             exit(0)
         vv_T_2_errors2 = io.read_values_from_file(vv_T_2_errors_file2)
+        kappa_errors2 = io.read_values_from_file(kappa_errors_file2)
+    vtk_kappa_errors = io.read_values_from_file(vtk_kappa_errors_file)
 
     # Plotting:
     plots_fold = '{}plots/'.format(fold)
     if not os.path.exists(plots_fold):
         os.makedirs(plots_fold)
-    root, ext = os.path.splitext(vv_T_2_errors_file)
-    head, tail = os.path.split(root)
-    vv_T_2_errors_plot = "{}{}.png".format(plots_fold, tail)
     if inverse is True:
         title = "Comparison for Inverse Cylinder ({}% noise)".format(noise)
         xlabel = "Maximal Principal Direction Error (%)"
+        xlabel2 = "Minimal Principal Curvature Error (%)"
     else:
         title = "Comparison for Cylinder ({}% noise)".format(noise)
         xlabel = "Minimal Principal Direction Error (%)"
+        xlabel2 = "Maximal Principal Curvature Error (%)"
+    root, ext = os.path.splitext(vv_T_2_errors_file)
+    head, tail = os.path.split(root)
+    vv_T_2_errors_plot = "{}{}.png".format(plots_fold, tail)
+    root, ext = os.path.splitext(kappa_errors_file)
+    head, tail = os.path.split(root)
+    kappa_errors_plot = "{}{}.png".format(plots_fold, tail)
     if extra != 0:
         if g_max > 0:
             vv_T_2_errors_plot = vv_T_2_errors_plot.replace(
                 "g_max{}".format(g_max),
                 "g_max{}-{}".format(g_max, g_max + extra))
+            kappa_errors_plot = kappa_errors_plot.replace(
+                "g_max{}".format(g_max),
+                "g_max{}-{}".format(g_max, g_max + extra))
         else:
-           vv_T_2_errors_plot = vv_T_2_errors_plot.replace(
-                "k{}".format(k),
-                "k{}-{}".format(k, k + extra))
+            vv_T_2_errors_plot = vv_T_2_errors_plot.replace(
+                "k{}".format(k), "k{}-{}".format(k, k + extra))
+            kappa_errors_plot = kappa_errors_plot.replace(
+                "k{}".format(k), "k{}-{}".format(k, k + extra))
         plot_double_line_hist(vv_T_2_errors, vv_T_2_errors2, 10,
                               title, xlabel=xlabel,
                               ylabel="Number of Vertices", value_range=(0, 100),
                               label1=label_vv, label2=label_vv2,
                               outfile=vv_T_2_errors_plot, max_val=100)
+        plot_triple_line_hist(kappa_errors, kappa_errors2, vtk_kappa_errors, 10,
+                              title, xlabel=xlabel2,
+                              ylabel="Number of Vertices", value_range=(0, 100),
+                              label1=label_vv, label2=label_vv2, label3="VTK",
+                              outfile=kappa_errors_plot, max_val=100)
     else:
         plot_line_hist(vv_T_2_errors, 10,
                        title, xlabel=xlabel,
                        ylabel="Number of Vertices", value_range=(0, 100),
                        label=label_vv,
                        outfile=vv_T_2_errors_plot, max_val=100)
+        plot_double_line_hist(kappa_errors, vtk_kappa_errors, 10,
+                              title, xlabel=xlabel2,
+                              ylabel="Number of Vertices", value_range=(0, 100),
+                              label1=label_vv, label2="VTK",
+                              outfile=kappa_errors_plot, max_val=100)
     print ("The plot was saved as {}".format(vv_T_2_errors_plot))
+    print ("The plot was saved as {}".format(kappa_errors_plot))
 
 
 def plot_sphere_curv_errors(radius, inverse=False, res=0, noise=10,
@@ -638,11 +699,11 @@ if __name__ == "__main__":
     # plot_plane_normal_errors(10, res=30, noise=5, k=5, extra=-2)
     # plot_plane_normal_errors(10, res=30, noise=10, k=5, extra=-2)
 
-    # for n in [0, 5, 10]:
-    #     plot_cylinder_T_2_errors(10, 25, noise=n, k=5, extra=-2)
+    for n in [0, 5, 10]:
+        plot_cylinder_T_2_errors(10, 25, noise=n, k=5, extra=-2)
     plot_cylinder_T_2_errors(10, 25, inverse=True, noise=0, k=5, extra=-2)
 
-    # plot_sphere_curv_errors(10, inverse=True, res=0, noise=0, k=5, extra=-2)
-    # for n in [5, 10]:
-    #     plot_sphere_curv_errors(10, inverse=False, res=0, noise=n, k=5,
+    # plot_sphere_curv_errors(10, inverse=True, res=30, noise=0, k=5, extra=-2)
+    # for n in [0, 5, 10]:
+    #     plot_sphere_curv_errors(10, inverse=False, res=30, noise=n, k=5,
     #                             extra=-2)
