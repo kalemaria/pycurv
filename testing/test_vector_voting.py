@@ -473,7 +473,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_sphere_curvatures(
             self, radius, inverse=False, res=0, noise=10,
-            k=3, g_max=0, epsilon=0, eta=0):
+            k=3, g_max=0, epsilon=0, eta=0, save_areas=False):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
@@ -580,6 +580,9 @@ class VectorVotingTestCase(unittest.TestCase):
                                    .format(base_filename))
         vtk_kappa_2_errors_file = ('{}.VTK.kappa_2_errors.txt'
                                    .format(base_filename))
+        if save_areas:
+            triangle_areas_file = ('{}.triangle_areas.txt'
+                                   .format(base_filename))
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
@@ -597,8 +600,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 sphere = sg.generate_UV_sphere_surface(
                     r=radius, latitude_res=res, longitude_res=res)
             if noise > 0:
-                sphere = add_gaussian_noise_to_surface(sphere,
-                                                       percent=noise)
+                sphere = add_gaussian_noise_to_surface(sphere, percent=noise)
             io.save_vtp(sphere, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
@@ -651,6 +653,8 @@ class VectorVotingTestCase(unittest.TestCase):
         kappa_2_values = tg.get_vertex_property_array("kappa_2")
         vtk_kappa_1_values = tg.get_vertex_property_array("max_curvature")
         vtk_kappa_2_values = tg.get_vertex_property_array("min_curvature")
+        if save_areas:
+            triangle_areas = tg.get_vertex_property_array("area")
 
         # Calculating average principal curvatures
         kappa_1_avg = np.mean(kappa_1_values)
@@ -682,6 +686,8 @@ class VectorVotingTestCase(unittest.TestCase):
         io.write_values_to_file(vtk_kappa_1_errors, vtk_kappa_1_errors_file)
         io.write_values_to_file(vtk_kappa_2_values, vtk_kappa_2_file)
         io.write_values_to_file(vtk_kappa_2_errors, vtk_kappa_2_errors_file)
+        if save_areas:
+            io.write_values_to_file(triangle_areas, triangle_areas_file)
 
         # Asserting that all values of both principal curvatures are close to
         # the true value, allowing percent error of +-30%:
@@ -730,19 +736,19 @@ class VectorVotingTestCase(unittest.TestCase):
     #         for k in [3, 5]:  # 1 for noise=0
     #             self.parametric_test_plane_normals(10, res=30, noise=n, k=k)
 
-    def test_cylinder_T_2_curvatures(self):
-        """
-        Tests whether minimal principal directions (T_2) are correctly estimated
-        using Normal Vector Voting with a certain g_max for an opened cylinder
-        surface (without the circular planes) with known orientation (height,
-        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-        and noise level.
-        """
-        # for k in [3, 5]:
-        #     self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k)
-        for n in [10, 5]:
-            for k in [3, 5]:
-                self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
+    # def test_cylinder_T_2_curvatures(self):
+    #     """
+    #     Tests whether minimal principal directions (T_2) are correctly estimated
+    #     using Normal Vector Voting with a certain g_max for an opened cylinder
+    #     surface (without the circular planes) with known orientation (height,
+    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+    #     and noise level.
+    #     """
+    #     # for k in [3, 5]:
+    #     #     self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k)
+    #     for n in [10, 5]:
+    #         for k in [3, 5]:
+    #             self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
 
     # def test_inverse_cylinder_T_2_curvatures(self):
     #     """
@@ -756,18 +762,19 @@ class VectorVotingTestCase(unittest.TestCase):
     #         self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k,
     #                                                      inverse=True)
 
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated using Normal Vector
-    #     Voting with a certain g_max for a sphere with a certain radius,
-    #     resolution and noise level:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-    #     """
-    #     # self.parametric_test_sphere_curvatures(10, res=42, noise=5, k=3)
-    #     for n in [0, 5, 10]:
-    #         for k in [3, 5]:
-    #             self.parametric_test_sphere_curvatures(10, noise=n, k=k)
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated using Normal Vector
+        Voting with a certain g_max for a sphere with a certain radius,
+        resolution and noise level:
+
+        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+        """
+        # self.parametric_test_sphere_curvatures(10, res=42, noise=5, k=3)
+        for n in [0, 5, 10]:
+            for k in [3]:  # 5
+                self.parametric_test_sphere_curvatures(10, res=30, noise=n, k=k,
+                                                       save_areas=True)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
