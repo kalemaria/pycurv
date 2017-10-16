@@ -637,6 +637,24 @@ def write_stl_file(poly, outfilename):
     stlWriter.Write()
 
 
+def stl_file_to_vtp_file(infilename, outfilename):
+    """
+    Converts an '.stl' file to a '.vtp' file.
+
+    Args:
+        infilename (str): an input '.stl' file name (with path)
+        outfilename (str): an output '.vtp' file name (with path)
+
+    Returns:
+        None
+    """
+    sr = vtk.vtkSTLReader()
+    sr.SetFileName(infilename)
+    sr.Update()
+    poly = sr.GetOutput()
+    save_vtp(poly, outfilename)
+
+
 def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
                          scale_z, logfilename=None, mean=False, verbose=False):
     """

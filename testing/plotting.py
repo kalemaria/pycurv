@@ -524,7 +524,7 @@ def plot_cylinder_T_2_errors(r, h, inverse=False, res=0, noise=0,
     print ("The plot was saved as {}".format(kappa_errors_plot))
 
 
-def plot_sphere_curv_errors(radius, inverse=False, res=0, noise=10,
+def plot_sphere_curv_errors(radius, inverse=False, res=0, ico=0, noise=10,
                             k=3, g_max=0, epsilon=0, eta=0, extra=0):
     """
     A method for plotting sphere principal curvature errors as estimated by a
@@ -535,10 +535,13 @@ def plot_sphere_curv_errors(radius, inverse=False, res=0, noise=10,
         inverse (boolean, optional): if True (default False), the sphere
             will have normals pointing outwards (negative curvature), else
             the other way around
-        res (int): if > 0 determines how many longitude and latitude stripes
-            the UV sphere from vtkSphereSource has, the surface was
-            triangulated; If 0 (default) first a gaussian sphere mask was
-            generated and then surface using vtkMarchingCubes
+        res (int, optional): if > 0 determines how many longitude and latitude
+            stripes the UV sphere from vtkSphereSource has, the surface was
+            triangulated; If 0 (default) and ico=0 first a gaussian sphere mask
+            was generated and then surface using vtkMarchingCubes
+        ico (int, optional): if > 0 (default 0) and res=0, an icosahedron
+            with so many faces is used (1280 faces with radius 1 or 10 are
+            available so far)
         noise (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 10), the noise
             is added on triangle vertex coordinates in its normal direction
@@ -562,11 +565,15 @@ def plot_sphere_curv_errors(radius, inverse=False, res=0, noise=10,
         None
     """
     base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
-    if res == 0:
-        fold = '{}synthetic_surfaces/sphere/noise{}/'.format(base_fold, noise)
-    else:
+    if res > 0:  # UV sphere is used
         fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
             base_fold, res, noise)
+    elif ico > 0:  # icosahedron sphere with so many faces is used
+        fold = '{}synthetic_surfaces/sphere/ico{}_noise{}/'.format(
+            base_fold, ico, noise)
+    else:  # a "disco" sphere from gaussian mask is used
+        fold = '{}synthetic_surfaces/sphere/noise{}/'.format(
+            base_fold, noise)
     files_fold = '{}files4plotting/'.format(fold)
     if inverse:
         inverse_str = "inverse_"
@@ -699,11 +706,12 @@ if __name__ == "__main__":
     # plot_plane_normal_errors(10, res=30, noise=5, k=5, extra=-2)
     # plot_plane_normal_errors(10, res=30, noise=10, k=5, extra=-2)
 
-    for n in [0, 5, 10]:
-        plot_cylinder_T_2_errors(10, 25, noise=n, k=5, extra=-2)
-    plot_cylinder_T_2_errors(10, 25, inverse=True, noise=0, k=5, extra=-2)
+    # for n in [0, 5, 10]:
+    #     plot_cylinder_T_2_errors(10, 25, noise=n, k=5, extra=-2)
+    # plot_cylinder_T_2_errors(10, 25, inverse=True, noise=0, k=5, extra=-2)
 
     # plot_sphere_curv_errors(10, inverse=True, res=30, noise=0, k=5, extra=-2)
-    # for n in [0, 5, 10]:
+    for n in [0]:  # , 5, 10
     #     plot_sphere_curv_errors(10, inverse=False, res=30, noise=n, k=5,
     #                             extra=-2)
+        plot_sphere_curv_errors(10, ico=1280, noise=n, k=5, extra=-2)

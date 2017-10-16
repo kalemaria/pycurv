@@ -1,6 +1,7 @@
 import vtk
 import math
 import numpy as np
+import os
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import pexceptions, surface_graphs
@@ -80,25 +81,24 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     if verbose:
         print ("variance = {}".format(var))
 
+    # Get the point normals of the surface
+    point_normals = __get_point_normals(surface)
+    if point_normals is None:
+        print "No point normals were found. Computing normals..."
+        surface = __compute_point_normals(surface)
+        point_normals = __get_point_normals(surface)
+        if point_normals is None:
+            print "Failed to compute point normals! Exiting..."
+            exit(0)
+        else:
+            print "Successfully computed point normals!"
+    else:
+        print "Point normals were found!"
+
     # Copy the surface and initialize vtkPoints data structure
     new_surface = vtk.vtkPolyData()
     new_surface.DeepCopy(surface)
     points = vtk.vtkPoints()
-    new_surface.GetPointData().SetNormals(
-        __copy_and_name_array(surface.GetPointData().GetNormals(), 'Normals'))
-
-    # Get the Normals points array:
-    point_data = new_surface.GetPointData()
-    n = point_data.GetNumberOfArrays()
-    point_normals = None
-    for i in range(n):
-        if point_data.GetArrayName(i) == "Normals":
-            point_normals = point_data.GetArray(i)
-            break
-
-    if point_normals is None:
-        print "No normals array found."
-        exit(0)
 
     # For each point, get its normal and randomly add noise from Gaussian
     # distribution with the wanted variance in the normal direction
@@ -108,12 +108,39 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
         new_p = old_p + np.random.normal(scale=std) * normal_p
         new_x, new_y, new_z = new_p
         points.InsertPoint(i, new_x, new_y, new_z)
-    # Set the points of the surface copy
+
+    # Set the points of the surface copy and return it
     new_surface.SetPoints(points)
     return new_surface
 
 
+def __get_point_normals(surface):
+    normals = surface.GetPointData().GetNormals()
+    if normals is None:
+        normals = surface.GetPointData().GetArray("Normals")
+    return normals
+
+
+def __compute_point_normals(surface):
+    normalGenerator = vtk.vtkPolyDataNormals()
+    normalGenerator.SetInputData(surface)
+    normalGenerator.ComputePointNormalsOn()
+    normalGenerator.Update()
+    surface = normalGenerator.GetOutput()
+    return surface
+
+
 def __copy_and_name_array(da, name):
+    """
+    Copies data array and gives it a new name.
+
+    Args:
+        da (vtkDataArray): data array
+        name (str): wanted name for the array
+
+    Returns:
+        copy of the data array with the name or None, if input was None
+    """
     if da is not None:
         outda = da.NewInstance()
         outda.DeepCopy(da)
@@ -283,7 +310,8 @@ class CylinderGenerator(object):
     @staticmethod
     def generate_cylinder_surface(r=10.0, h=20.0, res=100):
         """
-        Generates a cylinder surface with only triangular cells.
+        Generates a cylinder surface with minimal number of triangular cells
+        and two circular planes.
 
         Args:
             r (float, optional): cylinder radius (default 10.0)
@@ -293,8 +321,6 @@ class CylinderGenerator(object):
         Returns:
             a cylinder surface (vtk.vtkPolyData)
         """
-        # TODO generate more triangles on the curved surface
-        # TODO remove the two circular planes
         print("Generating a cylinder with radius={}, height={} and "
               "resolution={}".format(r, h, res))
         is_positive_number(r)
@@ -375,26 +401,34 @@ def main():
     # # io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
     # noisy_plane = add_gaussian_noise_to_surface(plane, percent=10)
     # io.save_vtp(noisy_plane,
-    #             "{}plane_half_size10_res30_noise10%normal.vtp".format(fold))
+    #             "{}plane_half_size10_res30_noise10.vtp".format(fold))
 
-    # # Sphere
+    # # UV Sphere
     # sg = SphereGenerator()
-    # # sphere_r10 = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
-    # #                                            longitude_res=50)
-    # # io.save_vtp(sphere_r10, fold + "sphere_r10_res50.vtp")
-    # rad = 10
-    # # sphere = sg.generate_sphere_surface(r=rad)
-    # # io.save_vtp(sphere, "{}sphere_r{}.vtp".format(fold, rad))
-    # sphere = sg.generate_gauss_sphere_surface(r=rad)
-    # io.save_vtp(sphere, "{}gauss_sphere_r{}.vtp".format(fold, rad))
+    # sphere = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
+    #                                        longitude_res=50)
+    # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
+    # io.save_vtp(sphere_noise, fold + "sphere_r10_res50_noise10.vtp")
 
-    # Cylinder
-    cg = CylinderGenerator()
-    # cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
-    # io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
-    rad = 10
-    cylinder = cg.generate_gauss_cylinder_surface(rad)
-    io.save_vtp(cylinder, "{}gauss_cylinder_r{}.vtp".format(fold, rad))
+    # Sphere from gauss mask
+    sg = SphereGenerator()
+    sphere = sg.generate_gauss_sphere_surface(r=10)
+    sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
+    io.save_vtp(sphere_noise, "{}gauss_sphere_r10_noise10.vtp".format(fold))
+
+    # # Cylinder
+    # cg = CylinderGenerator()
+    # # cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
+    # # io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
+    # rad = 10
+    # cylinder = cg.generate_gauss_cylinder_surface(rad)
+    # io.save_vtp(cylinder, "{}gauss_cylinder_r{}.vtp".format(fold, rad))
+
+    # # icosphere noise addition
+    # os.chdir(fold)
+    # poly = io.load_poly("sphere/ico1280_noise0/sphere_r10.surface.vtp")
+    # poly_noise = add_gaussian_noise_to_surface(poly, percent=10)
+    # io.save_vtp(poly_noise, "sphere/ico1280_noise10/sphere_r10.surface.vtp")
 
 
 if __name__ == "__main__":

@@ -472,7 +472,7 @@ class VectorVotingTestCase(unittest.TestCase):
                                    delta=allowed_error, msg=msg)
 
     def parametric_test_sphere_curvatures(
-            self, radius, inverse=False, res=0, noise=10,
+            self, radius, inverse=False, res=0, ico=0, noise=10,
             k=3, g_max=0, epsilon=0, eta=0, save_areas=False):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
@@ -486,10 +486,14 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
                 the other way around
-            res (int): if > 0 determines how many longitude and latitude stripes
-                the UV sphere from vtkSphereSource has, the surface is
-                triangulated; If 0 (default) first a gaussian sphere mask is
-                generated and then surface using vtkMarchingCubes
+            res (int, optional): if > 0 determines how many longitude and
+                latitude stripes the UV sphere from vtkSphereSource has, the
+                surface is triangulated; If 0 (default) and ico=0, first a
+                gaussian sphere mask is generated and then surface using
+                vtkMarchingCubes
+            ico (int, optional): if > 0 (default 0) and res=0, an icosahedron
+                with so many faces is used (1280 faces with radius 1 or 10 are
+                available so far)
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 10), the noise
                 is added on triangle vertex coordinates in its normal direction
@@ -506,6 +510,8 @@ class VectorVotingTestCase(unittest.TestCase):
                 influencing the number of triangles classified as "crease
                 junction" (class 2) and "no preferred orientation" (class 3, see
                 Notes), default 0
+            save_areas (boolean, optional): if True (default False), also mesh
+                triangle ares will be saved to a file
 
         Notes:
             * Either g_max or k must be positive (if both are positive, the
@@ -517,12 +523,16 @@ class VectorVotingTestCase(unittest.TestCase):
             None
         """
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
-        if res == 0:
-            fold = '{}synthetic_surfaces/sphere/noise{}/'.format(
-                base_fold, noise)
-        else:
+        if res > 0:  # UV sphere is used
             fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
                 base_fold, res, noise)
+        elif ico > 0:  # icosahedron sphere with so many faces is used
+            fold = '{}synthetic_surfaces/sphere/ico{}_noise{}/'.format(
+                base_fold, ico, noise)
+        else:  # a "disco" sphere from gaussian mask is used
+            fold = '{}synthetic_surfaces/sphere/noise{}/'.format(
+                base_fold, noise)
+
         if not os.path.exists(fold):
             os.makedirs(fold)
         surf_filebase = '{}sphere_r{}'.format(fold, radius)
@@ -594,14 +604,25 @@ class VectorVotingTestCase(unittest.TestCase):
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SphereGenerator()
-            if res == 0:  # generate surface from a gaussian mask
-                sphere = sg.generate_gauss_sphere_surface(radius)
-            else:  # generate surface directly with VTK
+            if res > 0:  # generate a UV sphere surface directly with VTK
                 sphere = sg.generate_UV_sphere_surface(
                     r=radius, latitude_res=res, longitude_res=res)
-            if noise > 0:
-                sphere = add_gaussian_noise_to_surface(sphere, percent=noise)
-            io.save_vtp(sphere, surf_file)
+                if noise > 0:
+                    sphere = add_gaussian_noise_to_surface(sphere, percent=noise)
+                io.save_vtp(sphere, surf_file)
+            elif ico > 0:
+                print ("Sorry, you have to generate the icosahedron sphere\n"
+                       "beforehand e.g. with Blender, export it as STL file\n"
+                       "and convert it to VTP file using the function\n"
+                       "pysurf_io.stl_file_to_vtp_file, optionally add noise\n"
+                       "with add_gaussian_noise_to_surface and save it as\n{}"
+                       .format(surf_file))
+                exit(0)
+            else:  # generate a sphere surface from a gaussian mask
+                sphere = sg.generate_gauss_sphere_surface(radius)
+                if noise > 0:
+                    sphere = add_gaussian_noise_to_surface(sphere, percent=noise)
+                io.save_vtp(sphere, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
         # it into a triangle graph:
@@ -770,11 +791,12 @@ class VectorVotingTestCase(unittest.TestCase):
 
         kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
         """
-        # self.parametric_test_sphere_curvatures(10, res=42, noise=5, k=3)
-        for n in [0, 5, 10]:
-            for k in [3]:  # 5
-                self.parametric_test_sphere_curvatures(10, res=30, noise=n, k=k,
-                                                       save_areas=True)
+        for n in [5, 10]:  # 0
+            for k in [5, 3]:
+                # self.parametric_test_sphere_curvatures(10, res=30, noise=n, k=k,
+                #                                        save_areas=True)
+                self.parametric_test_sphere_curvatures(10, ico=1280, noise=n,
+                                                       k=k, save_areas=True)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
