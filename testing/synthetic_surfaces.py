@@ -122,11 +122,11 @@ def __get_point_normals(surface):
 
 
 def __compute_point_normals(surface):
-    normalGenerator = vtk.vtkPolyDataNormals()
-    normalGenerator.SetInputData(surface)
-    normalGenerator.ComputePointNormalsOn()
-    normalGenerator.Update()
-    surface = normalGenerator.GetOutput()
+    normal_generator = vtk.vtkPolyDataNormals()
+    normal_generator.SetInputData(surface)
+    normal_generator.ComputePointNormalsOn()
+    normal_generator.Update()
+    surface = normal_generator.GetOutput()
     return surface
 
 
@@ -386,6 +386,48 @@ class CylinderGenerator(object):
         return surfaces.GetOutput()
 
 
+class SaddleGenerator(object):
+    """
+    A class for generating triangular-mesh surfaces containing a saddle surface
+    (negative gaussian curvature).
+    """
+    # @staticmethod
+    # def generate_one_sheeted_hyperboloid(a, c, h):
+    #     pass
+
+    @staticmethod
+    def generate_parametric_torus(rr, csr):
+        """
+        Generates a torus surface with triangular cells.
+
+        Args:
+            rr (int or float): ring radius
+            csr (int or float): cross-section radius
+
+        Returns:
+            a torus surface (vtk.vtkPolyData)
+        """
+        torus = vtk.vtkParametricTorus()
+        torus.SetRingRadius(rr)
+        torus.SetCrossSectionRadius(csr)
+
+        source = vtk.vtkParametricFunctionSource()
+        source.SetParametricFunction(torus)
+        source.Update()
+
+        # The surface has nasty discontinuities from the way the edges are
+        # generated, so pass it though a CleanPolyDataFilter to merge any
+        # points which are coincident or very close
+        cleaner = vtk.vtkCleanPolyData()
+        cleaner.SetInputConnection(source.GetOutputPort())
+        cleaner.SetTolerance(0.005)
+        cleaner.Update()
+
+        # Might contain non-triangle cells after cleaning - remove them
+        surface = remove_non_triangle_cells(cleaner.GetOutput())
+        return surface
+
+
 def main():
     """
     Main function generating some sphere and cylinder surfaces.
@@ -411,10 +453,10 @@ def main():
     # io.save_vtp(sphere_noise, fold + "sphere_r10_res50_noise10.vtp")
 
     # Sphere from gauss mask
-    sg = SphereGenerator()
-    sphere = sg.generate_gauss_sphere_surface(r=10)
-    sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
-    io.save_vtp(sphere_noise, "{}gauss_sphere_r10_noise10.vtp".format(fold))
+    # sg = SphereGenerator()
+    # sphere = sg.generate_gauss_sphere_surface(r=10)
+    # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
+    # io.save_vtp(sphere_noise, "{}gauss_sphere_r10_noise10.vtp".format(fold))
 
     # # Cylinder
     # cg = CylinderGenerator()
@@ -429,6 +471,13 @@ def main():
     # poly = io.load_poly("sphere/ico1280_noise0/sphere_r10.surface.vtp")
     # poly_noise = add_gaussian_noise_to_surface(poly, percent=10)
     # io.save_vtp(poly_noise, "sphere/ico1280_noise10/sphere_r10.surface.vtp")
+
+    # Torus
+    sg = SaddleGenerator()
+    rr = 20
+    csr = 5
+    torus = sg.generate_parametric_torus(rr, csr)
+    io.save_vtp(torus, "{}torus_rr{}_csr{}.vtp".format(fold, rr, csr))
 
 
 if __name__ == "__main__":

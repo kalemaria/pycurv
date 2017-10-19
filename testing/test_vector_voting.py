@@ -8,7 +8,7 @@ from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
     TriangleGraph, PointGraph, vector_voting, pexceptions)
 from synthetic_surfaces import (
-    PlaneGenerator, SphereGenerator, CylinderGenerator,
+    PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
 
 
@@ -744,6 +744,134 @@ class VectorVotingTestCase(unittest.TestCase):
         self.assertAlmostEqual(kappa_2_avg, true_curvature,
                                delta=allowed_error, msg=msg)
 
+    def parametric_test_torus_curvatures(self, rr, csr, inverse=False,
+                                         k=3, g_max=0, epsilon=0, eta=0):
+        """
+        Runs all the steps needed to calculate curvatures for a test torus
+        with given radii using Normal Vector Voting (VV) with a given g_max.
+
+        Args:
+            rr (int): ring radius of the torus
+            csr (int): cross-section radius of the torus
+            inverse (boolean, optional): if True (default False), the sphere
+                will have normals pointing outwards (negative curvature), else
+                the other way around
+            k (int, optional): parameter of Normal Vector Voting algorithm
+                determining the geodesic neighborhood radius:
+                g_max = k * average weak triangle graph edge length (default 3)
+            g_max (float, optional): geodesic neighborhood radius in length unit
+                of the graph, here voxels; if positive (default 0) this g_max
+                will be used and k will be ignored
+            epsilon (int, optional): parameter of Normal Vector Voting algorithm
+                influencing the number of triangles classified as "crease
+                junction" (class 2), default 0
+            eta (int, optional): parameter of Normal Vector Voting algorithm
+                influencing the number of triangles classified as "crease
+                junction" (class 2) and "no preferred orientation" (class 3, see
+                Notes), default 0
+
+        Notes:
+            * Either g_max or k must be positive (if both are positive, the
+              specified g_max will be used).
+            * If epsilon = 0 and eta = 0 (default), all triangles will be
+              classified as "surface patch" (class 1).
+
+        Returns:
+            None
+        """
+        fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
+
+        if not os.path.exists(fold):
+            os.makedirs(fold)
+        surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)
+        surf_file = '{}.surface.vtp'.format(surf_filebase)
+        scale_factor_to_nm = 1  # assume it's already in nm
+        # Actually can just give in any number for the scales, because they are
+        # only used for ribosome density calculation or volumes / .mrc files
+        # creation.
+        scale_x = 2 * (rr + csr)
+        scale_y = 2 * scale_x
+        scale_z = 2 * csr
+        files_fold = '{}files4plotting/'.format(fold)
+        if not os.path.exists(files_fold):
+            os.makedirs(files_fold)
+        if inverse:
+            inverse_str = "inverse_"
+        else:
+            inverse_str = ""
+        base_filename = "{}{}torus_rr{}_csr{}".format(
+            files_fold, inverse_str, rr, csr)
+        if g_max > 0:
+            surf_VV_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, g_max, epsilon, eta)
+        elif k > 0:
+            surf_VV_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, k, epsilon, eta)
+        else:
+            error_msg = ("Either g_max or k must be positive (if both are "
+                         "positive, the specified g_max will be used).")
+            raise pexceptions.PySegInputError(
+                expr='parametric_test_sphere_curvatures', msg=error_msg)
+
+        if inverse:
+            print ("\n*** Generating a surface and a graph for an inverse "
+                   "torus with ring radius {} and cross-section radius {} ***"
+                   .format(rr, csr))
+        else:
+            print ("\n*** Generating a surface and a graph for a torus "
+                   "with ring radius {} and cross-section radius {} ***"
+                   .format(rr, csr))
+        # If the .vtp file with the test surface does not exist, create it:
+        if not os.path.isfile(surf_file):
+            sg = SaddleGenerator()
+            torus = sg.generate_parametric_torus(rr, csr)
+            io.save_vtp(torus, surf_file)
+
+        # Reading in the .vtp file with the test triangle mesh and transforming
+        # it into a triangle graph:
+        t_begin = time.time()
+
+        print '\nReading in the surface file to get a vtkPolyData surface...'
+        surf = io.load_poly(surf_file)
+        print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+               'curvatures...')
+        tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+        # VTK has opposite surface normals convention than we use
+        # a graph with normals pointing outwards is generated (normal case
+        # for VTK; negative curvatures)
+        if inverse:
+            reverse_normals = False
+        # a graph with normals pointing inwards is generated (VTK normals have
+        # to be flipped, positive curvatures)
+        else:
+            reverse_normals = True
+        tg.build_graph_from_vtk_surface(surf, verbose=False,
+                                        reverse_normals=reverse_normals)
+        print tg.graph
+
+        if k > 0:
+            print "k = {}".format(k)
+            # Find the average triangle edge length (l_ave) and calculate g_max:
+            # (Do this here because in vector_voting average weak edge length of
+            # the triangle graph is used, since the surface not passed)
+            pg = PointGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+            pg.build_graph_from_vtk_surface(surf)
+            l_ave = pg.calculate_average_edge_length()
+            print "average triangle edge length = {}".format(l_ave)
+            g_max = k * l_ave
+
+        t_end = time.time()
+        duration = t_end - t_begin
+        print ('Graph construction from surface took: {} min {} s'.format(
+            divmod(duration, 60)[0], divmod(duration, 60)[1]))
+
+        # Running the modified Normal Vector Voting algorithm:
+        surf_VV = vector_voting(tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                                exclude_borders=False)
+        # Saving the output (TriangleGraph object) for later inspection in
+        # ParaView:
+        io.save_vtp(surf_VV, surf_VV_file)
+
     # *** The following tests will be run by unittest ***
 
     # def test_plane_normals(self):
@@ -783,20 +911,20 @@ class VectorVotingTestCase(unittest.TestCase):
     #         self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k,
     #                                                      inverse=True)
 
-    def test_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated using Normal Vector
-        Voting with a certain g_max for a sphere with a certain radius,
-        resolution and noise level:
-
-        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-        """
-        for n in [5, 10]:  # 0
-            for k in [5, 3]:
-                # self.parametric_test_sphere_curvatures(10, res=30, noise=n, k=k,
-                #                                        save_areas=True)
-                self.parametric_test_sphere_curvatures(10, ico=1280, noise=n,
-                                                       k=k, save_areas=True)
+    # def test_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated using Normal Vector
+    #     Voting with a certain g_max for a sphere with a certain radius,
+    #     resolution and noise level:
+    #
+    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+    #     """
+    #     for n in [5, 10]:  # 0
+    #         for k in [5, 3]:
+    #             # self.parametric_test_sphere_curvatures(10, res=30, noise=n, k=k,
+    #             #                                        save_areas=True)
+    #             self.parametric_test_sphere_curvatures(10, ico=1280, noise=n,
+    #                                                    k=k, save_areas=True)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -809,6 +937,12 @@ class VectorVotingTestCase(unittest.TestCase):
     #     for k in [3, 5]:
     #         self.parametric_test_sphere_curvatures(10, noise=0, k=k,
     #                                                inverse=True)
+
+    def test_torus_curvatures(self):
+        """
+        Runs parametric_test_torus_curvatures with certain parameters.
+        """
+        self.parametric_test_torus_curvatures(30, 10, inverse=False, k=3)
 
 
 if __name__ == '__main__':

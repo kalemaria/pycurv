@@ -711,7 +711,7 @@ if __name__ == "__main__":
     # plot_cylinder_T_2_errors(10, 25, inverse=True, noise=0, k=5, extra=-2)
 
     # plot_sphere_curv_errors(10, inverse=True, res=30, noise=0, k=5, extra=-2)
-    for n in [0]:  # , 5, 10
+    for n in [5, 10]:  # 0
     #     plot_sphere_curv_errors(10, inverse=False, res=30, noise=n, k=5,
     #                             extra=-2)
         plot_sphere_curv_errors(10, ico=1280, noise=n, k=5, extra=-2)
