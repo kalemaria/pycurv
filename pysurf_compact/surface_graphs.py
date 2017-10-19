@@ -1523,8 +1523,8 @@ class TriangleGraph(SurfaceGraph):
         T_3 = eigenvectors[:, 0]  # has to be equal to the normal N_v or -N_v
         N_v = np.array(self.graph.vp.N_v[vertex_v])
         try:
-            assert(round(abs(T_3[0]), 7) == round(abs(N_v[0]), 7) or
-                   round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) or
+            assert(round(abs(T_3[0]), 7) == round(abs(N_v[0]), 7) and
+                   round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2])), 7)
         except AssertionError:
             print "Error: T_3 has to be equal to the normal N_v or -N_v, but:"

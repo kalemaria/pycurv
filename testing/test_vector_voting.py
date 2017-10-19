@@ -755,7 +755,7 @@ class VectorVotingTestCase(unittest.TestCase):
             csr (int): cross-section radius of the torus
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
-                the other way around
+                the other way around (choose in the way that csr < rr - csr)
             k (int, optional): parameter of Normal Vector Voting algorithm
                 determining the geodesic neighborhood radius:
                 g_max = k * average weak triangle graph edge length (default 3)
@@ -775,6 +775,7 @@ class VectorVotingTestCase(unittest.TestCase):
               specified g_max will be used).
             * If epsilon = 0 and eta = 0 (default), all triangles will be
               classified as "surface patch" (class 1).
+            * csr should be much smaller than rr (csr < rr - csr).
 
         Returns:
             None
@@ -872,6 +873,28 @@ class VectorVotingTestCase(unittest.TestCase):
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
 
+        # Getting principal curvatures from NVV and VTK from the output graph:
+        kappa_1_values = tg.get_vertex_property_array("kappa_1")
+        kappa_2_values = tg.get_vertex_property_array("kappa_2")
+        vtk_kappa_1_values = tg.get_vertex_property_array("max_curvature")
+        vtk_kappa_2_values = tg.get_vertex_property_array("min_curvature")
+
+        # Ground-truth principal curvatures
+        irr = rr - csr
+        orr = rr + csr
+        if inverse:
+            true_kappa_1 = (- 1.0 / orr, 1.0 / irr)
+            print ("true kappa_1 between {} and {}".format(true_kappa_1[0],
+                                                           true_kappa_1[1]))
+            true_kappa_2 = - 1.0 / csr
+            print ("true kappa_2 = {}".format(true_kappa_2))
+        else:
+            true_kappa_1 = 1.0 / csr
+            print ("true kappa_1 = {}".format(true_kappa_1))
+            true_kappa_2 = (- 1.0 / irr, 1.0 / orr)
+            print ("true kappa_2 between {} and {}".format(true_kappa_2[0],
+                                                           true_kappa_2[1]))
+
     # *** The following tests will be run by unittest ***
 
     # def test_plane_normals(self):
@@ -942,7 +965,7 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         Runs parametric_test_torus_curvatures with certain parameters.
         """
-        self.parametric_test_torus_curvatures(30, 10, inverse=False, k=3)
+        self.parametric_test_torus_curvatures(30, 10, inverse=False, k=1)
 
 
 if __name__ == '__main__':
