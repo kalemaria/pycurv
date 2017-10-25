@@ -165,12 +165,18 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     classifying_orientation = tg.classifying_orientation
     classes_counts = {}
     for v in tg.graph.vertices():
+        # TODO for testing
+        if tg.graph.vertex_index[v] == 174:
+            verb = True
+        else:
+            verb = False
         neighbor_idx_to_dist, V_v = collecting_votes(v, g_max, A_max, sigma,
-                                                     verbose=False)
+                                                     verbose=verb)
         all_num_neighbors.append(len(neighbor_idx_to_dist))
         all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
+        # TODO for testing
         class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
-                                          verbose=False)
+                                          verbose=verb)
         try:
             classes_counts[class_v] += 1
         except KeyError:
@@ -232,6 +238,15 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
         tg.find_graph_border(purge=False)
         is_on_border = tg.graph.vp.is_on_border
         for i, v in enumerate(tg.graph.vertices()):
+            # TODO for testing
+            if tg.graph.vertex_index[v] == 174:
+                verb = True
+                print ("VTK min curvature = {}".format(
+                    tg.graph.vp.min_curvature[v]))
+                print ("VTK max curvature = {}".format(
+                    tg.graph.vp.max_curvature[v]))
+            else:
+                verb = False
             # Estimate principal curvatures and directions (and calculate the
             # Gaussian and mean curvatures, shape index and curvedness) for
             # vertices belonging to a surface patch and not on border
@@ -239,10 +254,12 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
             if orientation_class[v] == 1 and is_on_border[v] == 0:
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
+                # TODO for testing
                 B_v, curvature_is_negated = collecting_votes2(
-                    v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
+                    v, all_neighbor_idx_to_dist[i], sigma, verbose=verb)
             if B_v is not None:
-                estimate_curvature(v, B_v, curvature_is_negated, verbose=False)
+                # TODO for testing
+                estimate_curvature(v, B_v, curvature_is_negated, verbose=verb)
             # For crease, no preferably oriented vertices, vertices on border or
             # vertices lacking neighbors, add placeholders to the corresponding
             # vertex properties

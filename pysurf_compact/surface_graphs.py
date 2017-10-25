@@ -311,7 +311,7 @@ class TriangleGraph(SurfaceGraph):
         if isinstance(surface, vtk.vtkPolyData):
             t_begin = time.time()
 
-            # rescale the surface to nm  # TODO try before adding curvatures
+            # rescale the surface to nm
             surface = rescale_surface(surface, self.scale_factor_to_nm)
             print 'Adding curvatures to the vtkPolyData surface...'
             # because VTK and we (gen_surface) have the opposite normal
@@ -1289,7 +1289,7 @@ class TriangleGraph(SurfaceGraph):
             return 3
 
     num_curvature_is_negated = 0
-    """int: counts for how many triangles  the curvature is negated"""
+    """int: counts for how many triangles the curvature is negated"""
 
     def collecting_votes2(self, vertex_v, neighbor_idx_to_dist, sigma,
                           verbose=False):
@@ -1377,12 +1377,9 @@ class TriangleGraph(SurfaceGraph):
         except AssertionError:  # can be 0 if no surface patch neighbors exist
             print ("\nWarning: sum of the weights is not positive, but %s, for "
                    "the vertex v = %s" % (sum_w_i, v))
-            if len(surface_neighbors_idx) == 0:
-                print "No neighbors in a surface patch."
-            else:
-                print ("%s neighbors in a surface patch with weights w_i:"
-                       % len(surface_neighbors_idx))
-                print all_w_i
+            print ("%s neighbors in a surface patch with weights w_i:"
+                   % len(surface_neighbors_idx))
+            print all_w_i
             print "The vertex will be ignored."
             return None
 
@@ -1409,8 +1406,7 @@ class TriangleGraph(SurfaceGraph):
             vertex_v_i = vertex(idx_v_i)
 
             # Second, calculate tangent directions T_i of each vote:
-            v_i = xyz[vertex_v_i]
-            v_i = array(v_i)
+            v_i = array(xyz[vertex_v_i])
             vv_i = v_i - v
             t_i = vv_i - dot(N_v, vv_i) * N_v
             t_i_len = vector_length(t_i)
@@ -1439,8 +1435,8 @@ class TriangleGraph(SurfaceGraph):
             kappa_i = tetha / s
             # has to be like this according to Page's paper
             # kappa_i_sign = signum(dot(T_i, n_i))
-            # but negated according to Tang & Medioni's definition (more
-            # suitable for our surface)
+            # but negated according to Tang & Medioni's definition (suitable for
+            # our surface normals convention)
             kappa_i_sign = -1 * signum(dot(T_i, n_i))
             if kappa_i_sign < 0:
                 num_negative_kappa_i += 1
@@ -1462,6 +1458,7 @@ class TriangleGraph(SurfaceGraph):
                 print "tetha = %s" % tetha
                 print "s = g_i = %s" % s
                 print "kappa_i = %s" % kappa_i
+                print "kappa_i sign = {}".format(kappa_i_sign)  # test
                 print "w_i = %s" % w_i
 
             # Finally, sum up the components of B_v:
@@ -1476,8 +1473,9 @@ class TriangleGraph(SurfaceGraph):
         # kappa_i is negative - principle directions and curvatures have to be
         # swapped and the latter also negated in estimate_curvature
         curvature_is_negated = False
-        if (float(num_negative_kappa_i) /
-                float(len(surface_neighbors_idx)) > 0.5):
+        ratio = float(num_negative_kappa_i) / float(len(surface_neighbors_idx))
+        print "negative kappa_i ratio = {}".format(ratio)  # test
+        if ratio > 0.5:
             TriangleGraph.num_curvature_is_negated += 1
             curvature_is_negated = True
             if verbose:
@@ -1525,7 +1523,7 @@ class TriangleGraph(SurfaceGraph):
         try:
             assert(round(abs(T_3[0]), 7) == round(abs(N_v[0]), 7) and
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
-                   round(abs(T_3[2]), 7) == round(abs(N_v[2])), 7)
+                   round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
             print "Error: T_3 has to be equal to the normal N_v or -N_v, but:"
             print "T_3 = %s" % T_3

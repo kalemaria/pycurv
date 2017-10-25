@@ -784,7 +784,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if not os.path.exists(fold):
             os.makedirs(fold)
-        surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)
+        surf_filebase = '{}torus_rr{}_csr{}_inner_part'.format(fold, rr, csr)  # TODO remove "_inner_part" when finished debugging
         surf_file = '{}.surface.vtp'.format(surf_filebase)
         scale_factor_to_nm = 1  # assume it's already in nm
         # Actually can just give in any number for the scales, because they are
@@ -800,8 +800,8 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse_str = "inverse_"
         else:
             inverse_str = ""
-        base_filename = "{}{}torus_rr{}_csr{}".format(
-            files_fold, inverse_str, rr, csr)
+        base_filename = "{}{}torus_rr{}_csr{}_inner_part".format(
+            files_fold, inverse_str, rr, csr)  # TODO remove "_inner_part" when finished debugging
         if g_max > 0:
             surf_VV_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
@@ -868,7 +868,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
         # Running the modified Normal Vector Voting algorithm:
         surf_VV = vector_voting(tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                                exclude_borders=False)
+                                exclude_borders=True)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -918,21 +918,21 @@ class VectorVotingTestCase(unittest.TestCase):
     #     """
     #     # for k in [3, 5]:
     #     #     self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k)
-    #     for n in [10, 5]:
-    #         for k in [3, 5]:
+    #     for n in [0]:  # 10, 5
+    #         for k in [3]:  # 3, 5
     #             self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
 
-    # def test_inverse_cylinder_T_2_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) are correctly estimated
-    #     using Normal Vector Voting with a certain g_max for an opened cylinder
-    #     surface (without the circular planes) with known orientation (height,
-    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-    #     and noise level.
-    #     """
-    #     for k in [3, 5]:
-    #         self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k,
-    #                                                      inverse=True)
+    def test_inverse_cylinder_T_2_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) are correctly estimated
+        using Normal Vector Voting with a certain g_max for an opened cylinder
+        surface (without the circular planes) with known orientation (height,
+        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+        and noise level.
+        """
+        for k in [3]:  # 3, 5
+            self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k,
+                                                         inverse=True)
 
     # def test_sphere_curvatures(self):
     #     """
@@ -942,12 +942,12 @@ class VectorVotingTestCase(unittest.TestCase):
     #
     #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
-    #     for n in [5, 10]:  # 0
-    #         for k in [5, 3]:
+    #     for n in [0]:  # 5, 10
+    #         for k in [1]:  # 5, 3
     #             # self.parametric_test_sphere_curvatures(10, res=30, noise=n, k=k,
     #             #                                        save_areas=True)
-    #             self.parametric_test_sphere_curvatures(10, ico=1280, noise=n,
-    #                                                    k=k, save_areas=True)
+    #             self.parametric_test_sphere_curvatures(
+    #                 10, ico=1280, noise=n, k=k, save_areas=False)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -961,11 +961,11 @@ class VectorVotingTestCase(unittest.TestCase):
     #         self.parametric_test_sphere_curvatures(10, noise=0, k=k,
     #                                                inverse=True)
 
-    def test_torus_curvatures(self):
-        """
-        Runs parametric_test_torus_curvatures with certain parameters.
-        """
-        self.parametric_test_torus_curvatures(30, 10, inverse=False, k=1)
+    # def test_torus_curvatures(self):
+    #     """
+    #     Runs parametric_test_torus_curvatures with certain parameters.
+    #     """
+    #     self.parametric_test_torus_curvatures(25, 10, inverse=False, k=1)
 
 
 if __name__ == '__main__':
