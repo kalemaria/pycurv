@@ -1346,8 +1346,7 @@ class TriangleGraph(SurfaceGraph):
 
         # Get the coordinates of vertex v and its estimated normal N_v (as numpy
         # array):
-        v = xyz[vertex_v]
-        v = array(v)
+        v = array(xyz[vertex_v])
         N_v = array(vp_N_v[vertex_v])
 
         # First, calculate the weights w_i of the neighboring triangles
@@ -1413,11 +1412,11 @@ class TriangleGraph(SurfaceGraph):
             T_i = t_i / t_i_len
 
             # Third, calculate the normal curvature kappa_i:
-            # vector perpendicular to the plane that contains both N_v and T_i
-            # as well as the normal curve (between v and v_i)
+            # P_i: vector perpendicular to the plane that contains both N_v and
+            # T_i as well as the normal curve (between v and v_i)
             P_i = cross(N_v, T_i)
             N_v_i = array(vp_N_v[vertex_v_i])  # estimated normal of vertex v_i
-            # projection of N_v_i on the plane containing N_v - rooted at v -
+            # n_i: projection of N_v_i on the plane containing N_v rooted at v
             # and v_i
             n_i = N_v_i - dot(P_i, N_v_i) * P_i
             n_i_len = vector_length(n_i)
@@ -1474,7 +1473,8 @@ class TriangleGraph(SurfaceGraph):
         # swapped and the latter also negated in estimate_curvature
         curvature_is_negated = False
         ratio = float(num_negative_kappa_i) / float(len(surface_neighbors_idx))
-        print "negative kappa_i ratio = {}".format(ratio)  # test
+        if verbose:
+            print "negative kappa_i ratio = {}".format(ratio)  # test
         if ratio > 0.5:
             TriangleGraph.num_curvature_is_negated += 1
             curvature_is_negated = True
@@ -1525,10 +1525,24 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            print "Error: T_3 has to be equal to the normal N_v or -N_v, but:"
-            print "T_3 = %s" % T_3
-            print "N_v = %s" % N_v
-            exit(0)
+            if b_1 == 0.0 and b_2 == 0.0:
+                if T_1[0] == N_v[0] and T_1[1] == N_v[1] and T_1[2] == N_v[2]:
+                    T_1 = T_3
+                    # T_3 = N_v
+                elif T_2[0] == N_v[0] and T_2[1] == N_v[1] and T_2[2] == N_v[2]:
+                    T_2 = T_3
+                    # T_3 = N_v
+                else:
+                    print "No exchanged normal found"
+                    print "Error: T_3 has to be equal to the normal |N_v|, but:"
+                    print "T_3 = %s" % T_3
+                    print "N_v = %s" % N_v
+                    exit(0)
+            else:
+                print "Error: T_3 has to be equal to the normal |N_v|, but:"
+                print "T_3 = %s" % T_3
+                print "N_v = %s" % N_v
+                exit(0)
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
         kappa_2 = 3 * b_2 - b_1
@@ -1566,3 +1580,120 @@ class TriangleGraph(SurfaceGraph):
                 (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
         self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
+
+    def sign_voting(self, vertex_v, neighbor_idx_to_dist,
+                    verbose=False):
+        # To spare function referencing every time in the following for loop:
+        vertex = self.graph.vertex
+        xyz = self.graph.vp.xyz
+        vp_N_v = self.graph.vp.N_v
+        vp_normal = self.graph.vp.normal
+        array = np.array
+        dot = np.dot
+        cross = np.cross
+        transpose = np.transpose
+        vector_length = np.linalg.norm
+        sqrt = math.sqrt
+
+        # Get the coordinates of vertex v and its estimated normal N_v (as numpy
+        # array):
+        v = array(xyz[vertex_v])
+        N_v = array(vp_N_v[vertex_v])
+
+        votes_for_v = []
+        vote_strengths_for_v = []
+        for idx_v_i in neighbor_idx_to_dist.keys():
+            # Get the neighboring vertex v_i:
+            vertex_v_i = vertex(idx_v_i)
+
+            # Calculate tangent directions T_i of each vote:
+            v_i = array(xyz[vertex_v_i])
+            vv_i = v_i - v
+            t_i = vv_i - dot(N_v, vv_i) * N_v
+            t_i_len = vector_length(t_i)
+            T_i = t_i / t_i_len
+
+            # Calculate n_i:
+            # P_i: vector perpendicular to the plane that contains both N_v and
+            # T_i as well as the normal curve (between v and v_i)
+            P_i = cross(N_v, T_i)
+            # estimated normal of vertex v_i (of length 1)
+            N_v_i = array(vp_N_v[vertex_v_i])
+            # n_i: projection of N_v_i on the plane containing N_v rooted at v
+            # and v_i
+            n_i = N_v_i - dot(P_i, N_v_i) * P_i
+
+            # Find the sign and calculate the vote direction
+            kappa_i_sign = -1 * signum(dot(T_i, n_i))
+            if kappa_i_sign == 0:
+                vote_from_v_i = array([0, 1])
+            else:
+                vote_from_v_i = (1 / sqrt(2)) * array([kappa_i_sign, 1])
+            votes_for_v.append(vote_from_v_i)
+
+            # Calculate the vote strength
+            # original normal of vertex v_i (also of length 1)
+            normal_v_i = array(vp_normal[vertex_v_i])
+            # Euclidean distance between v and v_i
+            dist_v_v_i = vector_length(v - v_i)
+            vote_strength_from_v_i = dot(N_v_i, normal_v_i) / dist_v_v_i
+            vote_strengths_for_v.append(vote_strength_from_v_i)
+
+        n = len(neighbor_idx_to_dist)  # number of neighbors of v (= #votes)
+        votes_for_v = array(votes_for_v)  # n votes
+        votes_for_v_t = transpose(votes_for_v)
+        vote_strengths_for_v = array(vote_strengths_for_v)  # n vote strengths
+        weighted_votes_for_v_t = votes_for_v_t * vote_strengths_for_v
+        weighted_votes_for_v = transpose(weighted_votes_for_v_t)
+        # M: (sample) mean or "weighted-averaged sign"
+        M = np.mean(weighted_votes_for_v_t, axis=1)  # weighted votes
+        mu = M[0] / M[1]  # M[1] is always > 0
+        B = weighted_votes_for_v - M  # n deviations of each vote from M
+        B = transpose(B)
+        # S: covariance 2x2 positive semidefinite matrix
+        S = np.inner(B, B) / (n - 1)
+        traceS = np.trace(S)  # trace of S, always positive
+
+        # if abs(mu) < 0.9:
+        #     if traceS < 0.5:
+        #         local_shape_v = "planar"
+        #         self.graph.vp.planar[vertex_v] = 1
+        #         self.graph.vp.hyperbolic[vertex_v] = 0
+        #         self.graph.vp.elliptic[vertex_v] = 0
+        #         self.graph.vp.parabolic[vertex_v] = 0
+        #     else:
+        #         local_shape_v = "hyperbolic"
+        #         self.graph.vp.hyperbolic[vertex_v] = 1
+        #         self.graph.vp.planar[vertex_v] = 0
+        #         self.graph.vp.elliptic[vertex_v] = 0
+        #         self.graph.vp.parabolic[vertex_v] = 0
+        # else:
+        #     if traceS < 3e-32:
+        #         local_shape_v = "elliptic"
+        #         self.graph.vp.elliptic[vertex_v] = 1
+        #         self.graph.vp.planar[vertex_v] = 0
+        #         self.graph.vp.hyperbolic[vertex_v] = 0
+        #         self.graph.vp.parabolic[vertex_v] = 0
+        #     else:
+        #         local_shape_v = "parabolic"
+        #         self.graph.vp.parabolic[vertex_v] = 1
+        #         self.graph.vp.planar[vertex_v] = 0
+        #         self.graph.vp.hyperbolic[vertex_v] = 0
+        #         self.graph.vp.elliptic[vertex_v] = 0
+
+        if verbose:
+            print ("vote directions:")
+            print (votes_for_v_t)
+            print ("vote strength:")
+            print (vote_strengths_for_v)
+            print ("weighted votes:")
+            print (weighted_votes_for_v_t)
+            print ("M:")
+            print (M)
+            print ("mu = {}".format(mu))
+            print ("S:")
+            print (S)
+            print ("trace(S) = {}".format(traceS))
+            # print ("local shape: {}".format(local_shape_v))
+
+        return mu, traceS  # local_shape_v

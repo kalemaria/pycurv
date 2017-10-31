@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from scipy import stats
 
 import pexceptions
 from surface_graphs import TriangleGraph
@@ -115,6 +116,14 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     # triangle (if the vertex belongs to class 2; scaled in nm):
     tg.graph.vp.T_v = tg.graph.new_vertex_property("vector<float>")
 
+    # * Adding vertex properties to be filled in sign_voting *
+    # vertex properties telling whether the vertex is locally planar,
+    # hyperbolic, elliptic or parabolic:
+    tg.graph.vp.planar = tg.graph.new_vertex_property("int")
+    tg.graph.vp.hyperbolic = tg.graph.new_vertex_property("int")
+    tg.graph.vp.elliptic = tg.graph.new_vertex_property("int")
+    tg.graph.vp.parabolic = tg.graph.new_vertex_property("int")
+
     # * Adding vertex properties to be filled in estimate_curvature *
     # vertex property for storing the estimated principal directions of the
     # maximal curvature of the corresponding triangle (if the vertex belongs to
@@ -166,10 +175,11 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     classes_counts = {}
     for v in tg.graph.vertices():
         # TODO for testing
-        if tg.graph.vertex_index[v] == 174:
-            verb = True
-        else:
-            verb = False
+        # if tg.graph.vertex_index[v] == 174:
+        #     verb = True
+        # else:
+        #     verb = False
+        verb = False
         neighbor_idx_to_dist, V_v = collecting_votes(v, g_max, A_max, sigma,
                                                      verbose=verb)
         all_num_neighbors.append(len(neighbor_idx_to_dist))
@@ -196,6 +206,33 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     t_end1 = time.time()
     duration1 = t_end1 - t_begin1
     print 'First run took: %s min %s s' % divmod(duration1, 60)
+
+    print '\nRun in the middle: estimating curvature sign...'
+    sign_voting = tg.sign_voting
+    # shapes_counts = {}
+    all_mu = []
+    all_traceS = []
+    for i, v in enumerate(tg.graph.vertices()):
+        # TODO for testing
+        if tg.graph.vertex_index[v] == 174:
+            verb = True
+        else:
+            verb = False
+        # verb = True
+        mu, traceS = sign_voting(v, all_neighbor_idx_to_dist[i],
+                                 verbose=verb)  # shape_v
+        # try:
+        #     shapes_counts[shape_v] += 1
+        # except KeyError:
+        #     shapes_counts[shape_v] = 1
+        all_mu.append(mu)
+        all_traceS.append(traceS)
+    # for shape in shapes_counts.keys():
+    #     print "{}: {}".format(shape, shapes_counts[shape])
+    print "mu: [{}, {}]".format(min(all_mu), max(all_mu))
+    print stats.describe(np.array(all_mu))
+    print "traceS: [{}, {}]".format(min(all_traceS), max(all_traceS))
+    print stats.describe(np.array(all_traceS))
 
     print ("\nSecond run: estimating principle curvatures and directions for "
            "surface patches...")
@@ -239,14 +276,15 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
         is_on_border = tg.graph.vp.is_on_border
         for i, v in enumerate(tg.graph.vertices()):
             # TODO for testing
-            if tg.graph.vertex_index[v] == 174:
-                verb = True
-                print ("VTK min curvature = {}".format(
-                    tg.graph.vp.min_curvature[v]))
-                print ("VTK max curvature = {}".format(
-                    tg.graph.vp.max_curvature[v]))
-            else:
-                verb = False
+            # if tg.graph.vertex_index[v] == 174:
+            #     verb = True
+            #     print ("VTK min curvature = {}".format(
+            #         tg.graph.vp.min_curvature[v]))
+            #     print ("VTK max curvature = {}".format(
+            #         tg.graph.vp.max_curvature[v]))
+            # else:
+            #     verb = False
+            verb = False
             # Estimate principal curvatures and directions (and calculate the
             # Gaussian and mean curvatures, shape index and curvedness) for
             # vertices belonging to a surface patch and not on border
