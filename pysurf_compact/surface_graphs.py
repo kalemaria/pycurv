@@ -286,6 +286,10 @@ class TriangleGraph(SurfaceGraph):
         nanometers to a list of triangle-cell indices sharing this point.
         """
 
+        self.surface = vtk.vtkPolyData()
+        # TODO move surface parameter from build_graph_from_vtk_surface to the
+        # init function!
+
     def build_graph_from_vtk_surface(self, surface, verbose=False,
                                      reverse_normals=False):
         """
@@ -311,8 +315,10 @@ class TriangleGraph(SurfaceGraph):
         if isinstance(surface, vtk.vtkPolyData):
             t_begin = time.time()
 
-            # rescale the surface to nm
-            surface = rescale_surface(surface, self.scale_factor_to_nm)
+            # rescale the surface to nm and add it as an attribute
+            self.surface = rescale_surface(surface, self.scale_factor_to_nm)
+            surface = self.surface
+
             print 'Adding curvatures to the vtkPolyData surface...'
             # because VTK and we (gen_surface) have the opposite normal
             # convention: VTK outwards pointing normals, we: inwards pointing
@@ -1397,6 +1403,7 @@ class TriangleGraph(SurfaceGraph):
         # calculated:
         B_v = np.zeros(shape=(3, 3))
         num_negative_kappa_i = 0
+        neighbor_idx_to_orientation = {}
 
         # Let each of the neighboring triangles belonging to a surface patch
         # (as checked before) to cast a vote on vertex v:
@@ -1439,6 +1446,7 @@ class TriangleGraph(SurfaceGraph):
             kappa_i_sign = -1 * signum(dot(T_i, n_i))
             if kappa_i_sign < 0:
                 num_negative_kappa_i += 1
+            neighbor_idx_to_orientation[idx_v_i] = kappa_i_sign
 
             # Recover the corresponding weight, which was calculated and
             # normalized before:
@@ -1481,7 +1489,7 @@ class TriangleGraph(SurfaceGraph):
             if verbose:
                 print "curvature has to be negated"
 
-        return B_v, curvature_is_negated
+        return B_v, curvature_is_negated, neighbor_idx_to_orientation
 
     def estimate_curvature(self, vertex_v, B_v, curvature_is_negated,
                            verbose=False):
@@ -1581,8 +1589,7 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
-    def sign_voting(self, vertex_v, neighbor_idx_to_dist,
-                    verbose=False):
+    def sign_voting(self, vertex_v, neighbor_idx_to_dist, verbose=False):
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         xyz = self.graph.vp.xyz
@@ -1628,7 +1635,7 @@ class TriangleGraph(SurfaceGraph):
             if kappa_i_sign == 0:
                 vote_from_v_i = array([0, 1])
             else:
-                vote_from_v_i = (1 / sqrt(2)) * array([kappa_i_sign, 1])
+                vote_from_v_i = array([kappa_i_sign, 1]) / sqrt(2)
             votes_for_v.append(vote_from_v_i)
 
             # Calculate the vote strength
@@ -1636,7 +1643,7 @@ class TriangleGraph(SurfaceGraph):
             normal_v_i = array(vp_normal[vertex_v_i])
             # Euclidean distance between v and v_i
             dist_v_v_i = vector_length(v - v_i)
-            vote_strength_from_v_i = dot(N_v_i, normal_v_i) / dist_v_v_i
+            vote_strength_from_v_i = abs(dot(N_v_i, normal_v_i)) / dist_v_v_i
             vote_strengths_for_v.append(vote_strength_from_v_i)
 
         n = len(neighbor_idx_to_dist)  # number of neighbors of v (= #votes)
@@ -1653,6 +1660,9 @@ class TriangleGraph(SurfaceGraph):
         # S: covariance 2x2 positive semidefinite matrix
         S = np.inner(B, B) / (n - 1)
         traceS = np.trace(S)  # trace of S, always positive
+
+        self.graph.vp.mu[vertex_v] = mu
+        self.graph.vp.sigma[vertex_v] = traceS
 
         # if abs(mu) < 0.9:
         #     if traceS < 0.5:
@@ -1697,3 +1707,45 @@ class TriangleGraph(SurfaceGraph):
             # print ("local shape: {}".format(local_shape_v))
 
         return mu, traceS  # local_shape_v
+
+    def find_neighboring_cells_in_t_direction(
+            self, vertex_v, t, g_max, neighbor_idx_to_dist, verbose=False):
+        xyz = self.graph.vp.xyz
+        array = np.array
+
+        # Get the coordinates of vertex:
+        v = array(xyz[vertex_v])
+
+        # Find coordinates of two points:
+        # a on a line starting at v and going in -t direction with length g_max:
+        a = v - np.multiply(t, g_max)
+        # b on a line starting at v and going in t direction with length g_max:
+        b = v + np.multiply(t, g_max)
+        if verbose:
+            print "t = [{}, {}, {}]".format(t[0], t[1], t[2])
+            print "v = ({}, {}, {})".format(v[0], v[1], v[2])
+            print "a = ({}, {}, {})".format(a[0], a[1], a[2])
+            print "b = ({}, {}, {})".format(b[0], b[1], b[2])
+
+        # Define a cellLocator to be able to compute intersections between lines
+        # and the surface
+        locator = vtk.vtkCellLocator()
+        locator.SetDataSet(self.surface)
+        locator.BuildLocator()
+
+        # Find triangles on the surface along line defined by the points a and b
+        tolerance = 0.001
+        ab_cell_ids = vtk.vtkIdList()
+        locator.FindCellsAlongLine(a, b, tolerance, ab_cell_ids)
+
+        # Filter the triangles to those contained in the neighborhood of v
+        neighboring_cell_ids = []
+        for i in range(ab_cell_ids.GetNumberOfIds()):
+            cell_id = ab_cell_ids.GetId(i)
+            if cell_id in neighbor_idx_to_dist.keys():
+                neighboring_cell_ids.append(cell_id)
+        if verbose:
+            print "{} cells between a and b".format(ab_cell_ids.GetNumberOfIds())
+            print "{} cells in neighborhood:".format(len(neighboring_cell_ids))
+            print neighboring_cell_ids
+        return neighboring_cell_ids

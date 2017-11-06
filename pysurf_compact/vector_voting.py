@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from scipy import stats
+# from scipy import stats
 
 import pexceptions
 from surface_graphs import TriangleGraph
@@ -119,10 +119,12 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     # * Adding vertex properties to be filled in sign_voting *
     # vertex properties telling whether the vertex is locally planar,
     # hyperbolic, elliptic or parabolic:
-    tg.graph.vp.planar = tg.graph.new_vertex_property("int")
-    tg.graph.vp.hyperbolic = tg.graph.new_vertex_property("int")
-    tg.graph.vp.elliptic = tg.graph.new_vertex_property("int")
-    tg.graph.vp.parabolic = tg.graph.new_vertex_property("int")
+    # tg.graph.vp.planar = tg.graph.new_vertex_property("int")
+    # tg.graph.vp.hyperbolic = tg.graph.new_vertex_property("int")
+    # tg.graph.vp.elliptic = tg.graph.new_vertex_property("int")
+    # tg.graph.vp.parabolic = tg.graph.new_vertex_property("int")
+    tg.graph.vp.mu = tg.graph.new_vertex_property("float")
+    tg.graph.vp.sigma = tg.graph.new_vertex_property("float")
 
     # * Adding vertex properties to be filled in estimate_curvature *
     # vertex property for storing the estimated principal directions of the
@@ -175,10 +177,6 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     classes_counts = {}
     for v in tg.graph.vertices():
         # TODO for testing
-        # if tg.graph.vertex_index[v] == 174:
-        #     verb = True
-        # else:
-        #     verb = False
         verb = False
         neighbor_idx_to_dist, V_v = collecting_votes(v, g_max, A_max, sigma,
                                                      verbose=verb)
@@ -207,32 +205,32 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     duration1 = t_end1 - t_begin1
     print 'First run took: %s min %s s' % divmod(duration1, 60)
 
-    print '\nRun in the middle: estimating curvature sign...'
-    sign_voting = tg.sign_voting
-    # shapes_counts = {}
-    all_mu = []
-    all_traceS = []
-    for i, v in enumerate(tg.graph.vertices()):
-        # TODO for testing
-        if tg.graph.vertex_index[v] == 174:
-            verb = True
-        else:
-            verb = False
-        # verb = True
-        mu, traceS = sign_voting(v, all_neighbor_idx_to_dist[i],
-                                 verbose=verb)  # shape_v
-        # try:
-        #     shapes_counts[shape_v] += 1
-        # except KeyError:
-        #     shapes_counts[shape_v] = 1
-        all_mu.append(mu)
-        all_traceS.append(traceS)
-    # for shape in shapes_counts.keys():
-    #     print "{}: {}".format(shape, shapes_counts[shape])
-    print "mu: [{}, {}]".format(min(all_mu), max(all_mu))
-    print stats.describe(np.array(all_mu))
-    print "traceS: [{}, {}]".format(min(all_traceS), max(all_traceS))
-    print stats.describe(np.array(all_traceS))
+    # print '\nRun in the middle: estimating curvature sign...'
+    # sign_voting = tg.sign_voting
+    # # shapes_counts = {}
+    # all_mu = []
+    # all_traceS = []
+    # for i, v in enumerate(tg.graph.vertices()):
+    #     # TODO for testing
+    #     if tg.graph.vertex_index[v] == 174:
+    #         verb = True
+    #     else:
+    #         verb = False
+    #     # verb = True
+    #     mu, traceS = sign_voting(v, all_neighbor_idx_to_dist[i], sigma,
+    #                              verbose=verb)  # shape_v
+    #     # try:
+    #     #     shapes_counts[shape_v] += 1
+    #     # except KeyError:
+    #     #     shapes_counts[shape_v] = 1
+    #     all_mu.append(mu)
+    #     all_traceS.append(traceS)
+    # # for shape in shapes_counts.keys():
+    # #     print "{}: {}".format(shape, shapes_counts[shape])
+    # print "mu: [{}, {}]".format(min(all_mu), max(all_mu))
+    # print stats.describe(np.array(all_mu))
+    # print "traceS: [{}, {}]".format(min(all_traceS), max(all_traceS))
+    # print stats.describe(np.array(all_traceS))
 
     print ("\nSecond run: estimating principle curvatures and directions for "
            "surface patches...")
@@ -241,6 +239,7 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     orientation_class = tg.graph.vp.orientation_class
     collecting_votes2 = tg.collecting_votes2
     estimate_curvature = tg.estimate_curvature
+    all_neighbor_idx_to_orientation = []
     if exclude_borders is False:
         for i, v in enumerate(tg.graph.vertices()):
             # Estimate principal curvatures and directions (and calculate the
@@ -250,8 +249,11 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
             if orientation_class[v] == 1:
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
-                B_v, curvature_is_negated = collecting_votes2(
-                    v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
+                B_v, curvature_is_negated, neighbor_idx_to_orientation = \
+                    collecting_votes2(
+                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
+                all_neighbor_idx_to_orientation.append(
+                    neighbor_idx_to_orientation)
             if B_v is not None:
                 estimate_curvature(v, B_v, curvature_is_negated, verbose=False)
             # For crease, no preferably oriented vertices or vertices lacking
@@ -293,8 +295,11 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
                 # TODO for testing
-                B_v, curvature_is_negated = collecting_votes2(
-                    v, all_neighbor_idx_to_dist[i], sigma, verbose=verb)
+                B_v, curvature_is_negated, neighbor_idx_to_orientation = \
+                    collecting_votes2(
+                        v, all_neighbor_idx_to_dist[i], sigma, verbose=verb)
+                all_neighbor_idx_to_orientation.append(
+                    neighbor_idx_to_orientation)
             if B_v is not None:
                 # TODO for testing
                 estimate_curvature(v, B_v, curvature_is_negated, verbose=verb)
@@ -312,9 +317,6 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
                 tg.graph.vp.curvedness_VV[v] = 0
         tg.find_graph_border(purge=True)
 
-    # Transforming the resulting graph to a surface with triangles:
-    surface_VV = tg.graph_to_triangle_poly()
-
     t_end2 = time.time()
     duration2 = t_end2 - t_begin2
     print 'Second run took: %s min %s s' % divmod(duration2, 60)
@@ -323,4 +325,44 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     duration = t_end - t_begin
     print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
     print "kappa was negated %s times" % TriangleGraph.num_curvature_is_negated
+
+    # Testing
+    v_idx = 174
+    v = tg.graph.vertex(v_idx)
+    neighbor_idx_to_dist = all_neighbor_idx_to_dist[v_idx]
+    neighbor_idx_to_orientation = all_neighbor_idx_to_orientation[v_idx]
+    assert(len(neighbor_idx_to_dist) == len(neighbor_idx_to_orientation))
+    # neighbor_idx_to_orientation can be shorter if border was excluded!
+    print "{} neighboring triangles".format(len(neighbor_idx_to_dist))
+
+    for i in range(2):
+        if i == 0:
+            print ('\nFinding triangles in maximal principal direction for '
+                   'vertex {}...'.format(v_idx))
+            cell_ids = tg.find_neighboring_cells_in_t_direction(
+                v, tg.graph.vp.T_1[v], g_max, neighbor_idx_to_dist,
+                verbose=True)
+            true_orientation = 1
+        else:
+            print ('\nFinding triangles in minimal principal direction for '
+                   'vertex {}...'.format(v_idx))
+            cell_ids = tg.find_neighboring_cells_in_t_direction(
+                v, tg.graph.vp.T_2[v], g_max, neighbor_idx_to_dist,
+                verbose=True)
+            true_orientation = - 1
+        new_neighbor_idx_to_dist = {}
+        for cell_id in cell_ids:
+            cell_orientation = neighbor_idx_to_orientation[cell_id]
+            if cell_orientation == true_orientation:
+                new_neighbor_idx_to_dist[cell_id] = neighbor_idx_to_dist[cell_id]
+        print "{} cells with correct orientation:".format(len(
+            new_neighbor_idx_to_dist))
+        print new_neighbor_idx_to_dist.keys()
+        # B_v, curvature_is_negated, _ = collecting_votes2(
+        #     v, new_neighbor_idx_to_dist, sigma, verbose=True)
+        # if B_v is not None:
+        #     estimate_curvature(v, B_v, curvature_is_negated, verbose=True)
+
+    # Transforming the resulting graph to a surface with triangles:
+    surface_VV = tg.graph_to_triangle_poly()
     return surface_VV
