@@ -6,6 +6,7 @@ import math
 from graph_tool import Graph, GraphView, incident_edges_op
 from graph_tool.topology import (shortest_distance, label_largest_component,
                                  label_components)
+import matplotlib.pyplot as plt
 
 import graphs
 import pexceptions
@@ -1714,7 +1715,7 @@ class TriangleGraph(SurfaceGraph):
 
         return mu, traceS  # local_shape_v
 
-    def find_neighboring_cells_in_t_direction(
+    def find_neighboring_cells_in_tangent_direction(
             self, vertex_v, t, g_max, neighbor_idx_to_dist, verbose=False):
         # TODO docstring
         # Get the coordinates of vertex:
@@ -1754,11 +1755,12 @@ class TriangleGraph(SurfaceGraph):
             print neighboring_cell_ids
         return neighboring_cell_ids
 
-    def find_points_in_neighborhood_in_tangent_direction(
+    def find_points_in_tangent_direction(
             self, vertex_v, tangent, num_points, g_max, neighbor_idx_to_dist,
             verbose=False):
         # TODO docstring
         # tangent has to have length 1!
+
         # Get the coordinates of vertex and its estimated normal:
         v = np.array(self.graph.vp.xyz[vertex_v])
         normal = np.array(self.graph.vp.N_v[vertex_v])
@@ -1857,4 +1859,113 @@ class TriangleGraph(SurfaceGraph):
         if verbose:
                 print 'number of vertex cells: %s' % verts.GetNumberOfCells()
         poly_verts.SetVerts(verts)
+        return poly_verts
+
+    def find_points_in_tangent_direction_and_map_into_2d(
+            self, vertex_v, tangent, dist, g_max, neighbor_idx_to_dist,
+            verbose=False):
+        # TODO docstring
+        # tangent has to have length 1!
+        # dist: distance on the tangent line  to sample the perpendicular lines
+
+        # Get the coordinates of vertex and its estimated normal:
+        v = np.array(self.graph.vp.xyz[vertex_v])
+        normal = np.array(self.graph.vp.N_v[vertex_v])
+
+        if verbose:
+            print "v = ({}, {}, {})".format(v[0], v[1], v[2])
+            print "T = [{}, {}, {}]".format(tangent[0], tangent[1], tangent[2])
+
+        # Define a cellLocator to be able to compute intersections between lines
+        # and the surface:
+        locator = vtk.vtkCellLocator()
+        locator.SetDataSet(self.surface)
+        locator.BuildLocator()
+        tolerance = 0.001
+
+        # Make a list of points, each point is the intersection of a vertical
+        # line defined by p1 and p2 (of length 2 g_max) and the surface
+        points = vtk.vtkPoints()
+        pos_x_2d = []
+        pos_y_2d = []
+        vector_length = np.linalg.norm
+        # maximal number of points to sample in each direction
+        num_points = int(math.ceil(g_max / dist))
+        for i in range(1, num_points + 1):
+            # Alternatively sample in the tangent and in the opposite directions
+            for direction in [1, -1]:
+                # point on line from v in tangent / opposite direction
+                p0 = v + np.multiply(np.multiply(tangent, direction), i * dist)
+                # point on line from p0 in opposite normal direction
+                p1 = p0 - np.multiply(normal, g_max)
+                # point on line from p0 in normal direction
+                p2 = p0 + np.multiply(normal, g_max)
+
+                # Outputs (we need only pos, which is the x, y, z position
+                # of the intersection, and cell_id, which is id of the cell in
+                # which the intersection point lies):
+                t = vtk.mutable(0)
+                pos = [0.0, 0.0, 0.0]
+                pcoords = [0.0, 0.0, 0.0]
+                sub_id = vtk.mutable(0)
+                cell_id = vtk.mutable(0)
+                locator.IntersectWithLine(p1, p2, tolerance, t, pos, pcoords,
+                                          sub_id, cell_id)
+                cell_id = int(cell_id)
+
+                if verbose:
+                    print "\nPoint {}:".format(direction * i)
+                    print "p0 = ({}, {}, {})".format(p0[0], p0[1], p0[2])
+                    print "p1 = ({}, {}, {})".format(p1[0], p1[1], p1[2])
+                    print "p2 = ({}, {}, {})".format(p2[0], p2[1], p2[2])
+                    print ("intersection point = ({}, {}, {})".format(
+                        pos[0], pos[1], pos[2]))
+                    print ("parametric coordinates = ({}, {}, {})".format(
+                        pcoords[0], pcoords[1], pcoords[2]))  # test
+                    print "cell id: {}".format(cell_id)
+
+                # If there is no intersection, pos = (0, 0, 0) and cell_id = 0
+                if pos == [0.0, 0.0, 0.0] and cell_id == 0:
+                    if verbose:
+                        print "No intersection point"
+                else:
+                    # Add the x, y, z position of the intersection, if the cell
+                    # is in the neighborhood of triangle center v:
+                    if cell_id in neighbor_idx_to_dist:
+                        points.InsertNextPoint(pos)
+                        dist_v_pos = direction * dist * i
+                        pos_x_2d.append(dist_v_pos)
+                        dist_p0_pos = vector_length(p0 - pos)
+                        pos_y_2d.append(dist_p0_pos)
+                        if verbose:
+                            print "Point in neighborhood - added"
+                            print "coordinates in 2D: ({}, {})".format(
+                                dist_v_pos, dist_p0_pos)
+                    else:
+                        if verbose:
+                            print "Point NOT in neighborhood"
+        # Don't forget to add the central point v
+        points.InsertNextPoint(v)
+        pos_x_2d.append(0.0)
+        pos_y_2d.append(0.0)
+
+        print "\n{} intersection points found".format(points.GetNumberOfPoints())
+
+        # vtkPolyData construction
+        poly_verts = vtk.vtkPolyData()
+        poly_verts.SetPoints(points)
+        verts = vtk.vtkCellArray()  # vertex (1-point) cells
+        for i in range(points.GetNumberOfPoints()):
+            verts.InsertNextCell(1)
+            verts.InsertCellPoint(i)
+        if verbose:
+                print 'number of vertex cells: %s' % verts.GetNumberOfCells()
+        poly_verts.SetVerts(verts)
+
+        # Plot the points in 2D
+        # fig = plt.figure()
+        plt.plot(pos_x_2d, pos_y_2d, 'ro')
+        plt.axis('equal')
+        plt.show()
+
         return poly_verts

@@ -368,10 +368,15 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
 
     print ('\nFinding points in maximal principal direction for vertex {}...'
            .format(v_idx))
-    num_points = 10
-    surface_points_in_T_1 = tg.find_points_in_neighborhood_in_tangent_direction(
-        v, tg.graph.vp.T_1[v], num_points, g_max, neighbor_idx_to_dist,
-        verbose=True)
+    # num_points = 10
+    # surface_points_in_T_1 = tg.find_points_in_tangent_direction(
+    #     v, tg.graph.vp.T_1[v], num_points, g_max, neighbor_idx_to_dist,
+    #     verbose=True)
+
+    dist = 1.2
+    surface_points_in_T_1 = tg.find_points_in_tangent_direction_and_map_into_2d(
+            v, tg.graph.vp.T_1[v], dist, g_max, neighbor_idx_to_dist,
+            verbose=True)
 
     # Transforming the resulting graph to a surface with triangles:
     surface_VV = tg.graph_to_triangle_poly()
