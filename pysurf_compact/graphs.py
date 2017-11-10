@@ -177,8 +177,8 @@ class SegmentationGraph(object):
                 target_voxels
             )
             # rescale to nm, output an ndarray [[x1,y1,z1], [x2,y2,z2], ...]
-            target_ndarray_coordinates = (target_ndarray_voxels
-                                          * self.scale_factor_to_nm)
+            target_ndarray_coordinates = (target_ndarray_voxels *
+                                          self.scale_factor_to_nm)
             # convert to a list of tuples, which are in nm now
             target_coordinates = rd.ndarray_voxels_to_tupel_list(
                 target_ndarray_coordinates

@@ -183,6 +183,7 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
         all_num_neighbors.append(len(neighbor_idx_to_dist))
         all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
         # TODO for testing
+        # assert len(all_neighbor_idx_to_dist) - 1 == tg.graph.vertex_index[v]
         class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
                                           verbose=verb)
         try:
@@ -330,39 +331,48 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     v_idx = 174
     v = tg.graph.vertex(v_idx)
     neighbor_idx_to_dist = all_neighbor_idx_to_dist[v_idx]
-    neighbor_idx_to_orientation = all_neighbor_idx_to_orientation[v_idx]
-    assert(len(neighbor_idx_to_dist) == len(neighbor_idx_to_orientation))
+    # print "neighbor_idx_to_dist:"  # test
+    # print neighbor_idx_to_dist  # test
+    # neighbor_idx_to_orientation = all_neighbor_idx_to_orientation[v_idx]
+    # assert(len(neighbor_idx_to_dist) == len(neighbor_idx_to_orientation))
     # neighbor_idx_to_orientation can be shorter if border was excluded!
     print "{} neighboring triangles".format(len(neighbor_idx_to_dist))
 
-    for i in range(2):
-        if i == 0:
-            print ('\nFinding triangles in maximal principal direction for '
-                   'vertex {}...'.format(v_idx))
-            cell_ids = tg.find_neighboring_cells_in_t_direction(
-                v, tg.graph.vp.T_1[v], g_max, neighbor_idx_to_dist,
-                verbose=True)
-            true_orientation = 1
-        else:
-            print ('\nFinding triangles in minimal principal direction for '
-                   'vertex {}...'.format(v_idx))
-            cell_ids = tg.find_neighboring_cells_in_t_direction(
-                v, tg.graph.vp.T_2[v], g_max, neighbor_idx_to_dist,
-                verbose=True)
-            true_orientation = - 1
-        new_neighbor_idx_to_dist = {}
-        for cell_id in cell_ids:
-            cell_orientation = neighbor_idx_to_orientation[cell_id]
-            if cell_orientation == true_orientation:
-                new_neighbor_idx_to_dist[cell_id] = neighbor_idx_to_dist[cell_id]
-        print "{} cells with correct orientation:".format(len(
-            new_neighbor_idx_to_dist))
-        print new_neighbor_idx_to_dist.keys()
-        # B_v, curvature_is_negated, _ = collecting_votes2(
-        #     v, new_neighbor_idx_to_dist, sigma, verbose=True)
-        # if B_v is not None:
-        #     estimate_curvature(v, B_v, curvature_is_negated, verbose=True)
+    # for i in range(1):
+    #     if i == 0:
+    #         print ('\nFinding triangles in maximal principal direction for '
+    #                'vertex {}...'.format(v_idx))
+    #         cell_ids = tg.find_neighboring_cells_in_t_direction(
+    #             v, tg.graph.vp.T_1[v], g_max, neighbor_idx_to_dist,
+    #             verbose=True)
+    #         true_orientation = 1
+    #     else:
+    #         print ('\nFinding triangles in minimal principal direction for '
+    #                'vertex {}...'.format(v_idx))
+    #         cell_ids = tg.find_neighboring_cells_in_t_direction(
+    #             v, tg.graph.vp.T_2[v], g_max, neighbor_idx_to_dist,
+    #             verbose=True)
+    #         true_orientation = - 1
+    #     new_neighbor_idx_to_dist = {}
+    #     for cell_id in cell_ids:
+    #         cell_orientation = neighbor_idx_to_orientation[cell_id]
+    #         if cell_orientation == true_orientation:
+    #             new_neighbor_idx_to_dist[cell_id] = neighbor_idx_to_dist[cell_id]
+    #     print "{} cells with correct orientation:".format(len(
+    #         new_neighbor_idx_to_dist))
+    #     print new_neighbor_idx_to_dist.keys()
+    #     # B_v, curvature_is_negated, _ = collecting_votes2(
+    #     #     v, new_neighbor_idx_to_dist, sigma, verbose=True)
+    #     # if B_v is not None:
+    #     #     estimate_curvature(v, B_v, curvature_is_negated, verbose=True)
+
+    print ('\nFinding points in maximal principal direction for vertex {}...'
+           .format(v_idx))
+    num_points = 10
+    surface_points_in_T_1 = tg.find_points_in_neighborhood_in_tangent_direction(
+        v, tg.graph.vp.T_1[v], num_points, g_max, neighbor_idx_to_dist,
+        verbose=True)
 
     # Transforming the resulting graph to a surface with triangles:
     surface_VV = tg.graph_to_triangle_poly()
-    return surface_VV
+    return surface_VV, surface_points_in_T_1

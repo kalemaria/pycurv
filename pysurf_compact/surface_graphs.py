@@ -289,6 +289,10 @@ class TriangleGraph(SurfaceGraph):
         self.surface = vtk.vtkPolyData()
         # TODO move surface parameter from build_graph_from_vtk_surface to the
         # init function!
+        # TODO docstring
+
+        # self.cell_id_to_vertex_id = {}
+        # # TODO docstring
 
     def build_graph_from_vtk_surface(self, surface, verbose=False,
                                      reverse_normals=False):
@@ -456,6 +460,7 @@ class TriangleGraph(SurfaceGraph):
                 vd = self.graph.add_vertex()  # vertex descriptor
                 # Note: vertex index is numbered from 0 and does not necessarily
                 # correspond to the (triangle) cell index!
+                # self.cell_id_to_vertex_id[cell_id] = self.graph.vertex_index[vd]
                 self.graph.vp.xyz[vd] = [x_center, y_center, z_center]
                 self.coordinates_to_vertex_index[(
                     x_center, y_center, z_center)] = self.graph.vertex_index[vd]
@@ -1492,7 +1497,7 @@ class TriangleGraph(SurfaceGraph):
         return B_v, curvature_is_negated, neighbor_idx_to_orientation
 
     def estimate_curvature(self, vertex_v, B_v, curvature_is_negated,
-                           verbose=False):
+                           verbose=False):  # TODO complete docstring
         """
         For a vertex v and its calculated matrix B_v (output of
         collecting_votes2), calculates the principal directions (T_1 and T_2)
@@ -1590,6 +1595,7 @@ class TriangleGraph(SurfaceGraph):
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
     def sign_voting(self, vertex_v, neighbor_idx_to_dist, verbose=False):
+        # TODO docstring
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         xyz = self.graph.vp.xyz
@@ -1710,11 +1716,9 @@ class TriangleGraph(SurfaceGraph):
 
     def find_neighboring_cells_in_t_direction(
             self, vertex_v, t, g_max, neighbor_idx_to_dist, verbose=False):
-        xyz = self.graph.vp.xyz
-        array = np.array
-
+        # TODO docstring
         # Get the coordinates of vertex:
-        v = array(xyz[vertex_v])
+        v = np.array(self.graph.vp.xyz[vertex_v])
 
         # Find coordinates of two points:
         # a on a line starting at v and going in -t direction with length g_max:
@@ -1742,10 +1746,115 @@ class TriangleGraph(SurfaceGraph):
         neighboring_cell_ids = []
         for i in range(ab_cell_ids.GetNumberOfIds()):
             cell_id = ab_cell_ids.GetId(i)
-            if cell_id in neighbor_idx_to_dist.keys():
+            if cell_id in neighbor_idx_to_dist:
                 neighboring_cell_ids.append(cell_id)
         if verbose:
             print "{} cells between a and b".format(ab_cell_ids.GetNumberOfIds())
             print "{} cells in neighborhood:".format(len(neighboring_cell_ids))
             print neighboring_cell_ids
         return neighboring_cell_ids
+
+    def find_points_in_neighborhood_in_tangent_direction(
+            self, vertex_v, tangent, num_points, g_max, neighbor_idx_to_dist,
+            verbose=False):
+        # TODO docstring
+        # tangent has to have length 1!
+        # Get the coordinates of vertex and its estimated normal:
+        v = np.array(self.graph.vp.xyz[vertex_v])
+        normal = np.array(self.graph.vp.N_v[vertex_v])
+
+        # Find coordinates of a point 'a' on a line going in the tangent
+        # direction with v in the middle and length 2 * g_max:
+        a = v - np.multiply(tangent, g_max)
+
+        # Distance on the line to sample the perpendicular lines:
+        dist = 2 * g_max / num_points
+
+        if verbose:
+            print "v = ({}, {}, {})".format(v[0], v[1], v[2])
+            print "T = [{}, {}, {}]".format(tangent[0], tangent[1], tangent[2])
+            print "a = ({}, {}, {})".format(a[0], a[1], a[2])
+            print "dist = {}".format(dist)
+
+        # Define a cellLocator to be able to compute intersections between lines
+        # and the surface:
+        locator = vtk.vtkCellLocator()
+        locator.SetDataSet(self.surface)
+        locator.BuildLocator()
+        tolerance = 0.001
+
+        # Make a list of points, each point is the intersection of a vertical
+        # line defined by p1 and p2 (of length 2 g_max) and the surface:
+        points = vtk.vtkPoints()
+        for i in range(num_points):
+            # on line from a in tangent direction
+            p0 = a + np.multiply(tangent, i * dist)
+            # on line from p0 in opposite normal direction
+            p1 = p0 - np.multiply(normal, g_max)
+            # on line from p0 in normal direction
+            p2 = p0 + np.multiply(normal, g_max)
+
+            # Outputs (we need only pos, which is the x, y, z position
+            # of the intersection, and cell_id, which is id of the cell in which
+            # the intersection point lies):
+            t = vtk.mutable(0)
+            pos = [0.0, 0.0, 0.0]
+            pcoords = [0.0, 0.0, 0.0]
+            sub_id = vtk.mutable(0)
+            cell_id = vtk.mutable(0)
+            locator.IntersectWithLine(p1, p2, tolerance, t, pos, pcoords,
+                                      sub_id, cell_id)
+            cell_id = int(cell_id)
+
+            if verbose:
+                print "\nPoint {}:".format(i)
+                print "p0 = ({}, {}, {})".format(p0[0], p0[1], p0[2])
+                print "p1 = ({}, {}, {})".format(p1[0], p1[1], p1[2])
+                print "p2 = ({}, {}, {})".format(p2[0], p2[1], p2[2])
+                print ("intersection point = ({}, {}, {})".format(
+                    pos[0], pos[1], pos[2]))
+                print "cell id: {}".format(cell_id)
+
+            # If there is no intersection, pos = (0.0, 0.0, 0.0) and cell_id = 0
+            if pos == [0.0, 0.0, 0.0] and cell_id == 0:
+                if verbose:
+                    print "No intersection point"
+            else:
+                # Add the x, y, z position of the intersection, if the cell is
+                # in the neighborhood of triangle center v:
+                if cell_id in neighbor_idx_to_dist:
+                    points.InsertNextPoint(pos)
+                    if verbose:
+                        print "Point in neighborhood - added"
+                elif verbose:
+                    print "Point NOT in neighborhood"
+
+                # Test if vertex id is different from cell id - it's the same:
+                # try:
+                #     vertex_id = self.cell_id_to_vertex_id[cell_id]
+                #     if verbose:
+                #         print "vertex id: {}".format(vertex_id)
+                #     if vertex_id in neighbor_idx_to_dist:
+                #         points.InsertNextPoint(pos)
+                #         if verbose:
+                #             print "Point in neighborhood - added"
+                #     elif verbose:
+                #         print "Point NOT in neighborhood"
+                # except KeyError:
+                #     print "Cell id {} not found!".format(cell_id)
+
+                # points.InsertNextPoint(pos)  # Add all found points for a test
+
+        print "{} intersection points found".format(points.GetNumberOfPoints())
+
+        # vtkPolyData construction
+        poly_verts = vtk.vtkPolyData()
+        poly_verts.SetPoints(points)
+        verts = vtk.vtkCellArray()  # vertex (1-point) cells
+        for i in range(points.GetNumberOfPoints()):
+            verts.InsertNextCell(1)
+            verts.InsertCellPoint(i)
+        if verbose:
+                print 'number of vertex cells: %s' % verts.GetNumberOfCells()
+        poly_verts.SetVerts(verts)
+        return poly_verts
