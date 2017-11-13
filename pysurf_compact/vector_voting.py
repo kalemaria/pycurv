@@ -23,7 +23,8 @@ date: 2017-06-17
 __author__ = 'kalemanov'
 
 
-def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
+def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
+                  test=False):  # TODO remove test when done testing
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -327,57 +328,62 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
     print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
     print "kappa was negated %s times" % TriangleGraph.num_curvature_is_negated
 
-    # Testing
-    v_idx = 174
-    v = tg.graph.vertex(v_idx)
-    neighbor_idx_to_dist = all_neighbor_idx_to_dist[v_idx]
-    # print "neighbor_idx_to_dist:"  # test
-    # print neighbor_idx_to_dist  # test
-    # neighbor_idx_to_orientation = all_neighbor_idx_to_orientation[v_idx]
-    # assert(len(neighbor_idx_to_dist) == len(neighbor_idx_to_orientation))
-    # neighbor_idx_to_orientation can be shorter if border was excluded!
-    print "{} neighboring triangles".format(len(neighbor_idx_to_dist))
+    if test is True:  # Testing (e.g. on torus inner part - saddle surface)
+        v_idx = 174
+        v = tg.graph.vertex(v_idx)
+        dist = 1.2
+        neighbor_idx_to_dist = all_neighbor_idx_to_dist[v_idx]
+        print "{} neighboring triangles".format(len(neighbor_idx_to_dist))
+        points_in_T_1_file = 'v174_points_in_T_1.vtp'
+        points_in_T_2_file = 'v174_points_in_T_2.vtp'
+        points_in_T_1_plot = 'v174_points_in_T_1.png'
+        points_in_T_2_plot = 'v174_points_in_T_2.png'
+        print ('\nFinding points in maximal principal direction for vertex {}'
+               '...'.format(v_idx))
+        tg.find_points_in_tangent_direction_and_map_into_2d(
+                v, tg.graph.vp.T_1[v], dist, g_max, neighbor_idx_to_dist,
+                poly_file=points_in_T_1_file, plot_file=points_in_T_1_plot,
+                verbose=True)
+        print ('\nFinding points in minimal principal direction for vertex {}'
+               '...'.format(v_idx))
+        tg.find_points_in_tangent_direction_and_map_into_2d(
+                v, tg.graph.vp.T_2[v], dist, g_max, neighbor_idx_to_dist,
+                poly_file=points_in_T_2_file, plot_file=points_in_T_2_plot,
+                verbose=True)
 
-    # for i in range(1):
-    #     if i == 0:
-    #         print ('\nFinding triangles in maximal principal direction for '
-    #                'vertex {}...'.format(v_idx))
-    #         cell_ids = tg.find_neighboring_cells_in_t_direction(
-    #             v, tg.graph.vp.T_1[v], g_max, neighbor_idx_to_dist,
-    #             verbose=True)
-    #         true_orientation = 1
-    #     else:
-    #         print ('\nFinding triangles in minimal principal direction for '
-    #                'vertex {}...'.format(v_idx))
-    #         cell_ids = tg.find_neighboring_cells_in_t_direction(
-    #             v, tg.graph.vp.T_2[v], g_max, neighbor_idx_to_dist,
-    #             verbose=True)
-    #         true_orientation = - 1
-    #     new_neighbor_idx_to_dist = {}
-    #     for cell_id in cell_ids:
-    #         cell_orientation = neighbor_idx_to_orientation[cell_id]
-    #         if cell_orientation == true_orientation:
-    #             new_neighbor_idx_to_dist[cell_id] = neighbor_idx_to_dist[cell_id]
-    #     print "{} cells with correct orientation:".format(len(
-    #         new_neighbor_idx_to_dist))
-    #     print new_neighbor_idx_to_dist.keys()
-    #     # B_v, curvature_is_negated, _ = collecting_votes2(
-    #     #     v, new_neighbor_idx_to_dist, sigma, verbose=True)
-    #     # if B_v is not None:
-    #     #     estimate_curvature(v, B_v, curvature_is_negated, verbose=True)
-
-    print ('\nFinding points in maximal principal direction for vertex {}...'
-           .format(v_idx))
-    # num_points = 10
-    # surface_points_in_T_1 = tg.find_points_in_tangent_direction(
-    #     v, tg.graph.vp.T_1[v], num_points, g_max, neighbor_idx_to_dist,
-    #     verbose=True)
-
-    dist = 1.2
-    surface_points_in_T_1 = tg.find_points_in_tangent_direction_and_map_into_2d(
-            v, tg.graph.vp.T_1[v], dist, g_max, neighbor_idx_to_dist,
-            verbose=True)
+        # neighbor_idx_to_orientation = all_neighbor_idx_to_orientation[v_idx]
+        # assert(len(neighbor_idx_to_dist) == len(neighbor_idx_to_orientation))
+        # # neighbor_idx_to_orientation can be shorter if border was excluded!
+        #
+        # for i in range(2):
+        #     if i == 0:
+        #         print ('\nFinding triangles in maximal principal direction for '
+        #                'vertex {}...'.format(v_idx))
+        #         cell_ids = tg.find_neighboring_cells_in_tangent_direction(
+        #             v, tg.graph.vp.T_1[v], g_max, neighbor_idx_to_dist,
+        #             verbose=True)
+        #         true_orientation = 1
+        #     else:
+        #         print ('\nFinding triangles in minimal principal direction for '
+        #                'vertex {}...'.format(v_idx))
+        #         cell_ids = tg.find_neighboring_cells_in_tangent_direction(
+        #             v, tg.graph.vp.T_2[v], g_max, neighbor_idx_to_dist,
+        #             verbose=True)
+        #         true_orientation = -1
+        #     new_neighbor_idx_to_dist = {}
+        #     for cell_id in cell_ids:
+        #         cell_orientation = neighbor_idx_to_orientation[cell_id]
+        #         if cell_orientation == true_orientation:
+        #             new_neighbor_idx_to_dist[cell_id] = neighbor_idx_to_dist[
+        #                 cell_id]
+        #     print "{} cells with correct orientation:".format(len(
+        #         new_neighbor_idx_to_dist))
+        #     print new_neighbor_idx_to_dist.keys()
+        #     # B_v, curvature_is_negated, _ = collecting_votes2(
+        #     #     v, new_neighbor_idx_to_dist, sigma, verbose=True)
+        #     # if B_v is not None:
+        #     #     estimate_curvature(v, B_v, curvature_is_negated, verbose=True)
 
     # Transforming the resulting graph to a surface with triangles:
     surface_VV = tg.graph_to_triangle_poly()
-    return surface_VV, surface_points_in_T_1
+    return surface_VV

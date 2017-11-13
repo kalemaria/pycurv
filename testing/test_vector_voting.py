@@ -745,7 +745,9 @@ class VectorVotingTestCase(unittest.TestCase):
                                delta=allowed_error, msg=msg)
 
     def parametric_test_torus_curvatures(self, rr, csr, inverse=False,
-                                         k=3, g_max=0, epsilon=0, eta=0):
+                                         k=3, g_max=0, epsilon=0, eta=0,
+                                         test=False):
+        # TODO remove test when done with testing
         """
         Runs all the steps needed to calculate curvatures for a test torus
         with given radii using Normal Vector Voting (VV) with a given g_max.
@@ -805,13 +807,9 @@ class VectorVotingTestCase(unittest.TestCase):
         if g_max > 0:
             surf_VV_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
-            surface_points_in_T_1_file = ('{}.VV_g_max{}_v174_points_in_T_1.vtp'
-                                          .format(base_filename, g_max))  # test
         elif k > 0:
             surf_VV_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, k, epsilon, eta)
-            surface_points_in_T_1_file = ('{}.VV_k{}_v174_points_in_T_1.vtp'
-               .format(base_filename, k))  # test
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
                          "positive, the specified g_max will be used).")
@@ -871,13 +869,12 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        surf_VV, surface_points_in_T_1 = vector_voting(
+        surf_VV = vector_voting(
             tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-            exclude_borders=False)  # test
+            exclude_borders=False, test=test)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
-        io.save_vtp(surface_points_in_T_1, surface_points_in_T_1_file)  # test
 
         # Getting principal curvatures from NVV and VTK from the output graph:
         kappa_1_values = tg.get_vertex_property_array("kappa_1")
@@ -969,7 +966,8 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         Runs parametric_test_torus_curvatures with certain parameters.
         """
-        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=3)
+        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=3,
+                                              test=True)
 
 
 if __name__ == '__main__':
