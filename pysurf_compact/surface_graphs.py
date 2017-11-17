@@ -1638,11 +1638,18 @@ class TriangleGraph(SurfaceGraph):
             n_i = N_v_i - dot(P_i, N_v_i) * P_i
 
             # Find the sign and calculate the vote direction
-            kappa_i_sign = -1 * signum(dot(T_i, n_i))
-            if kappa_i_sign == 0:
+            # kappa_i_sign = - signum(dot(T_i, n_i))
+            # if kappa_i_sign == 0:
+            #     vote_from_v_i = array([0, 1])
+            # else:
+            #     vote_from_v_i = array([kappa_i_sign, 1]) / sqrt(2)
+            dot_T_i_n_i = dot(T_i, n_i)
+            if abs(dot_T_i_n_i) < 0.1:  # on
                 vote_from_v_i = array([0, 1])
-            else:
-                vote_from_v_i = array([kappa_i_sign, 1]) / sqrt(2)
+            elif dot_T_i_n_i >= 0.1:  # below
+                vote_from_v_i = array([-1, 1]) / sqrt(2)
+            else:  # above
+                vote_from_v_i = array([1, 1]) / sqrt(2)
             votes_for_v.append(vote_from_v_i)
 
             # Calculate the vote strength
@@ -1668,35 +1675,23 @@ class TriangleGraph(SurfaceGraph):
         S = np.inner(B, B) / (n - 1)
         traceS = np.trace(S)  # trace of S, always positive
 
+    # Add vertex properties to the surface graph:
         self.graph.vp.mu[vertex_v] = mu
         self.graph.vp.sigma[vertex_v] = traceS
-
         # if abs(mu) < 0.9:
         #     if traceS < 0.5:
         #         local_shape_v = "planar"
-        #         self.graph.vp.planar[vertex_v] = 1
-        #         self.graph.vp.hyperbolic[vertex_v] = 0
-        #         self.graph.vp.elliptic[vertex_v] = 0
-        #         self.graph.vp.parabolic[vertex_v] = 0
+        #         self.graph.vp.local_shape[vertex_v] = 0
         #     else:
         #         local_shape_v = "hyperbolic"
-        #         self.graph.vp.hyperbolic[vertex_v] = 1
-        #         self.graph.vp.planar[vertex_v] = 0
-        #         self.graph.vp.elliptic[vertex_v] = 0
-        #         self.graph.vp.parabolic[vertex_v] = 0
+        #         self.graph.vp.local_shape[vertex_v] = 2
         # else:
         #     if traceS < 3e-32:
         #         local_shape_v = "elliptic"
-        #         self.graph.vp.elliptic[vertex_v] = 1
-        #         self.graph.vp.planar[vertex_v] = 0
-        #         self.graph.vp.hyperbolic[vertex_v] = 0
-        #         self.graph.vp.parabolic[vertex_v] = 0
+        #         self.graph.vp.local_shape[vertex_v] = 1
         #     else:
         #         local_shape_v = "parabolic"
-        #         self.graph.vp.parabolic[vertex_v] = 1
-        #         self.graph.vp.planar[vertex_v] = 0
-        #         self.graph.vp.hyperbolic[vertex_v] = 0
-        #         self.graph.vp.elliptic[vertex_v] = 0
+        #         self.graph.vp.local_shape[vertex_v] = 3
 
         if verbose:
             print ("vote directions:")

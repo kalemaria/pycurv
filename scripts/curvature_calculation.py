@@ -5,7 +5,7 @@ import gzip
 from os import remove
 
 from pysurf_compact import (vector_voting, run_gen_surface, TriangleGraph,
-                            split_segmentation)
+                            split_segmentation, pexceptions, PointGraph)
 from pysurf_compact import pysurf_io as io
 
 """
@@ -29,7 +29,7 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
 
     Args:
         fold (str): path where the input membrane segmentation is and where the
-            ouptut will be written
+            output will be written
         tomo (str): tomogram name with which the segmentation file starts
         seg_file (str): membrane segmentation mask (may contain 'fold' and
             'tomo')
@@ -394,6 +394,98 @@ def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
         print 'Archive %s.gz was written' % mrcfilename
 
 
+def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
+                    scale_y, scale_z, k=3, g_max=0, epsilon=0, eta=0):
+    """
+    bla bla
+
+    Args:
+
+        k (int, optional): parameter of Normal Vector Voting algorithm
+            determining the geodesic neighborhood radius:
+            g_max = k * average weak triangle graph edge length (default 3)
+        g_max (float, optional): geodesic neighborhood radius in length unit
+            of the graph, here voxels; if positive (default 0) this g_max
+            will be used and k will be ignored
+        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease
+            junction" (class 2), default 0
+        eta (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease
+            junction" (class 2) and "no preferred orientation" (class 3),
+            default 0
+
+    Notes:
+        * Either g_max or k must be positive (if both are positive, the
+          specified g_max will be used).
+        * If epsilon = 0 and eta = 0 (default), all triangles will be
+          classified as "surface patch" (class 1).
+
+    Returns:
+        None
+    """
+    if g_max > 0:
+        surf_vv_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
+            base_filename, g_max, epsilon, eta)
+    elif k > 0:
+        surf_vv_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
+            base_filename, k, epsilon, eta)
+    else:
+        error_msg = ("Either g_max or k must be positive (if both are "
+                     "positive, the specified g_max will be used).")
+        raise pexceptions.PySegInputError(
+            expr='simple_workflow', msg=error_msg)
+
+    # Reading in the .vtp file with the test triangle mesh and transforming
+    # it into a triangle graph:
+    t_begin = time.time()
+
+    print '\nReading in the surface file to get a vtkPolyData surface...'
+    surf = io.load_poly(fold + surf_file)
+    print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+           'curvatures...')
+    tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+    tg.build_graph_from_vtk_surface(surf, verbose=False,
+                                    reverse_normals=False)
+    print ('The graph has %s vertices and %s edges'
+           % (tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    print '\nFinding triangles that are 3 pixels to surface borders...'
+    tg.find_vertices_near_border(3 * scale_factor_to_nm, purge=True)
+    print ('The graph has %s vertices and %s edges'
+           % (tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    print '\nFinding small connected components of the graph...'
+    tg.find_small_connected_components(threshold=100, purge=True)
+    print ('The graph has %s vertices and %s edges and following '
+           'properties'
+           % (tg.graph.num_vertices(), tg.graph.num_edges()))
+    tg.graph.list_properties()
+
+    if k > 0:
+        print "k = {}".format(k)
+        # Find the average triangle edge length (l_ave) and calculate g_max:
+        # (Do this here because in vector_voting average weak edge length of
+        # the triangle graph is used, since the surface not passed)
+        pg = PointGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+        pg.build_graph_from_vtk_surface(surf)
+        l_ave = pg.calculate_average_edge_length()
+        print "average triangle edge length = {}".format(l_ave)
+        g_max = k * l_ave
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print ('Graph construction from surface and cleaning took: {} min {} s'
+           .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
+
+    # Running the modified Normal Vector Voting algorithm:
+    surf_vv = vector_voting(tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                            exclude_borders=False)  # TODO T if want no borders
+    # Saving the output (TriangleGraph object) for later inspection in
+    # ParaView:
+    io.save_vtp(surf_vv, fold + surf_vv_file)
+
+
 def main():
     """
     Main function for running the workflow function for example data.
@@ -404,24 +496,43 @@ def main():
     t_begin = time.time()
 
     # TODO change those parameters for each tomogram & label:
-    fold = \
-        "/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/diffuseHtt97Q/"
-    tomo = "t112"
-    seg_file = "%s%s_final_ER1_vesicles2_notER3_NE4.Labels.mrc" % (fold, tomo)
-    label = 1
-    pixel_size = 2.526
-    scale_x = 620
-    scale_y = 620
-    scale_z = 80
-    k = 3
+    # fold = \
+    #     "/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/diffuseHtt97Q/"
+    # tomo = "t112"
+    # seg_file = "%s%s_final_ER1_vesicles2_notER3_NE4.Labels.mrc" % (fold, tomo)
+    # label = 1
+    # pixel_size = 2.526
+    # scale_x = 620
+    # scale_y = 620
+    # scale_z = 80
+    # k = 3
+    # workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
+    #          k)
 
-    workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
-             k)
-
+    # Javier's cER
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/only_without_borders/"
+    pixel_size = 1.044
+    scale_x = 320
+    scale_y = 520
+    scale_z = 210
+    g_max = 6.5
+    surf_file = "t3_ny01_cropped_cER.surface.vtp"
+    base_filename = "t3_ny01_cropped_cER"
+    simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
+                    scale_y, scale_z, k=0, g_max=g_max, epsilon=0, eta=0)
     t_end = time.time()
     duration = t_end - t_begin
     print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
 
+    # Javier's PM
+    t_begin = time.time()
+    surf_file = "t3_ny01_cropped_PM.surface.vtp"
+    base_filename = "t3_ny01_cropped_PM"
+    simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
+                    scale_y, scale_z, k=0, g_max=g_max, epsilon=0, eta=0)
+    t_end = time.time()
+    duration = t_end - t_begin
+    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
 
 if __name__ == "__main__":
     main()

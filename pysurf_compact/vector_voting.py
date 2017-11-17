@@ -118,12 +118,10 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     tg.graph.vp.T_v = tg.graph.new_vertex_property("vector<float>")
 
     # * Adding vertex properties to be filled in sign_voting *
-    # vertex properties telling whether the vertex is locally planar,
-    # hyperbolic, elliptic or parabolic:
-    # tg.graph.vp.planar = tg.graph.new_vertex_property("int")
-    # tg.graph.vp.hyperbolic = tg.graph.new_vertex_property("int")
-    # tg.graph.vp.elliptic = tg.graph.new_vertex_property("int")
-    # tg.graph.vp.parabolic = tg.graph.new_vertex_property("int")
+    # vertex property telling whether the vertex is locally planar(0),
+    # elliptic (1), hyperbolic (2) or parabolic (3):
+    tg.graph.vp.local_shape = tg.graph.new_vertex_property("int")
+    # TODO remove after testing:
     tg.graph.vp.mu = tg.graph.new_vertex_property("float")
     tg.graph.vp.sigma = tg.graph.new_vertex_property("float")
 
@@ -214,13 +212,12 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     # all_traceS = []
     # for i, v in enumerate(tg.graph.vertices()):
     #     # TODO for testing
-    #     if tg.graph.vertex_index[v] == 174:
-    #         verb = True
-    #     else:
-    #         verb = False
-    #     # verb = True
-    #     mu, traceS = sign_voting(v, all_neighbor_idx_to_dist[i], sigma,
-    #                              verbose=verb)  # shape_v
+    #     # if tg.graph.vertex_index[v] == 174:
+    #     #     verb = True
+    #     # else:
+    #     #     verb = False
+    #     verb = False
+    #     mu, traceS = sign_voting(v, all_neighbor_idx_to_dist[i], verbose=verb)
     #     # try:
     #     #     shapes_counts[shape_v] += 1
     #     # except KeyError:
@@ -230,9 +227,9 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     # # for shape in shapes_counts.keys():
     # #     print "{}: {}".format(shape, shapes_counts[shape])
     # print "mu: [{}, {}]".format(min(all_mu), max(all_mu))
-    # print stats.describe(np.array(all_mu))
+    # # print stats.describe(np.array(all_mu))
     # print "traceS: [{}, {}]".format(min(all_traceS), max(all_traceS))
-    # print stats.describe(np.array(all_traceS))
+    # # print stats.describe(np.array(all_traceS))
 
     print ("\nSecond run: estimating principle curvatures and directions for "
            "surface patches...")
