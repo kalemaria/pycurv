@@ -871,7 +871,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # Running the modified Normal Vector Voting algorithm:
         surf_VV = vector_voting(
             tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-            exclude_borders=True, test=test)
+            exclude_borders=False, test=test)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -966,8 +966,8 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         Runs parametric_test_torus_curvatures with certain parameters.
         """
-        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=5,
-                                              test=False)
+        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=4,
+                                              test=True)
 
 
 if __name__ == '__main__':

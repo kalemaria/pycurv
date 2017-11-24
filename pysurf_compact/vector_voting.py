@@ -120,10 +120,10 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     # * Adding vertex properties to be filled in sign_voting *
     # vertex property telling whether the vertex is locally planar(0),
     # elliptic (1), hyperbolic (2) or parabolic (3):
-    tg.graph.vp.local_shape = tg.graph.new_vertex_property("int")
+    # tg.graph.vp.local_shape = tg.graph.new_vertex_property("int")
     # TODO remove after testing:
-    tg.graph.vp.mu = tg.graph.new_vertex_property("float")
-    tg.graph.vp.sigma = tg.graph.new_vertex_property("float")
+    # tg.graph.vp.mu = tg.graph.new_vertex_property("float")
+    # tg.graph.vp.sigma = tg.graph.new_vertex_property("float")
 
     # * Adding vertex properties to be filled in estimate_curvature *
     # vertex property for storing the estimated principal directions of the
@@ -175,16 +175,13 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     classifying_orientation = tg.classifying_orientation
     classes_counts = {}
     for v in tg.graph.vertices():
-        # TODO for testing
-        verb = False
         neighbor_idx_to_dist, V_v = collecting_votes(v, g_max, A_max, sigma,
-                                                     verbose=verb)
+                                                     verbose=False)
         all_num_neighbors.append(len(neighbor_idx_to_dist))
         all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
-        # TODO for testing
         # assert len(all_neighbor_idx_to_dist) - 1 == tg.graph.vertex_index[v]
         class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
-                                          verbose=verb)
+                                          verbose=False)
         try:
             classes_counts[class_v] += 1
         except KeyError:
@@ -241,7 +238,7 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     all_neighbor_idx_to_orientation = []
     if exclude_borders is False:
         for i, v in enumerate(tg.graph.vertices()):
-            # Estimate principal curvatures and directions (and calculate the
+            # Estimate principal directions and curvatures (and calculate the
             # Gaussian and mean curvatures, shape index and curvedness) for
             # vertices belonging to a surface patch
             B_v = None  # initialization
@@ -276,32 +273,20 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
         tg.find_graph_border(purge=False)
         is_on_border = tg.graph.vp.is_on_border
         for i, v in enumerate(tg.graph.vertices()):
-            # TODO for testing
-            # if tg.graph.vertex_index[v] == 174:
-            #     verb = True
-            #     print ("VTK min curvature = {}".format(
-            #         tg.graph.vp.min_curvature[v]))
-            #     print ("VTK max curvature = {}".format(
-            #         tg.graph.vp.max_curvature[v]))
-            # else:
-            #     verb = False
-            verb = False
-            # Estimate principal curvatures and directions (and calculate the
+            # Estimate principal directions and curvatures (and calculate the
             # Gaussian and mean curvatures, shape index and curvedness) for
             # vertices belonging to a surface patch and not on border
             B_v = None  # initialization
             if orientation_class[v] == 1 and is_on_border[v] == 0:
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
-                # TODO for testing
                 B_v, curvature_is_negated, neighbor_idx_to_orientation = \
                     collecting_votes2(
-                        v, all_neighbor_idx_to_dist[i], sigma, verbose=verb)
+                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
                 all_neighbor_idx_to_orientation.append(
                     neighbor_idx_to_orientation)
             if B_v is not None:
-                # TODO for testing
-                estimate_curvature(v, B_v, curvature_is_negated, verbose=verb)
+                estimate_curvature(v, B_v, curvature_is_negated, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
             # vertices lacking neighbors, add placeholders to the corresponding
             # vertex properties
@@ -325,61 +310,42 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
     print "kappa was negated %s times" % TriangleGraph.num_curvature_is_negated
 
-    if test is True:  # Testing (e.g. on torus inner part - saddle surface)
+    if test is True:
+        print ("\n*** Testing curvature estimation using curve fitting for "
+               "vertex 174 on torus inner part - saddle surface ***")
+        # test parameters:
         v_idx = 174
+        dist = 1
+        fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/"
+        file_prefix = "torus_rr25_csr10_inner_part.VV_k4_v{}_".format(v_idx)
+        points_in_T_1_file = '{}files4plotting/{}points_in_T_1.vtp'.format(
+            fold, file_prefix)
+        points_in_T_2_file = '{}files4plotting/{}points_in_T_2.vtp'.format(
+            fold, file_prefix)
+        points_in_T_1_plot = '{}plots/{}points_in_T_1.png'.format(
+            fold, file_prefix)
+        points_in_T_2_plot = '{}plots/{}points_in_T_2.png'.format(
+            fold, file_prefix)
+
         v = tg.graph.vertex(v_idx)
-        dist = 1.2
         neighbor_idx_to_dist = all_neighbor_idx_to_dist[v_idx]
         print "{} neighboring triangles".format(len(neighbor_idx_to_dist))
-        points_in_T_1_file = 'v174_points_in_T_1.vtp'
-        points_in_T_2_file = 'v174_points_in_T_2.vtp'
-        points_in_T_1_plot = 'v174_points_in_T_1.png'
-        points_in_T_2_plot = 'v174_points_in_T_2.png'
+
         print ('\nFinding points in maximal principal direction for vertex {}'
                '...'.format(v_idx))
         tg.find_points_in_tangent_direction_and_map_into_2d(
                 v, tg.graph.vp.T_1[v], dist, g_max, neighbor_idx_to_dist,
                 poly_file=points_in_T_1_file, plot_file=points_in_T_1_plot,
                 verbose=True)
+        print ("VTK max curvature = {}".format(tg.graph.vp.max_curvature[v]))
+
         print ('\nFinding points in minimal principal direction for vertex {}'
                '...'.format(v_idx))
         tg.find_points_in_tangent_direction_and_map_into_2d(
                 v, tg.graph.vp.T_2[v], dist, g_max, neighbor_idx_to_dist,
                 poly_file=points_in_T_2_file, plot_file=points_in_T_2_plot,
                 verbose=True)
-
-        # neighbor_idx_to_orientation = all_neighbor_idx_to_orientation[v_idx]
-        # assert(len(neighbor_idx_to_dist) == len(neighbor_idx_to_orientation))
-        # # neighbor_idx_to_orientation can be shorter if border was excluded!
-        #
-        # for i in range(2):
-        #     if i == 0:
-        #         print ('\nFinding triangles in maximal principal direction for '
-        #                'vertex {}...'.format(v_idx))
-        #         cell_ids = tg.find_neighboring_cells_in_tangent_direction(
-        #             v, tg.graph.vp.T_1[v], g_max, neighbor_idx_to_dist,
-        #             verbose=True)
-        #         true_orientation = 1
-        #     else:
-        #         print ('\nFinding triangles in minimal principal direction for '
-        #                'vertex {}...'.format(v_idx))
-        #         cell_ids = tg.find_neighboring_cells_in_tangent_direction(
-        #             v, tg.graph.vp.T_2[v], g_max, neighbor_idx_to_dist,
-        #             verbose=True)
-        #         true_orientation = -1
-        #     new_neighbor_idx_to_dist = {}
-        #     for cell_id in cell_ids:
-        #         cell_orientation = neighbor_idx_to_orientation[cell_id]
-        #         if cell_orientation == true_orientation:
-        #             new_neighbor_idx_to_dist[cell_id] = neighbor_idx_to_dist[
-        #                 cell_id]
-        #     print "{} cells with correct orientation:".format(len(
-        #         new_neighbor_idx_to_dist))
-        #     print new_neighbor_idx_to_dist.keys()
-        #     # B_v, curvature_is_negated, _ = collecting_votes2(
-        #     #     v, new_neighbor_idx_to_dist, sigma, verbose=True)
-        #     # if B_v is not None:
-        #     #     estimate_curvature(v, B_v, curvature_is_negated, verbose=True)
+        print ("VTK min curvature = {}".format(tg.graph.vp.min_curvature[v]))
 
     # Transforming the resulting graph to a surface with triangles:
     surface_VV = tg.graph_to_triangle_poly()

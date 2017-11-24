@@ -7,6 +7,7 @@ from graph_tool import Graph, GraphView, incident_edges_op
 from graph_tool.topology import (shortest_distance, label_largest_component,
                                  label_components)
 import matplotlib.pyplot as plt
+import scipy.optimize as optimization
 
 import graphs
 import pexceptions
@@ -1596,7 +1597,7 @@ class TriangleGraph(SurfaceGraph):
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
     def sign_voting(self, vertex_v, neighbor_idx_to_dist, verbose=False):
-        # TODO docstring
+        # TODO docstring; is not finished - did not achieve separation to types
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         xyz = self.graph.vp.xyz
@@ -1761,9 +1762,9 @@ class TriangleGraph(SurfaceGraph):
         v = np.array(self.graph.vp.xyz[vertex_v])
         normal = np.array(self.graph.vp.N_v[vertex_v])
 
-        if verbose:
-            print "v = ({}, {}, {})".format(v[0], v[1], v[2])
-            print "T = [{}, {}, {}]".format(tangent[0], tangent[1], tangent[2])
+        # # testing:
+        # print "v = ({}, {}, {})".format(v[0], v[1], v[2])
+        # print "T = [{}, {}, {}]".format(tangent[0], tangent[1], tangent[2])
 
         # Define a cellLocator to be able to compute intersections between lines
         # and the surface:
@@ -1803,14 +1804,11 @@ class TriangleGraph(SurfaceGraph):
                                           sub_id, cell_id)
                 cell_id = int(cell_id)
 
-                if verbose:
-                    print "\nPoint {}:".format(direction * i)
+                # if verbose:
+                #     print "\nPoint {}:".format(direction * i)
 
-                # If there is no intersection, pos = (0, 0, 0) and cell_id = 0
-                if pos == [0.0, 0.0, 0.0] and cell_id == 0:
-                    if verbose:
-                        print "No intersection point"
-                else:
+                # If there is no intersection, pos stays like initialized
+                if pos != [0.0, 0.0, 0.0]:
                     # Add the x, y, z position of the intersection, if the cell
                     # is in the neighborhood of triangle center v:
                     if cell_id in neighbor_idx_to_dist:
@@ -1821,26 +1819,37 @@ class TriangleGraph(SurfaceGraph):
                         pos_x_2d.append(dist_v_pos)
                         dist_p0_pos = sign * vector_length(p0 - pos)
                         pos_y_2d.append(dist_p0_pos)
-                        if verbose:
-                            print "Point in neighborhood - added"
-                            print "p0 = ({}, {}, {})".format(p0[0], p0[1], p0[2])
-                            print "p1 = ({}, {}, {})".format(p1[0], p1[1], p1[2])
-                            print "p2 = ({}, {}, {})".format(p2[0], p2[1], p2[2])
-                            print ("intersection point = ({}, {}, {})".format(
-                                pos[0], pos[1], pos[2]))
-                            print "cell id: {}".format(cell_id)
-                            print "sign = {}".format(sign)
-                            print "coordinates in 2D: ({}, {})".format(
-                                dist_v_pos, dist_p0_pos)
-                    else:
-                        if verbose:
-                            print "Point NOT in neighborhood"
+                        # # testing:
+                        # print "Point in neighborhood - added"
+                        # print "p0 = ({}, {}, {})".format(p0[0], p0[1], p0[2])
+                        # print "p1 = ({}, {}, {})".format(p1[0], p1[1], p1[2])
+                        # print "p2 = ({}, {}, {})".format(p2[0], p2[1], p2[2])
+                        # print ("intersection point = ({}, {}, {})".format(
+                        #     pos[0], pos[1], pos[2]))
+                        # print "cell id: {}".format(cell_id)
+                        # print "sign = {}".format(sign)
+                        # print "coordinates in 2D: ({}, {})".format(
+                        #     dist_v_pos, dist_p0_pos)
+                    # else: # testing:
+                    #     print "Point NOT in neighborhood"
+                # else:  # testing:
+                #     print "No intersection point"
+
         # Don't forget to add the central point v
         points.InsertNextPoint(v)
         pos_x_2d.append(0.0)
         pos_y_2d.append(0.0)
 
-        print "\n{} intersection points found".format(points.GetNumberOfPoints())
+        if verbose:
+            print ("{} intersection points found".format(
+                points.GetNumberOfPoints()))
+
+        # Fit a simple parabola curve:
+        a, var_a = fit_curve(pos_x_2d, pos_y_2d)  # a = 1 / (2 * R)
+        curvature = 2 * a  # curvature = 1 / R
+        if verbose:
+            print "variance = {}".format(var_a)
+            print "curvature = {}".format(curvature)
 
         if poly_file is not None:  # vtkPolyData construction
             poly_verts = vtk.vtkPolyData()
@@ -1849,17 +1858,42 @@ class TriangleGraph(SurfaceGraph):
             for i in range(points.GetNumberOfPoints()):
                 verts.InsertNextCell(1)
                 verts.InsertCellPoint(i)
-            if verbose:
-                    print '{} vertex cells'.format(verts.GetNumberOfCells())
             poly_verts.SetVerts(verts)
             save_vtp(poly_verts, poly_file)
 
         if plot_file is not None:  # Plot the points in 2D
             fig = plt.figure()
+            # plot the intersection points
             plt.plot(pos_x_2d, pos_y_2d, 'ro')
+            # plot the estimated parabola function
+            x = np.linspace(min(pos_x_2d), max(pos_x_2d), 100)
+            y = [canonical_parabola(x_i, a) for x_i in x]
+            plt.plot(x, y)
+            # add grey lines parallel to axes at (0, 0)
+            plt.axvline(x=0, color='grey', linewidth=0.5)
+            plt.axhline(y=0, color='grey', linewidth=0.5)
+            # make axes scale equal and add labels
             plt.axis('equal')
             plt.xlabel("tangent")
             plt.ylabel("normal")
+
             fig.savefig(plot_file)
 
         return points, pos_x_2d, pos_y_2d
+
+
+def fit_curve(pos_x_2d, pos_y_2d):
+    # TODO docstring (and move up before the class)
+    # Initial guess of the parameter a is 0 (a straight line)
+    x0 = np.array([0.0])
+
+    popt, pcov = optimization.curve_fit(
+        canonical_parabola, pos_x_2d, pos_y_2d, x0, sigma=None)
+    a = popt[0]
+    var_a = pcov[0][0]
+    return a, var_a
+
+
+def canonical_parabola(x, a):
+    # TODO docstring? (and move up before the class)
+    return a * x * x
