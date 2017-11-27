@@ -1301,9 +1301,6 @@ class TriangleGraph(SurfaceGraph):
             self.graph.vp.T_v[vertex_v] = np.zeros(shape=3)
             return 3
 
-    num_curvature_is_negated = 0
-    """int: counts for how many triangles the curvature is negated"""
-
     def collecting_votes2(self, vertex_v, neighbor_idx_to_dist, sigma,
                           verbose=False):
         """
@@ -1342,6 +1339,181 @@ class TriangleGraph(SurfaceGraph):
 
         Returns:
             the 3x3 symmetric matrix B_v (numpy.ndarray)
+        """
+        # To spare function referencing every time in the following for loop:
+        vertex = self.graph.vertex
+        vp_N_v = self.graph.vp.N_v
+        orientation_class = self.graph.vp.orientation_class
+        exp = math.exp
+        xyz = self.graph.vp.xyz
+        array = np.array
+        dot = np.dot
+        vector_length = np.linalg.norm
+        pi = math.pi
+        cross = np.cross
+        acos = math.acos
+        outer = np.outer
+
+        # Get the coordinates of vertex v and its estimated normal N_v (as numpy
+        # array):
+        v = array(xyz[vertex_v])
+        N_v = array(vp_N_v[vertex_v])
+
+        # First, calculate the weights w_i of the neighboring triangles
+        # belonging to a surface patch, because they have to be normalized to
+        # sum up to 2 * pi:
+        surface_neighbors_idx = []
+        all_w_i = []
+        for idx_v_i in neighbor_idx_to_dist.keys():
+            # Get the neighboring vertex v_i:
+            vertex_v_i = vertex(idx_v_i)
+
+            # Check if the neighboring vertex v_i belongs to a surface patch
+            # (otherwise don't consider it):
+            if orientation_class[vertex_v_i] == 1:
+                surface_neighbors_idx.append(idx_v_i)
+                # Weight depending on the geodesic distance to the neighboring
+                # vertex v_i from the vertex v, g_i:
+                g_i = neighbor_idx_to_dist[idx_v_i]
+                w_i = exp(- g_i / sigma)
+                all_w_i.append(w_i)
+
+        all_w_i = array(all_w_i)
+        sum_w_i = np.sum(all_w_i)
+
+        try:
+            assert(sum_w_i > 0)
+        except AssertionError:  # can be 0 if no surface patch neighbors exist
+            print ("\nWarning: sum of the weights is not positive, but %s, for "
+                   "the vertex v = %s" % (sum_w_i, v))
+            print ("%s neighbors in a surface patch with weights w_i:"
+                   % len(surface_neighbors_idx))
+            print all_w_i
+            print "The vertex will be ignored."
+            return None
+
+        wanted_sum_w_i = 2 * pi
+        factor = wanted_sum_w_i / sum_w_i
+        all_w_i = factor * all_w_i  # normalized weights!
+
+        if verbose:
+            print "\nv = %s" % v
+            print "N_v = %s" % N_v
+            print ("%s neighbors in a surface patch with normalized weights "
+                   "w_i:" % len(surface_neighbors_idx))
+            print all_w_i
+
+        # Initialize the weighted matrix sum of all votes for vertex v to be
+        # calculated:
+        B_v = np.zeros(shape=(3, 3))
+
+        # Let each of the neighboring triangles belonging to a surface patch
+        # (as checked before) to cast a vote on vertex v:
+        for i, idx_v_i in enumerate(surface_neighbors_idx):
+            # Get the neighboring vertex v_i:
+            vertex_v_i = vertex(idx_v_i)
+
+            # Second, calculate tangent directions T_i of each vote:
+            v_i = array(xyz[vertex_v_i])
+            vv_i = v_i - v
+            t_i = vv_i - dot(N_v, vv_i) * N_v
+            t_i_len = vector_length(t_i)
+            T_i = t_i / t_i_len
+
+            # Third, calculate the normal curvature kappa_i:
+            # P_i: vector perpendicular to the plane that contains both N_v and
+            # T_i as well as the normal curve (between v and v_i)
+            P_i = cross(N_v, T_i)
+            N_v_i = array(vp_N_v[vertex_v_i])  # estimated normal of vertex v_i
+            # n_i: projection of N_v_i on the plane containing N_v rooted at v
+            # and v_i
+            n_i = N_v_i - dot(P_i, N_v_i) * P_i
+            n_i_len = vector_length(n_i)
+            # tetha is the turning angle between n_i and N_v
+            cos_tetha = dot(N_v, n_i) / n_i_len
+            try:
+                tetha = acos(cos_tetha)
+            except ValueError:
+                if cos_tetha > 1:
+                    cos_tetha = 1.0
+                elif cos_tetha < 0:
+                    cos_tetha = 0.0
+                tetha = acos(cos_tetha)
+            s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
+            kappa_i = tetha / s
+
+            # Recover the corresponding weight, which was calculated and
+            # normalized before:
+            w_i = all_w_i[i]
+
+            if verbose:
+                print "\nv_i = %s" % v_i
+                print "vv_i = %s" % vv_i
+                print "t_i = %s" % t_i
+                print "||t_i|| = %s" % t_i_len
+                print "T_i = %s" % T_i
+                print "P_i = %s" % P_i
+                print "N_v_i = %s" % N_v_i
+                print "n_i = %s" % n_i
+                print "||n_i|| = %s" % n_i_len
+                print "tetha = %s" % tetha
+                print "s = g_i = %s" % s
+                print "kappa_i = %s" % kappa_i
+                print "w_i = %s" % w_i
+
+            # Finally, sum up the components of B_v:
+            B_v += w_i * kappa_i * outer(T_i, T_i)
+        # and normalize it by 2 * pi:
+        B_v /= (2 * pi)
+
+        if verbose:
+            print "\nB_v = %s" % B_v
+
+        return B_v
+
+    num_curvature_is_negated = 0
+    """int: counts for how many triangles the curvature is negated"""
+
+    def collecting_votes2_sign_correction(self, vertex_v, neighbor_idx_to_dist,
+                                          sigma, verbose=False):
+        """
+        For a vertex v, collects the curvature and tangent votes of all
+        triangles within its geodesic neighborhood belonging to a surface patch
+        and calculates the matrix B_v.
+
+        Implements equations (13) and (15) also illustrated in figure 6(c),
+        (16), (17), (14), and (5) from the paper. In short, three components are
+        calculated for each neighboring vertex (representing triangle centroid)
+        v_i:
+
+        1. Weight w_i depending on the geodesic distance between v_i and v (so
+            that all weights sum up to 2 * pi).
+
+        2. Tangent T_i from v in the direction of the arc connecting v and v_i
+            (using the estimated normal N_v at v).
+
+        3. Normal curvature kappa_i, which is the turning angle between N_v and
+            the projection of the estimated normal of v_i (N_v_i) onto the arc
+            plane (formed by v, N_v and v_i) divided by the arc length.
+
+        Those components are incorporated into the 3x3 symmetric matrix B_v
+        (Eq. 5), which is returned.
+
+        Args:
+            vertex_v (graph_tool.Vertex): the vertex v in the surface
+                triangle-graph for which the votes are collected
+            neighbor_idx_to_dist (dict): a dictionary of neighbors of vertex v,
+                mapping index of each vertex v_i to its geodesic distance from
+                the vertex v (output of collecting_votes)
+            sigma (float): sigma, defined as 3*sigma = g_max, so that votes
+                beyond the neighborhood can be ignored
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
+
+        Returns:
+            the 3x3 symmetric matrix B_v (numpy.ndarray)
+            True if curvature has to be negated, else False
+            dict mapping neighbor index to its orientation (sign -1, 0 or 1)
         """
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
@@ -1498,8 +1670,7 @@ class TriangleGraph(SurfaceGraph):
 
         return B_v, curvature_is_negated, neighbor_idx_to_orientation
 
-    def estimate_curvature(self, vertex_v, B_v, curvature_is_negated,
-                           verbose=False):  # TODO complete docstring
+    def estimate_curvature(self, vertex_v, B_v, verbose=False):
         """
         For a vertex v and its calculated matrix B_v (output of
         collecting_votes2), calculates the principal directions (T_1 and T_2)
@@ -1570,6 +1741,96 @@ class TriangleGraph(SurfaceGraph):
             print "kappa_1 = %s" % kappa_1
             print "kappa_2 = %s" % kappa_2
 
+        # Add T_1, T_2, kappa_1, kappa_2, derived Gaussian and mean curvatures
+        # as well as shape index and curvedness as properties to the graph:
+        self.graph.vp.T_1[vertex_v] = T_1
+        self.graph.vp.T_2[vertex_v] = T_2
+        self.graph.vp.kappa_1[vertex_v] = kappa_1
+        self.graph.vp.kappa_2[vertex_v] = kappa_2
+        self.graph.vp.gauss_curvature_VV[vertex_v] = kappa_1 * kappa_2
+        self.graph.vp.mean_curvature_VV[vertex_v] = (kappa_1 + kappa_2) / 2
+        if kappa_1 == 0 and kappa_2 == 0:
+            self.graph.vp.shape_index_VV[vertex_v] = 0
+        else:
+            self.graph.vp.shape_index_VV[vertex_v] = 2 / math.pi * math.atan(
+                (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
+        self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
+            (kappa_1 ** 2 + kappa_2 ** 2) / 2)
+
+    def estimate_curvature_sign_correction(self, vertex_v, B_v,
+                                           curvature_is_negated, verbose=False):
+        """
+        For a vertex v and its calculated matrix B_v (output of
+        collecting_votes2), calculates the principal directions (T_1 and T_2)
+        and curvatures (kappa_1 and kappa_2) at this vertex.
+
+        This is done using eigen-decomposition of B_v: the eigenvectors
+        corresponding to the two largest eigenvalues are the principal
+        directions and the principal curvatures are found with linear
+        transformations of those eigenvalues (Eq. 4).
+
+        Args:
+            vertex_v (graph_tool.Vertex): the vertex v in the surface
+                triangle-graph for which the principal directions and curvatures
+                are estimated
+            B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
+                collecting_votes2)
+            curvature_is_negated (boolean): True if curvature has to be negated,
+                else False
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
+
+        Returns:
+            None
+        """
+        # Decompose the symmetric matrix B_v:
+        # eigenvalues are in increasing order and eigenvectors are in columns of
+        # the returned quadratic matrix
+        eigenvalues, eigenvectors = np.linalg.eigh(B_v)
+        # Eigenvalues from highest to lowest:
+        b_1 = eigenvalues[2]
+        b_2 = eigenvalues[1]
+        # Eigenvectors that correspond to the highest two eigenvalues are the
+        # estimated principal directions:
+        T_1 = eigenvectors[:, 2]
+        T_2 = eigenvectors[:, 1]
+        T_3 = eigenvectors[:, 0]  # has to be equal to the normal N_v or -N_v
+        N_v = np.array(self.graph.vp.N_v[vertex_v])
+        try:
+            assert(round(abs(T_3[0]), 7) == round(abs(N_v[0]), 7) and
+                   round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
+                   round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
+        except AssertionError:
+            if b_1 == 0.0 and b_2 == 0.0:
+                if T_1[0] == N_v[0] and T_1[1] == N_v[1] and T_1[2] == N_v[2]:
+                    T_1 = T_3
+                    # T_3 = N_v
+                elif T_2[0] == N_v[0] and T_2[1] == N_v[1] and T_2[2] == N_v[2]:
+                    T_2 = T_3
+                    # T_3 = N_v
+                else:
+                    print "No exchanged normal found"
+                    print "Error: T_3 has to be equal to the normal |N_v|, but:"
+                    print "T_3 = %s" % T_3
+                    print "N_v = %s" % N_v
+                    exit(0)
+            else:
+                print "Error: T_3 has to be equal to the normal |N_v|, but:"
+                print "T_3 = %s" % T_3
+                print "N_v = %s" % N_v
+                exit(0)
+        # Estimated principal curvatures:
+        kappa_1 = 3 * b_1 - b_2
+        kappa_2 = 3 * b_2 - b_1
+
+        if verbose:
+            print "\nb_1 = %s" % b_1
+            print "b_2 = %s" % b_2
+            print "T_1 = %s" % T_1
+            print "T_2 = %s" % T_2
+            print "kappa_1 = %s" % kappa_1
+            print "kappa_2 = %s" % kappa_2
+
         if curvature_is_negated:
             T_1, T_2 = T_2, T_1
             kappa_1, kappa_2 = -1 * kappa_2, -1 * kappa_1
@@ -1584,6 +1845,108 @@ class TriangleGraph(SurfaceGraph):
         # as well as shape index and curvedness as properties to the graph:
         self.graph.vp.T_1[vertex_v] = T_1
         self.graph.vp.T_2[vertex_v] = T_2
+        self.graph.vp.kappa_1[vertex_v] = kappa_1
+        self.graph.vp.kappa_2[vertex_v] = kappa_2
+        self.graph.vp.gauss_curvature_VV[vertex_v] = kappa_1 * kappa_2
+        self.graph.vp.mean_curvature_VV[vertex_v] = (kappa_1 + kappa_2) / 2
+        if kappa_1 == 0 and kappa_2 == 0:
+            self.graph.vp.shape_index_VV[vertex_v] = 0
+        else:
+            self.graph.vp.shape_index_VV[vertex_v] = 2 / math.pi * math.atan(
+                (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
+        self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
+            (kappa_1 ** 2 + kappa_2 ** 2) / 2)
+
+    def estimate_directions_and_fit_curves(self, vertex_v, B_v, g_max,
+                                           neighbor_idx_to_dist, verbose=False):
+        """
+        For a vertex v and its calculated matrix B_v (output of
+        collecting_votes2), calculates the principal directions (T_1 and T_2)
+        and curvatures (kappa_1 and kappa_2) at this vertex.
+
+        This is done using eigen-decomposition of B_v: the eigenvectors
+        corresponding to the two largest eigenvalues are the principal
+        directions. The principal curvatures are estimated from parabolic curves
+        fitted to the surface points in the principal directions.
+
+        Args:
+            vertex_v (graph_tool.Vertex): the vertex v in the surface
+                triangle-graph for which the principal directions and curvatures
+                are estimated
+            B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
+                collecting_votes2)
+            g_max (float): geodesic radius
+            neighbor_idx_to_dist (dict): a dictionary of neighbors of vertex v,
+                mapping index of each vertex v_i to its geodesic distance from
+                the vertex v (output of collecting_votes)
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
+
+        Returns:
+            None
+        """
+        # Decompose the symmetric matrix B_v:
+        # eigenvalues are in increasing order and eigenvectors are in columns of
+        # the returned quadratic matrix
+        eigenvalues, eigenvectors = np.linalg.eigh(B_v)
+        # Eigenvalues from highest to lowest:
+        b_1 = eigenvalues[2]
+        b_2 = eigenvalues[1]
+        # Eigenvectors that correspond to the highest two eigenvalues are the
+        # estimated principal directions:
+        T_1 = eigenvectors[:, 2]
+        T_2 = eigenvectors[:, 1]
+        T_3 = eigenvectors[:, 0]  # has to be equal to the normal N_v or -N_v
+        N_v = np.array(self.graph.vp.N_v[vertex_v])
+        try:
+            assert(round(abs(T_3[0]), 7) == round(abs(N_v[0]), 7) and
+                   round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
+                   round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
+        except AssertionError:
+            if b_1 == 0.0 and b_2 == 0.0:
+                if T_1[0] == N_v[0] and T_1[1] == N_v[1] and T_1[2] == N_v[2]:
+                    T_1 = T_3
+                    # T_3 = N_v
+                elif T_2[0] == N_v[0] and T_2[1] == N_v[1] and T_2[2] == N_v[2]:
+                    T_2 = T_3
+                    # T_3 = N_v
+                else:
+                    print "No exchanged normal found"
+                    print "Error: T_3 has to be equal to the normal |N_v|, but:"
+                    print "T_3 = {}".format(T_3)
+                    print "N_v = {}".format(N_v)
+                    exit(0)
+            else:
+                print "Error: T_3 has to be equal to the normal |N_v|, but:"
+                print "T_3 = {}".format(T_3)
+                print "N_v = {}".format(N_v)
+                exit(0)
+        # Estimate principal curvatures using curve fitting in the principal
+        # directions:
+        var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
+            vertex_v, T_1, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist)
+        var_a_2, kappa_2 = self.find_points_in_tangent_direction_and_fit_curve(
+            vertex_v, T_2, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist)
+        if kappa_1 < kappa_2:
+            T_1, T_2 = T_2, T_1
+            var_a_1, var_a_2 = var_a_2, var_a_1
+            kappa_1, kappa_2 = kappa_2, kappa_1
+
+        if verbose:
+            print "\nT_1 = {}".format(T_1)
+            print "T_2 = {}".format(T_2)
+            print "fit_error_1 = {}".format(var_a_1)
+            print "fit_error_2 = {}".format(var_a_2)
+            print "kappa_1 = {}".format(kappa_1)
+            print "kappa_2 = {}".format(kappa_2)
+
+        # Add T_1, T_2, curve fitting errors (variances), kappa_1, kappa_2,
+        # derived Gaussian and mean curvatures as well as shape index and
+        # curvedness as properties to the graph:
+        self.graph.vp.T_1[vertex_v] = T_1
+        self.graph.vp.T_2[vertex_v] = T_2
+        self.graph.vp.fit_error_1[vertex_v] = var_a_1
+        self.graph.vp.fit_error_2[vertex_v] = var_a_2
         self.graph.vp.kappa_1[vertex_v] = kappa_1
         self.graph.vp.kappa_2[vertex_v] = kappa_2
         self.graph.vp.gauss_curvature_VV[vertex_v] = kappa_1 * kappa_2
@@ -1751,9 +2114,9 @@ class TriangleGraph(SurfaceGraph):
             print neighboring_cell_ids
         return neighboring_cell_ids
 
-    def find_points_in_tangent_direction_and_map_into_2d(
+    def find_points_in_tangent_direction_and_fit_curve(
             self, vertex_v, tangent, dist, g_max, neighbor_idx_to_dist,
-            poly_file=None, plot_file=None, verbose=False):
+            poly_file=None, plot_file=None, verbose=False, debug=True):
         # TODO docstring
         # tangent has to have length 1!
         # dist: distance on the tangent line between the perpendicular lines
@@ -1762,9 +2125,10 @@ class TriangleGraph(SurfaceGraph):
         v = np.array(self.graph.vp.xyz[vertex_v])
         normal = np.array(self.graph.vp.N_v[vertex_v])
 
-        # # testing:
-        # print "v = ({}, {}, {})".format(v[0], v[1], v[2])
-        # print "T = [{}, {}, {}]".format(tangent[0], tangent[1], tangent[2])
+        if debug:
+            print "v = ({},{},{})".format(v[0], v[1], v[2])
+            print "T = [{},{},{}]".format(tangent[0], tangent[1], tangent[2])
+            print "N = [{},{},{}]".format(normal[0], normal[1], normal[2])
 
         # Define a cellLocator to be able to compute intersections between lines
         # and the surface:
@@ -1781,8 +2145,10 @@ class TriangleGraph(SurfaceGraph):
         vector_length = np.linalg.norm
         dot = np.dot
         # maximal number of points to sample in each direction
-        num_points = int(math.ceil(g_max / dist))
-        for i in range(1, num_points + 1):
+        num_points = int(g_max / dist)
+        # Note: int(math.ceil(g_max / dist)) led to too high points at edges
+        for i in range(1, num_points):
+            # Note: num_points + 1 led to points with wrong sign
             # Alternatively sample in the tangent and in the opposite directions
             for direction in [1, -1]:
                 # point on line from v in tangent / opposite direction
@@ -1803,51 +2169,59 @@ class TriangleGraph(SurfaceGraph):
                 locator.IntersectWithLine(p1, p2, tolerance, t, pos, pcoords,
                                           sub_id, cell_id)
                 cell_id = int(cell_id)
-
-                # if verbose:
-                #     print "\nPoint {}:".format(direction * i)
+                if debug:
+                    print "\nPoint {}:".format(direction * i)
 
                 # If there is no intersection, pos stays like initialized
                 if pos != [0.0, 0.0, 0.0]:
-                    # Add the x, y, z position of the intersection, if the cell
-                    # is in the neighborhood of triangle center v:
+                    # Check if the cell is in the neighborhood of graph vertex v
                     if cell_id in neighbor_idx_to_dist:
-                        points.InsertNextPoint(pos)
-                        # Check orientation (curvature in or against the normal)
-                        sign = - signum(dot(normal, v - pos))
-                        dist_v_pos = direction * dist * i
-                        pos_x_2d.append(dist_v_pos)
-                        dist_p0_pos = sign * vector_length(p0 - pos)
-                        pos_y_2d.append(dist_p0_pos)
-                        # # testing:
-                        # print "Point in neighborhood - added"
-                        # print "p0 = ({}, {}, {})".format(p0[0], p0[1], p0[2])
-                        # print "p1 = ({}, {}, {})".format(p1[0], p1[1], p1[2])
-                        # print "p2 = ({}, {}, {})".format(p2[0], p2[1], p2[2])
-                        # print ("intersection point = ({}, {}, {})".format(
-                        #     pos[0], pos[1], pos[2]))
-                        # print "cell id: {}".format(cell_id)
-                        # print "sign = {}".format(sign)
-                        # print "coordinates in 2D: ({}, {})".format(
-                        #     dist_v_pos, dist_p0_pos)
-                    # else: # testing:
-                    #     print "Point NOT in neighborhood"
-                # else:  # testing:
-                #     print "No intersection point"
+                        # Check if the point pos is between p1 and p2
+                        if is_pos_between_2_points(pos, p1, p2):
+                            # Check orientation (curvature in or against the
+                            # normal)
+                            sign = - signum(dot(normal, v - pos))
+                            # Calculate distances in X and Y axes from v to pos
+                            dist_v_pos = direction * dist * i  # in X
+                            dist_p0_pos = sign * vector_length(p0 - pos)  # in Y
+                            # Add the x, y, z position of the intersection
+                            points.InsertNextPoint(pos)
+                            pos_x_2d.append(dist_v_pos)
+                            pos_y_2d.append(dist_p0_pos)
+                            if debug:
+                                print "Point in neighborhood - added"
+                                print "p0 = ({},{},{})".format(
+                                    p0[0], p0[1], p0[2])
+                                print "p1 = ({},{},{})".format(
+                                    p1[0], p1[1], p1[2])
+                                print "p2 = ({},{},{})".format(
+                                    p2[0], p2[1], p2[2])
+                                print ("point = ({}, {}, {})".format(
+                                    pos[0], pos[1], pos[2]))
+                                print "cell id = {}".format(cell_id)
+                                print "sign = {}".format(sign)
+                                print "coordinates in 2D = ({}, {})".format(
+                                    dist_v_pos, dist_p0_pos)
+                        elif debug:
+                            print "Point {} NOT between p1 and p2".format(
+                                direction * i)
+                    elif debug:
+                        print "Point NOT in neighborhood"
+                elif debug:
+                    print "No intersection point"
 
         # Don't forget to add the central point v
         points.InsertNextPoint(v)
         pos_x_2d.append(0.0)
         pos_y_2d.append(0.0)
 
-        if verbose:
-            print ("{} intersection points found".format(
-                points.GetNumberOfPoints()))
-
         # Fit a simple parabola curve:
         a, var_a = fit_curve(pos_x_2d, pos_y_2d)  # a = 1 / (2 * R)
         curvature = 2 * a  # curvature = 1 / R
-        if verbose:
+
+        if verbose or var_a > 0.00001:
+            print ("{} intersection points found".format(
+                points.GetNumberOfPoints()))
             print "variance = {}".format(var_a)
             print "curvature = {}".format(curvature)
 
@@ -1861,7 +2235,7 @@ class TriangleGraph(SurfaceGraph):
             poly_verts.SetVerts(verts)
             save_vtp(poly_verts, poly_file)
 
-        if plot_file is not None:  # Plot the points in 2D
+        if plot_file is not None or var_a > 0.00001:  # Plot the points in 2D
             fig = plt.figure()
             # plot the intersection points
             plt.plot(pos_x_2d, pos_y_2d, 'ro')
@@ -1876,10 +2250,12 @@ class TriangleGraph(SurfaceGraph):
             plt.axis('equal')
             plt.xlabel("tangent")
             plt.ylabel("normal")
+            if plot_file is not None:
+                fig.savefig(plot_file)
+            else:
+                plt.show()
 
-            fig.savefig(plot_file)
-
-        return points, pos_x_2d, pos_y_2d
+        return var_a, curvature
 
 
 def fit_curve(pos_x_2d, pos_y_2d):
@@ -1897,3 +2273,18 @@ def fit_curve(pos_x_2d, pos_y_2d):
 def canonical_parabola(x, a):
     # TODO docstring? (and move up before the class)
     return a * x * x
+
+
+def is_pos_between_2_points(pos, p1, p2):
+    # TODO docstring (and move up before the class)
+    if len(pos) == len(p1) == len(p2):
+        validity = True
+        for i in range(len(pos)):
+            if p1[i] < p2[i]:
+                validity = validity and (p1[i] < pos[i] < p2[i])
+            elif p2[i] < p1[i]:
+                validity = validity and (p2[i] < pos[i] < p1[i])
+        return validity
+    else:
+        print "points have to be of same dimensions"
+        return False

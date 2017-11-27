@@ -4,8 +4,9 @@ from graph_tool import load_graph
 import gzip
 from os import remove
 
-from pysurf_compact import (vector_voting, run_gen_surface, TriangleGraph,
-                            split_segmentation, pexceptions, PointGraph)
+from pysurf_compact import (
+    vector_voting, vector_voting_sign_correction, run_gen_surface,
+    TriangleGraph, split_segmentation, pexceptions, PointGraph)
 from pysurf_compact import pysurf_io as io
 
 """
@@ -479,8 +480,9 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
            .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
     # Running the modified Normal Vector Voting algorithm:
-    surf_vv = vector_voting(tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                            exclude_borders=False)  # TODO T if want no borders
+    surf_vv = vector_voting_sign_correction(
+        tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta, exclude_borders=False)
+    # TODO exclude_borders=True if want no borders
     # Saving the output (TriangleGraph object) for later inspection in
     # ParaView:
     io.save_vtp(surf_vv, fold + surf_vv_file)
