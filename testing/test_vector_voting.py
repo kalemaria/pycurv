@@ -107,16 +107,16 @@ class VectorVotingTestCase(unittest.TestCase):
         vtk_normal_errors_file = '{}.VTK.normal_errors.txt'.format(
             base_filename)
         if g_max > 0:
-            surf_vv_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
+            surf_vv_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
             vv_normal_errors_file = (
-                '{}.VV_g_max{}_epsilon{}_eta{}.normal_errors.txt'.format(
+                '{}.VVCF_g_max{}_epsilon{}_eta{}.normal_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
         elif k > 0:
-            surf_vv_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
+            surf_vv_file = '{}.VVCF_k{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, k, epsilon, eta)
             vv_normal_errors_file = (
-                '{}.VV_k{}_epsilon{}_eta{}.normal_errors.txt'.format(
+                '{}.VVCF_k{}_epsilon{}_eta{}.normal_errors.txt'.format(
                     base_filename, k, epsilon, eta))
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
@@ -168,8 +168,9 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        surf_vv = vector_voting_curve_fitting(tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                                                exclude_borders=True)
+        surf_vv = vector_voting_curve_fitting(
+            tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+            exclude_borders=True)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_vv, surf_vv_file)
@@ -286,28 +287,28 @@ class VectorVotingTestCase(unittest.TestCase):
         base_filename = "{}{}cylinder_r{}_h{}".format(
             files_fold, inverse_str, r, h)
         if g_max > 0:
-            surf_vv_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
+            surf_vv_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
-            T_2_errors_file = (
-                '{}.VV_g_max{}_epsilon{}_eta{}.T_2_errors.txt'.format(
+            T_h_errors_file = (
+                '{}.VVCF_g_max{}_epsilon{}_eta{}.T_h_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
             kappa_1_errors_file = (
-                '{}.VV_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
             kappa_2_errors_file = (
-                '{}.VV_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
         elif k > 0:
-            surf_vv_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
+            surf_vv_file = '{}.VVCF_k{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, k, epsilon, eta)
-            T_2_errors_file = (
-                '{}.VV_k{}_epsilon{}_eta{}.T_2_errors.txt'.format(
+            T_h_errors_file = (
+                '{}.VVCF_k{}_epsilon{}_eta{}.T_h_errors.txt'.format(
                     base_filename, k, epsilon, eta))
             kappa_1_errors_file = (
-                '{}.VV_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                '{}.VVCF_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
                     base_filename, k, epsilon, eta))
             kappa_2_errors_file = (
-                '{}.VV_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                '{}.VVCF_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
                     base_filename, k, epsilon, eta))
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
@@ -379,30 +380,32 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        surf_vv = vector_voting_curve_fitting(tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                                                exclude_borders=False)
+        surf_vv = vector_voting_curve_fitting(
+            tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+            exclude_borders=False)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_vv, surf_vv_file)
 
-        # Getting the estimated (by VV) minimal principal directions (T_2)
+        # Getting the estimated (by VV) principal directions along cylinder
+        # height (T_h)
         pos = [0, 1, 2]  # vector-property value positions
-        if not inverse:
-            T_2s = tg.graph.vertex_properties["T_2"].get_2d_array(pos)
-        else:
-            T_2s = tg.graph.vertex_properties["T_1"].get_2d_array(pos)
+        if not inverse:  # it's the minimal direction
+            T_h = tg.graph.vertex_properties["T_2"].get_2d_array(pos)
+        else:  # it's the maximal direction
+            T_h = tg.graph.vertex_properties["T_1"].get_2d_array(pos)
         # The shape is (3, <num_vertices>) - have to transpose to group the
         # respective x, y, z components to sub-arrays
-        T_2s = np.transpose(T_2s)  # shape (<num_vertices>, 3)
+        T_h = np.transpose(T_h)  # shape (<num_vertices>, 3)
 
-        # Ground-truth T_2 vector is parallel to Z axis
-        true_T_2 = np.array([0, 0, 1])
+        # Ground-truth T_h vector is parallel to Z axis
+        true_T_h = np.array([0, 0, 1])
 
-        # Computing the percentage errors of the estimated T_2 vectors wrt the
+        # Computing the percentage errors of the estimated T_h vectors wrt the
         # true one and writing them into a file:
-        T_2_errors = np.array(map(
-            lambda x: percent_error_vector(true_T_2, x), T_2s))
-        io.write_values_to_file(T_2_errors, T_2_errors_file)
+        T_h_errors = np.array(map(
+            lambda x: percent_error_vector(true_T_h, x), T_h))
+        io.write_values_to_file(T_h_errors, T_h_errors_file)
 
         # Getting principal curvatures from NVV and VTK from the output graph:
         kappa_1_values = tg.get_vertex_property_array("kappa_1")
@@ -443,13 +446,13 @@ class VectorVotingTestCase(unittest.TestCase):
                 vtk_kappa_2_values))
             io.write_values_to_file(vtk_kappa_2_errors, vtk_kappa_2_errors_file)
 
-        # Asserting that all estimated T_2 vectors are close to the true vector,
+        # Asserting that all estimated T_h vectors are close to the true vector,
         # allowing error of 30%:
         if not inverse:
             print "Testing the minimal principal directions (T_2)..."
         else:
             print "Testing the maximal principal directions (T_1)..."
-        for error in T_2_errors:
+        for error in T_h_errors:
             msg = '{} is > {}%!'.format(error, 30)
             self.assertLessEqual(error, 30, msg=msg)
 
@@ -554,30 +557,30 @@ class VectorVotingTestCase(unittest.TestCase):
         base_filename = "{}{}sphere_r{}".format(
             files_fold, inverse_str, radius)
         if g_max > 0:
-            surf_VV_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
+            surf_VV_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
-            kappa_1_file = '{}.VV_g_max{}_epsilon{}_eta{}.kappa_1.txt'.format(
+            kappa_1_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_1.txt'.format(
                 base_filename, g_max, epsilon, eta)
-            kappa_2_file = '{}.VV_g_max{}_epsilon{}_eta{}.kappa_2.txt'.format(
+            kappa_2_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_2.txt'.format(
                 base_filename, g_max, epsilon, eta)
             kappa_1_errors_file = (
-                '{}.VV_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
             kappa_2_errors_file = (
-                '{}.VV_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
         elif k > 0:
-            surf_VV_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
+            surf_VV_file = '{}.VVCF_k{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, k, epsilon, eta)
-            kappa_1_file = '{}.VV_k{}_epsilon{}_eta{}.kappa_1.txt'.format(
+            kappa_1_file = '{}.VVCF_k{}_epsilon{}_eta{}.kappa_1.txt'.format(
                 base_filename, k, epsilon, eta)
-            kappa_2_file = '{}.VV_k{}_epsilon{}_eta{}.kappa_2.txt'.format(
+            kappa_2_file = '{}.VVCF_k{}_epsilon{}_eta{}.kappa_2.txt'.format(
                 base_filename, k, epsilon, eta)
             kappa_1_errors_file = (
-                '{}.VV_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                '{}.VVCF_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
                     base_filename, k, epsilon, eta))
             kappa_2_errors_file = (
-                '{}.VV_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                '{}.VVCF_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
                     base_filename, k, epsilon, eta))
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
@@ -907,7 +910,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     (parallel to to X and Y axes), certain size, resolution and noise
     #     level.
     #     """
-    #     for n in [1]:  # 0, 5, 10
+    #     for n in [5]:  # 0, 5, 10
     #         for k in [5]:  # 1 for noise=0, else 3, 5
     #             self.parametric_test_plane_normals(10, res=10, noise=n, k=k)
 
@@ -922,7 +925,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     for n in [0]:  # 5, 10
     #         for k in [5]:  # 3, 5
     #             self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
-
+    #
     # def test_inverse_cylinder_T_2_curvatures(self):
     #     """
     #     Tests whether minimal principal directions (T_2) are correctly estimated
@@ -949,7 +952,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #             #     10, res=30, noise=n, k=k, save_areas=True)
     #             self.parametric_test_sphere_curvatures(
     #                 10, ico=1280, noise=n, k=k, save_areas=False)
-
+    #
     # def test_inverse_sphere_curvatures(self):
     #     """
     #     Tests whether curvatures are correctly estimated using Normal Vector
@@ -959,14 +962,16 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
     #     """
     #     for k in [5]:  # 3
-    #         self.parametric_test_sphere_curvatures(10, noise=0, k=k,
-    #                                                inverse=True)
+    #         # self.parametric_test_sphere_curvatures(10, noise=0, k=k,
+    #         #                                        inverse=True)
+    #         self.parametric_test_sphere_curvatures(
+    #             10, ico=1280, noise=0, k=k, save_areas=False, inverse=True)
 
     def test_torus_curvatures(self):
         """
         Runs parametric_test_torus_curvatures with certain parameters.
         """
-        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=4)
+        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=5)
 
 
 if __name__ == '__main__':

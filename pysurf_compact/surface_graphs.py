@@ -1924,13 +1924,17 @@ class TriangleGraph(SurfaceGraph):
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
         var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_1, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist)
+            vertex_v, T_1, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist,
+            verbose=verbose)
         var_a_2, kappa_2 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_2, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist)
+            vertex_v, T_2, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist,
+            verbose=verbose)
         if kappa_1 < kappa_2:
             T_1, T_2 = T_2, T_1
             var_a_1, var_a_2 = var_a_2, var_a_1
             kappa_1, kappa_2 = kappa_2, kappa_1
+            # print ("\nkappa_1 < kappa_2 -> directions, errors and curvatures "
+            #        "were swapped")  # test
 
         if verbose:
             print "\nT_1 = {}".format(T_1)
@@ -2116,8 +2120,8 @@ class TriangleGraph(SurfaceGraph):
 
     def find_points_in_tangent_direction_and_fit_curve(
             self, vertex_v, tangent, dist, g_max, neighbor_idx_to_dist,
-            poly_file=None, plot_file=None, verbose=False, debug=True):
-        # TODO docstring
+            poly_file=None, plot_file=None, verbose=False, debug=False):
+        # TODO docstring, debug=False or remove when finished debugging
         # tangent has to have length 1!
         # dist: distance on the tangent line between the perpendicular lines
 
@@ -2126,7 +2130,7 @@ class TriangleGraph(SurfaceGraph):
         normal = np.array(self.graph.vp.N_v[vertex_v])
 
         if debug:
-            print "v = ({},{},{})".format(v[0], v[1], v[2])
+            print "\nv = ({},{},{})".format(v[0], v[1], v[2])
             print "T = [{},{},{}]".format(tangent[0], tangent[1], tangent[2])
             print "N = [{},{},{}]".format(normal[0], normal[1], normal[2])
 
@@ -2219,7 +2223,11 @@ class TriangleGraph(SurfaceGraph):
         a, var_a = fit_curve(pos_x_2d, pos_y_2d)  # a = 1 / (2 * R)
         curvature = 2 * a  # curvature = 1 / R
 
-        if verbose or var_a > 0.00001:
+        # if the fit is perfect, var_a == inf for some reason -> change to 0
+        if var_a == float('Inf'):
+            var_a = 0
+
+        if verbose or var_a > 0.001:
             print ("{} intersection points found".format(
                 points.GetNumberOfPoints()))
             print "variance = {}".format(var_a)
@@ -2235,7 +2243,7 @@ class TriangleGraph(SurfaceGraph):
             poly_verts.SetVerts(verts)
             save_vtp(poly_verts, poly_file)
 
-        if plot_file is not None or var_a > 0.00001:  # Plot the points in 2D
+        if plot_file is not None or var_a > 0.001:  # Plot the points in 2D
             fig = plt.figure()
             # plot the intersection points
             plt.plot(pos_x_2d, pos_y_2d, 'ro')
