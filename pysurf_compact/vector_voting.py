@@ -805,3 +805,242 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
     # Transforming the resulting graph to a surface with triangles:
     surface_VV = tg.graph_to_triangle_poly()
     return surface_VV
+
+
+def curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
+                            exclude_borders=True):
+    """
+    Runs the modified Normal Vector Voting algorithm to estimate surface
+    orientation, principle curvatures and directions for a surface using its
+    triangle graph.
+
+    Args:
+        tg (TriangleGraph): triangle graph generated from a surface of interest
+        k (int, optional): parameter of Normal Vector Voting algorithm
+            determining the geodesic neighborhood radius:
+            g_max = k * average weak triangle graph edge length (default k=3)
+        g_max (float, optional): geodesic neighborhood radius in length unit of
+            the graph, e.g. nanometers; if positive (default 0.0) this g_max
+            will be used and k will be ignored
+        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2), default 0
+        eta (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2) and "no preferred orientation" (class 3, see Notes),
+            default 0
+        exclude_borders (boolean, optional): if True (default), principle
+            curvatures and directions are not estimated for triangles at surface
+            borders
+
+    Returns:
+        the surface of triangles with classified orientation and estimated
+        normals or tangents, principle curvatures and directions (vtkPolyData)
+
+    Notes:
+        * Either g_max or k must be positive (if both are positive, the
+          specified g_max will be used).
+        * If epsilon = 0 and eta = 0 (default), all triangles will be classified
+          as "surface patch" (class 1).
+    """
+    # TODO modify the docstring!
+    # Preparation (calculations that are the same for the whole graph)
+    t_begin = time.time()
+    print '\nPreparing for running modified Vector Voting...'
+
+    if g_max > 0:
+        # * Maximal geodesic distance g_max (given directly) *
+        print "g_max = {}".format(g_max)
+    elif k > 0:
+        # * k, integer multiple of the average length of the triangle edges *
+        print "k = {}".format(k)
+
+        # * Average length of the triangle edges *
+        # weak edges of triangle graph are the most similar in length to surface
+        # triangle edges
+        avg_weak_edge_length = tg.calculate_average_edge_length(
+            prop_e="is_strong", value=0)
+        try:
+            assert(avg_weak_edge_length > 0)
+        except AssertionError:
+            print ("Something wrong in the graph construction has happened: "
+                   "average weak edge length is 0.")
+            exit(1)
+
+        # * Maximal geodesic distance g_max (depend on k but is also the same
+        # for the whole graph) *
+        g_max = k * avg_weak_edge_length
+        print "g_max = {}".format(g_max)
+    else:
+        error_msg = ("Either g_max or k must be positive (if both are "
+                     "positive, the specified g_max will be used).")
+        raise pexceptions.PySegInputError(expr='vector_voting',
+                                          msg=error_msg)
+
+    # * sigma *
+    sigma = g_max / 3.0
+
+    # * Maximal triangle area *
+    A, _ = tg.get_areas()
+    A_max = np.max(A)
+    print "Maximal triangle area = %s" % A_max
+
+    # * Orientation classification parameters *
+    print "epsilon = %s" % epsilon
+    print "eta = %s" % eta
+
+    # * Adding vertex properties to be filled in classifying_orientation *
+    # vertex property storing the orientation class of the vertex: 1 if it
+    # belongs to a surface patch, 2 if it belongs to a crease junction or 3 if
+    # it doesn't have a preferred orientation:
+    tg.graph.vp.orientation_class = tg.graph.new_vertex_property("int")
+    # vertex property for storing the estimated normal of the corresponding
+    # triangle (if the vertex belongs to class 1; scaled in nm):
+    tg.graph.vp.N_v = tg.graph.new_vertex_property("vector<float>")
+    # vertex property for storing the estimated tangent of the corresponding
+    # triangle (if the vertex belongs to class 2; scaled in nm):
+    tg.graph.vp.T_v = tg.graph.new_vertex_property("vector<float>")
+
+    # * Adding vertex properties to be filled in estimate_directions_and_fit
+    # curves *
+    # vertex properties for storing the estimated principal directions of the
+    # maximal and minimal curvatures of the corresponding triangle (if the
+    # vertex belongs to class 1; scaled in nm):
+    tg.graph.vp.T_1 = tg.graph.new_vertex_property("vector<float>")
+    tg.graph.vp.T_2 = tg.graph.new_vertex_property("vector<float>")
+    # vertex properties for storing the estimated maximal and minimal curvatures
+    # of the corresponding triangle (if the vertex belongs to class 1; scaled in
+    # nm):
+    tg.graph.vp.kappa_1 = tg.graph.new_vertex_property("float")
+    tg.graph.vp.kappa_2 = tg.graph.new_vertex_property("float")
+    # vertex property for storing the Gaussian curvature calculated from kappa_1
+    # and kappa_2 at the corresponding triangle:
+    tg.graph.vp.gauss_curvature_VV = tg.graph.new_vertex_property("float")
+    # vertex property for storing the mean curvature calculated from kappa_1 and
+    # kappa_2 at the corresponding triangle:
+    tg.graph.vp.mean_curvature_VV = tg.graph.new_vertex_property("float")
+    # vertex property for storing the shape index calculated from kappa_1 and
+    # kappa_2 at the corresponding triangle:
+    tg.graph.vp.shape_index_VV = tg.graph.new_vertex_property("float")
+    # vertex property for storing the curvedness calculated from kappa_1 and
+    # kappa_2 at the corresponding triangle:
+    tg.graph.vp.curvedness_VV = tg.graph.new_vertex_property("float")
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print 'Preparation took: %s min %s s' % divmod(duration, 60)
+
+    # Main algorithm
+    t_begin = time.time()
+
+    # * For all vertices, collecting normal vector votes, while calculating
+    # average number of the geodesic neighbors, and classifying the orientation
+    # of each vertex *
+    print "\nRunning modified Vector Voting for all vertices..."
+
+    print ("\nFirst run: classifying orientation and estimating normals for "
+           "surface patches and tangents for creases...")
+    t_begin1 = time.time()
+
+    collecting_votes = tg.collecting_votes
+    all_num_neighbors = []
+    all_neighbor_idx_to_dist = []
+    classifying_orientation = tg.classifying_orientation
+    classes_counts = {}
+    for v in tg.graph.vertices():
+        neighbor_idx_to_dist, V_v = collecting_votes(v, g_max, A_max, sigma,
+                                                     verbose=False)
+        all_num_neighbors.append(len(neighbor_idx_to_dist))
+        all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
+        class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
+                                          verbose=False)
+        try:
+            classes_counts[class_v] += 1
+        except KeyError:
+            classes_counts[class_v] = 1
+
+    # Printing out some numbers concerning the first run:
+    avg_num_geodesic_neighbors = (sum(x for x in all_num_neighbors) /
+                                  len(all_num_neighbors))
+    print ("Average number of geodesic neighbors for all vertices: %s"
+           % avg_num_geodesic_neighbors)
+    print "%s surface patches" % classes_counts[1]
+    if 2 in classes_counts:
+        print "%s crease junctions" % classes_counts[2]
+    if 3 in classes_counts:
+        print "%s no preferred orientation" % classes_counts[3]
+
+    t_end1 = time.time()
+    duration1 = t_end1 - t_begin1
+    print 'First run took: %s min %s s' % divmod(duration1, 60)
+
+    print ("\nSecond run: estimating principle directions and curvatures for "
+           "surface patches...")
+    t_begin2 = time.time()
+
+    orientation_class = tg.graph.vp.orientation_class
+    gen_curv_vote = tg.gen_curv_vote
+    if exclude_borders is False:
+        for i, v in enumerate(tg.graph.vertices()):
+            # Estimate principal directions and curvatures (and calculate the
+            # Gaussian and mean curvatures, shape index and curvedness) for
+            # vertices belonging to a surface patch
+            result = None  # initialization
+            if orientation_class[v] == 1:
+                # None is returned if curvature at v cannot be estimated
+                result = gen_curv_vote(v, g_max, verbose=True)
+            # For crease, no preferably oriented vertices or if curvature could
+            # not be estimated, add placeholders to the corresponding vertex
+            # properties
+            if orientation_class[v] != 1 or result is None:
+                tg.graph.vp.T_1[v] = np.zeros(shape=3)
+                tg.graph.vp.T_2[v] = np.zeros(shape=3)
+                tg.graph.vp.kappa_1[v] = 0
+                tg.graph.vp.kappa_2[v] = 0
+                tg.graph.vp.gauss_curvature_VV[v] = 0
+                tg.graph.vp.mean_curvature_VV[v] = 0
+                tg.graph.vp.shape_index_VV[v] = 0
+                tg.graph.vp.curvedness_VV[v] = 0
+    # Exclude triangles at the borders from curvatures calculation and remove
+    # them in the end
+    else:
+        print ('\nFinding triangles that are at surface borders and excluding '
+               'them from curvatures calculation...')
+        # Mark vertices at borders with vertex property 'is_on_border', do not
+        # delete
+        tg.find_graph_border(purge=False)
+        is_on_border = tg.graph.vp.is_on_border
+        for i, v in enumerate(tg.graph.vertices()):
+            # Estimate principal directions and curvatures (and calculate the
+            # Gaussian and mean curvatures, shape index and curvedness) for
+            # vertices belonging to a surface patch and not on border
+            result = None  # initialization
+            if orientation_class[v] == 1 and is_on_border[v] == 0:
+                # None is returned if curvature at v cannot be estimated
+                result = gen_curv_vote(v, g_max, verbose=True)
+            # For crease, no preferably oriented vertices, vertices on border or
+            # if curvature could not be estimated, add placeholders to the
+            # corresponding vertex properties
+            if (orientation_class[v] != 1 or is_on_border[v] == 1 or
+                    result is None):
+                tg.graph.vp.T_1[v] = np.zeros(shape=3)
+                tg.graph.vp.T_2[v] = np.zeros(shape=3)
+                tg.graph.vp.kappa_1[v] = 0
+                tg.graph.vp.kappa_2[v] = 0
+                tg.graph.vp.gauss_curvature_VV[v] = 0
+                tg.graph.vp.mean_curvature_VV[v] = 0
+                tg.graph.vp.shape_index_VV[v] = 0
+                tg.graph.vp.curvedness_VV[v] = 0
+        tg.find_graph_border(purge=True)
+
+    t_end2 = time.time()
+    duration2 = t_end2 - t_begin2
+    print 'Second run took: %s min %s s' % divmod(duration2, 60)
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
+
+    # Transforming the resulting graph to a surface with triangles:
+    surface_VV = tg.graph_to_triangle_poly()
+    return surface_VV

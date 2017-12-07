@@ -6,7 +6,8 @@ import math
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
-    TriangleGraph, PointGraph, vector_voting_curve_fitting, pexceptions)
+    TriangleGraph, PointGraph, vector_voting_curve_fitting,
+    curvature_tensor_voting, pexceptions)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
@@ -752,7 +753,7 @@ class VectorVotingTestCase(unittest.TestCase):
                                          k=3, g_max=0, epsilon=0, eta=0):
         """
         Runs all the steps needed to calculate curvatures for a test torus
-        with given radii using Normal Vector Voting combined with curbe fitting
+        with given radii using Normal Vector Voting combined with curve fitting
         (VVCF) with a given g_max.
 
         Args:
@@ -785,6 +786,7 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
+        # TODO modify the docstring to match the method!
         fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
 
         if not os.path.exists(fold):
@@ -808,10 +810,10 @@ class VectorVotingTestCase(unittest.TestCase):
         base_filename = "{}{}torus_rr{}_csr{}".format(
             files_fold, inverse_str, rr, csr)  # TODO "_inner_part" for a small saddle part
         if g_max > 0:
-            surf_VV_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.vtp'.format(
+            surf_VV_file = '{}.CTV_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
         elif k > 0:
-            surf_VV_file = '{}.VVCF_k{}_epsilon{}_eta{}.vtp'.format(
+            surf_VV_file = '{}.CTV_k{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, k, epsilon, eta)
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
@@ -872,7 +874,7 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm with curve fitting
-        surf_VV = vector_voting_curve_fitting(
+        surf_VV = curvature_tensor_voting(
             tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
             exclude_borders=False)
         # Saving the output (TriangleGraph object) for later inspection in
@@ -971,7 +973,7 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         Runs parametric_test_torus_curvatures with certain parameters.
         """
-        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=5)
+        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=4)
 
 
 if __name__ == '__main__':

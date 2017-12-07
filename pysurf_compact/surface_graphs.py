@@ -1,13 +1,13 @@
 import vtk
 import numpy as np
 import time
-from scipy import ndimage
+from scipy import ndimage, optimize
+from scipy.linalg import expm3, norm
 import math
 from graph_tool import Graph, GraphView, incident_edges_op
 from graph_tool.topology import (shortest_distance, label_largest_component,
                                  label_components)
 import matplotlib.pyplot as plt
-import scipy.optimize as optimization
 
 import graphs
 import pexceptions
@@ -2184,7 +2184,8 @@ class TriangleGraph(SurfaceGraph):
                         if is_pos_between_2_points(pos, p1, p2):
                             # Check orientation (curvature in or against the
                             # normal)
-                            sign = - signum(dot(normal, v - pos))
+                            sign = signum(dot(normal, pos - v))
+                            # was: - signum(dot(normal, v - pos))
                             # Calculate distances in X and Y axes from v to pos
                             dist_v_pos = direction * dist * i  # in X
                             dist_p0_pos = sign * vector_length(p0 - pos)  # in Y
@@ -2265,13 +2266,136 @@ class TriangleGraph(SurfaceGraph):
 
         return var_a, curvature
 
+    def gen_curv_vote(self, vertex_r, radius_hit, verbose=False):
+        # Get the coordinates of vertex r and its estimated normal N_r (as numpy
+        # array, input of the original method):
+        r = np.array(self.graph.vp.xyz[vertex_r])
+        N_r = np.array(self.graph.vp.N_v[vertex_r])
+        if verbose:
+            print("\nr = ({}, {}, {})".format(r[0], r[1], r[2]))
+            print("N_r = ({}, {}, {})".format(N_r[0], N_r[1], N_r[2]))
+
+        # Define a cellLocator to be able to compute intersections between lines
+        # and the surface:
+        locator = vtk.vtkCellLocator()
+        locator.SetDataSet(self.surface)
+        locator.BuildLocator()
+        tolerance = 0.001
+
+        # Define some frequently used functions in the loop:
+        multiply = np.multiply
+        vector_length = np.linalg.norm
+        dot = np.dot
+        outer = np.outer
+
+        # a vector on tangent plane T_r(S)
+        votedir = perpendicular_vector(N_r, debug=verbose)
+        if votedir is None:
+            print("Calculation of a perpendicular vector failed")
+            exit(0)
+        M_r = np.zeros(shape=(2, 2))
+        R = rotation_matrix(N_r, math.pi/4)
+        for i in range(8):
+            # rotate the vector by 45 degrees (pi/4 radians) around N_r axis
+            votedir = rotate_vector(votedir, math.pi/4, matrix=R, debug=verbose)
+            r_t = r + votedir * radius_hit
+
+            # Find intersection point c between the surface and line segment l
+            # going through r_t and parallel to N_r:
+            # point on line l from r_t in normal direction
+            p1 = r_t + multiply(N_r, radius_hit)
+            # point on line l from r_t in opposite normal direction
+            p2 = r_t - multiply(N_r, radius_hit)
+            # Outputs (we need only c, which is the x, y, z position
+            # of the intersection):
+            t = vtk.mutable(0)
+            c = [0.0, 0.0, 0.0]
+            pcoords = [0.0, 0.0, 0.0]
+            sub_id = vtk.mutable(0)
+            cell_id = vtk.mutable(0)
+            locator.IntersectWithLine(p1, p2, tolerance, t, c, pcoords,
+                                      sub_id, cell_id)
+            # If there is no intersection, c stays like initialized or some
+            # distant point not between p1 and p2 is returned:
+            if (c == [0.0, 0.0, 0.0] or
+                    not is_pos_between_2_points(c, p1, p2)):
+                if verbose:
+                    print("No intersection point found")
+                continue  # in paper "return None", but I think if does not make
+                # sense to give up if there is no continuation of the surface at
+                # radius_hit distance just in one or some of the 8 directions
+
+            b = vector_length(r_t - c)
+            if b > radius_hit:
+                if verbose:
+                    print("b = {}, higher than RadiusHit = {}".format(
+                        b, radius_hit))
+                continue
+            k_rc = 2 * b / (b ** 2 + radius_hit ** 2)
+            # sign(c) = 1 if c is above the tangent plane T_r(S)
+            #          -1 if c is below T_r(S)
+            #           0 if c lies on T_r(S)
+            sign_c = signum(dot(N_r, c - r))
+
+            # TODO transform votedir to a local coordinate system, where r is
+            # in [0, 0, 0] and N_r is the Z axis
+            outer_product = outer(votedir, votedir)
+            multiplicator = sign_c * k_rc / 8
+            M_r += multiply(outer_product, multiplicator)
+
+            if verbose:
+                print("\nvotedir = ({}, {}, {})".format(
+                    votedir[0], votedir[1], votedir[2]))
+                print("r_t = ({}, {}, {})".format(r_t[0], r_t[1], r_t[2]))
+                print("c = ({}, {}, {})".format(c[0], c[1], c[2]))
+                print("b = {}".format(b))
+                print("k_rc = {}".format(k_rc))
+                print("sign_c = {}".format(sign_c))
+
+        # Decompose the symmetric matrix B_v:
+        # eigenvalues are in increasing order and eigenvectors are in columns of
+        # the returned quadratic matrix
+        eigenvalues, eigenvectors = np.linalg.eigh(M_r)
+        # Eigenvalues from highest to lowest:
+        lambda_1 = eigenvalues[1]
+        lambda_2 = eigenvalues[0]
+        # Eigenvectors that correspond to the highest two eigenvalues are the
+        # estimated principal directions:
+        T_1 = eigenvectors[:, 1]
+        T_2 = eigenvectors[:, 0]
+        # Estimated principal curvatures:
+        kappa_1 = 3 * lambda_1 - lambda_2
+        kappa_2 = 3 * lambda_2 - lambda_1
+        if verbose:
+            print("\nT_1 = ({}, {})".format(T_1[0], T_1[1]))
+            print("T_2 = ({}, {})".format(T_2[0], T_2[1]))
+            print("kappa_1 = {}".format(kappa_1))
+            print("kappa_2 = {}".format(kappa_2))
+
+        # Add T_1, T_2, kappa_1, kappa_2, derived Gaussian and mean curvatures
+        # as well as shape index and curvedness as properties to the graph:
+        self.graph.vp.T_1[vertex_r] = T_1
+        self.graph.vp.T_2[vertex_r] = T_2
+        self.graph.vp.kappa_1[vertex_r] = kappa_1
+        self.graph.vp.kappa_2[vertex_r] = kappa_2
+        self.graph.vp.gauss_curvature_VV[vertex_r] = kappa_1 * kappa_2
+        self.graph.vp.mean_curvature_VV[vertex_r] = (kappa_1 + kappa_2) / 2
+        if kappa_1 == 0 and kappa_2 == 0:
+            self.graph.vp.shape_index_VV[vertex_r] = 0
+        else:
+            self.graph.vp.shape_index_VV[vertex_r] = 2 / math.pi * math.atan(
+                (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
+        self.graph.vp.curvedness_VV[vertex_r] = math.sqrt(
+            (kappa_1 ** 2 + kappa_2 ** 2) / 2)
+        return kappa_1, kappa_2, T_1, T_2
+
 
 def fit_curve(pos_x_2d, pos_y_2d):
     # TODO docstring (and move up before the class)
     # Initial guess of the parameter a is 0 (a straight line)
     x0 = np.array([0.0])
 
-    popt, pcov = optimization.curve_fit(
+    popt, pcov = optimize.curve_fit(
         canonical_parabola, pos_x_2d, pos_y_2d, x0, sigma=None)
     a = popt[0]
     var_a = pcov[0][0]
@@ -2296,3 +2420,114 @@ def is_pos_between_2_points(pos, p1, p2):
     else:
         print "points have to be of same dimensions"
         return False
+
+
+def perpendicular_vector(iv, debug=False):
+    # TODO docstring
+    # implementation of algorithm of Ahmed Fasih https://math.stackexchange.com/
+    # questions/133177/finding-a-unit-vector-perpendicular-to-another-vector
+    try:
+        assert(isinstance(iv, np.ndarray) and iv.shape == (3,))
+    except AssertionError:
+        print("Requires a 1D numpy.ndarray of length 3 (3D vector)")
+        return None
+    if iv[0] == iv[1] == iv[2] == 0:
+        print("Requires a non-zero 3D vector")
+        return None
+    ov = np.array([0.0, 0.0, 0.0])
+    for m in range(3):
+        if iv[m] != 0:
+            break
+    if m == 2:
+        n = 0
+    else:
+        n = m + 1
+    ov[n] = iv[m]
+    ov[m] = -iv[n]
+    if debug:
+        try:
+            assert np.dot(iv, ov) == 0
+        except AssertionError:
+            print("Failed to find a perpendicular vector to the given one")
+            print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
+            print("resulting vector: ({}, {}, {})".format(ov[0], ov[1], ov[2]))
+            return None
+    len_outv = norm(ov)
+    if len_outv == 0:
+        print("Resulting vector has length 0")
+        print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
+        print("resulting vector: ({}, {}, {})".format(ov[0], ov[1], ov[2]))
+        return None
+    return ov / len_outv  # unit length vector
+
+
+def rotation_matrix(axis, theta):
+    # TODO docstring
+    # from B. M. https://stackoverflow.com/questions/6802577/
+    # python-rotation-of-3d-vector
+    a = axis / norm(axis)  # unit vector along axis
+    A = np.cross(np.eye(3), a)  # skew-symmetric matrix associated to a
+    return expm3(A * theta)
+
+
+def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
+    # TODO docstring, wrapper for rotation_matrix
+    dot = np.dot
+    acos = math.acos
+    pi = math.pi
+
+    if matrix is None and axis is not None:
+        R = rotation_matrix(axis, theta)
+    elif matrix is not None and axis is None:
+        R = matrix
+    else:
+        print("Either the rotation axis or rotation matrix must be given")
+        return None
+
+    u = dot(R, v)
+    if debug:
+        cos_tetha = dot(v, u) / norm(v) / norm(u)
+        try:
+            theta2 = acos(cos_tetha)
+        except ValueError:
+            if cos_tetha > 1:
+                cos_tetha = 1.0
+            elif cos_tetha < 0:
+                cos_tetha = 0.0
+            theta2 = acos(cos_tetha)
+        try:
+            assert theta - (0.05 * pi) <= theta2 <= theta + (0.05 * pi)
+        except AssertionError:
+            print("Angle between the input vector and the rotated one is not "
+                  "{}, but {}".format(theta, theta2))
+            return None
+    return u
+
+
+def transform_vector_to_local_system(pos, normal, vector):
+    # so that pos shifts to [0, 0, 0] and normal to the plane where the vector
+    # lies becomes the Z axis
+    pass  # TODO
+
+
+if __name__ == "__main__":
+    # for a in range(-1, 2):
+    #     for b in range(-1, 2):
+    #         for c in range(-1, 2):
+    #             if not a == b == c == 0:
+    #                 x = np.array([a, b, c])
+    #                 # len_x = np.linalg.norm(x)
+    #                 if x is not None:
+    #                     print("\nx=({}, {}, {})".format(x[0], x[1], x[2]))
+    #                 y = perpendicular_vector(x, debug=True)
+    #                 if y is not None:
+    #                     print("y=({}, {}, {})".format(y[0], y[1], y[2]))
+    #                     for i in range(8):
+    #                         y = rotate_vector(y, x, math.pi/4, debug=True)
+    #                         if y is not None:
+    #                             print("y=({}, {}, {})".format(y[0], y[1], y[2]))
+
+    x = np.array([-0.995584478545, -0.0854814893975, -0.0387873826256])
+    y = perpendicular_vector(x, debug=True)
+    if y is not None:
+        print("y=({}, {}, {})".format(y[0], y[1], y[2]))
