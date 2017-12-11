@@ -1923,12 +1923,18 @@ class TriangleGraph(SurfaceGraph):
                 exit(0)
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
-        var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
+        out1 = self.find_points_in_tangent_direction_and_fit_curve(
             vertex_v, T_1, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist,
             verbose=verbose)
-        var_a_2, kappa_2 = self.find_points_in_tangent_direction_and_fit_curve(
+        if out1 is None:
+            return None
+        var_a_1, kappa_1 = out1
+        out2 = self.find_points_in_tangent_direction_and_fit_curve(
             vertex_v, T_2, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist,
             verbose=verbose)
+        if out2 is None:
+            return None
+        var_a_2, kappa_2 = out2
         if kappa_1 < kappa_2:
             T_1, T_2 = T_2, T_1
             var_a_1, var_a_2 = var_a_2, var_a_1
@@ -1962,6 +1968,7 @@ class TriangleGraph(SurfaceGraph):
                 (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
         self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
+        return "success"
 
     def sign_voting(self, vertex_v, neighbor_idx_to_dist, verbose=False):
         # TODO docstring; is not finished - did not achieve separation to types
@@ -2121,15 +2128,15 @@ class TriangleGraph(SurfaceGraph):
     def find_points_in_tangent_direction_and_fit_curve(
             self, vertex_v, tangent, dist, g_max, neighbor_idx_to_dist,
             poly_file=None, plot_file=None, verbose=False, debug=False):
-        # TODO docstring, debug=False or remove when finished debugging
+        # TODO docstring, remove debug when finished debugging
         # tangent has to have length 1!
         # dist: distance on the tangent line between the perpendicular lines
 
-        # Get the coordinates of vertex and its estimated normal:
+        # Get the coordinates of the central vertex and its estimated normal:
         v = np.array(self.graph.vp.xyz[vertex_v])
         normal = np.array(self.graph.vp.N_v[vertex_v])
 
-        if debug:
+        if verbose:
             print "\nv = ({},{},{})".format(v[0], v[1], v[2])
             print "T = [{},{},{}]".format(tangent[0], tangent[1], tangent[2])
             print "N = [{},{},{}]".format(normal[0], normal[1], normal[2])
@@ -2144,19 +2151,35 @@ class TriangleGraph(SurfaceGraph):
         # Make a list of points, each point is the intersection of a vertical
         # line defined by p1 and p2 (of length 2 g_max) and the surface
         points = vtk.vtkPoints()
-        pos_x_2d = []
-        pos_y_2d = []
+        positions_2D_x = []
+        positions_2D_y = []
         vector_length = np.linalg.norm
         dot = np.dot
         # maximal number of points to sample in each direction
-        num_points = int(g_max / dist)
-        # Note: int(math.ceil(g_max / dist)) led to too high points at edges
-        for i in range(1, num_points):
-            # Note: num_points + 1 led to points with wrong sign
-            # Alternatively sample in the tangent and in the opposite directions
-            for direction in [1, -1]:
+        num_points = int(g_max / dist)  # last dist have to fit into g_max
+        # Note: int(math.ceil(g_max / dist)) led sometimes to too high points at
+        # edges
+
+        # Add the central point v first
+        points.InsertNextPoint(v)
+        positions_2D_x.append(0.0)
+        positions_2D_y.append(0.0)
+
+        # First sample in the tangent direction and then in the opposite one
+        for direction in [1, -1]:
+            for i in range(1, num_points + 1):
+                # Note: num_points + 1 led sometimes to points with wrong sign
+
+                curr_dist = i * dist
+                # 1. If the euclidean distance of a point on the tangent line
+                # from v is >g_max, exclude and stop searching in that direction
+                # if curr_dist > g_max:  # does not occur with this for loop!
+                #     if debug:
+                #         print "Distance bigger than g_max"
+                #     break
+
                 # point on line from v in tangent / opposite direction
-                p0 = v + np.multiply(np.multiply(tangent, direction), i * dist)
+                p0 = v + np.multiply(np.multiply(tangent, direction), curr_dist)
                 # point on line from p0 in opposite normal direction
                 p1 = p0 - np.multiply(normal, g_max)
                 # point on line from p0 in normal direction
@@ -2173,55 +2196,88 @@ class TriangleGraph(SurfaceGraph):
                 locator.IntersectWithLine(p1, p2, tolerance, t, pos, pcoords,
                                           sub_id, cell_id)
                 cell_id = int(cell_id)
-                if debug:
+                if verbose:
                     print "\nPoint {}:".format(direction * i)
 
-                # If there is no intersection, pos stays like initialized
-                if pos != [0.0, 0.0, 0.0]:
-                    # Check if the cell is in the neighborhood of graph vertex v
-                    if cell_id in neighbor_idx_to_dist:
-                        # Check if the point pos is between p1 and p2
-                        if is_pos_between_2_points(pos, p1, p2):
-                            # Check orientation (curvature in or against the
-                            # normal)
-                            sign = signum(dot(normal, pos - v))
-                            # was: - signum(dot(normal, v - pos))
-                            # Calculate distances in X and Y axes from v to pos
-                            dist_v_pos = direction * dist * i  # in X
-                            dist_p0_pos = sign * vector_length(p0 - pos)  # in Y
-                            # Add the x, y, z position of the intersection
-                            points.InsertNextPoint(pos)
-                            pos_x_2d.append(dist_v_pos)
-                            pos_y_2d.append(dist_p0_pos)
-                            if debug:
-                                print "Point in neighborhood - added"
-                                print "p0 = ({},{},{})".format(
-                                    p0[0], p0[1], p0[2])
-                                print "p1 = ({},{},{})".format(
-                                    p1[0], p1[1], p1[2])
-                                print "p2 = ({},{},{})".format(
-                                    p2[0], p2[1], p2[2])
-                                print ("point = ({}, {}, {})".format(
-                                    pos[0], pos[1], pos[2]))
-                                print "cell id = {}".format(cell_id)
-                                print "sign = {}".format(sign)
-                                print "coordinates in 2D = ({}, {})".format(
-                                    dist_v_pos, dist_p0_pos)
-                        elif debug:
-                            print "Point {} NOT between p1 and p2".format(
-                                direction * i)
-                    elif debug:
+                # 2. If the cell of pos is not in the geodesic neighbourhood of
+                # v, exclude and stop searching in that direction
+                if cell_id not in neighbor_idx_to_dist:
+                    if debug or verbose:
                         print "Point NOT in neighborhood"
-                elif debug:
-                    print "No intersection point"
+                    break
 
-        # Don't forget to add the central point v
-        points.InsertNextPoint(v)
-        pos_x_2d.append(0.0)
-        pos_y_2d.append(0.0)
+                # 3. If no intersection was found (pos stays like initialized),
+                # exclude and stop searching in that direction
+                if pos == [0.0, 0.0, 0.0]:
+                    if debug or verbose:
+                        print "No intersection point"
+                    break
+
+                # 4. If euclidean distance between p0 and pos is > g_max (i.e.
+                # pos is not between p1 and p2), exclude and stop searching in
+                # that direction
+                # was: if not is_pos_between_2_points(pos, p1, p2):
+                if vector_length(p0 - pos) > g_max:
+                    if debug or verbose:
+                        print "Point NOT within geodesic radius to the tangent"
+                    break
+
+                # Check orientation (curvature in or against the normal)
+                sign = signum(dot(normal, pos - v))
+                # Calculate 2D coordinates of point pos
+                pos_2D_x = float(direction * curr_dist)
+                pos_2D_y = float(sign * vector_length(p0 - pos))
+
+                if i >= 2:
+                    # 5. If a high jump happens, i.e. distance to previous point
+                    # is too high, exclude and stop searching in that direction
+                    current_pos = np.array([pos_2D_x, pos_2D_y])
+                    last_pos = np.array(
+                        [positions_2D_x[-1], positions_2D_y[-1]])
+                    before_last_pos = np.array(
+                        [positions_2D_x[-2], positions_2D_y[-2]])
+                    current_pos_dist = vector_length(current_pos - last_pos)
+                    last_pos_dist = vector_length(last_pos - before_last_pos)
+                    if current_pos_dist > 1.5 * last_pos_dist:
+                        if debug or verbose:
+                            print "Point too far away from the previous one"
+                            print "current distance = {}".format(
+                                current_pos_dist)
+                            print "last distance = {}".format(last_pos_dist)
+                        break
+
+                # Add the x, y, z position of the intersection
+                points.InsertNextPoint(pos)
+                positions_2D_x.append(pos_2D_x)
+                positions_2D_y.append(pos_2D_y)
+                if verbose:
+                    print "Added a valid point"
+                #     print "p0 = ({},{},{})".format(p0[0], p0[1], p0[2])
+                #     print "p1 = ({},{},{})".format(p1[0], p1[1], p1[2])
+                #     print "p2 = ({},{},{})".format(p2[0], p2[1], p2[2])
+                #     print "point = ({}, {}, {})".format(pos[0], pos[1], pos[2])
+                #     print "cell id = {}".format(cell_id)
+                #     print "sign = {}".format(sign)
+                #     print "coordinates in 2D = ({}, {})".format(
+                #         pos_2D_x, pos_2D_y)
 
         # Fit a simple parabola curve:
-        a, var_a = fit_curve(pos_x_2d, pos_y_2d)  # a = 1 / (2 * R)
+        out = fit_curve(positions_2D_x, positions_2D_y)  # a = 1 / (2 * R)
+        if out is None:
+            fig = plt.figure()
+            # plot the intersection points
+            plt.plot(positions_2D_x, positions_2D_y, 'ro')
+            # add grey lines parallel to axes at (0, 0)
+            plt.axvline(x=0, color='grey', linewidth=0.5)
+            plt.axhline(y=0, color='grey', linewidth=0.5)
+            # make axes scale equal and add labels
+            plt.axis('equal')
+            plt.xlabel("tangent")
+            plt.ylabel("normal")
+            plt.show()
+            return None
+
+        a, var_a = out
         curvature = 2 * a  # curvature = 1 / R
 
         # if the fit is perfect, var_a == inf for some reason -> change to 0
@@ -2244,12 +2300,12 @@ class TriangleGraph(SurfaceGraph):
             poly_verts.SetVerts(verts)
             save_vtp(poly_verts, poly_file)
 
-        if plot_file is not None or var_a > 0.001:  # Plot the points in 2D
+        if plot_file is not None or var_a > 0.001:  # 2D plot
             fig = plt.figure()
             # plot the intersection points
-            plt.plot(pos_x_2d, pos_y_2d, 'ro')
+            plt.plot(positions_2D_x, positions_2D_y, 'ro')
             # plot the estimated parabola function
-            x = np.linspace(min(pos_x_2d), max(pos_x_2d), 100)
+            x = np.linspace(min(positions_2D_x), max(positions_2D_x), 100)
             y = [canonical_parabola(x_i, a) for x_i in x]
             plt.plot(x, y)
             # add grey lines parallel to axes at (0, 0)
@@ -2394,12 +2450,18 @@ def fit_curve(pos_x_2d, pos_y_2d):
     # TODO docstring (and move up before the class)
     # Initial guess of the parameter a is 0 (a straight line)
     x0 = np.array([0.0])
-
-    popt, pcov = optimize.curve_fit(
-        canonical_parabola, pos_x_2d, pos_y_2d, x0, sigma=None)
-    a = popt[0]
-    var_a = pcov[0][0]
-    return a, var_a
+    try:
+        popt, pcov = optimize.curve_fit(
+            canonical_parabola, pos_x_2d, pos_y_2d, x0, sigma=None)
+        a = popt[0]
+        var_a = pcov[0][0]
+        return a, var_a
+    except RuntimeError as e:
+        print "RuntimeError happened:"
+        print(e)  # has to be: "Optimal parameters not found: gtol=0.000000 is
+        # too small, func(x) is orthogonal to the columns of
+        # the Jacobian to machine precision.""
+        return 0.0, 0.0
 
 
 def canonical_parabola(x, a):

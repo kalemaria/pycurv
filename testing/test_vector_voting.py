@@ -94,7 +94,7 @@ class VectorVotingTestCase(unittest.TestCase):
         if not os.path.exists(fold):
             os.makedirs(fold)
         surf_file = '{}plane_half_size{}.surface.vtp'.format(fold, half_size)
-        scale_factor_to_nm = 1  # assume it's already in nm
+        scale_factor_to_nm = 1.0  # assume it's already in nm
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
@@ -271,7 +271,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
         surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
         surf_file = '{}.surface.vtp'.format(surf_filebase)
-        scale_factor_to_nm = 1  # assume it's already in nm
+        scale_factor_to_nm = 1.0  # assume it's already in nm
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
@@ -541,7 +541,7 @@ class VectorVotingTestCase(unittest.TestCase):
             os.makedirs(fold)
         surf_filebase = '{}sphere_r{}'.format(fold, radius)
         surf_file = '{}.surface.vtp'.format(surf_filebase)
-        scale_factor_to_nm = 1  # assume it's already in nm
+        scale_factor_to_nm = 1.0  # assume it's already in nm
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
@@ -750,11 +750,12 @@ class VectorVotingTestCase(unittest.TestCase):
                                delta=allowed_error, msg=msg)
 
     def parametric_test_torus_curvatures(self, rr, csr, inverse=False,
-                                         k=3, g_max=0, epsilon=0, eta=0):
+                                         k=3, g_max=0, epsilon=0, eta=0,
+                                         method='VVCF'):
         """
         Runs all the steps needed to calculate curvatures for a test torus
-        with given radii using Normal Vector Voting combined with curve fitting
-        (VVCF) with a given g_max.
+        with given radii using normal vector voting combined with curve fitting
+        (VVCF) or with curvature tensor voting (VCTV).
 
         Args:
             rr (int): ring radius of the torus
@@ -775,6 +776,11 @@ class VectorVotingTestCase(unittest.TestCase):
                 influencing the number of triangles classified as "crease
                 junction" (class 2) and "no preferred orientation" (class 3, see
                 Notes), default 0
+            method (str): tells which method should be used after normal vector
+                voting (VV): 'VVCF' for curve fitting in the two principal
+                directions estimated by VV to estimate the principal curvatures
+                (default) or 'VCTV' for curvature tensor voting to estimate the
+                principal direction and curvatures
 
         Notes:
             * Either g_max or k must be positive (if both are positive, the
@@ -786,14 +792,16 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
-        # TODO modify the docstring to match the method!
+        if method != 'VVCF' and method != 'VCTV':
+            print "The parameter 'method' has to be 'VVCF' or 'VCTV'"
+            exit(0)
         fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
 
         if not os.path.exists(fold):
             os.makedirs(fold)
         surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)  # TODO "_inner_part" for a small saddle part
         surf_file = '{}.surface.vtp'.format(surf_filebase)
-        scale_factor_to_nm = 1  # assume it's already in nm
+        scale_factor_to_nm = 1.0  # assume it's already in nm
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
@@ -810,11 +818,11 @@ class VectorVotingTestCase(unittest.TestCase):
         base_filename = "{}{}torus_rr{}_csr{}".format(
             files_fold, inverse_str, rr, csr)  # TODO "_inner_part" for a small saddle part
         if g_max > 0:
-            surf_VV_file = '{}.CTV_g_max{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, g_max, epsilon, eta)
+            surf_VV_file = '{}.{}_g_max{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, method, g_max, epsilon, eta)
         elif k > 0:
-            surf_VV_file = '{}.CTV_k{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, k, epsilon, eta)
+            surf_VV_file = '{}.{}_k{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, method, k, epsilon, eta)
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
                          "positive, the specified g_max will be used).")
@@ -823,12 +831,14 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
-                   "torus with ring radius {} and cross-section radius {} ***"
-                   .format(rr, csr))
+                   "torus with ring radius {} and cross-section radius {} "
+                   "using the method {}***"
+                   .format(rr, csr, method))
         else:
             print ("\n*** Generating a surface and a graph for a torus "
-                   "with ring radius {} and cross-section radius {} ***"
-                   .format(rr, csr))
+                   "with ring radius {} and cross-section radius {} "
+                   "using the method {}***"
+                   .format(rr, csr, method))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SaddleGenerator()
@@ -874,11 +884,14 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm with curve fitting
-        surf_VV = curvature_tensor_voting(
+        if method == 'VCTV':
+            script = curvature_tensor_voting
+        else:
+            script = vector_voting_curve_fitting
+        surf_VV = script(
             tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
             exclude_borders=False)
-        # Saving the output (TriangleGraph object) for later inspection in
-        # ParaView:
+        # Saving the output (TriangleGraph object) for later inspection:
         io.save_vtp(surf_VV, surf_VV_file)
 
         # Getting principal curvatures from NVV and VTK from the output graph:
@@ -916,18 +929,18 @@ class VectorVotingTestCase(unittest.TestCase):
     #         for k in [5]:  # 1 for noise=0, else 3, 5
     #             self.parametric_test_plane_normals(10, res=10, noise=n, k=k)
 
-    # def test_cylinder_T_2_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) are correctly estimated
-    #     using Normal Vector Voting with a certain g_max for an opened cylinder
-    #     surface (without the circular planes) with known orientation (height,
-    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-    #     and noise level.
-    #     """
-    #     for n in [0]:  # 5, 10
-    #         for k in [5]:  # 3, 5
-    #             self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
-    #
+    def test_cylinder_T_2_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) are correctly estimated
+        using Normal Vector Voting with a certain g_max for an opened cylinder
+        surface (without the circular planes) with known orientation (height,
+        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+        and noise level.
+        """
+        for n in [5]:  # 0, 3, 5
+            for k in [5]:  # 3, 5
+                self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
+
     # def test_inverse_cylinder_T_2_curvatures(self):
     #     """
     #     Tests whether minimal principal directions (T_2) are correctly estimated
@@ -940,21 +953,21 @@ class VectorVotingTestCase(unittest.TestCase):
     #         self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k,
     #                                                      inverse=True)
 
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated using Normal Vector
-    #     Voting with a certain g_max for a sphere with a certain radius,
-    #     resolution and noise level:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-    #     """
-    #     for n in [0]:  # 5, 10
-    #         for k in [5]:  # 3, 5
-    #             # self.parametric_test_sphere_curvatures(
-    #             #     10, res=30, noise=n, k=k, save_areas=True)
-    #             self.parametric_test_sphere_curvatures(
-    #                 10, ico=1280, noise=n, k=k, save_areas=False)
-    #
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated using Normal Vector
+        Voting with a certain g_max for a sphere with a certain radius,
+        resolution and noise level:
+
+        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+        """
+        for n in [5]:  # 5, 10
+            for k in [5]:  # 3, 5
+                # self.parametric_test_sphere_curvatures(
+                #     10, res=30, noise=n, k=k, save_areas=True)
+                self.parametric_test_sphere_curvatures(
+                    10, ico=1280, noise=n, k=k, save_areas=False)
+
     # def test_inverse_sphere_curvatures(self):
     #     """
     #     Tests whether curvatures are correctly estimated using Normal Vector
@@ -969,11 +982,13 @@ class VectorVotingTestCase(unittest.TestCase):
     #         self.parametric_test_sphere_curvatures(
     #             10, ico=1280, noise=0, k=k, save_areas=False, inverse=True)
 
-    def test_torus_curvatures(self):
-        """
-        Runs parametric_test_torus_curvatures with certain parameters.
-        """
-        self.parametric_test_torus_curvatures(25, 10, inverse=False, k=4)
+    # def test_torus_curvatures(self):
+    #     """
+    #     Runs parametric_test_torus_curvatures with certain parameters.
+    #     """
+    #     for k in [4]:  # 3, 4, 5
+    #         self.parametric_test_torus_curvatures(
+    #             25, 10, inverse=False, k=k, method='VVCF')
 
 
 if __name__ == '__main__':
