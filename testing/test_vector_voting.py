@@ -929,17 +929,17 @@ class VectorVotingTestCase(unittest.TestCase):
     #         for k in [5]:  # 1 for noise=0, else 3, 5
     #             self.parametric_test_plane_normals(10, res=10, noise=n, k=k)
 
-    def test_cylinder_T_2_curvatures(self):
-        """
-        Tests whether minimal principal directions (T_2) are correctly estimated
-        using Normal Vector Voting with a certain g_max for an opened cylinder
-        surface (without the circular planes) with known orientation (height,
-        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-        and noise level.
-        """
-        for n in [5]:  # 0, 3, 5
-            for k in [5]:  # 3, 5
-                self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
+    # def test_cylinder_T_2_curvatures(self):
+    #     """
+    #     Tests whether minimal principal directions (T_2) are correctly estimated
+    #     using Normal Vector Voting with a certain g_max for an opened cylinder
+    #     surface (without the circular planes) with known orientation (height,
+    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+    #     and noise level.
+    #     """
+    #     for n in [5]:  # 0, 3, 5
+    #         for k in [7]:  # 3, 5
+    #             self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
 
     # def test_inverse_cylinder_T_2_curvatures(self):
     #     """
@@ -953,20 +953,20 @@ class VectorVotingTestCase(unittest.TestCase):
     #         self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k,
     #                                                      inverse=True)
 
-    def test_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated using Normal Vector
-        Voting with a certain g_max for a sphere with a certain radius,
-        resolution and noise level:
-
-        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-        """
-        for n in [5]:  # 5, 10
-            for k in [5]:  # 3, 5
-                # self.parametric_test_sphere_curvatures(
-                #     10, res=30, noise=n, k=k, save_areas=True)
-                self.parametric_test_sphere_curvatures(
-                    10, ico=1280, noise=n, k=k, save_areas=False)
+    # def test_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated using Normal Vector
+    #     Voting with a certain g_max for a sphere with a certain radius,
+    #     resolution and noise level:
+    #
+    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+    #     """
+    #     for n in [5]:  # 5, 10
+    #         for k in [5]:  # 3, 5
+    #             # self.parametric_test_sphere_curvatures(
+    #             #     10, res=30, noise=n, k=k, save_areas=True)
+    #             self.parametric_test_sphere_curvatures(
+    #                 10, ico=1280, noise=n, k=k, save_areas=False)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -982,13 +982,13 @@ class VectorVotingTestCase(unittest.TestCase):
     #         self.parametric_test_sphere_curvatures(
     #             10, ico=1280, noise=0, k=k, save_areas=False, inverse=True)
 
-    # def test_torus_curvatures(self):
-    #     """
-    #     Runs parametric_test_torus_curvatures with certain parameters.
-    #     """
-    #     for k in [4]:  # 3, 4, 5
-    #         self.parametric_test_torus_curvatures(
-    #             25, 10, inverse=False, k=k, method='VVCF')
+    def test_torus_curvatures(self):
+        """
+        Runs parametric_test_torus_curvatures with certain parameters.
+        """
+        for g in [4]:  # 3, 4, 5
+            self.parametric_test_torus_curvatures(
+                25, 10, inverse=False, k=0, g_max=g, method='VVCF')  # 'VCTV'
 
 
 if __name__ == '__main__':

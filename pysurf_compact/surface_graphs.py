@@ -1700,6 +1700,7 @@ class TriangleGraph(SurfaceGraph):
         # Eigenvalues from highest to lowest:
         b_1 = eigenvalues[2]
         b_2 = eigenvalues[1]
+        b_3 = eigenvalues[0]
         # Eigenvectors that correspond to the highest two eigenvalues are the
         # estimated principal directions:
         T_1 = eigenvectors[:, 2]
@@ -1711,23 +1712,28 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            if b_1 == 0.0 and b_2 == 0.0:
-                if T_1[0] == N_v[0] and T_1[1] == N_v[1] and T_1[2] == N_v[2]:
-                    T_1 = T_3
-                    # T_3 = N_v
-                elif T_2[0] == N_v[0] and T_2[1] == N_v[1] and T_2[2] == N_v[2]:
-                    T_2 = T_3
-                    # T_3 = N_v
-                else:
-                    print "No exchanged normal found"
-                    print "Error: T_3 has to be equal to the normal |N_v|, but:"
-                    print "T_3 = %s" % T_3
-                    print "N_v = %s" % N_v
-                    exit(0)
+            print "T_3 has to be equal to the normal |N_v|, but:"
+            print("T_1 = {}".format(T_1))
+            print("T_2 = {}".format(T_2))
+            print("T_3 = {}".format(T_3))
+            print("N_r = {}".format(N_v))
+            print("lambda_1 = {}".format(b_1))
+            print("lambda_2 = {}".format(b_2))
+            print("lambda_3 = {}".format(b_3))
+            if (round(abs(T_1[0]), 7) == round(abs(N_v[0]), 7) and
+                    round(abs(T_1[1]), 7) == round(abs(N_v[1]), 7) and
+                    round(abs(T_1[2]), 7) == round(abs(N_v[2]), 7)):
+                T_1 = T_3  # T_3 = N_v
+                b_1 = b_3  # b_3 = 0
+                print("Exchanged T_1 with T_3 and b_1 with b_3")
+            elif (round(abs(T_2[0]), 7) == round(abs(N_v[0]), 7) and
+                    round(abs(T_2[1]), 7) == round(abs(N_v[1]), 7) and
+                    round(abs(T_2[2]), 7) == round(abs(N_v[2]), 7)):
+                T_2 = T_3  # T_3 = N_v
+                b_2 = b_3  # b_3 = 0
+                print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
-                print "Error: T_3 has to be equal to the normal |N_v|, but:"
-                print "T_3 = %s" % T_3
-                print "N_v = %s" % N_v
+                print("Error: no eigenvector equal to the normal |N_v| found")
                 exit(0)
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
@@ -1790,6 +1796,7 @@ class TriangleGraph(SurfaceGraph):
         # Eigenvalues from highest to lowest:
         b_1 = eigenvalues[2]
         b_2 = eigenvalues[1]
+        b_3 = eigenvalues[0]
         # Eigenvectors that correspond to the highest two eigenvalues are the
         # estimated principal directions:
         T_1 = eigenvectors[:, 2]
@@ -1801,23 +1808,28 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            if b_1 == 0.0 and b_2 == 0.0:
-                if T_1[0] == N_v[0] and T_1[1] == N_v[1] and T_1[2] == N_v[2]:
-                    T_1 = T_3
-                    # T_3 = N_v
-                elif T_2[0] == N_v[0] and T_2[1] == N_v[1] and T_2[2] == N_v[2]:
-                    T_2 = T_3
-                    # T_3 = N_v
-                else:
-                    print "No exchanged normal found"
-                    print "Error: T_3 has to be equal to the normal |N_v|, but:"
-                    print "T_3 = %s" % T_3
-                    print "N_v = %s" % N_v
-                    exit(0)
+            print "T_3 has to be equal to the normal |N_v|, but:"
+            print("T_1 = {}".format(T_1))
+            print("T_2 = {}".format(T_2))
+            print("T_3 = {}".format(T_3))
+            print("N_r = {}".format(N_v))
+            print("lambda_1 = {}".format(b_1))
+            print("lambda_2 = {}".format(b_2))
+            print("lambda_3 = {}".format(b_3))
+            if (round(abs(T_1[0]), 7) == round(abs(N_v[0]), 7) and
+                    round(abs(T_1[1]), 7) == round(abs(N_v[1]), 7) and
+                    round(abs(T_1[2]), 7) == round(abs(N_v[2]), 7)):
+                T_1 = T_3  # T_3 = N_v
+                b_1 = b_3  # b_3 = 0
+                print("Exchanged T_1 with T_3 and b_1 with b_3")
+            elif (round(abs(T_2[0]), 7) == round(abs(N_v[0]), 7) and
+                    round(abs(T_2[1]), 7) == round(abs(N_v[1]), 7) and
+                    round(abs(T_2[2]), 7) == round(abs(N_v[2]), 7)):
+                T_2 = T_3  # T_3 = N_v
+                b_2 = b_3  # b_3 = 0
+                print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
-                print "Error: T_3 has to be equal to the normal |N_v|, but:"
-                print "T_3 = %s" % T_3
-                print "N_v = %s" % N_v
+                print("Error: no eigenvector equal to the normal |N_v| found")
                 exit(0)
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
@@ -1892,6 +1904,7 @@ class TriangleGraph(SurfaceGraph):
         # Eigenvalues from highest to lowest:
         b_1 = eigenvalues[2]
         b_2 = eigenvalues[1]
+        b_3 = eigenvalues[0]
         # Eigenvectors that correspond to the highest two eigenvalues are the
         # estimated principal directions:
         T_1 = eigenvectors[:, 2]
@@ -1903,23 +1916,28 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            if b_1 == 0.0 and b_2 == 0.0:
-                if T_1[0] == N_v[0] and T_1[1] == N_v[1] and T_1[2] == N_v[2]:
-                    T_1 = T_3
-                    # T_3 = N_v
-                elif T_2[0] == N_v[0] and T_2[1] == N_v[1] and T_2[2] == N_v[2]:
-                    T_2 = T_3
-                    # T_3 = N_v
-                else:
-                    print "No exchanged normal found"
-                    print "Error: T_3 has to be equal to the normal |N_v|, but:"
-                    print "T_3 = {}".format(T_3)
-                    print "N_v = {}".format(N_v)
-                    exit(0)
+            print "T_3 has to be equal to the normal |N_v|, but:"
+            print("T_1 = {}".format(T_1))
+            print("T_2 = {}".format(T_2))
+            print("T_3 = {}".format(T_3))
+            print("N_r = {}".format(N_v))
+            print("lambda_1 = {}".format(b_1))
+            print("lambda_2 = {}".format(b_2))
+            print("lambda_3 = {}".format(b_3))
+            if (round(abs(T_1[0]), 7) == round(abs(N_v[0]), 7) and
+                    round(abs(T_1[1]), 7) == round(abs(N_v[1]), 7) and
+                    round(abs(T_1[2]), 7) == round(abs(N_v[2]), 7)):
+                T_1 = T_3  # T_3 = N_v
+                # b_1 = b_3  # b_3 = 0
+                print("Exchanged T_1 with T_3 and b_1 with b_3")
+            elif (round(abs(T_2[0]), 7) == round(abs(N_v[0]), 7) and
+                    round(abs(T_2[1]), 7) == round(abs(N_v[1]), 7) and
+                    round(abs(T_2[2]), 7) == round(abs(N_v[2]), 7)):
+                T_2 = T_3  # T_3 = N_v
+                # b_2 = b_3  # b_3 = 0
+                print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
-                print "Error: T_3 has to be equal to the normal |N_v|, but:"
-                print "T_3 = {}".format(T_3)
-                print "N_v = {}".format(N_v)
+                print("Error: no eigenvector equal to the normal |N_v| found")
                 exit(0)
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
@@ -2347,10 +2365,12 @@ class TriangleGraph(SurfaceGraph):
         # a vector on tangent plane T_r(S)
         votedir = perpendicular_vector(N_r, debug=verbose)
         if votedir is None:
-            print("Calculation of a perpendicular vector failed")
+            print("Error: calculation of a perpendicular vector failed")
             exit(0)
-        M_r = np.zeros(shape=(2, 2))
+        # M_r = np.zeros(shape=(2, 2))  # when transform votedir to 2D
+        M_r = np.zeros(shape=(3, 3))
         R = rotation_matrix(N_r, math.pi/4)
+        num_valid_votes = 0
         for i in range(8):
             # rotate the vector by 45 degrees (pi/4 radians) around N_r axis
             votedir = rotate_vector(votedir, math.pi/4, matrix=R, debug=verbose)
@@ -2386,7 +2406,7 @@ class TriangleGraph(SurfaceGraph):
                 if verbose:
                     print("b = {}, higher than RadiusHit = {}".format(
                         b, radius_hit))
-                continue
+                continue  # in paper "return None" ...
             k_rc = 2 * b / (b ** 2 + radius_hit ** 2)
             # sign(c) = 1 if c is above the tangent plane T_r(S)
             #          -1 if c is below T_r(S)
@@ -2394,10 +2414,11 @@ class TriangleGraph(SurfaceGraph):
             sign_c = signum(dot(N_r, c - r))
 
             # TODO transform votedir to a local coordinate system, where r is
-            # in [0, 0, 0] and N_r is the Z axis
+            # in [0, 0, 0] and N_r is the Z axis and leave out third dimension
             outer_product = outer(votedir, votedir)
-            multiplicator = sign_c * k_rc / 8
+            multiplicator = sign_c * k_rc
             M_r += multiply(outer_product, multiplicator)
+            num_valid_votes += 1
 
             if verbose:
                 print("\nvotedir = ({}, {}, {})".format(
@@ -2408,23 +2429,57 @@ class TriangleGraph(SurfaceGraph):
                 print("k_rc = {}".format(k_rc))
                 print("sign_c = {}".format(sign_c))
 
-        # Decompose the symmetric matrix B_v:
+        M_r /= 8  # or M_r /= num_valid_votes ?
+        # Decompose the symmetric matrix M_r:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix
         eigenvalues, eigenvectors = np.linalg.eigh(M_r)
         # Eigenvalues from highest to lowest:
-        lambda_1 = eigenvalues[1]
-        lambda_2 = eigenvalues[0]
+        lambda_1 = eigenvalues[2]  # in 2D eigenvalues[1]
+        lambda_2 = eigenvalues[1]  # in 2D eigenvalues[0]
+        lambda_3 = eigenvalues[0]
         # Eigenvectors that correspond to the highest two eigenvalues are the
         # estimated principal directions:
-        T_1 = eigenvectors[:, 1]
-        T_2 = eigenvectors[:, 0]
+        T_1 = eigenvectors[:, 2]  # in 2D eigenvectors[:, 1]
+        T_2 = eigenvectors[:, 1]  # in 2D eigenvectors[:, 0]
+        T_3 = eigenvectors[:, 0]
+        try:
+            assert(round(abs(T_3[0]), 7) == round(abs(N_r[0]), 7) and
+                   round(abs(T_3[1]), 7) == round(abs(N_r[1]), 7) and
+                   round(abs(T_3[2]), 7) == round(abs(N_r[2]), 7))
+        except AssertionError:
+            print "T_3 has to be equal to the normal |N_r|, but:"
+            print("T_1 = {}".format(T_1))
+            print("T_2 = {}".format(T_2))
+            print("T_3 = {}".format(T_3))
+            print("N_r = {}".format(N_r))
+            print("lambda_1 = {}".format(lambda_1))
+            print("lambda_2 = {}".format(lambda_2))
+            print("lambda_3 = {}".format(lambda_3))
+            if (round(abs(T_1[0]), 7) == round(abs(N_r[0]), 7) and
+                    round(abs(T_1[1]), 7) == round(abs(N_r[1]), 7) and
+                    round(abs(T_1[2]), 7) == round(abs(N_r[2]), 7)):
+                T_1 = T_3
+                lambda_1 = lambda_3
+                # T_3 = N_r; lambda_3 = 0
+                print("Exchanged T_1 with T_3 and lambda_1 with lambda_3")
+            elif (round(abs(T_2[0]), 7) == round(abs(N_r[0]), 7) and
+                    round(abs(T_2[1]), 7) == round(abs(N_r[1]), 7) and
+                    round(abs(T_2[2]), 7) == round(abs(N_r[2]), 7)):
+                T_2 = T_3
+                lambda_2 = lambda_3
+                # T_3 = N_r; lambda_3 = 0
+                print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
+            else:
+                print("Error: no eigenvector equal to the normal |N_r| found")
+                exit(0)
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2
         kappa_2 = 3 * lambda_2 - lambda_1
         if verbose:
-            print("\nT_1 = ({}, {})".format(T_1[0], T_1[1]))
-            print("T_2 = ({}, {})".format(T_2[0], T_2[1]))
+            print("\nNumber valid votes = {}".format(num_valid_votes))
+            print("T_1 = {}".format(T_1))
+            print("T_2 = {}".format(T_2))
             print("kappa_1 = {}".format(kappa_1))
             print("kappa_2 = {}".format(kappa_2))
 

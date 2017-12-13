@@ -989,7 +989,7 @@ def curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
             result = None  # initialization
             if orientation_class[v] == 1:
                 # None is returned if curvature at v cannot be estimated
-                result = gen_curv_vote(v, g_max, verbose=True)
+                result = gen_curv_vote(v, g_max, verbose=False)
             # For crease, no preferably oriented vertices or if curvature could
             # not be estimated, add placeholders to the corresponding vertex
             # properties
@@ -1018,7 +1018,7 @@ def curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
             result = None  # initialization
             if orientation_class[v] == 1 and is_on_border[v] == 0:
                 # None is returned if curvature at v cannot be estimated
-                result = gen_curv_vote(v, g_max, verbose=True)
+                result = gen_curv_vote(v, g_max, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
             # if curvature could not be estimated, add placeholders to the
             # corresponding vertex properties
