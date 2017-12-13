@@ -781,8 +781,8 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
             # For crease, no preferably oriented vertices, vertices on border or
             # vertices lacking neighbors, add placeholders to the corresponding
             # vertex properties
-            if orientation_class[v] != 1 or is_on_border[v] == 1 or B_v is None\
-                    or result is None:
+            if (orientation_class[v] != 1 or is_on_border[v] == 1 or B_v is None
+                    or result is None):
                 tg.graph.vp.T_1[v] = np.zeros(shape=3)
                 tg.graph.vp.T_2[v] = np.zeros(shape=3)
                 tg.graph.vp.fit_error_1[v] = 0
@@ -808,8 +808,8 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
     return surface_VV
 
 
-def curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
-                            exclude_borders=True):
+def vector_curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
+                                   exclude_borders=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its

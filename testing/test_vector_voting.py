@@ -6,8 +6,8 @@ import math
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
-    TriangleGraph, PointGraph, vector_voting_curve_fitting,
-    curvature_tensor_voting, pexceptions)
+    TriangleGraph, PointGraph, vector_voting, vector_voting_sign_correction,
+    vector_voting_curve_fitting, vector_curvature_tensor_voting, pexceptions)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
@@ -792,8 +792,11 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
-        if method != 'VVCF' and method != 'VCTV':
-            print "The parameter 'method' has to be 'VVCF' or 'VCTV'"
+        # TODO complete the docstring (top and methods parameter description)
+        if (method != 'VV' and method != 'VVSC' and method != 'VVCF' and
+                    method != 'VCTV'):
+            print("The parameter 'method' has to be 'VV', 'VVSC', 'VVCF' or "
+                  "'VCTV'")
             exit(0)
         fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
 
@@ -884,10 +887,15 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm with curve fitting
-        if method == 'VCTV':
-            script = curvature_tensor_voting
-        else:
+        if method == 'VV':
+            script = vector_voting
+        elif method == 'VVSC':
+            script = vector_voting_sign_correction
+        elif method == 'VVCF':
             script = vector_voting_curve_fitting
+        else:  # if method == 'VCTV'
+            script = vector_curvature_tensor_voting
+
         surf_VV = script(
             tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
             exclude_borders=False)
@@ -988,7 +996,8 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         for g in [4]:  # 3, 4, 5
             self.parametric_test_torus_curvatures(
-                25, 10, inverse=False, k=0, g_max=g, method='VVCF')  # 'VCTV'
+                25, 10, inverse=False, k=0, g_max=g,
+                method='VVSC')  # 'VV', 'VVSC', 'VVCF', 'VCTV'
 
 
 if __name__ == '__main__':
