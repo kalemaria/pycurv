@@ -741,11 +741,10 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
                 B_v = collecting_votes2(
                         v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
             if B_v is not None:
-                result = estimate_directions_and_fit_curves(
-                    v, B_v, g_max, all_neighbor_idx_to_dist[i], verbose=False)
+                estimate_directions_and_fit_curves(v, B_v, g_max, verbose=False)
             # For crease, no preferably oriented vertices or vertices lacking
             # neighbors, add placeholders to the corresponding vertex properties
-            if orientation_class[v] != 1 or B_v is None or result is None:
+            if orientation_class[v] != 1 or B_v is None:
                 tg.graph.vp.T_1[v] = np.zeros(shape=3)
                 tg.graph.vp.T_2[v] = np.zeros(shape=3)
                 tg.graph.vp.fit_error_1[v] = 0
@@ -776,13 +775,11 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
                 B_v = collecting_votes2(
                         v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
             if B_v is not None:
-                result = estimate_directions_and_fit_curves(
-                    v, B_v, g_max, all_neighbor_idx_to_dist[i], verbose=False)
+                estimate_directions_and_fit_curves(v, B_v, g_max, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
             # vertices lacking neighbors, add placeholders to the corresponding
             # vertex properties
-            if (orientation_class[v] != 1 or is_on_border[v] == 1 or B_v is None
-                    or result is None):
+            if orientation_class[v] != 1 or is_on_border[v] == 1 or B_v is None:
                 tg.graph.vp.T_1[v] = np.zeros(shape=3)
                 tg.graph.vp.T_2[v] = np.zeros(shape=3)
                 tg.graph.vp.fit_error_1[v] = 0

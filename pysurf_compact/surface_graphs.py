@@ -117,6 +117,119 @@ def signum(number):
         return 0
 
 
+def fit_curve(pos_x_2d, pos_y_2d):
+    # TODO docstring
+    # Initial guess of the parameter a is 0 (a straight line)
+    x0 = np.array([0.0])
+    try:
+        popt, pcov = optimize.curve_fit(
+            canonical_parabola, pos_x_2d, pos_y_2d, x0, sigma=None)
+        a = popt[0]
+        var_a = pcov[0][0]
+        if var_a == float('Inf'):  # if fit is impossible (e.g. only one point)
+            var_a = 1
+        return a, var_a
+    except RuntimeError as e:
+        print "RuntimeError happened:"
+        print(e)  # has to be: "Optimal parameters not found: gtol=0.000000 is
+        # too small, func(x) is orthogonal to the columns of
+        # the Jacobian to machine precision.""
+        return 0.0, -1.0  # in tests it looked like a perfect straight line
+
+
+def canonical_parabola(x, a):
+    # TODO docstring?
+    return a * x * x
+
+
+def perpendicular_vector(iv, debug=False):
+    # TODO docstring
+    # implementation of algorithm of Ahmed Fasih https://math.stackexchange.com/
+    # questions/133177/finding-a-unit-vector-perpendicular-to-another-vector
+    try:
+        assert(isinstance(iv, np.ndarray) and iv.shape == (3,))
+    except AssertionError:
+        print("Requires a 1D numpy.ndarray of length 3 (3D vector)")
+        return None
+    if iv[0] == iv[1] == iv[2] == 0:
+        print("Requires a non-zero 3D vector")
+        return None
+    ov = np.array([0.0, 0.0, 0.0])
+    for m in range(3):
+        if iv[m] != 0:
+            break
+    if m == 2:
+        n = 0
+    else:
+        n = m + 1
+    ov[n] = iv[m]
+    ov[m] = -iv[n]
+    if debug:
+        try:
+            assert np.dot(iv, ov) == 0
+        except AssertionError:
+            print("Failed to find a perpendicular vector to the given one")
+            print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
+            print("resulting vector: ({}, {}, {})".format(ov[0], ov[1], ov[2]))
+            return None
+    len_outv = norm(ov)
+    if len_outv == 0:
+        print("Resulting vector has length 0")
+        print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
+        print("resulting vector: ({}, {}, {})".format(ov[0], ov[1], ov[2]))
+        return None
+    return ov / len_outv  # unit length vector
+
+
+def rotation_matrix(axis, theta):
+    # TODO docstring
+    # from B. M. https://stackoverflow.com/questions/6802577/
+    # python-rotation-of-3d-vector
+    a = axis / norm(axis)  # unit vector along axis
+    A = np.cross(np.eye(3), a)  # skew-symmetric matrix associated to a
+    return expm3(A * theta)
+
+
+def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
+    # TODO docstring, wrapper for rotation_matrix
+    dot = np.dot
+    acos = math.acos
+    pi = math.pi
+
+    if matrix is None and axis is not None:
+        R = rotation_matrix(axis, theta)
+    elif matrix is not None and axis is None:
+        R = matrix
+    else:
+        print("Either the rotation axis or rotation matrix must be given")
+        return None
+
+    u = dot(R, v)
+    if debug:
+        cos_tetha = dot(v, u) / norm(v) / norm(u)
+        try:
+            theta2 = acos(cos_tetha)
+        except ValueError:
+            if cos_tetha > 1:
+                cos_tetha = 1.0
+            elif cos_tetha < 0:
+                cos_tetha = 0.0
+            theta2 = acos(cos_tetha)
+        try:
+            assert theta - (0.05 * pi) <= theta2 <= theta + (0.05 * pi)
+        except AssertionError:
+            print("Angle between the input vector and the rotated one is not "
+                  "{}, but {}".format(theta, theta2))
+            return None
+    return u
+
+
+def transform_vector_to_local_system(pos, normal, vector):
+    # so that pos shifts to [0, 0, 0] and normal to the plane where the vector
+    # lies becomes the Z axis
+    pass  # TODO
+
+
 class SurfaceGraph(graphs.SegmentationGraph):
     """Class defining the abstract SurfaceGraph object."""
 
@@ -1712,26 +1825,29 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            print "T_3 has to be equal to the normal |N_v|, but:"
-            print("T_1 = {}".format(T_1))
-            print("T_2 = {}".format(T_2))
-            print("T_3 = {}".format(T_3))
-            print("N_r = {}".format(N_v))
-            print("lambda_1 = {}".format(b_1))
-            print("lambda_2 = {}".format(b_2))
-            print("lambda_3 = {}".format(b_3))
+            if verbose:
+                print "T_3 has to be equal to the normal |N_v|, but:"
+                print("T_1 = {}".format(T_1))
+                print("T_2 = {}".format(T_2))
+                print("T_3 = {}".format(T_3))
+                print("N_r = {}".format(N_v))
+                print("lambda_1 = {}".format(b_1))
+                print("lambda_2 = {}".format(b_2))
+                print("lambda_3 = {}".format(b_3))
             if (round(abs(T_1[0]), 7) == round(abs(N_v[0]), 7) and
                     round(abs(T_1[1]), 7) == round(abs(N_v[1]), 7) and
                     round(abs(T_1[2]), 7) == round(abs(N_v[2]), 7)):
                 T_1 = T_3  # T_3 = N_v
                 b_1 = b_3  # b_3 = 0
-                print("Exchanged T_1 with T_3 and b_1 with b_3")
+                if verbose:
+                    print("Exchanged T_1 with T_3 and b_1 with b_3")
             elif (round(abs(T_2[0]), 7) == round(abs(N_v[0]), 7) and
                     round(abs(T_2[1]), 7) == round(abs(N_v[1]), 7) and
                     round(abs(T_2[2]), 7) == round(abs(N_v[2]), 7)):
                 T_2 = T_3  # T_3 = N_v
                 b_2 = b_3  # b_3 = 0
-                print("Exchanged T_2 with T_3 and b_2 with b_3")
+                if verbose:
+                    print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
                 print("Error: no eigenvector equal to the normal |N_v| found")
                 exit(0)
@@ -1808,26 +1924,29 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            print "T_3 has to be equal to the normal |N_v|, but:"
-            print("T_1 = {}".format(T_1))
-            print("T_2 = {}".format(T_2))
-            print("T_3 = {}".format(T_3))
-            print("N_r = {}".format(N_v))
-            print("lambda_1 = {}".format(b_1))
-            print("lambda_2 = {}".format(b_2))
-            print("lambda_3 = {}".format(b_3))
+            if verbose:
+                print "T_3 has to be equal to the normal |N_v|, but:"
+                print("T_1 = {}".format(T_1))
+                print("T_2 = {}".format(T_2))
+                print("T_3 = {}".format(T_3))
+                print("N_r = {}".format(N_v))
+                print("lambda_1 = {}".format(b_1))
+                print("lambda_2 = {}".format(b_2))
+                print("lambda_3 = {}".format(b_3))
             if (round(abs(T_1[0]), 7) == round(abs(N_v[0]), 7) and
                     round(abs(T_1[1]), 7) == round(abs(N_v[1]), 7) and
                     round(abs(T_1[2]), 7) == round(abs(N_v[2]), 7)):
                 T_1 = T_3  # T_3 = N_v
                 b_1 = b_3  # b_3 = 0
-                print("Exchanged T_1 with T_3 and b_1 with b_3")
+                if verbose:
+                    print("Exchanged T_1 with T_3 and b_1 with b_3")
             elif (round(abs(T_2[0]), 7) == round(abs(N_v[0]), 7) and
                     round(abs(T_2[1]), 7) == round(abs(N_v[1]), 7) and
                     round(abs(T_2[2]), 7) == round(abs(N_v[2]), 7)):
                 T_2 = T_3  # T_3 = N_v
                 b_2 = b_3  # b_3 = 0
-                print("Exchanged T_2 with T_3 and b_2 with b_3")
+                if verbose:
+                    print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
                 print("Error: no eigenvector equal to the normal |N_v| found")
                 exit(0)
@@ -1870,7 +1989,7 @@ class TriangleGraph(SurfaceGraph):
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
     def estimate_directions_and_fit_curves(self, vertex_v, B_v, g_max,
-                                           neighbor_idx_to_dist, verbose=False):
+                                           verbose=False):
         """
         For a vertex v and its calculated matrix B_v (output of
         collecting_votes2), calculates the principal directions (T_1 and T_2)
@@ -1888,9 +2007,6 @@ class TriangleGraph(SurfaceGraph):
             B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
                 collecting_votes2)
             g_max (float): geodesic radius
-            neighbor_idx_to_dist (dict): a dictionary of neighbors of vertex v,
-                mapping index of each vertex v_i to its geodesic distance from
-                the vertex v (output of collecting_votes)
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -1916,43 +2032,38 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            print "T_3 has to be equal to the normal |N_v|, but:"
-            print("T_1 = {}".format(T_1))
-            print("T_2 = {}".format(T_2))
-            print("T_3 = {}".format(T_3))
-            print("N_r = {}".format(N_v))
-            print("lambda_1 = {}".format(b_1))
-            print("lambda_2 = {}".format(b_2))
-            print("lambda_3 = {}".format(b_3))
+            if verbose:
+                print "T_3 has to be equal to the normal |N_v|, but:"
+                print("T_1 = {}".format(T_1))
+                print("T_2 = {}".format(T_2))
+                print("T_3 = {}".format(T_3))
+                print("N_r = {}".format(N_v))
+                print("lambda_1 = {}".format(b_1))
+                print("lambda_2 = {}".format(b_2))
+                print("lambda_3 = {}".format(b_3))
             if (round(abs(T_1[0]), 7) == round(abs(N_v[0]), 7) and
                     round(abs(T_1[1]), 7) == round(abs(N_v[1]), 7) and
                     round(abs(T_1[2]), 7) == round(abs(N_v[2]), 7)):
                 T_1 = T_3  # T_3 = N_v
                 # b_1 = b_3  # b_3 = 0
-                print("Exchanged T_1 with T_3 and b_1 with b_3")
+                if verbose:
+                    print("Exchanged T_1 with T_3 and b_1 with b_3")
             elif (round(abs(T_2[0]), 7) == round(abs(N_v[0]), 7) and
                     round(abs(T_2[1]), 7) == round(abs(N_v[1]), 7) and
                     round(abs(T_2[2]), 7) == round(abs(N_v[2]), 7)):
                 T_2 = T_3  # T_3 = N_v
                 # b_2 = b_3  # b_3 = 0
-                print("Exchanged T_2 with T_3 and b_2 with b_3")
+                if verbose:
+                    print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
                 print("Error: no eigenvector equal to the normal |N_v| found")
                 exit(0)
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
-        out1 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_1, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist,
-            verbose=verbose)
-        if out1 is None:
-            return None
-        var_a_1, kappa_1 = out1
-        out2 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_2, self.scale_factor_to_nm, g_max, neighbor_idx_to_dist,
-            verbose=verbose)
-        if out2 is None:
-            return None
-        var_a_2, kappa_2 = out2
+        var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
+            vertex_v, T_1, self.scale_factor_to_nm, g_max, verbose=verbose)
+        var_a_2, kappa_2 = self.find_points_in_tangent_direction_and_fit_curve(
+            vertex_v, T_2, self.scale_factor_to_nm, g_max, verbose=verbose)
         if kappa_1 < kappa_2:
             T_1, T_2 = T_2, T_1
             var_a_1, var_a_2 = var_a_2, var_a_1
@@ -1986,7 +2097,6 @@ class TriangleGraph(SurfaceGraph):
                 (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
         self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
-        return "success"
 
     def sign_voting(self, vertex_v, neighbor_idx_to_dist, verbose=False):
         # TODO docstring; is not finished - did not achieve separation to types
@@ -2144,7 +2254,7 @@ class TriangleGraph(SurfaceGraph):
         return neighboring_cell_ids
 
     def find_points_in_tangent_direction_and_fit_curve(
-            self, vertex_v, tangent, dist, g_max, neighbor_idx_to_dist,
+            self, vertex_v, tangent, dist, g_max,
             poly_file=None, plot_file=None, verbose=False, debug=False):
         # TODO docstring, remove debug when finished debugging
         # tangent has to have length 1!
@@ -2175,8 +2285,6 @@ class TriangleGraph(SurfaceGraph):
         dot = np.dot
         # maximal number of points to sample in each direction
         num_points = int(g_max / dist)  # last dist have to fit into g_max
-        # Note: int(math.ceil(g_max / dist)) led sometimes to too high points at
-        # edges
 
         # Add the central point v first
         points.InsertNextPoint(v)
@@ -2186,16 +2294,7 @@ class TriangleGraph(SurfaceGraph):
         # First sample in the tangent direction and then in the opposite one
         for direction in [1, -1]:
             for i in range(1, num_points + 1):
-                # Note: num_points + 1 led sometimes to points with wrong sign
-
                 curr_dist = i * dist
-                # 1. If the euclidean distance of a point on the tangent line
-                # from v is >g_max, exclude and stop searching in that direction
-                # if curr_dist > g_max:  # does not occur with this for loop!
-                #     if debug:
-                #         print "Distance bigger than g_max"
-                #     break
-
                 # point on line from v in tangent / opposite direction
                 p0 = v + np.multiply(np.multiply(tangent, direction), curr_dist)
                 # point on line from p0 in opposite normal direction
@@ -2204,8 +2303,7 @@ class TriangleGraph(SurfaceGraph):
                 p2 = p0 + np.multiply(normal, g_max)
 
                 # Outputs (we need only pos, which is the x, y, z position
-                # of the intersection, and cell_id, which is id of the cell in
-                # which the intersection point lies):
+                # of the intersection:
                 t = vtk.mutable(0)
                 pos = [0.0, 0.0, 0.0]
                 pcoords = [0.0, 0.0, 0.0]
@@ -2213,28 +2311,19 @@ class TriangleGraph(SurfaceGraph):
                 cell_id = vtk.mutable(0)
                 locator.IntersectWithLine(p1, p2, tolerance, t, pos, pcoords,
                                           sub_id, cell_id)
-                cell_id = int(cell_id)
                 if verbose:
                     print "\nPoint {}:".format(direction * i)
 
-                # # 2. If the cell of pos is not in the geodesic neighbourhood of
-                # # v, exclude and stop searching in that direction
-                # if cell_id not in neighbor_idx_to_dist:
-                #     if debug or verbose:
-                #         print "Point NOT in neighborhood"
-                #     break
-
-                # 3. If no intersection was found (pos stays like initialized),
+                # If no intersection was found (pos stays like initialized),
                 # exclude and stop searching in that direction
                 if pos == [0.0, 0.0, 0.0]:
                     if debug or verbose:
                         print "No intersection point"
                     break
 
-                # 4. If euclidean distance between p0 and pos is > g_max (i.e.
+                # If euclidean distance between p0 and pos is > g_max (i.e.
                 # pos is not between p1 and p2), exclude and stop searching in
                 # that direction
-                # was: if not is_pos_between_2_points(pos, p1, p2):
                 if vector_length(p0 - pos) > g_max:
                     if debug or verbose:
                         print "Point NOT within geodesic radius to the tangent"
@@ -2247,7 +2336,7 @@ class TriangleGraph(SurfaceGraph):
                 pos_2D_y = float(sign * vector_length(p0 - pos))
 
                 if i >= 2:
-                    # 5. If a high jump happens, i.e. distance to previous point
+                    # If a high jump happens, i.e. distance to previous point
                     # is too high, exclude and stop searching in that direction
                     current_pos = np.array([pos_2D_x, pos_2D_y])
                     last_pos = np.array(
@@ -2372,10 +2461,8 @@ class TriangleGraph(SurfaceGraph):
             cell_id = vtk.mutable(0)
             locator.IntersectWithLine(p1, p2, tolerance, t, c, pcoords,
                                       sub_id, cell_id)
-            # If there is no intersection, c stays like initialized or some
-            # distant point not between p1 and p2 is returned:
-            if (c == [0.0, 0.0, 0.0] or
-                    not is_pos_between_2_points(c, p1, p2)):
+            # If there is no intersection, c stays like initialized:
+            if c == [0.0, 0.0, 0.0]:
                 if verbose:
                     print("No intersection point found")
                 continue  # in paper "return None", but I think if does not make
@@ -2429,34 +2516,38 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_r[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_r[2]), 7))
         except AssertionError:
-            print "T_3 has to be equal to the normal |N_r|, but:"
-            print("T_1 = {}".format(T_1))
-            print("T_2 = {}".format(T_2))
-            print("T_3 = {}".format(T_3))
-            print("N_r = {}".format(N_r))
-            print("lambda_1 = {}".format(lambda_1))
-            print("lambda_2 = {}".format(lambda_2))
-            print("lambda_3 = {}".format(lambda_3))
+            if verbose:
+                print "T_3 has to be equal to the normal |N_r|, but:"
+                print("T_1 = {}".format(T_1))
+                print("T_2 = {}".format(T_2))
+                print("T_3 = {}".format(T_3))
+                print("N_r = {}".format(N_r))
+                print("lambda_1 = {}".format(lambda_1))
+                print("lambda_2 = {}".format(lambda_2))
+                print("lambda_3 = {}".format(lambda_3))
             if (round(abs(T_1[0]), 7) == round(abs(N_r[0]), 7) and
                     round(abs(T_1[1]), 7) == round(abs(N_r[1]), 7) and
                     round(abs(T_1[2]), 7) == round(abs(N_r[2]), 7)):
                 T_1 = T_3
                 lambda_1 = lambda_3
                 # T_3 = N_r; lambda_3 = 0
-                print("Exchanged T_1 with T_3 and lambda_1 with lambda_3")
+                if verbose:
+                    print("Exchanged T_1 with T_3 and lambda_1 with lambda_3")
             elif (round(abs(T_2[0]), 7) == round(abs(N_r[0]), 7) and
                     round(abs(T_2[1]), 7) == round(abs(N_r[1]), 7) and
                     round(abs(T_2[2]), 7) == round(abs(N_r[2]), 7)):
                 T_2 = T_3
                 lambda_2 = lambda_3
                 # T_3 = N_r; lambda_3 = 0
-                print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
+                if verbose:
+                    print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
             else:
-                print("Error: no eigenvector equal to the normal |N_r| found")
+                print("Error: no eigenvector equals to the normal |N_r| found")
                 exit(0)
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2
         kappa_2 = 3 * lambda_2 - lambda_1
+        # TODO transform 2D vectors T_1 and T_2 to 3D
         if verbose:
             print("\nNumber valid votes = {}".format(num_valid_votes))
             print("T_1 = {}".format(T_1))
@@ -2480,134 +2571,6 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.curvedness_VV[vertex_r] = math.sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
         return kappa_1, kappa_2, T_1, T_2
-
-
-def fit_curve(pos_x_2d, pos_y_2d):
-    # TODO docstring (and move up before the class)
-    # Initial guess of the parameter a is 0 (a straight line)
-    x0 = np.array([0.0])
-    try:
-        popt, pcov = optimize.curve_fit(
-            canonical_parabola, pos_x_2d, pos_y_2d, x0, sigma=None)
-        a = popt[0]
-        var_a = pcov[0][0]
-        if var_a == float('Inf'):  # if fit is impossible (e.g. only one point)
-            var_a = 1
-        return a, var_a
-    except RuntimeError as e:
-        print "RuntimeError happened:"
-        print(e)  # has to be: "Optimal parameters not found: gtol=0.000000 is
-        # too small, func(x) is orthogonal to the columns of
-        # the Jacobian to machine precision.""
-        return 0.0, -1.0  # in tests it looked like a perfect straight line
-
-
-def canonical_parabola(x, a):
-    # TODO docstring? (and move up before the class)
-    return a * x * x
-
-
-def is_pos_between_2_points(pos, p1, p2):
-    # TODO docstring (and move up before the class)
-    if len(pos) == len(p1) == len(p2):
-        validity = True
-        for i in range(len(pos)):
-            if p1[i] < p2[i]:
-                validity = validity and (p1[i] < pos[i] < p2[i])
-            elif p2[i] < p1[i]:
-                validity = validity and (p2[i] < pos[i] < p1[i])
-        return validity
-    else:
-        print "points have to be of same dimensions"
-        return False
-
-
-def perpendicular_vector(iv, debug=False):
-    # TODO docstring
-    # implementation of algorithm of Ahmed Fasih https://math.stackexchange.com/
-    # questions/133177/finding-a-unit-vector-perpendicular-to-another-vector
-    try:
-        assert(isinstance(iv, np.ndarray) and iv.shape == (3,))
-    except AssertionError:
-        print("Requires a 1D numpy.ndarray of length 3 (3D vector)")
-        return None
-    if iv[0] == iv[1] == iv[2] == 0:
-        print("Requires a non-zero 3D vector")
-        return None
-    ov = np.array([0.0, 0.0, 0.0])
-    for m in range(3):
-        if iv[m] != 0:
-            break
-    if m == 2:
-        n = 0
-    else:
-        n = m + 1
-    ov[n] = iv[m]
-    ov[m] = -iv[n]
-    if debug:
-        try:
-            assert np.dot(iv, ov) == 0
-        except AssertionError:
-            print("Failed to find a perpendicular vector to the given one")
-            print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
-            print("resulting vector: ({}, {}, {})".format(ov[0], ov[1], ov[2]))
-            return None
-    len_outv = norm(ov)
-    if len_outv == 0:
-        print("Resulting vector has length 0")
-        print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
-        print("resulting vector: ({}, {}, {})".format(ov[0], ov[1], ov[2]))
-        return None
-    return ov / len_outv  # unit length vector
-
-
-def rotation_matrix(axis, theta):
-    # TODO docstring
-    # from B. M. https://stackoverflow.com/questions/6802577/
-    # python-rotation-of-3d-vector
-    a = axis / norm(axis)  # unit vector along axis
-    A = np.cross(np.eye(3), a)  # skew-symmetric matrix associated to a
-    return expm3(A * theta)
-
-
-def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
-    # TODO docstring, wrapper for rotation_matrix
-    dot = np.dot
-    acos = math.acos
-    pi = math.pi
-
-    if matrix is None and axis is not None:
-        R = rotation_matrix(axis, theta)
-    elif matrix is not None and axis is None:
-        R = matrix
-    else:
-        print("Either the rotation axis or rotation matrix must be given")
-        return None
-
-    u = dot(R, v)
-    if debug:
-        cos_tetha = dot(v, u) / norm(v) / norm(u)
-        try:
-            theta2 = acos(cos_tetha)
-        except ValueError:
-            if cos_tetha > 1:
-                cos_tetha = 1.0
-            elif cos_tetha < 0:
-                cos_tetha = 0.0
-            theta2 = acos(cos_tetha)
-        try:
-            assert theta - (0.05 * pi) <= theta2 <= theta + (0.05 * pi)
-        except AssertionError:
-            print("Angle between the input vector and the rotated one is not "
-                  "{}, but {}".format(theta, theta2))
-            return None
-    return u
-
-
-def transform_vector_to_local_system(pos, normal, vector):
-    # so that pos shifts to [0, 0, 0] and normal to the plane where the vector
-    # lies becomes the Z axis
-    pass  # TODO
 
 
 if __name__ == "__main__":
