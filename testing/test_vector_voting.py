@@ -997,7 +997,7 @@ class VectorVotingTestCase(unittest.TestCase):
         for g in [4]:  # 3, 4, 5
             self.parametric_test_torus_curvatures(
                 25, 10, inverse=False, k=0, g_max=g,
-                method='VVSC')  # 'VV', 'VVSC', 'VVCF', 'VCTV'
+                method='VVCF')  # 'VV', 'VVSC', 'VVCF', 'VCTV'
 
 
 if __name__ == '__main__':

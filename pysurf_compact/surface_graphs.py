@@ -2217,12 +2217,12 @@ class TriangleGraph(SurfaceGraph):
                 if verbose:
                     print "\nPoint {}:".format(direction * i)
 
-                # 2. If the cell of pos is not in the geodesic neighbourhood of
-                # v, exclude and stop searching in that direction
-                if cell_id not in neighbor_idx_to_dist:
-                    if debug or verbose:
-                        print "Point NOT in neighborhood"
-                    break
+                # # 2. If the cell of pos is not in the geodesic neighbourhood of
+                # # v, exclude and stop searching in that direction
+                # if cell_id not in neighbor_idx_to_dist:
+                #     if debug or verbose:
+                #         print "Point NOT in neighborhood"
+                #     break
 
                 # 3. If no intersection was found (pos stays like initialized),
                 # exclude and stop searching in that direction
@@ -2280,29 +2280,10 @@ class TriangleGraph(SurfaceGraph):
                 #         pos_2D_x, pos_2D_y)
 
         # Fit a simple parabola curve:
-        out = fit_curve(positions_2D_x, positions_2D_y)  # a = 1 / (2 * R)
-        if out is None:
-            fig = plt.figure()
-            # plot the intersection points
-            plt.plot(positions_2D_x, positions_2D_y, 'ro')
-            # add grey lines parallel to axes at (0, 0)
-            plt.axvline(x=0, color='grey', linewidth=0.5)
-            plt.axhline(y=0, color='grey', linewidth=0.5)
-            # make axes scale equal and add labels
-            plt.axis('equal')
-            plt.xlabel("tangent")
-            plt.ylabel("normal")
-            plt.show()
-            return None
-
-        a, var_a = out
+        a, var_a = fit_curve(positions_2D_x, positions_2D_y)  # a = 1 / (2 * R)
         curvature = 2 * a  # curvature = 1 / R
 
-        # if the fit is perfect, var_a == inf for some reason -> change to 0
-        if var_a == float('Inf'):
-            var_a = 0
-
-        if verbose or var_a > 0.001:
+        if verbose or var_a == 1 or var_a == -1:
             print ("{} intersection points found".format(
                 points.GetNumberOfPoints()))
             print "variance = {}".format(var_a)
@@ -2318,7 +2299,7 @@ class TriangleGraph(SurfaceGraph):
             poly_verts.SetVerts(verts)
             save_vtp(poly_verts, poly_file)
 
-        if plot_file is not None or var_a > 0.001:  # 2D plot
+        if plot_file is not None or var_a == 1 or var_a == -1:  # 2D plot
             fig = plt.figure()
             # plot the intersection points
             plt.plot(positions_2D_x, positions_2D_y, 'ro')
@@ -2510,13 +2491,15 @@ def fit_curve(pos_x_2d, pos_y_2d):
             canonical_parabola, pos_x_2d, pos_y_2d, x0, sigma=None)
         a = popt[0]
         var_a = pcov[0][0]
+        if var_a == float('Inf'):  # if fit is impossible (e.g. only one point)
+            var_a = 1
         return a, var_a
     except RuntimeError as e:
         print "RuntimeError happened:"
         print(e)  # has to be: "Optimal parameters not found: gtol=0.000000 is
         # too small, func(x) is orthogonal to the columns of
         # the Jacobian to machine precision.""
-        return 0.0, 0.0
+        return 0.0, -1.0  # in tests it looked like a perfect straight line
 
 
 def canonical_parabola(x, a):
