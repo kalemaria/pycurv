@@ -22,7 +22,8 @@ date: 2017-06-17
 __author__ = 'kalemanov'
 
 
-def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
+def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
+                  other_curvature_formula=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -46,7 +47,8 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
         exclude_borders (boolean, optional): if True (default), principle
             curvatures and directions are not estimated for triangles at surface
             borders
-
+        other_curvature_formula (boolean, optional): if True (default False)
+            alternative normal curvature formula is used (see collecting_votes2)
     Returns:
         the surface of triangles with classified orientation and estimated
         normals or tangents, principle curvatures and directions (vtkPolyData)
@@ -203,7 +205,8 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
                 B_v = collecting_votes2(
-                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
+                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
+                        other_curvature_formula=other_curvature_formula)
             if B_v is not None:
                 estimate_curvature(v, B_v, verbose=False)
             # For crease, no preferably oriented vertices or vertices lacking
@@ -235,7 +238,8 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True):
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
                 B_v = collecting_votes2(
-                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
+                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
+                        other_curvature_formula=other_curvature_formula)
             if B_v is not None:
                 estimate_curvature(v, B_v, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
@@ -553,7 +557,8 @@ def vector_voting_sign_correction(tg, k=3, g_max=0.0, epsilon=0, eta=0,
 
 
 def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
-                                exclude_borders=True):
+                                exclude_borders=True,
+                                other_curvature_formula=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -577,6 +582,8 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
         exclude_borders (boolean, optional): if True (default), principle
             curvatures and directions are not estimated for triangles at surface
             borders
+        other_curvature_formula (boolean, optional): if True (default False)
+            alternative normal curvature formula is used (see collecting_votes2)
 
     Returns:
         the surface of triangles with classified orientation and estimated
@@ -739,7 +746,8 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
                 B_v = collecting_votes2(
-                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
+                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
+                        other_curvature_formula=other_curvature_formula)
             if B_v is not None:
                 estimate_directions_and_fit_curves(v, B_v, g_max, verbose=False)
             # For crease, no preferably oriented vertices or vertices lacking
@@ -773,7 +781,8 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
                 B_v = collecting_votes2(
-                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False)
+                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
+                        other_curvature_formula=other_curvature_formula)
             if B_v is not None:
                 estimate_directions_and_fit_curves(v, B_v, g_max, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or

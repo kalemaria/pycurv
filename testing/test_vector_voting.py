@@ -749,13 +749,13 @@ class VectorVotingTestCase(unittest.TestCase):
         self.assertAlmostEqual(kappa_2_avg, true_curvature,
                                delta=allowed_error, msg=msg)
 
-    def parametric_test_torus_curvatures(self, rr, csr, inverse=False,
-                                         k=3, g_max=0, epsilon=0, eta=0,
-                                         method='VVCF'):
+    def parametric_test_torus_curvatures(
+            self, rr, csr, inverse=False, k=3, g_max=0, epsilon=0, eta=0,
+            method='VCTV', other_curvature_formula=False):
         """
         Runs all the steps needed to calculate curvatures for a test torus
-        with given radii using normal vector voting combined with curve fitting
-        (VVCF) or with curvature tensor voting (VCTV).
+        with given radii using normal vector voting (VV), VV combined with curve
+        fitting (VVCF) or with curvature tensor voting (VCTV).
 
         Args:
             rr (int): ring radius of the torus
@@ -776,11 +776,14 @@ class VectorVotingTestCase(unittest.TestCase):
                 influencing the number of triangles classified as "crease
                 junction" (class 2) and "no preferred orientation" (class 3, see
                 Notes), default 0
-            method (str): tells which method should be used after normal vector
-                voting (VV): 'VVCF' for curve fitting in the two principal
+            method (str): tells which method should be used: 'VV' for normal
+                vector voting, 'VVCF' for curve fitting in the two principal
                 directions estimated by VV to estimate the principal curvatures
-                (default) or 'VCTV' for curvature tensor voting to estimate the
-                principal direction and curvatures
+                or 'VCTV' (default) for vector and curvature tensor voting to
+                estimate the principal direction and curvatures
+            other_curvature_formula (boolean, optional): if True (default False)
+                alternative normal curvature formula is used for VV or VVCF (see
+                collecting_votes2)
 
         Notes:
             * Either g_max or k must be positive (if both are positive, the
@@ -793,10 +796,8 @@ class VectorVotingTestCase(unittest.TestCase):
             None
         """
         # TODO complete the docstring (top and methods parameter description)
-        if (method != 'VV' and method != 'VVSC' and method != 'VVCF' and
-                    method != 'VCTV'):
-            print("The parameter 'method' has to be 'VV', 'VVSC', 'VVCF' or "
-                  "'VCTV'")
+        if method != 'VV' and method != 'VVCF' and method != 'VCTV':
+            print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
             exit(0)
         fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
 
@@ -889,16 +890,19 @@ class VectorVotingTestCase(unittest.TestCase):
         # Running the modified Normal Vector Voting algorithm with curve fitting
         if method == 'VV':
             script = vector_voting
-        elif method == 'VVSC':
-            script = vector_voting_sign_correction
         elif method == 'VVCF':
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
 
-        surf_VV = script(
-            tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-            exclude_borders=False)
+        if (method == 'VV' or method == 'VVCF') and other_curvature_formula:
+            surf_VV = script(
+                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                exclude_borders=False, other_curvature_formula=True)
+        else:
+            surf_VV = script(
+                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                exclude_borders=False)
         # Saving the output (TriangleGraph object) for later inspection:
         io.save_vtp(surf_VV, surf_VV_file)
 
@@ -997,7 +1001,7 @@ class VectorVotingTestCase(unittest.TestCase):
         for g in [4]:  # 3, 4, 5
             self.parametric_test_torus_curvatures(
                 25, 10, inverse=False, k=0, g_max=g,
-                method='VCTV')  # 'VV', 'VVSC', 'VVCF', 'VCTV'
+                method='VV', other_curvature_formula=True)  # 'VVCF', 'VCTV'
 
 
 if __name__ == '__main__':
