@@ -799,6 +799,10 @@ class VectorVotingTestCase(unittest.TestCase):
         if method != 'VV' and method != 'VVCF' and method != 'VCTV':
             print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
             exit(0)
+        if method == 'VV' and other_curvature_formula:
+            method = 'VV_other_curvature_formula'
+        elif method == 'VVCF' and other_curvature_formula:
+            method = 'VVCF_other_curvature_formula'
         fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
 
         if not os.path.exists(fold):
@@ -888,14 +892,14 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm with curve fitting
-        if method == 'VV':
+        if method == 'VV' or method == 'VV_other_curvature_formula':
             script = vector_voting
-        elif method == 'VVCF':
+        elif method == 'VVCF' or method == 'VVCF_other_curvature_formula':
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
 
-        if (method == 'VV' or method == 'VVCF') and other_curvature_formula:
+        if 'other_curvature_formula' in method:
             surf_VV = script(
                 tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
                 exclude_borders=False, other_curvature_formula=True)
