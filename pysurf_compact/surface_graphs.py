@@ -1868,6 +1868,10 @@ class TriangleGraph(SurfaceGraph):
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
         kappa_2 = 3 * b_2 - b_1
+        # Curvatures and directions might be interchanged:
+        if kappa_1 < kappa_2:
+            T_1, T_2 = T_2, T_1
+            kappa_1, kappa_2 = kappa_2, kappa_1
 
         if verbose:
             print "\nb_1 = %s" % b_1
@@ -2078,12 +2082,11 @@ class TriangleGraph(SurfaceGraph):
             vertex_v, T_1, self.scale_factor_to_nm, g_max, verbose=verbose)
         var_a_2, kappa_2 = self.find_points_in_tangent_direction_and_fit_curve(
             vertex_v, T_2, self.scale_factor_to_nm, g_max, verbose=verbose)
+        # Curvatures and directions might be interchanged:
         if kappa_1 < kappa_2:
             T_1, T_2 = T_2, T_1
             var_a_1, var_a_2 = var_a_2, var_a_1
             kappa_1, kappa_2 = kappa_2, kappa_1
-            # print ("\nkappa_1 < kappa_2 -> directions, errors and curvatures "
-            #        "were swapped")  # test
 
         if verbose:
             print "\nT_1 = {}".format(T_1)
@@ -2386,7 +2389,7 @@ class TriangleGraph(SurfaceGraph):
         a, var_a = fit_curve(positions_2D_x, positions_2D_y)  # a = 1 / (2 * R)
         curvature = 2 * a  # curvature = 1 / R
 
-        if verbose or var_a == 1 or var_a == -1:
+        if verbose:  # or var_a == 1 or var_a == -1:
             print ("{} intersection points found".format(
                 points.GetNumberOfPoints()))
             print "variance = {}".format(var_a)
@@ -2402,7 +2405,7 @@ class TriangleGraph(SurfaceGraph):
             poly_verts.SetVerts(verts)
             save_vtp(poly_verts, poly_file)
 
-        if plot_file is not None or var_a == 1 or var_a == -1:  # 2D plot
+        if plot_file is not None:  # or var_a == 1 or var_a == -1:  # 2D plot
             fig = plt.figure()
             # plot the intersection points
             plt.plot(positions_2D_x, positions_2D_y, 'ro')
@@ -2561,6 +2564,10 @@ class TriangleGraph(SurfaceGraph):
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2
         kappa_2 = 3 * lambda_2 - lambda_1
+        # Curvatures and directions might be interchanged:
+        if kappa_1 < kappa_2:
+            T_1, T_2 = T_2, T_1
+            kappa_1, kappa_2 = kappa_2, kappa_1
         # TODO transform 2D vectors T_1 and T_2 to 3D
         if verbose:
             print("\nNumber valid votes = {}".format(num_valid_votes))

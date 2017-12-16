@@ -6,8 +6,8 @@ import math
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
-    TriangleGraph, PointGraph, vector_voting, vector_voting_sign_correction,
-    vector_voting_curve_fitting, vector_curvature_tensor_voting, pexceptions)
+    TriangleGraph, PointGraph, vector_voting, vector_voting_curve_fitting,
+    vector_curvature_tensor_voting, pexceptions)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
@@ -108,16 +108,16 @@ class VectorVotingTestCase(unittest.TestCase):
         vtk_normal_errors_file = '{}.VTK.normal_errors.txt'.format(
             base_filename)
         if g_max > 0:
-            surf_vv_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.vtp'.format(
+            surf_vv_file = '{}.VCTV_g_max{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, g_max, epsilon, eta)
             vv_normal_errors_file = (
-                '{}.VVCF_g_max{}_epsilon{}_eta{}.normal_errors.txt'.format(
+                '{}.VCTV_g_max{}_epsilon{}_eta{}.normal_errors.txt'.format(
                     base_filename, g_max, epsilon, eta))
         elif k > 0:
-            surf_vv_file = '{}.VVCF_k{}_epsilon{}_eta{}.vtp'.format(
+            surf_vv_file = '{}.VCTV_k{}_epsilon{}_eta{}.vtp'.format(
                 base_filename, k, epsilon, eta)
             vv_normal_errors_file = (
-                '{}.VVCF_k{}_epsilon{}_eta{}.normal_errors.txt'.format(
+                '{}.VCTV_k{}_epsilon{}_eta{}.normal_errors.txt'.format(
                     base_filename, k, epsilon, eta))
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
@@ -168,8 +168,9 @@ class VectorVotingTestCase(unittest.TestCase):
         print ('Graph construction from surface took: {} min {} s'.format(
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
-        # Running the modified Normal Vector Voting algorithm:
-        surf_vv = vector_voting_curve_fitting(
+        # Running the modified Normal Vector Voting algorithm (with curvature
+        # tensor voting, because it is be the fastest):
+        surf_vv = vector_curvature_tensor_voting(
             tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
             exclude_borders=True)
         # Saving the output (TriangleGraph object) for later inspection in
@@ -205,14 +206,17 @@ class VectorVotingTestCase(unittest.TestCase):
             msg = '{} is > {}%!'.format(error, 30)
             self.assertLessEqual(error, 30, msg=msg)
 
-    def parametric_test_cylinder_T_2_curvatures(
+    def parametric_test_cylinder_directions_curvatures(
             self, r, inverse=False, res=0, h=0, noise=0,
-            k=3, g_max=0, epsilon=0, eta=0):
+            k=3, g_max=0, epsilon=0, eta=0,
+            method='VCTV', other_curvature_formula=False):
         """
         Tests whether minimal principal directions (T_2), as well as minimal and
-        maximal principal curvatures are correctly estimated
-        for an opened cylinder surface (without the circular planes) with known
-        orientation (height, i.e. T_2, parallel to the Z axis).
+        maximal principal curvatures are correctly estimated for an opened
+        cylinder surface (without the circular planes) with known
+        orientation (height, i.e. T_2, parallel to the Z axis) using normal
+        vector voting (VV), VV combined with curve fitting (VVCF) or with
+        curvature tensor voting (VCTV).
 
         Args:
             r (int): cylinder radius in voxels
@@ -244,6 +248,14 @@ class VectorVotingTestCase(unittest.TestCase):
                 influencing the number of triangles classified as "crease
                 junction" (class 2) and "no preferred orientation" (class 3),
                 default 0
+            method (str): tells which method should be used: 'VV' for normal
+                vector voting, 'VVCF' for curve fitting in the two principal
+                directions estimated by VV to estimate the principal curvatures
+                or 'VCTV' (default) for vector and curvature tensor voting to
+                estimate the principal direction and curvatures
+            other_curvature_formula (boolean, optional): if True (default False)
+                alternative normal curvature formula is used for VV or VVCF (see
+                collecting_votes2)
 
         Notes:
             * Either g_max or k must be positive (if both are positive, the
@@ -254,6 +266,13 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
+        if method != 'VV' and method != 'VVCF' and method != 'VCTV':
+            print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
+            exit(0)
+        if method == 'VV' and other_curvature_formula:
+            method = 'VV_other_curvature_formula'
+        elif method == 'VVCF' and other_curvature_formula:
+            method = 'VVCF_other_curvature_formula'
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res == 0:
             fold = '{}synthetic_surfaces/cylinder/noise{}/'.format(
@@ -288,29 +307,29 @@ class VectorVotingTestCase(unittest.TestCase):
         base_filename = "{}{}cylinder_r{}_h{}".format(
             files_fold, inverse_str, r, h)
         if g_max > 0:
-            surf_vv_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, g_max, epsilon, eta)
+            surf_VV_file = '{}.{}_g_max{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, method, g_max, epsilon, eta)
             T_h_errors_file = (
-                '{}.VVCF_g_max{}_epsilon{}_eta{}.T_h_errors.txt'.format(
-                    base_filename, g_max, epsilon, eta))
+                '{}.{}_g_max{}_epsilon{}_eta{}.T_h_errors.txt'.format(
+                    base_filename, method, g_max, epsilon, eta))
             kappa_1_errors_file = (
-                '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
-                    base_filename, g_max, epsilon, eta))
+                '{}.{}_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                    base_filename, method, g_max, epsilon, eta))
             kappa_2_errors_file = (
-                '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
-                    base_filename, g_max, epsilon, eta))
+                '{}.{}_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                    base_filename, method, g_max, epsilon, eta))
         elif k > 0:
-            surf_vv_file = '{}.VVCF_k{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, k, epsilon, eta)
+            surf_VV_file = '{}.{}_k{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, method, k, epsilon, eta)
             T_h_errors_file = (
-                '{}.VVCF_k{}_epsilon{}_eta{}.T_h_errors.txt'.format(
-                    base_filename, k, epsilon, eta))
+                '{}.{}_k{}_epsilon{}_eta{}.T_h_errors.txt'.format(
+                    base_filename, method, k, epsilon, eta))
             kappa_1_errors_file = (
-                '{}.VVCF_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
-                    base_filename, k, epsilon, eta))
+                '{}.{}_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                    base_filename, method, k, epsilon, eta))
             kappa_2_errors_file = (
-                '{}.VVCF_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
-                    base_filename, k, epsilon, eta))
+                '{}.{}_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                    base_filename, method, k, epsilon, eta))
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
                          "positive, the specified g_max will be used).")
@@ -323,12 +342,12 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
-                   "cylinder with radius {}, height {} and {}% noise ***"
-                   .format(r, h, noise))
+                   "cylinder with radius {}, height {} and {}% noise using the "
+                   "method {}***".format(r, h, noise, method))
         else:
             print ("\n*** Generating a surface and a graph for a cylinder with "
-                   "radius {}, height {} and {}% noise ***".format(
-                    r, h, noise))
+                   "radius {}, height {} and {}% noise using the method {}***"
+                   .format(r, h, noise, method))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             cg = CylinderGenerator()
@@ -381,12 +400,24 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        surf_vv = vector_voting_curve_fitting(
-            tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-            exclude_borders=False)
+        if method == 'VV' or method == 'VV_other_curvature_formula':
+            script = vector_voting
+        elif method == 'VVCF' or method == 'VVCF_other_curvature_formula':
+            script = vector_voting_curve_fitting
+        else:  # if method == 'VCTV'
+            script = vector_curvature_tensor_voting
+
+        if 'other_curvature_formula' in method:
+            surf_VV = script(
+                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                exclude_borders=True, other_curvature_formula=True)
+        else:
+            surf_VV = script(
+                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                exclude_borders=True)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
-        io.save_vtp(surf_vv, surf_vv_file)
+        io.save_vtp(surf_VV, surf_VV_file)
 
         # Getting the estimated (by VV) principal directions along cylinder
         # height (T_h)
@@ -477,11 +508,13 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_sphere_curvatures(
             self, radius, inverse=False, res=0, ico=0, noise=10,
-            k=3, g_max=0, epsilon=0, eta=0, save_areas=False):
+            k=3, g_max=0, epsilon=0, eta=0, save_areas=False,
+            method='VCTV', other_curvature_formula=False):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
-        estimated using Normal Vector Voting (VV) with a given g_max:
+        estimated using normal vector voting (VV), VV combined with curve
+        fitting (VVCF) or with curvature tensor voting (VCTV):
 
         kappa_1 = kappa_2 = 1/r; allowing some error.
 
@@ -516,6 +549,14 @@ class VectorVotingTestCase(unittest.TestCase):
                 Notes), default 0
             save_areas (boolean, optional): if True (default False), also mesh
                 triangle ares will be saved to a file
+            method (str): tells which method should be used: 'VV' for normal
+                vector voting, 'VVCF' for curve fitting in the two principal
+                directions estimated by VV to estimate the principal curvatures
+                or 'VCTV' (default) for vector and curvature tensor voting to
+                estimate the principal direction and curvatures
+            other_curvature_formula (boolean, optional): if True (default False)
+                alternative normal curvature formula is used for VV or VVCF (see
+                collecting_votes2)
 
         Notes:
             * Either g_max or k must be positive (if both are positive, the
@@ -526,6 +567,13 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
+        if method != 'VV' and method != 'VVCF' and method != 'VCTV':
+            print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
+            exit(0)
+        if method == 'VV' and other_curvature_formula:
+            method = 'VV_other_curvature_formula'
+        elif method == 'VVCF' and other_curvature_formula:
+            method = 'VVCF_other_curvature_formula'
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res > 0:  # UV sphere is used
             fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
@@ -558,31 +606,31 @@ class VectorVotingTestCase(unittest.TestCase):
         base_filename = "{}{}sphere_r{}".format(
             files_fold, inverse_str, radius)
         if g_max > 0:
-            surf_VV_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, g_max, epsilon, eta)
-            kappa_1_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_1.txt'.format(
-                base_filename, g_max, epsilon, eta)
-            kappa_2_file = '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_2.txt'.format(
-                base_filename, g_max, epsilon, eta)
+            surf_VV_file = '{}.{}_g_max{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, method, g_max, epsilon, eta)
+            kappa_1_file = '{}.{}_g_max{}_epsilon{}_eta{}.kappa_1.txt'.format(
+                base_filename, method, g_max, epsilon, eta)
+            kappa_2_file = '{}.{}_g_max{}_epsilon{}_eta{}.kappa_2.txt'.format(
+                base_filename, method, g_max, epsilon, eta)
             kappa_1_errors_file = (
-                '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
-                    base_filename, g_max, epsilon, eta))
+                '{}.{}_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                    base_filename, method, g_max, epsilon, eta))
             kappa_2_errors_file = (
-                '{}.VVCF_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
-                    base_filename, g_max, epsilon, eta))
+                '{}.{}_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                    base_filename, method, g_max, epsilon, eta))
         elif k > 0:
-            surf_VV_file = '{}.VVCF_k{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, k, epsilon, eta)
-            kappa_1_file = '{}.VVCF_k{}_epsilon{}_eta{}.kappa_1.txt'.format(
-                base_filename, k, epsilon, eta)
-            kappa_2_file = '{}.VVCF_k{}_epsilon{}_eta{}.kappa_2.txt'.format(
-                base_filename, k, epsilon, eta)
+            surf_VV_file = '{}.{}_k{}_epsilon{}_eta{}.vtp'.format(
+                base_filename, method, k, epsilon, eta)
+            kappa_1_file = '{}.{}_k{}_epsilon{}_eta{}.kappa_1.txt'.format(
+                base_filename, method, k, epsilon, eta)
+            kappa_2_file = '{}.{}_k{}_epsilon{}_eta{}.kappa_2.txt'.format(
+                base_filename, method, k, epsilon, eta)
             kappa_1_errors_file = (
-                '{}.VVCF_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
-                    base_filename, k, epsilon, eta))
+                '{}.{}_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
+                    base_filename, method, k, epsilon, eta))
             kappa_2_errors_file = (
-                '{}.VVCF_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
-                    base_filename, k, epsilon, eta))
+                '{}.{}_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
+                    base_filename, method, k, epsilon, eta))
         else:
             error_msg = ("Either g_max or k must be positive (if both are "
                          "positive, the specified g_max will be used).")
@@ -600,11 +648,12 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
-                   "sphere with radius {} and {}% noise ***".format(
-                    radius, noise))
+                   "sphere with radius {} and {}% noise using the method {}***"
+                   .format(radius, noise, method))
         else:
             print ("\n*** Generating a surface and a graph for a sphere "
-                   "with radius {} and {}% noise ***".format(radius, noise))
+                   "with radius {} and {}% noise using the method {}***".format(
+                    radius, noise, method))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SphereGenerator()
@@ -667,9 +716,21 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        surf_VV = vector_voting_curve_fitting(
-            tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-            exclude_borders=False)
+        if method == 'VV' or method == 'VV_other_curvature_formula':
+            script = vector_voting
+        elif method == 'VVCF' or method == 'VVCF_other_curvature_formula':
+            script = vector_voting_curve_fitting
+        else:  # if method == 'VCTV'
+            script = vector_curvature_tensor_voting
+
+        if 'other_curvature_formula' in method:
+            surf_VV = script(
+                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                exclude_borders=False, other_curvature_formula=True)
+        else:
+            surf_VV = script(
+                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
+                exclude_borders=False)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -795,7 +856,6 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
-        # TODO complete the docstring (top and methods parameter description)
         if method != 'VV' and method != 'VVCF' and method != 'VCTV':
             print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
             exit(0)
@@ -941,71 +1001,75 @@ class VectorVotingTestCase(unittest.TestCase):
     #     (parallel to to X and Y axes), certain size, resolution and noise
     #     level.
     #     """
-    #     for n in [5]:  # 0, 5, 10
-    #         for k in [5]:  # 1 for noise=0, else 3, 5
-    #             self.parametric_test_plane_normals(10, res=10, noise=n, k=k)
+    #     for n in [5]:
+    #         for g in [8]:
+    #             self.parametric_test_plane_normals(
+    #                 10, res=10, noise=n, k=0, g_max=g)
 
-    # def test_cylinder_T_2_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) are correctly estimated
-    #     using Normal Vector Voting with a certain g_max for an opened cylinder
-    #     surface (without the circular planes) with known orientation (height,
-    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-    #     and noise level.
-    #     """
-    #     for n in [5]:  # 0, 3, 5
-    #         for k in [7]:  # 3, 5
-    #             self.parametric_test_cylinder_T_2_curvatures(10, noise=n, k=k)
+    def test_cylinder_T_2_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) are correctly estimated
+        using Normal Vector Voting with a certain g_max for an opened cylinder
+        surface (without the circular planes) with known orientation (height,
+        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+        and noise level.
+        """
+        for n in [0]:
+            for g in [8]:
+                self.parametric_test_cylinder_directions_curvatures(
+                    10, noise=n, k=0, g_max=g, method='VV',
+                    other_curvature_formula=True)
 
-    # def test_inverse_cylinder_T_2_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) are correctly estimated
-    #     using Normal Vector Voting with a certain g_max for an opened cylinder
-    #     surface (without the circular planes) with known orientation (height,
-    #     i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-    #     and noise level.
-    #     """
-    #     for k in [5]:  # 3, 5
-    #         self.parametric_test_cylinder_T_2_curvatures(10, noise=0, k=k,
-    #                                                      inverse=True)
+    def test_inverse_cylinder_T_2_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) are correctly estimated
+        using Normal Vector Voting with a certain g_max for an opened cylinder
+        surface (without the circular planes) with known orientation (height,
+        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
+        and noise level.
+        """
+        for g in [8]:
+            self.parametric_test_cylinder_directions_curvatures(
+                10, noise=0, k=0, g_max=g, inverse=True, method='VV',
+                other_curvature_formula=True)
 
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated using Normal Vector
-    #     Voting with a certain g_max for a sphere with a certain radius,
-    #     resolution and noise level:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-    #     """
-    #     for n in [5]:  # 5, 10
-    #         for k in [5]:  # 3, 5
-    #             # self.parametric_test_sphere_curvatures(
-    #             #     10, res=30, noise=n, k=k, save_areas=True)
-    #             self.parametric_test_sphere_curvatures(
-    #                 10, ico=1280, noise=n, k=k, save_areas=False)
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated using Normal Vector
+        Voting with a certain g_max for a sphere with a certain radius,
+        resolution and noise level:
 
-    # def test_inverse_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated using Normal Vector
-    #     Voting with a certain g_max for an inverse sphere with a certain
-    #     radius, resolution and noise level:
-    #
-    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-    #     """
-    #     for k in [5]:  # 3
-    #         # self.parametric_test_sphere_curvatures(10, noise=0, k=k,
-    #         #                                        inverse=True)
-    #         self.parametric_test_sphere_curvatures(
-    #             10, ico=1280, noise=0, k=k, save_areas=False, inverse=True)
+        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+        """
+        for n in [0]:
+            for g in [8]:
+                # self.parametric_test_sphere_curvatures(
+                #     10, res=30, noise=n, k=k, save_areas=True)
+                self.parametric_test_sphere_curvatures(
+                    10, ico=1280, noise=n, k=0, g_max=g, save_areas=False,
+                    method='VV', other_curvature_formula=True)
+
+    def test_inverse_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated using Normal Vector
+        Voting with a certain g_max for an inverse sphere with a certain
+        radius, resolution and noise level:
+
+        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+        """
+        for g in [8]:
+            self.parametric_test_sphere_curvatures(
+                10, ico=1280, noise=0, k=0, g_max=g, save_areas=False,
+                inverse=True, method='VV', other_curvature_formula=True)
 
     def test_torus_curvatures(self):
         """
         Runs parametric_test_torus_curvatures with certain parameters.
         """
-        for g in [4]:  # 3, 4, 5
+        for g in [8]:
             self.parametric_test_torus_curvatures(
                 25, 10, inverse=False, k=0, g_max=g,
-                method='VV', other_curvature_formula=True)  # 'VVCF', 'VCTV'
+                method='VV', other_curvature_formula=True)  # 'VVCF'; 'VCTV'
 
 
 if __name__ == '__main__':
