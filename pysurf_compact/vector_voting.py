@@ -64,6 +64,7 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
 
     # * Maximal geodesic neighborhood distance g_max for normal vector voting *
     g_max = math.pi * radius_hit / 2
+    print "radius_hit = {}".format(radius_hit)
     print "g_max = {}".format(g_max)
 
     # * sigma *
@@ -288,6 +289,7 @@ def vector_voting_curve_fitting(tg, radius_hit, epsilon=0, eta=0,
 
     # * Maximal geodesic neighborhood distance g_max for normal vector voting *
     g_max = math.pi * radius_hit / 2
+    print "radius_hit = {}".format(radius_hit)
     print "g_max = {}".format(g_max)
 
     # * sigma *
@@ -518,6 +520,7 @@ def vector_curvature_tensor_voting(tg, radius_hit, epsilon=0, eta=0,
 
     # * Maximal geodesic neighborhood distance g_max for normal vector voting *
     g_max = math.pi * radius_hit / 2
+    print "radius_hit = {}".format(radius_hit)
     print "g_max = {}".format(g_max)
 
     # * sigma *
