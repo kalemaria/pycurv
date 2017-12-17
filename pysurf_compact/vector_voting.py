@@ -1,6 +1,7 @@
 import time
 import numpy as np
 # from scipy import stats
+import math
 
 import pexceptions
 from surface_graphs import TriangleGraph
@@ -22,7 +23,7 @@ date: 2017-06-17
 __author__ = 'kalemanov'
 
 
-def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
+def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
                   other_curvature_formula=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
@@ -31,12 +32,9 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
-        k (int, optional): parameter of Normal Vector Voting algorithm
-            determining the geodesic neighborhood radius:
-            g_max = k * average weak triangle graph edge length (default k=3)
-        g_max (float, optional): geodesic neighborhood radius in length unit of
-            the graph, e.g. nanometers; if positive (default 0.0) this g_max
-            will be used and k will be ignored
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
         epsilon (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2), default 0
@@ -55,8 +53,8 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
         normals or tangents, principle curvatures and directions (vtkPolyData)
 
     Notes:
-        * Either g_max or k must be positive (if both are positive, the
-          specified g_max will be used).
+        * Maximal geodesic neighborhood distance g_max for normal vector voting
+          will be derived from radius_hit: g_max = pi * radius_hit / 2
         * If epsilon = 0 and eta = 0 (default), all triangles will be classified
           as "surface patch" (class 1).
     """
@@ -64,34 +62,9 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     t_begin = time.time()
     print '\nPreparing for running modified Vector Voting...'
 
-    if g_max > 0:
-        # * Maximal geodesic distance g_max (given directly) *
-        print "g_max = {}".format(g_max)
-    elif k > 0:
-        # * k, integer multiple of the average length of the triangle edges *
-        print "k = {}".format(k)
-
-        # * Average length of the triangle edges *
-        # weak edges of triangle graph are the most similar in length to surface
-        # triangle edges
-        avg_weak_edge_length = tg.calculate_average_edge_length(
-            prop_e="is_strong", value=0)
-        try:
-            assert(avg_weak_edge_length > 0)
-        except AssertionError:
-            print ("Something wrong in the graph construction has happened: "
-                   "average weak edge length is 0.")
-            exit(1)
-
-        # * Maximal geodesic distance g_max (depend on k but is also the same
-        # for the whole graph) *
-        g_max = k * avg_weak_edge_length
-        print "g_max = {}".format(g_max)
-    else:
-        error_msg = ("Either g_max or k must be positive (if both are "
-                     "positive, the specified g_max will be used).")
-        raise pexceptions.PySegInputError(expr='vector_voting',
-                                          msg=error_msg)
+    # * Maximal geodesic neighborhood distance g_max for normal vector voting *
+    g_max = math.pi * radius_hit / 2
+    print "g_max = {}".format(g_max)
 
     # * sigma *
     sigma = g_max / 3.0
@@ -270,7 +243,7 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
     return surface_VV
 
 
-def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
+def vector_voting_curve_fitting(tg, radius_hit, epsilon=0, eta=0,
                                 exclude_borders=True,
                                 other_curvature_formula=True):
     """
@@ -280,12 +253,10 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
-        k (int, optional): parameter of Normal Vector Voting algorithm
-            determining the geodesic neighborhood radius:
-            g_max = k * average weak triangle graph edge length (default k=3)
-        g_max (float, optional): geodesic neighborhood radius in length unit of
-            the graph, e.g. nanometers; if positive (default 0.0) this g_max
-            will be used and k will be ignored
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers,
+            for sampling surface points in tangent directions (distance between
+            the points equals to graph's scale); it should be chosen to
+            correspond to radius of smallest features of interest on the surface
         epsilon (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2), default 0
@@ -305,8 +276,8 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
         normals or tangents, principle curvatures and directions (vtkPolyData)
 
     Notes:
-        * Either g_max or k must be positive (if both are positive, the
-          specified g_max will be used).
+        * Maximal geodesic neighborhood distance g_max for normal vector voting
+          will be derived from radius_hit: g_max = pi * radius_hit / 2
         * If epsilon = 0 and eta = 0 (default), all triangles will be classified
           as "surface patch" (class 1).
     """
@@ -315,34 +286,9 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
     t_begin = time.time()
     print '\nPreparing for running modified Vector Voting...'
 
-    if g_max > 0:
-        # * Maximal geodesic distance g_max (given directly) *
-        print "g_max = {}".format(g_max)
-    elif k > 0:
-        # * k, integer multiple of the average length of the triangle edges *
-        print "k = {}".format(k)
-
-        # * Average length of the triangle edges *
-        # weak edges of triangle graph are the most similar in length to surface
-        # triangle edges
-        avg_weak_edge_length = tg.calculate_average_edge_length(
-            prop_e="is_strong", value=0)
-        try:
-            assert(avg_weak_edge_length > 0)
-        except AssertionError:
-            print ("Something wrong in the graph construction has happened: "
-                   "average weak edge length is 0.")
-            exit(1)
-
-        # * Maximal geodesic distance g_max (depend on k but is also the same
-        # for the whole graph) *
-        g_max = k * avg_weak_edge_length
-        print "g_max = {}".format(g_max)
-    else:
-        error_msg = ("Either g_max or k must be positive (if both are "
-                     "positive, the specified g_max will be used).")
-        raise pexceptions.PySegInputError(expr='vector_voting',
-                                          msg=error_msg)
+    # * Maximal geodesic neighborhood distance g_max for normal vector voting *
+    g_max = math.pi * radius_hit / 2
+    print "g_max = {}".format(g_max)
 
     # * sigma *
     sigma = g_max / 3.0
@@ -465,7 +411,8 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
                         v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
                         other_curvature_formula=other_curvature_formula)
             if B_v is not None:
-                estimate_directions_and_fit_curves(v, B_v, g_max, verbose=False)
+                estimate_directions_and_fit_curves(v, B_v, radius_hit,
+                                                   verbose=False)
             # For crease, no preferably oriented vertices or vertices lacking
             # neighbors, add placeholders to the corresponding vertex properties
             if orientation_class[v] != 1 or B_v is None:
@@ -500,7 +447,8 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
                         v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
                         other_curvature_formula=other_curvature_formula)
             if B_v is not None:
-                estimate_directions_and_fit_curves(v, B_v, g_max, verbose=False)
+                estimate_directions_and_fit_curves(v, B_v, radius_hit,
+                                                   verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
             # vertices lacking neighbors, add placeholders to the corresponding
             # vertex properties
@@ -530,7 +478,7 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
     return surface_VV
 
 
-def vector_curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
+def vector_curvature_tensor_voting(tg, radius_hit, epsilon=0, eta=0,
                                    exclude_borders=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
@@ -539,12 +487,9 @@ def vector_curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
-        k (int, optional): parameter of Normal Vector Voting algorithm
-            determining the geodesic neighborhood radius:
-            g_max = k * average weak triangle graph edge length (default k=3)
-        g_max (float, optional): geodesic neighborhood radius in length unit of
-            the graph, e.g. nanometers; if positive (default 0.0) this g_max
-            will be used and k will be ignored
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers,
+            parameter of gen_curv_vote algorithm; it should be chosen to
+            correspond to radius of smallest features of interest on the surface
         epsilon (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2), default 0
@@ -561,8 +506,8 @@ def vector_curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
         normals or tangents, principle curvatures and directions (vtkPolyData)
 
     Notes:
-        * Either g_max or k must be positive (if both are positive, the
-          specified g_max will be used).
+        * Maximal geodesic neighborhood distance g_max for normal vector voting
+          will be derived from radius_hit: g_max = pi * radius_hit / 2
         * If epsilon = 0 and eta = 0 (default), all triangles will be classified
           as "surface patch" (class 1).
     """
@@ -571,34 +516,9 @@ def vector_curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
     t_begin = time.time()
     print '\nPreparing for running modified Vector Voting...'
 
-    if g_max > 0:
-        # * Maximal geodesic distance g_max (given directly) *
-        print "g_max = {}".format(g_max)
-    elif k > 0:
-        # * k, integer multiple of the average length of the triangle edges *
-        print "k = {}".format(k)
-
-        # * Average length of the triangle edges *
-        # weak edges of triangle graph are the most similar in length to surface
-        # triangle edges
-        avg_weak_edge_length = tg.calculate_average_edge_length(
-            prop_e="is_strong", value=0)
-        try:
-            assert(avg_weak_edge_length > 0)
-        except AssertionError:
-            print ("Something wrong in the graph construction has happened: "
-                   "average weak edge length is 0.")
-            exit(1)
-
-        # * Maximal geodesic distance g_max (depend on k but is also the same
-        # for the whole graph) *
-        g_max = k * avg_weak_edge_length
-        print "g_max = {}".format(g_max)
-    else:
-        error_msg = ("Either g_max or k must be positive (if both are "
-                     "positive, the specified g_max will be used).")
-        raise pexceptions.PySegInputError(expr='vector_voting',
-                                          msg=error_msg)
+    # * Maximal geodesic neighborhood distance g_max for normal vector voting *
+    g_max = math.pi * radius_hit / 2
+    print "g_max = {}".format(g_max)
 
     # * sigma *
     sigma = g_max / 3.0
@@ -711,7 +631,7 @@ def vector_curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
             result = None  # initialization
             if orientation_class[v] == 1:
                 # None is returned if curvature at v cannot be estimated
-                result = gen_curv_vote(v, g_max, verbose=False)
+                result = gen_curv_vote(v, radius_hit, verbose=False)
             # For crease, no preferably oriented vertices or if curvature could
             # not be estimated, add placeholders to the corresponding vertex
             # properties
@@ -740,7 +660,7 @@ def vector_curvature_tensor_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
             result = None  # initialization
             if orientation_class[v] == 1 and is_on_border[v] == 0:
                 # None is returned if curvature at v cannot be estimated
-                result = gen_curv_vote(v, g_max, verbose=False)
+                result = gen_curv_vote(v, radius_hit, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
             # if curvature could not be estimated, add placeholders to the
             # corresponding vertex properties

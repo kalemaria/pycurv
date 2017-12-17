@@ -49,38 +49,22 @@ class VectorVotingTestCase(unittest.TestCase):
     Tests for vector_voting.py, assuming that other used functions are correct.
     """
 
-    def parametric_test_plane_normals(self, half_size, res=30, noise=10,
-                                      k=3, g_max=0, epsilon=0, eta=0):
+    def parametric_test_plane_normals(self, half_size, radius_hit, res=30,
+                                      noise=10):
         """
         Tests whether normals are correctly estimated for a plane surface with
         known orientation (parallel to to X and Y axes).
 
         Args:
             half_size (int): half size of the plane (from center to an edge)
+            radius_hit (float): radius in length unit of the graph, here voxels;
+                it should be chosen to correspond to radius of smallest features
+                of interest on the surface
             res (int, optional): resolution (number of divisions) in X and Y
                 axes (default 30)
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 10), the noise
                 is added on triangle vertex coordinates in its normal direction
-            k (int, optional): parameter of Normal Vector Voting algorithm
-                determining the geodesic neighborhood radius:
-                g_max = k * average weak triangle graph edge length (default 3)
-            g_max (float, optional): geodesic neighborhood radius in length unit
-                of the graph, here voxels; if positive (default 0) this g_max
-                will be used and k will be ignored
-            epsilon (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2), default 0
-            eta (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2) and "no preferred orientation" (class 3),
-                default 0
-
-        Notes:
-            * Either g_max or k must be positive (if both are positive, the
-              specified g_max will be used).
-            * If epsilon = 0 and eta = 0 (default), all triangles will be
-              classified as "surface patch" (class 1).
 
         Returns:
             None
@@ -107,23 +91,9 @@ class VectorVotingTestCase(unittest.TestCase):
         base_filename = "{}plane_half_size{}".format(files_fold, half_size)
         vtk_normal_errors_file = '{}.VTK.normal_errors.txt'.format(
             base_filename)
-        if g_max > 0:
-            surf_vv_file = '{}.VCTV_g_max{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, g_max, epsilon, eta)
-            vv_normal_errors_file = (
-                '{}.VCTV_g_max{}_epsilon{}_eta{}.normal_errors.txt'.format(
-                    base_filename, g_max, epsilon, eta))
-        elif k > 0:
-            surf_vv_file = '{}.VCTV_k{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, k, epsilon, eta)
-            vv_normal_errors_file = (
-                '{}.VCTV_k{}_epsilon{}_eta{}.normal_errors.txt'.format(
-                    base_filename, k, epsilon, eta))
-        else:
-            error_msg = ("Either g_max or k must be positive (if both are "
-                         "positive, the specified g_max will be used).")
-            raise pexceptions.PySegInputError(
-                expr='parametric_test_plane_normals', msg=error_msg)
+        surf_vv_file = '{}.VCTV_rh{}.vtp'.format(base_filename, radius_hit)
+        vv_normal_errors_file = ('{}.VCTV_rh{}.normal_errors.txt'.format(
+            base_filename, radius_hit))
 
         print ("\n*** Generating a surface and a graph for a plane with half-"
                "size {} and {}% noise ***".format(half_size, noise))
@@ -152,17 +122,6 @@ class VectorVotingTestCase(unittest.TestCase):
                                         reverse_normals=False)
         print tg.graph
 
-        if k > 0:
-            print "k = {}".format(k)
-            # Find the average triangle edge length (l_ave) and calculate g_max:
-            # (Do this here because in vector_voting average weak edge length of
-            # the triangle graph is used, since the surface not passed)
-            pg = PointGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-            pg.build_graph_from_vtk_surface(surf)
-            l_ave = pg.calculate_average_edge_length()
-            print "average triangle edge length = {}".format(l_ave)
-            g_max = k * l_ave
-
         t_end = time.time()
         duration = t_end - t_begin
         print ('Graph construction from surface took: {} min {} s'.format(
@@ -171,8 +130,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # Running the modified Normal Vector Voting algorithm (with curvature
         # tensor voting, because it is be the fastest):
         surf_vv = vector_curvature_tensor_voting(
-            tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-            exclude_borders=True)
+            tg, radius_hit=radius_hit, exclude_borders=True)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_vv, surf_vv_file)
@@ -207,8 +165,7 @@ class VectorVotingTestCase(unittest.TestCase):
             self.assertLessEqual(error, 30, msg=msg)
 
     def parametric_test_cylinder_directions_curvatures(
-            self, r, inverse=False, res=0, h=0, noise=0,
-            k=3, g_max=0, epsilon=0, eta=0,
+            self, r, radius_hit, inverse=False, res=0, h=0, noise=10,
             method='VCTV', other_curvature_formula=False):
         """
         Tests whether minimal principal directions (T_2), as well as minimal and
@@ -220,6 +177,9 @@ class VectorVotingTestCase(unittest.TestCase):
 
         Args:
             r (int): cylinder radius in voxels
+            radius_hit (float): radius in length unit of the graph, here voxels;
+                it should be chosen to correspond to radius of smallest features
+                of interest on the surface
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
                 the other way around
@@ -235,19 +195,6 @@ class VectorVotingTestCase(unittest.TestCase):
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 0), the noise
                 is added on triangle vertex coordinates in its normal direction
-            k (int, optional): parameter of Normal Vector Voting algorithm
-                determining the geodesic neighborhood radius:
-                g_max = k * average weak triangle graph edge length (default 3)
-            g_max (float, optional): geodesic neighborhood radius in length unit
-                of the graph, here voxels; if positive (default 0) this g_max
-                will be used and k will be ignored
-            epsilon (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2), default 0
-            eta (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2) and "no preferred orientation" (class 3),
-                default 0
             method (str): tells which method should be used: 'VV' for normal
                 vector voting, 'VVCF' for curve fitting in the two principal
                 directions estimated by VV to estimate the principal curvatures
@@ -256,12 +203,6 @@ class VectorVotingTestCase(unittest.TestCase):
             other_curvature_formula (boolean, optional): if True (default False)
                 alternative normal curvature formula is used for VV or VVCF (see
                 collecting_votes2)
-
-        Notes:
-            * Either g_max or k must be positive (if both are positive, the
-              specified g_max will be used).
-            * If epsilon = 0 and eta = 0 (default), all triangles will be
-              classified as "surface patch" (class 1).
 
         Returns:
             None
@@ -306,39 +247,18 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse_str = ""
         base_filename = "{}{}cylinder_r{}_h{}".format(
             files_fold, inverse_str, r, h)
-        if g_max > 0:
-            surf_VV_file = '{}.{}_g_max{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, method, g_max, epsilon, eta)
-            T_h_errors_file = (
-                '{}.{}_g_max{}_epsilon{}_eta{}.T_h_errors.txt'.format(
-                    base_filename, method, g_max, epsilon, eta))
-            kappa_1_errors_file = (
-                '{}.{}_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
-                    base_filename, method, g_max, epsilon, eta))
-            kappa_2_errors_file = (
-                '{}.{}_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
-                    base_filename, method, g_max, epsilon, eta))
-        elif k > 0:
-            surf_VV_file = '{}.{}_k{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, method, k, epsilon, eta)
-            T_h_errors_file = (
-                '{}.{}_k{}_epsilon{}_eta{}.T_h_errors.txt'.format(
-                    base_filename, method, k, epsilon, eta))
-            kappa_1_errors_file = (
-                '{}.{}_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
-                    base_filename, method, k, epsilon, eta))
-            kappa_2_errors_file = (
-                '{}.{}_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
-                    base_filename, method, k, epsilon, eta))
-        else:
-            error_msg = ("Either g_max or k must be positive (if both are "
-                         "positive, the specified g_max will be used).")
-            raise pexceptions.PySegInputError(
-                expr='parametric_test_plane_normals', msg=error_msg)
-        vtk_kappa_1_errors_file = ('{}.VTK.kappa_1_errors.txt'
-                                   .format(base_filename))
-        vtk_kappa_2_errors_file = ('{}.VTK.kappa_2_errors.txt'
-                                   .format(base_filename))
+        surf_VV_file = '{}.{}_rh{}.vtp'.format(
+            base_filename, method, radius_hit)
+        T_h_errors_file = ('{}.{}_rh{}.T_h_errors.txt'.format(
+                base_filename, method, radius_hit))
+        kappa_1_errors_file = ('{}.{}_rh{}.kappa_1_errors.txt'.format(
+                base_filename, method, radius_hit))
+        kappa_2_errors_file = ('{}.{}_rh{}.kappa_2_errors.txt'.format(
+                base_filename, method, radius_hit))
+        vtk_kappa_1_errors_file = ('{}.VTK.kappa_1_errors.txt'.format(
+            base_filename))
+        vtk_kappa_2_errors_file = ('{}.VTK.kappa_2_errors.txt'.format(
+            base_filename))
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
@@ -383,17 +303,6 @@ class VectorVotingTestCase(unittest.TestCase):
                                         reverse_normals=reverse_normals)
         print tg.graph
 
-        if k > 0:
-            print "k = {}".format(k)
-            # Find the average triangle edge length (l_ave) and calculate g_max:
-            # (Do this here because in vector_voting average weak edge length of
-            # the triangle graph is used, since the surface not passed)
-            pg = PointGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-            pg.build_graph_from_vtk_surface(surf)
-            l_ave = pg.calculate_average_edge_length()
-            print "average triangle edge length = {}".format(l_ave)
-            g_max = k * l_ave
-
         t_end = time.time()
         duration = t_end - t_begin
         print ('Graph construction from surface took: {} min {} s'.format(
@@ -409,12 +318,11 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if 'other_curvature_formula' in method:
             surf_VV = script(
-                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                exclude_borders=True, other_curvature_formula=True)
+                tg, radius_hit=radius_hit, exclude_borders=True,
+                other_curvature_formula=True)
         else:
             surf_VV = script(
-                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                exclude_borders=True)
+                tg, radius_hit=radius_hit, exclude_borders=True)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -507,9 +415,8 @@ class VectorVotingTestCase(unittest.TestCase):
                                    delta=allowed_error, msg=msg)
 
     def parametric_test_sphere_curvatures(
-            self, radius, inverse=False, res=0, ico=0, noise=10,
-            k=3, g_max=0, epsilon=0, eta=0, save_areas=False,
-            method='VCTV', other_curvature_formula=False):
+            self, radius, radius_hit, inverse=False, res=0, ico=0, noise=10,
+            save_areas=False, method='VCTV', other_curvature_formula=False):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
@@ -520,6 +427,9 @@ class VectorVotingTestCase(unittest.TestCase):
 
         Args:
             radius (int): radius of the sphere
+            radius_hit (float): radius in length unit of the graph, here voxels;
+                it should be chosen to correspond to radius of smallest features
+                of interest on the surface
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
                 the other way around
@@ -534,19 +444,6 @@ class VectorVotingTestCase(unittest.TestCase):
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 10), the noise
                 is added on triangle vertex coordinates in its normal direction
-            k (int, optional): parameter of Normal Vector Voting algorithm
-                determining the geodesic neighborhood radius:
-                g_max = k * average weak triangle graph edge length (default 3)
-            g_max (float, optional): geodesic neighborhood radius in length unit
-                of the graph, here voxels; if positive (default 0) this g_max
-                will be used and k will be ignored
-            epsilon (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2), default 0
-            eta (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2) and "no preferred orientation" (class 3, see
-                Notes), default 0
             save_areas (boolean, optional): if True (default False), also mesh
                 triangle ares will be saved to a file
             method (str): tells which method should be used: 'VV' for normal
@@ -557,12 +454,6 @@ class VectorVotingTestCase(unittest.TestCase):
             other_curvature_formula (boolean, optional): if True (default False)
                 alternative normal curvature formula is used for VV or VVCF (see
                 collecting_votes2)
-
-        Notes:
-            * Either g_max or k must be positive (if both are positive, the
-              specified g_max will be used).
-            * If epsilon = 0 and eta = 0 (default), all triangles will be
-              classified as "surface patch" (class 1).
 
         Returns:
             None
@@ -603,48 +494,27 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse_str = "inverse_"
         else:
             inverse_str = ""
-        base_filename = "{}{}sphere_r{}".format(
-            files_fold, inverse_str, radius)
-        if g_max > 0:
-            surf_VV_file = '{}.{}_g_max{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, method, g_max, epsilon, eta)
-            kappa_1_file = '{}.{}_g_max{}_epsilon{}_eta{}.kappa_1.txt'.format(
-                base_filename, method, g_max, epsilon, eta)
-            kappa_2_file = '{}.{}_g_max{}_epsilon{}_eta{}.kappa_2.txt'.format(
-                base_filename, method, g_max, epsilon, eta)
-            kappa_1_errors_file = (
-                '{}.{}_g_max{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
-                    base_filename, method, g_max, epsilon, eta))
-            kappa_2_errors_file = (
-                '{}.{}_g_max{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
-                    base_filename, method, g_max, epsilon, eta))
-        elif k > 0:
-            surf_VV_file = '{}.{}_k{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, method, k, epsilon, eta)
-            kappa_1_file = '{}.{}_k{}_epsilon{}_eta{}.kappa_1.txt'.format(
-                base_filename, method, k, epsilon, eta)
-            kappa_2_file = '{}.{}_k{}_epsilon{}_eta{}.kappa_2.txt'.format(
-                base_filename, method, k, epsilon, eta)
-            kappa_1_errors_file = (
-                '{}.{}_k{}_epsilon{}_eta{}.kappa_1_errors.txt'.format(
-                    base_filename, method, k, epsilon, eta))
-            kappa_2_errors_file = (
-                '{}.{}_k{}_epsilon{}_eta{}.kappa_2_errors.txt'.format(
-                    base_filename, method, k, epsilon, eta))
-        else:
-            error_msg = ("Either g_max or k must be positive (if both are "
-                         "positive, the specified g_max will be used).")
-            raise pexceptions.PySegInputError(
-                expr='parametric_test_sphere_curvatures', msg=error_msg)
+        base_filename = "{}{}sphere_r{}".format(files_fold, inverse_str, radius)
+        surf_VV_file = '{}.{}_rh{}.vtp'.format(
+            base_filename, method, radius_hit)
+        kappa_1_file = '{}.{}_rh{}.kappa_1.txt'.format(
+            base_filename, method, radius_hit)
+        kappa_2_file = '{}.{}_rh{}.kappa_2.txt'.format(
+            base_filename, method, radius_hit)
+        kappa_1_errors_file = ('{}.{}_rh{}.kappa_1_errors.txt'.format(
+                base_filename, method, radius_hit))
+        kappa_2_errors_file = (
+            '{}.{}_rh{}.kappa_2_errors.txt'.format(
+                base_filename, method, radius_hit))
         vtk_kappa_1_file = ('{}.VTK.kappa_1.txt'.format(base_filename))
         vtk_kappa_2_file = ('{}.VTK.kappa_2.txt'.format(base_filename))
-        vtk_kappa_1_errors_file = ('{}.VTK.kappa_1_errors.txt'
-                                   .format(base_filename))
-        vtk_kappa_2_errors_file = ('{}.VTK.kappa_2_errors.txt'
-                                   .format(base_filename))
+        vtk_kappa_1_errors_file = ('{}.VTK.kappa_1_errors.txt'.format(
+            base_filename))
+        vtk_kappa_2_errors_file = ('{}.VTK.kappa_2_errors.txt'.format(
+            base_filename))
         if save_areas:
-            triangle_areas_file = ('{}.triangle_areas.txt'
-                                   .format(base_filename))
+            triangle_areas_file = ('{}.triangle_areas.txt'.format(
+                base_filename))
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
@@ -699,17 +569,6 @@ class VectorVotingTestCase(unittest.TestCase):
                                         reverse_normals=reverse_normals)
         print tg.graph
 
-        if k > 0:
-            print "k = {}".format(k)
-            # Find the average triangle edge length (l_ave) and calculate g_max:
-            # (Do this here because in vector_voting average weak edge length of
-            # the triangle graph is used, since the surface not passed)
-            pg = PointGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-            pg.build_graph_from_vtk_surface(surf)
-            l_ave = pg.calculate_average_edge_length()
-            print "average triangle edge length = {}".format(l_ave)
-            g_max = k * l_ave
-
         t_end = time.time()
         duration = t_end - t_begin
         print ('Graph construction from surface took: {} min {} s'.format(
@@ -725,12 +584,11 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if 'other_curvature_formula' in method:
             surf_VV = script(
-                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                exclude_borders=False, other_curvature_formula=True)
+                tg, radius_hit=radius_hit, exclude_borders=False,
+                other_curvature_formula=True)
         else:
             surf_VV = script(
-                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                exclude_borders=False)
+                tg, radius_hit=radius_hit, exclude_borders=False)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -811,8 +669,8 @@ class VectorVotingTestCase(unittest.TestCase):
                                delta=allowed_error, msg=msg)
 
     def parametric_test_torus_curvatures(
-            self, rr, csr, inverse=False, k=3, g_max=0, epsilon=0, eta=0,
-            method='VCTV', other_curvature_formula=False):
+            self, rr, csr, radius_hit, inverse=False, method='VCTV',
+            other_curvature_formula=False):
         """
         Runs all the steps needed to calculate curvatures for a test torus
         with given radii using normal vector voting (VV), VV combined with curve
@@ -821,22 +679,12 @@ class VectorVotingTestCase(unittest.TestCase):
         Args:
             rr (int): ring radius of the torus
             csr (int): cross-section radius of the torus
+            radius_hit (float): radius in length unit of the graph, here voxels;
+                it should be chosen to correspond to radius of smallest features
+                of interest on the surface
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
                 the other way around (choose in the way that csr < rr - csr)
-            k (int, optional): parameter of Normal Vector Voting algorithm
-                determining the geodesic neighborhood radius:
-                g_max = k * average weak triangle graph edge length (default 3)
-            g_max (float, optional): geodesic neighborhood radius in length unit
-                of the graph, here voxels; if positive (default 0) this g_max
-                will be used and k will be ignored
-            epsilon (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2), default 0
-            eta (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2) and "no preferred orientation" (class 3, see
-                Notes), default 0
             method (str): tells which method should be used: 'VV' for normal
                 vector voting, 'VVCF' for curve fitting in the two principal
                 directions estimated by VV to estimate the principal curvatures
@@ -847,10 +695,6 @@ class VectorVotingTestCase(unittest.TestCase):
                 collecting_votes2)
 
         Notes:
-            * Either g_max or k must be positive (if both are positive, the
-              specified g_max will be used).
-            * If epsilon = 0 and eta = 0 (default), all triangles will be
-              classified as "surface patch" (class 1).
             * csr should be much smaller than rr (csr < rr - csr).
 
         Returns:
@@ -867,7 +711,8 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if not os.path.exists(fold):
             os.makedirs(fold)
-        surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)  # TODO "_inner_part" for a small saddle part
+        # TODO add "_inner_part" for a small saddle part:
+        surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)
         surf_file = '{}.surface.vtp'.format(surf_filebase)
         scale_factor_to_nm = 1.0  # assume it's already in nm
         # Actually can just give in any number for the scales, because they are
@@ -883,20 +728,11 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse_str = "inverse_"
         else:
             inverse_str = ""
+        # TODO add "_inner_part" for a small saddle part:
         base_filename = "{}{}torus_rr{}_csr{}".format(
-            files_fold, inverse_str, rr, csr)  # TODO "_inner_part" for a small saddle part
-        if g_max > 0:
-            surf_VV_file = '{}.{}_g_max{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, method, g_max, epsilon, eta)
-        elif k > 0:
-            surf_VV_file = '{}.{}_k{}_epsilon{}_eta{}.vtp'.format(
-                base_filename, method, k, epsilon, eta)
-        else:
-            error_msg = ("Either g_max or k must be positive (if both are "
-                         "positive, the specified g_max will be used).")
-            raise pexceptions.PySegInputError(
-                expr='parametric_test_sphere_curvatures', msg=error_msg)
-
+            files_fold, inverse_str, rr, csr)
+        surf_VV_file = '{}.{}_rh{}.vtp'.format(
+            base_filename, method, radius_hit)
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
                    "torus with ring radius {} and cross-section radius {} "
@@ -935,17 +771,6 @@ class VectorVotingTestCase(unittest.TestCase):
                                         reverse_normals=reverse_normals)
         print tg.graph
 
-        if k > 0:
-            print "k = {}".format(k)
-            # Find the average triangle edge length (l_ave) and calculate g_max:
-            # (Do this here because in vector_voting average weak edge length of
-            # the triangle graph is used, since the surface not passed)
-            pg = PointGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-            pg.build_graph_from_vtk_surface(surf)
-            l_ave = pg.calculate_average_edge_length()
-            print "average triangle edge length = {}".format(l_ave)
-            g_max = k * l_ave
-
         t_end = time.time()
         duration = t_end - t_begin
         print ('Graph construction from surface took: {} min {} s'.format(
@@ -961,12 +786,11 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if 'other_curvature_formula' in method:
             surf_VV = script(
-                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                exclude_borders=False, other_curvature_formula=True)
+                tg, radius_hit=radius_hit, exclude_borders=False,
+                other_curvature_formula=True)
         else:
             surf_VV = script(
-                tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta,
-                exclude_borders=False)
+                tg, radius_hit=radius_hit, exclude_borders=False)
         # Saving the output (TriangleGraph object) for later inspection:
         io.save_vtp(surf_VV, surf_VV_file)
 
@@ -994,82 +818,75 @@ class VectorVotingTestCase(unittest.TestCase):
 
     # *** The following tests will be run by unittest ***
 
-    # def test_plane_normals(self):
-    #     """
-    #     Tests whether normals are correctly estimated using Normal Vector
-    #     Voting with a certain g_max for a plane surface with known orientation
-    #     (parallel to to X and Y axes), certain size, resolution and noise
-    #     level.
-    #     """
-    #     for n in [5]:
-    #         for g in [8]:
-    #             self.parametric_test_plane_normals(
-    #                 10, res=10, noise=n, k=0, g_max=g)
-
-    def test_cylinder_T_2_curvatures(self):
+    def test_plane_normals(self):
         """
-        Tests whether minimal principal directions (T_2) are correctly estimated
-        using Normal Vector Voting with a certain g_max for an opened cylinder
-        surface (without the circular planes) with known orientation (height,
-        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-        and noise level.
+        Tests whether normals are correctly estimated for a plane surface with
+        known orientation (parallel to to X and Y axes), certain size,
+        resolution and noise level.
+        """
+        for n in [5]:
+            for rh in [8]:
+                self.parametric_test_plane_normals(
+                    10, rh, res=10, noise=n)
+
+    def test_cylinder_directions_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) and curvatures are
+        correctly estimated for an opened cylinder surface (without the circular
+        planes) with known orientation (height, i.e. T_2, parallel to the Z
+        axis), certain radius and noise level.
         """
         for n in [0]:
-            for g in [8]:
-                self.parametric_test_cylinder_directions_curvatures(
-                    10, noise=n, k=0, g_max=g, method='VVCF',
-                    other_curvature_formula=True)
+            for rh in [8]:
+                for m in ['VV', 'VVCF', 'VCTV']:
+                    self.parametric_test_cylinder_directions_curvatures(
+                        10, rh, noise=n, method=m)
 
-    def test_inverse_cylinder_T_2_curvatures(self):
+    def test_inverse_cylinder_directions_curvatures(self):
         """
-        Tests whether minimal principal directions (T_2) are correctly estimated
-        using Normal Vector Voting with a certain g_max for an opened cylinder
-        surface (without the circular planes) with known orientation (height,
-        i.e. T_2, parallel to the Z axis), certain radius, height, resolution
-        and noise level.
+        Tests whether maximal principal directions (T_1) and curvatures are
+        correctly estimated for an inverse opened cylinder surface (without the
+        circular planes) with known orientation (height, i.e. T_1, parallel to
+        the Z axis), certain radius and noise level.
         """
-        for g in [8]:
-            self.parametric_test_cylinder_directions_curvatures(
-                10, noise=0, k=0, g_max=g, inverse=True, method='VVCF',
-                other_curvature_formula=True)
+        for rh in [8]:
+            for m in ['VV', 'VVCF', 'VCTV']:
+                self.parametric_test_cylinder_directions_curvatures(
+                    10, rh, noise=0, inverse=True, method=m)
 
     def test_sphere_curvatures(self):
         """
-        Tests whether curvatures are correctly estimated using Normal Vector
-        Voting with a certain g_max for a sphere with a certain radius,
-        resolution and noise level:
+        Tests whether curvatures are correctly estimated for a sphere with a
+        certain radius and noise level:
 
         kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
         """
         for n in [0]:
-            for g in [8]:
-                # self.parametric_test_sphere_curvatures(
-                #     10, res=30, noise=n, k=k, save_areas=True)
-                self.parametric_test_sphere_curvatures(
-                    10, ico=1280, noise=n, k=0, g_max=g, save_areas=False,
-                    method='VVCF', other_curvature_formula=True)
+            for rh in [8]:
+                for m in ['VV', 'VVCF', 'VCTV']:
+                    self.parametric_test_sphere_curvatures(
+                        10, rh, ico=1280, noise=n, method=m)
 
     def test_inverse_sphere_curvatures(self):
         """
-        Tests whether curvatures are correctly estimated using Normal Vector
-        Voting with a certain g_max for an inverse sphere with a certain
-        radius, resolution and noise level:
+        Tests whether curvatures are correctly estimated for an inverse sphere
+        with a certain radius and noise level:
 
         kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
         """
-        for g in [8]:
-            self.parametric_test_sphere_curvatures(
-                10, ico=1280, noise=0, k=0, g_max=g, save_areas=False,
-                inverse=True, method='VVCF', other_curvature_formula=True)
+        for rh in [8]:
+            for m in ['VV', 'VVCF', 'VCTV']:
+                self.parametric_test_sphere_curvatures(
+                    10, rh, ico=1280, noise=0, inverse=True, method=m)
 
     def test_torus_curvatures(self):
         """
         Runs parametric_test_torus_curvatures with certain parameters.
         """
-        for g in [8]:
-            self.parametric_test_torus_curvatures(
-                25, 10, inverse=False, k=0, g_max=g,
-                method='VVCF', other_curvature_formula=True)  # 'VVCF'; 'VCTV'
+        for rh in [8]:
+            for m in ['VV', 'VVCF', 'VCTV']:
+                self.parametric_test_torus_curvatures(
+                    25, 10, rh, inverse=False, method=m)
 
 
 if __name__ == '__main__':

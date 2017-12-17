@@ -1700,7 +1700,7 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
-    def estimate_directions_and_fit_curves(self, vertex_v, B_v, g_max,
+    def estimate_directions_and_fit_curves(self, vertex_v, B_v, radius_hit,
                                            verbose=False):
         """
         For a vertex v and its calculated matrix B_v (output of
@@ -1718,7 +1718,9 @@ class TriangleGraph(SurfaceGraph):
                 are estimated
             B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
                 collecting_votes2)
-            g_max (float): geodesic radius
+            radius_hit (float): radius in length unit of the graph, e.g.
+                nanometers, for sampling surface points in tangent directions
+                (distance between the points equals to graph's scale)
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -1773,9 +1775,9 @@ class TriangleGraph(SurfaceGraph):
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
         var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_1, self.scale_factor_to_nm, g_max, verbose=verbose)
+            vertex_v, T_1, self.scale_factor_to_nm, radius_hit, verbose=verbose)
         var_a_2, kappa_2 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_2, self.scale_factor_to_nm, g_max, verbose=verbose)
+            vertex_v, T_2, self.scale_factor_to_nm, radius_hit, verbose=verbose)
         # Curvatures and directions might be interchanged:
         if kappa_1 < kappa_2:
             T_1, T_2 = T_2, T_1
@@ -1810,7 +1812,7 @@ class TriangleGraph(SurfaceGraph):
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
     def find_points_in_tangent_direction_and_fit_curve(
-            self, vertex_v, tangent, dist, g_max,
+            self, vertex_v, tangent, dist, radius_hit,
             poly_file=None, plot_file=None, verbose=False, debug=False):
         # TODO docstring, remove debug when finished debugging
         # tangent has to have length 1!
@@ -1833,14 +1835,15 @@ class TriangleGraph(SurfaceGraph):
         tolerance = 0.001
 
         # Make a list of points, each point is the intersection of a vertical
-        # line defined by p1 and p2 (of length 2 g_max) and the surface
+        # line defined by p1 and p2 (of length 2 radius_hit) and the surface
         points = vtk.vtkPoints()
         positions_2D_x = []
         positions_2D_y = []
         vector_length = np.linalg.norm
         dot = np.dot
-        # maximal number of points to sample in each direction
-        num_points = int(g_max / dist)  # last dist have to fit into g_max
+        # maximal number of points to sample in each direction (last dist have
+        # to fit into radius_hit)
+        num_points = int(radius_hit / dist)
 
         # Add the central point v first
         points.InsertNextPoint(v)
@@ -1854,9 +1857,9 @@ class TriangleGraph(SurfaceGraph):
                 # point on line from v in tangent / opposite direction
                 p0 = v + np.multiply(np.multiply(tangent, direction), curr_dist)
                 # point on line from p0 in opposite normal direction
-                p1 = p0 - np.multiply(normal, g_max)
+                p1 = p0 - np.multiply(normal, radius_hit)
                 # point on line from p0 in normal direction
-                p2 = p0 + np.multiply(normal, g_max)
+                p2 = p0 + np.multiply(normal, radius_hit)
 
                 # Outputs (we need only pos, which is the x, y, z position
                 # of the intersection:
@@ -1877,10 +1880,10 @@ class TriangleGraph(SurfaceGraph):
                         print "No intersection point"
                     break
 
-                # If euclidean distance between p0 and pos is > g_max (i.e.
+                # If euclidean distance between p0 and pos is > radius_hit (i.e.
                 # pos is not between p1 and p2), exclude and stop searching in
                 # that direction
-                if vector_length(p0 - pos) > g_max:
+                if vector_length(p0 - pos) > radius_hit:
                     if debug or verbose:
                         print "Point NOT within geodesic radius to the tangent"
                     break
@@ -1967,6 +1970,7 @@ class TriangleGraph(SurfaceGraph):
         return var_a, curvature
 
     def gen_curv_vote(self, vertex_r, radius_hit, verbose=False):
+        # TODO docstring
         # Get the coordinates of vertex r and its estimated normal N_r (as numpy
         # array, input of the original method):
         r = np.array(self.graph.vp.xyz[vertex_r])
