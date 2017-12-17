@@ -23,7 +23,7 @@ __author__ = 'kalemanov'
 
 
 def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
-                  other_curvature_formula=False):
+                  other_curvature_formula=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -47,7 +47,7 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
         exclude_borders (boolean, optional): if True (default), principle
             curvatures and directions are not estimated for triangles at surface
             borders
-        other_curvature_formula (boolean, optional): if True (default False)
+        other_curvature_formula (boolean, optional): if True (default),
             alternative normal curvature formula is used (see
             collecting_curvature_votes)
     Returns:
@@ -272,7 +272,7 @@ def vector_voting(tg, k=3, g_max=0.0, epsilon=0, eta=0, exclude_borders=True,
 
 def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
                                 exclude_borders=True,
-                                other_curvature_formula=False):
+                                other_curvature_formula=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -296,7 +296,7 @@ def vector_voting_curve_fitting(tg, k=3, g_max=0.0, epsilon=0, eta=0,
         exclude_borders (boolean, optional): if True (default), principle
             curvatures and directions are not estimated for triangles at surface
             borders
-        other_curvature_formula (boolean, optional): if True (default False)
+        other_curvature_formula (boolean, optional): if True (default),
             alternative normal curvature formula is used (see
             collecting_curvature_votes)
 

@@ -1017,7 +1017,7 @@ class VectorVotingTestCase(unittest.TestCase):
         for n in [0]:
             for g in [8]:
                 self.parametric_test_cylinder_directions_curvatures(
-                    10, noise=n, k=0, g_max=g, method='VV',
+                    10, noise=n, k=0, g_max=g, method='VVCF',
                     other_curvature_formula=True)
 
     def test_inverse_cylinder_T_2_curvatures(self):
@@ -1030,7 +1030,7 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         for g in [8]:
             self.parametric_test_cylinder_directions_curvatures(
-                10, noise=0, k=0, g_max=g, inverse=True, method='VV',
+                10, noise=0, k=0, g_max=g, inverse=True, method='VVCF',
                 other_curvature_formula=True)
 
     def test_sphere_curvatures(self):
@@ -1047,7 +1047,7 @@ class VectorVotingTestCase(unittest.TestCase):
                 #     10, res=30, noise=n, k=k, save_areas=True)
                 self.parametric_test_sphere_curvatures(
                     10, ico=1280, noise=n, k=0, g_max=g, save_areas=False,
-                    method='VV', other_curvature_formula=True)
+                    method='VVCF', other_curvature_formula=True)
 
     def test_inverse_sphere_curvatures(self):
         """
@@ -1060,7 +1060,7 @@ class VectorVotingTestCase(unittest.TestCase):
         for g in [8]:
             self.parametric_test_sphere_curvatures(
                 10, ico=1280, noise=0, k=0, g_max=g, save_areas=False,
-                inverse=True, method='VV', other_curvature_formula=True)
+                inverse=True, method='VVCF', other_curvature_formula=True)
 
     def test_torus_curvatures(self):
         """
@@ -1069,7 +1069,7 @@ class VectorVotingTestCase(unittest.TestCase):
         for g in [8]:
             self.parametric_test_torus_curvatures(
                 25, 10, inverse=False, k=0, g_max=g,
-                method='VV', other_curvature_formula=True)  # 'VVCF'; 'VCTV'
+                method='VVCF', other_curvature_formula=True)  # 'VVCF'; 'VCTV'
 
 
 if __name__ == '__main__':
