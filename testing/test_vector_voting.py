@@ -166,7 +166,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_cylinder_directions_curvatures(
             self, r, radius_hit, inverse=False, res=0, h=0, noise=10,
-            method='VCTV', other_curvature_formula=True):
+            method='VCTV', page_curvature_formula=False):
         """
         Tests whether minimal principal directions (T_2), as well as minimal and
         maximal principal curvatures are correctly estimated for an opened
@@ -200,9 +200,9 @@ class VectorVotingTestCase(unittest.TestCase):
                 directions estimated by VV to estimate the principal curvatures
                 or 'VCTV' (default) for vector and curvature tensor voting to
                 estimate the principal direction and curvatures
-            other_curvature_formula (boolean, optional): if True (default)
-                alternative normal curvature formula is used for VV or VVCF (see
-                collecting_votes2)
+            page_curvature_formula (boolean, optional): if True (default False)
+                normal curvature formula from Page at al. is used for VV or VVCF
+                (see collecting_curvature_votes)
 
         Returns:
             None
@@ -210,10 +210,10 @@ class VectorVotingTestCase(unittest.TestCase):
         if method != 'VV' and method != 'VVCF' and method != 'VCTV':
             print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
             exit(0)
-        if method == 'VV' and other_curvature_formula:
-            method = 'VV_other_curvature_formula'
-        elif method == 'VVCF' and other_curvature_formula:
-            method = 'VVCF_other_curvature_formula'
+        if method == 'VV' and page_curvature_formula:
+            method = 'VV_page_curvature_formula'
+        elif method == 'VVCF' and page_curvature_formula:
+            method = 'VVCF_page_curvature_formula'
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res == 0:
             fold = '{}synthetic_surfaces/cylinder/noise{}/'.format(
@@ -309,17 +309,17 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        if method == 'VV' or method == 'VV_other_curvature_formula':
+        if method == 'VV' or method == 'VV_page_curvature_formula':
             script = vector_voting
-        elif method == 'VVCF' or method == 'VVCF_other_curvature_formula':
+        elif method == 'VVCF' or method == 'VVCF_page_curvature_formula':
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
 
-        if 'other_curvature_formula' in method:
+        if 'page_curvature_formula' in method:
             surf_VV = script(
                 tg, radius_hit=radius_hit, exclude_borders=True,
-                other_curvature_formula=True)
+                page_curvature_formula=True)
         else:
             surf_VV = script(
                 tg, radius_hit=radius_hit, exclude_borders=True)
@@ -416,7 +416,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_sphere_curvatures(
             self, radius, radius_hit, inverse=False, res=0, ico=0, noise=10,
-            save_areas=False, method='VCTV', other_curvature_formula=True):
+            save_areas=False, method='VCTV', page_curvature_formula=False):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
@@ -451,9 +451,9 @@ class VectorVotingTestCase(unittest.TestCase):
                 directions estimated by VV to estimate the principal curvatures
                 or 'VCTV' (default) for vector and curvature tensor voting to
                 estimate the principal direction and curvatures
-            other_curvature_formula (boolean, optional): if True (default)
-                alternative normal curvature formula is used for VV or VVCF (see
-                collecting_votes2)
+            page_curvature_formula (boolean, optional): if True (default False)
+                normal curvature formula from Page et al. is used for VV or VVCF
+                (see collecting_curvature_votes)
 
         Returns:
             None
@@ -461,10 +461,10 @@ class VectorVotingTestCase(unittest.TestCase):
         if method != 'VV' and method != 'VVCF' and method != 'VCTV':
             print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
             exit(0)
-        if method == 'VV' and other_curvature_formula:
-            method = 'VV_other_curvature_formula'
-        elif method == 'VVCF' and other_curvature_formula:
-            method = 'VVCF_other_curvature_formula'
+        if method == 'VV' and page_curvature_formula:
+            method = 'VV_page_curvature_formula'
+        elif method == 'VVCF' and page_curvature_formula:
+            method = 'VVCF_page_curvature_formula'
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res > 0:  # UV sphere is used
             fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
@@ -575,17 +575,17 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        if method == 'VV' or method == 'VV_other_curvature_formula':
+        if method == 'VV' or method == 'VV_page_curvature_formula':
             script = vector_voting
-        elif method == 'VVCF' or method == 'VVCF_other_curvature_formula':
+        elif method == 'VVCF' or method == 'VVCF_page_curvature_formula':
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
 
-        if 'other_curvature_formula' in method:
+        if 'page_curvature_formula' in method:
             surf_VV = script(
                 tg, radius_hit=radius_hit, exclude_borders=False,
-                other_curvature_formula=True)
+                page_curvature_formula=True)
         else:
             surf_VV = script(
                 tg, radius_hit=radius_hit, exclude_borders=False)
@@ -670,7 +670,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_torus_curvatures(
             self, rr, csr, radius_hit, inverse=False, method='VCTV',
-            other_curvature_formula=True):
+            page_curvature_formula=False):
         """
         Runs all the steps needed to calculate curvatures for a test torus
         with given radii using normal vector voting (VV), VV combined with curve
@@ -690,9 +690,9 @@ class VectorVotingTestCase(unittest.TestCase):
                 directions estimated by VV to estimate the principal curvatures
                 or 'VCTV' (default) for vector and curvature tensor voting to
                 estimate the principal direction and curvatures
-            other_curvature_formula (boolean, optional): if True (default)
-                alternative normal curvature formula is used for VV or VVCF (see
-                collecting_votes2)
+            page_curvature_formula (boolean, optional): if True (default False)
+                normal curvature formula from Page et al. is used for VV or VVCF
+                (see collecting_curvature_votes)
 
         Notes:
             * csr should be much smaller than rr (csr < rr - csr).
@@ -703,10 +703,10 @@ class VectorVotingTestCase(unittest.TestCase):
         if method != 'VV' and method != 'VVCF' and method != 'VCTV':
             print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
             exit(0)
-        if method == 'VV' and other_curvature_formula:
-            method = 'VV_other_curvature_formula'
-        elif method == 'VVCF' and other_curvature_formula:
-            method = 'VVCF_other_curvature_formula'
+        if method == 'VV' and page_curvature_formula:
+            method = 'VV_page_curvature_formula'
+        elif method == 'VVCF' and page_curvature_formula:
+            method = 'VVCF_page_curvature_formula'
         fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
 
         if not os.path.exists(fold):
@@ -777,17 +777,17 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm with curve fitting
-        if method == 'VV' or method == 'VV_other_curvature_formula':
+        if method == 'VV' or method == 'VV_page_curvature_formula':
             script = vector_voting
-        elif method == 'VVCF' or method == 'VVCF_other_curvature_formula':
+        elif method == 'VVCF' or method == 'VVCF_page_curvature_formula':
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
 
-        if 'other_curvature_formula' in method:
+        if 'page_curvature_formula' in method:
             surf_VV = script(
                 tg, radius_hit=radius_hit, exclude_borders=False,
-                other_curvature_formula=True)
+                page_curvature_formula=True)
         else:
             surf_VV = script(
                 tg, radius_hit=radius_hit, exclude_borders=False)
@@ -838,9 +838,9 @@ class VectorVotingTestCase(unittest.TestCase):
     #     """
     #     for n in [0]:
     #         for rh in [9]:
-    #             for m in ['VV', 'VVCF', 'VCTV']:
+    #             for m in ['VV', 'VVCF']:  # , 'VCTV'
     #                 self.parametric_test_cylinder_directions_curvatures(
-    #                     10, rh, noise=n, method=m)
+    #                     10, rh, noise=n, method=m, page_curvature_formula=True)
 
     def test_inverse_cylinder_directions_curvatures(self):
         """
@@ -852,7 +852,8 @@ class VectorVotingTestCase(unittest.TestCase):
         for rh in [8]:
             for m in ['VV', 'VVCF']:  # , 'VCTV'
                 self.parametric_test_cylinder_directions_curvatures(
-                    10, rh, noise=0, inverse=True, method=m)
+                    10, rh, noise=0, inverse=True, method=m,
+                    page_curvature_formula=True)
 
     # def test_sphere_curvatures(self):
     #     """
@@ -863,30 +864,31 @@ class VectorVotingTestCase(unittest.TestCase):
     #     """
     #     for n in [0]:
     #         for rh in [9]:
-    #             for m in ['VV', 'VVCF', 'VCTV']:
+    #             for m in ['VV', 'VVCF']:  # , 'VCTV'
     #                 self.parametric_test_sphere_curvatures(
-    #                     10, rh, ico=1280, noise=n, method=m)
+    #                     10, rh, ico=1280, noise=n, method=m, page_curvature_formula=True)
 
-    def test_inverse_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated for an inverse sphere
-        with a certain radius and noise level:
-
-        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-        """
-        for rh in [8]:
-            for m in ['VV', 'VVCF']:  # , 'VCTV'
-                self.parametric_test_sphere_curvatures(
-                    10, rh, ico=1280, noise=0, inverse=True, method=m)
+    # def test_inverse_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated for an inverse sphere
+    #     with a certain radius and noise level:
+    #
+    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+    #     """
+    #     for rh in [8]:
+    #         for m in ['VV', 'VVCF']:  # , 'VCTV'
+    #             self.parametric_test_sphere_curvatures(
+    #                 10, rh, ico=1280, noise=0, inverse=True, method=m,
+    #                 page_curvature_formula=True)
 
     # def test_torus_curvatures(self):
     #     """
     #     Runs parametric_test_torus_curvatures with certain parameters.
     #     """
     #     for rh in [9]:
-    #         for m in ['VV', 'VVCF', 'VCTV']:
+    #         for m in ['VV', 'VVCF']:  # , 'VCTV'
     #             self.parametric_test_torus_curvatures(
-    #                 25, 10, rh, inverse=False, method=m)
+    #                 25, 10, rh, inverse=False, method=m, page_curvature_formula=True)
 
 
 if __name__ == '__main__':

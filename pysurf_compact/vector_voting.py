@@ -24,7 +24,7 @@ __author__ = 'kalemanov'
 
 
 def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
-                  other_curvature_formula=True):
+                  page_curvature_formula=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -45,8 +45,8 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
         exclude_borders (boolean, optional): if True (default), principle
             curvatures and directions are not estimated for triangles at surface
             borders
-        other_curvature_formula (boolean, optional): if True (default),
-            alternative normal curvature formula is used (see
+        page_curvature_formula (boolean, optional): if True (default False),
+            normal curvature formula from Page et al. is used (see
             collecting_curvature_votes)
     Returns:
         the surface of triangles with classified orientation and estimated
@@ -181,7 +181,7 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
                 # a surface patch
                 B_v = collecting_curvature_votes(
                         v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
-                        other_curvature_formula=other_curvature_formula)
+                        page_curvature_formula=page_curvature_formula)
             if B_v is not None:
                 estimate_curvature(v, B_v, verbose=False)
             # For crease, no preferably oriented vertices or vertices lacking
@@ -214,7 +214,7 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
                 # a surface patch
                 B_v = collecting_curvature_votes(
                         v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
-                        other_curvature_formula=other_curvature_formula)
+                        page_curvature_formula=page_curvature_formula)
             if B_v is not None:
                 estimate_curvature(v, B_v, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
@@ -246,7 +246,7 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
 
 def vector_voting_curve_fitting(tg, radius_hit, epsilon=0, eta=0,
                                 exclude_borders=True,
-                                other_curvature_formula=True):
+                                page_curvature_formula=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -268,8 +268,8 @@ def vector_voting_curve_fitting(tg, radius_hit, epsilon=0, eta=0,
         exclude_borders (boolean, optional): if True (default), principle
             curvatures and directions are not estimated for triangles at surface
             borders
-        other_curvature_formula (boolean, optional): if True (default),
-            alternative normal curvature formula is used (see
+        page_curvature_formula (boolean, optional): if True (default False),
+            normal curvature formula from Page et al. is used (see
             collecting_curvature_votes)
 
     Returns:
@@ -411,7 +411,7 @@ def vector_voting_curve_fitting(tg, radius_hit, epsilon=0, eta=0,
                 # a surface patch
                 B_v = collecting_curvature_votes(
                         v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
-                        other_curvature_formula=other_curvature_formula)
+                        page_curvature_formula=page_curvature_formula)
             if B_v is not None:
                 estimate_directions_and_fit_curves(v, B_v, radius_hit,
                                                    verbose=False)
@@ -447,7 +447,7 @@ def vector_voting_curve_fitting(tg, radius_hit, epsilon=0, eta=0,
                 # a surface patch
                 B_v = collecting_curvature_votes(
                         v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
-                        other_curvature_formula=other_curvature_formula)
+                        page_curvature_formula=page_curvature_formula)
             if B_v is not None:
                 estimate_directions_and_fit_curves(v, B_v, radius_hit,
                                                    verbose=False)
