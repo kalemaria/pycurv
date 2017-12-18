@@ -2062,7 +2062,8 @@ class TriangleGraph(SurfaceGraph):
                 print("k_rc = {}".format(k_rc))
                 print("sign_c = {}".format(sign_c))
 
-        M_r /= 8  # or M_r /= num_valid_votes ?
+        M_r /= 8  # or:
+        # M_r /= num_valid_votes  # TODO check more!
         # Decompose the symmetric matrix M_r:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix

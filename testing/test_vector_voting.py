@@ -829,44 +829,45 @@ class VectorVotingTestCase(unittest.TestCase):
     #             self.parametric_test_plane_normals(
     #                 10, rh, res=10, noise=n)
 
-    # def test_cylinder_directions_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) and curvatures are
-    #     correctly estimated for an opened cylinder surface (without the circular
-    #     planes) with known orientation (height, i.e. T_2, parallel to the Z
-    #     axis), certain radius and noise level.
-    #     """
-    #     for n in [0]:
-    #         for rh in [9]:
-    #             for m in ['VV', 'VVCF']:  # , 'VCTV'
-    #                 self.parametric_test_cylinder_directions_curvatures(
-    #                     10, rh, noise=n, method=m, page_curvature_formula=True)
-
-    def test_inverse_cylinder_directions_curvatures(self):
+    def test_cylinder_directions_curvatures(self):
         """
-        Tests whether maximal principal directions (T_1) and curvatures are
-        correctly estimated for an inverse opened cylinder surface (without the
-        circular planes) with known orientation (height, i.e. T_1, parallel to
-        the Z axis), certain radius and noise level.
+        Tests whether minimal principal directions (T_2) and curvatures are
+        correctly estimated for an opened cylinder surface (without the circular
+        planes) with known orientation (height, i.e. T_2, parallel to the Z
+        axis), certain radius and noise level.
         """
-        for rh in [8]:
-            for m in ['VV', 'VVCF']:  # , 'VCTV'
-                self.parametric_test_cylinder_directions_curvatures(
-                    10, rh, noise=0, inverse=True, method=m,
-                    page_curvature_formula=True)
+        for n in [0]:
+            for rh in [2, 4, 6, 8, 9]:
+                for m in ['VV', 'VVCF', 'VCTV']:
+                    self.parametric_test_cylinder_directions_curvatures(
+                        10, rh, noise=n, method=m, page_curvature_formula=False)
 
-    # def test_sphere_curvatures(self):
+    # def test_inverse_cylinder_directions_curvatures(self):
     #     """
-    #     Tests whether curvatures are correctly estimated for a sphere with a
-    #     certain radius and noise level:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+    #     Tests whether maximal principal directions (T_1) and curvatures are
+    #     correctly estimated for an inverse opened cylinder surface (without the
+    #     circular planes) with known orientation (height, i.e. T_1, parallel to
+    #     the Z axis), certain radius and noise level.
     #     """
-    #     for n in [0]:
-    #         for rh in [9]:
-    #             for m in ['VV', 'VVCF']:  # , 'VCTV'
-    #                 self.parametric_test_sphere_curvatures(
-    #                     10, rh, ico=1280, noise=n, method=m, page_curvature_formula=True)
+    #     for rh in [8]:
+    #         for m in ['VV', 'VVCF']:  # , 'VCTV'
+    #             self.parametric_test_cylinder_directions_curvatures(
+    #                 10, rh, noise=0, inverse=True, method=m,
+    #                 page_curvature_formula=True)
+
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated for a sphere with a
+        certain radius and noise level:
+
+        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+        """
+        for n in [0]:
+            for rh in [2, 4, 6, 8, 9]:
+                for m in ['VV', 'VVCF', 'VCTV']:
+                    self.parametric_test_sphere_curvatures(
+                        10, rh, ico=1280, noise=n, method=m,
+                        page_curvature_formula=False)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -875,7 +876,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #
     #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
     #     """
-    #     for rh in [8]:
+    #     for rh in [9]:
     #         for m in ['VV', 'VVCF']:  # , 'VCTV'
     #             self.parametric_test_sphere_curvatures(
     #                 10, rh, ico=1280, noise=0, inverse=True, method=m,
@@ -885,10 +886,11 @@ class VectorVotingTestCase(unittest.TestCase):
     #     """
     #     Runs parametric_test_torus_curvatures with certain parameters.
     #     """
-    #     for rh in [9]:
-    #         for m in ['VV', 'VVCF']:  # , 'VCTV'
+    #     for rh in [2, 4, 6]:
+    #         for m in ['VV', 'VVCF', 'VCTV']:
     #             self.parametric_test_torus_curvatures(
-    #                 25, 10, rh, inverse=False, method=m, page_curvature_formula=True)
+    #                 25, 10, rh, inverse=False, method=m,
+    #                 page_curvature_formula=False)
 
 
 if __name__ == '__main__':

@@ -156,9 +156,10 @@ def plot_errors(
 
 
 if __name__ == "__main__":
-    plot_fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/plots/"
+    plot_fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+                "plots_and_images/"
     # plane normals
-    n = 5  # noise in %
+    n = 10  # noise in %
     fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
             "plane/res10_noise{}/files4plotting/".format(n))
     plot_errors(
