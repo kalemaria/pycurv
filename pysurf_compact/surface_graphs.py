@@ -1706,7 +1706,7 @@ class TriangleGraph(SurfaceGraph):
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
     def estimate_directions_and_fit_curves(self, vertex_v, B_v, radius_hit,
-                                           verbose=False):
+                                           num_points, verbose=False):
         """
         For a vertex v and its calculated matrix B_v (output of
         collecting_votes2), calculates the principal directions (T_1 and T_2)
@@ -1725,7 +1725,8 @@ class TriangleGraph(SurfaceGraph):
                 collecting_votes2)
             radius_hit (float): radius in length unit of the graph, e.g.
                 nanometers, for sampling surface points in tangent directions
-                (distance between the points equals to graph's scale)
+            num_points (int): number of points to sample in each tangent
+                direction in order to fit parabola and estimate curvature
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -1780,9 +1781,9 @@ class TriangleGraph(SurfaceGraph):
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
         var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_1, self.scale_factor_to_nm, radius_hit, verbose=verbose)
+            vertex_v, T_1, radius_hit, num_points, verbose=verbose)
         var_a_2, kappa_2 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_2, self.scale_factor_to_nm, radius_hit, verbose=verbose)
+            vertex_v, T_2, radius_hit, num_points, verbose=verbose)
         # Curvatures and directions might be interchanged:
         if kappa_1 < kappa_2:
             T_1, T_2 = T_2, T_1
@@ -1817,11 +1818,13 @@ class TriangleGraph(SurfaceGraph):
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
     def find_points_in_tangent_direction_and_fit_curve(
-            self, vertex_v, tangent, dist, radius_hit,
+            self, vertex_v, tangent, radius_hit, num_points,
             poly_file=None, plot_file=None, verbose=False, debug=False):
         # TODO docstring, remove debug when finished debugging
         # tangent has to have length 1!
-        # dist: distance on the tangent line between the perpendicular lines
+        # num_points (int): maximal number of points to sample in the tangent
+        #     direction in order to fit parabola and estimate curvature (in
+        #     each of the two directions, without the central point)
 
         # Get the coordinates of the central vertex and its estimated normal:
         v = np.array(self.graph.vp.xyz[vertex_v])
@@ -1846,9 +1849,8 @@ class TriangleGraph(SurfaceGraph):
         positions_2D_y = []
         vector_length = np.linalg.norm
         dot = np.dot
-        # maximal number of points to sample in each direction (last dist have
-        # to fit into radius_hit)
-        num_points = int(radius_hit / dist)
+        # dist: distance on the tangent line between the perpendicular lines
+        dist = float(radius_hit) / num_points
 
         # Add the central point v first
         points.InsertNextPoint(v)

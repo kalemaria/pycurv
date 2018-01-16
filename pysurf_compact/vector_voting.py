@@ -245,7 +245,7 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
 
 
 def vector_voting_curve_fitting(
-        tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
+        tg, radius_hit, num_points, epsilon=0, eta=0, exclude_borders=True,
         page_curvature_formula=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
@@ -258,6 +258,8 @@ def vector_voting_curve_fitting(
             for sampling surface points in tangent directions (distance between
             the points equals to graph's scale); it should be chosen to
             correspond to radius of smallest features of interest on the surface
+        num_points (int): number of points to sample in each estimated
+            principal direction in order to fit parabola and estimate curvature
         epsilon (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2), default 0
@@ -414,7 +416,7 @@ def vector_voting_curve_fitting(
                         page_curvature_formula=page_curvature_formula)
             if B_v is not None:
                 estimate_directions_and_fit_curves(v, B_v, radius_hit,
-                                                   verbose=False)
+                                                   num_points, verbose=False)
             # For crease, no preferably oriented vertices or vertices lacking
             # neighbors, add placeholders to the corresponding vertex properties
             if orientation_class[v] != 1 or B_v is None:
@@ -450,7 +452,7 @@ def vector_voting_curve_fitting(
                         page_curvature_formula=page_curvature_formula)
             if B_v is not None:
                 estimate_directions_and_fit_curves(v, B_v, radius_hit,
-                                                   verbose=False)
+                                                   num_points, verbose=False)
             # For crease, no preferably oriented vertices, vertices on border or
             # vertices lacking neighbors, add placeholders to the corresponding
             # vertex properties
