@@ -76,6 +76,71 @@ def angular_error_vector(true_vector, estimated_vector):
     return math.acos(abs(np.dot(true_vector, estimated_vector)))
 
 
+def beautify_number(number, precision=15):
+    """
+    Rounds an almost zero floating point number to 0 and removes minus.
+    Args:
+        number (float): input number
+        precision (int): desired number of decimal points to use for rounding
+
+    Returns:
+        0 if absolute value of the rounded number is 0, else the original number
+    """
+    if abs(round(number, precision)) == 0:
+        return 0
+    else:
+        return number
+
+
+def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
+    # TODO docstring
+    sin = math.sin
+    cos = math.cos
+    asin = math.asin
+    acos = math.acos
+    pi = math.pi
+
+    # Find v angle around the small circle, origin at outer torus side,
+    # rotation towards positive z
+    v = asin(z / a)
+    r_xy = math.sqrt(x ** 2 + y ** 2)  # same as c + a * cos(v)
+    if r_xy < c:
+        v += pi
+
+    # Find u angle around the big circle, origin at positive x and y=0,
+    # rotation towards positive y
+    cos_u = x / r_xy
+    u = acos(cos_u)
+    if y < 0:
+        u = 2 * pi - u
+    # sin_u = y / r_xy  # alternative calculation
+    # u_too = asin(sin_u)
+    # if x < 0:
+    #     u_too = pi - u_too
+
+    # minimal principal curvatures
+    if abs(v) == pi / 2:  # top or bottom of torus in Z
+        kappa_2 = 0
+    else:
+        kappa_2 = cos(v) / r_xy
+
+    # maximal and minimal principal directions
+    E_1 = [- cos(u) * sin(v), - sin(u) * sin(v), cos(v)]
+    E_2 = [- sin(u), cos(u), 0]
+    # round almost 0 to 0 and remove minus before 0
+    E_1 = [beautify_number(e) for e in E_1]
+    E_2 = [beautify_number(e) for e in E_2]
+
+    if verbose:
+        print("v = {}".format(v))
+        print("u = {}".format(u))
+        print("kappa_2 = {}".format(kappa_2))
+        print("E_1 = ({}, {}, {})".format(E_1[0], E_1[1], E_1[2]))
+        print("E_2 = ({}, {}, {})".format(E_2[0], E_2[1], E_2[2]))
+
+    return kappa_2, E_1, E_2
+
+
 class VectorVotingTestCase(unittest.TestCase):
     """
     Tests for vector_voting.py, assuming that other used functions are correct.
@@ -791,7 +856,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
         scale_x = 2 * (rr + csr)
-        scale_y = 2 * scale_x
+        scale_y = scale_x
         scale_z = 2 * csr
         files_fold = '{}files4plotting/'.format(fold)
         if not os.path.exists(files_fold):
@@ -805,7 +870,7 @@ class VectorVotingTestCase(unittest.TestCase):
             files_fold, inverse_str, rr, csr)
         surf_VV_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
-        if inverse:
+        if inverse:  # TODO remove the inverse option, not needed for torus!
             print ("\n*** Generating a surface and a graph for an inverse "
                    "torus with ring radius {} and cross-section radius {} "
                    "using the method {}***"
@@ -848,6 +913,43 @@ class VectorVotingTestCase(unittest.TestCase):
         print ('Graph construction from surface took: {} min {} s'.format(
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
+        # Ground-truth principal curvatures and directions
+        irr = rr - csr
+        orr = rr + csr
+        if inverse:
+            true_kappa_1 = (- 1.0 / orr, 1.0 / irr)
+            print ("true kappa_1 between {} and {}".format(true_kappa_1[0],
+                                                           true_kappa_1[1]))
+            true_kappa_2 = - 1.0 / csr
+            print ("true kappa_2 = {}".format(true_kappa_2))
+        else:
+            true_kappa_1 = 1.0 / csr
+            print ("true kappa_1 = {}".format(true_kappa_1))
+            true_kappa_2 = (- 1.0 / irr, 1.0 / orr)
+            print ("true kappa_2 between {} and {}".format(true_kappa_2[0],
+                                                           true_kappa_2[1]))
+        # Vertex properties for storing the true maximal and minimal curvatures
+        # and the their directions of the corresponding triangle:
+        tg.graph.vp.true_kappa_1 = tg.graph.new_vertex_property("float")
+        tg.graph.vp.true_kappa_2 = tg.graph.new_vertex_property("float")
+        tg.graph.vp.true_T_1 = tg.graph.new_vertex_property("vector<float>")
+        tg.graph.vp.true_T_2 = tg.graph.new_vertex_property("vector<float>")
+
+        # Calculate and fill the properties
+        true_kappa_1 = 1.0 / csr  # constant for the whole torus surface
+        xyz = tg.graph.vp.xyz
+        print len(tg.graph.vertices())
+        print tg.graph.num_vertices()
+        for v in tg.graph.vertices():
+            x, y, z = xyz[v]  # coordinates of triangle center v
+            # print "\nx, y, z = ({}, {}, {})".format(x, y, z)  # test
+            true_kappa_2, true_T_1, true_T_2 = torus_curvatures_and_directions(
+                rr, csr, x, y, z)
+            tg.graph.vp.true_kappa_1[v] = true_kappa_1
+            tg.graph.vp.true_kappa_2[v] = true_kappa_2
+            tg.graph.vp.true_T_1[v] = true_T_1
+            tg.graph.vp.true_T_2[v] = true_T_2
+
         # Running the modified Normal Vector Voting algorithm with curve fitting
         if method == 'VV' or method == 'VV_page_curvature_formula':
             script = vector_voting
@@ -872,23 +974,6 @@ class VectorVotingTestCase(unittest.TestCase):
         vtk_kappa_1_values = tg.get_vertex_property_array("max_curvature")
         vtk_kappa_2_values = tg.get_vertex_property_array("min_curvature")
         # TODO save the values
-
-        # Ground-truth principal curvatures
-        irr = rr - csr
-        orr = rr + csr
-        if inverse:
-            true_kappa_1 = (- 1.0 / orr, 1.0 / irr)
-            print ("true kappa_1 between {} and {}".format(true_kappa_1[0],
-                                                           true_kappa_1[1]))
-            true_kappa_2 = - 1.0 / csr
-            print ("true kappa_2 = {}".format(true_kappa_2))
-        else:
-            true_kappa_1 = 1.0 / csr
-            print ("true kappa_1 = {}".format(true_kappa_1))
-            true_kappa_2 = (- 1.0 / irr, 1.0 / orr)
-            print ("true kappa_2 between {} and {}".format(true_kappa_2[0],
-                                                           true_kappa_2[1]))
-        # TODO calculate all true principal curvatures and directions for torus
         # TODO calculate errors and save them
 
     # *** The following tests will be run by unittest ***
@@ -904,19 +989,19 @@ class VectorVotingTestCase(unittest.TestCase):
     #             self.parametric_test_plane_normals(
     #                 10, rh, res=10, noise=n)
 
-    def test_cylinder_directions_curvatures(self):
-        """
-        Tests whether minimal principal directions (T_2) and curvatures are
-        correctly estimated for an opened cylinder surface (without the circular
-        planes) with known orientation (height, i.e. T_2, parallel to the Z
-        axis), certain radius and noise level.
-        """
-        for n in [0]:
-            for rh in [6.5, 7, 7.5, 8, 8.5, 9, 9.5]:
-                for m in ['VV', 'VVCF', 'VCTV']:
-                    self.parametric_test_cylinder_directions_curvatures(
-                        10, rh, noise=n, method=m,
-                        page_curvature_formula=False)
+    # def test_cylinder_directions_curvatures(self):
+    #     """
+    #     Tests whether minimal principal directions (T_2) and curvatures are
+    #     correctly estimated for an opened cylinder surface (without the circular
+    #     planes) with known orientation (height, i.e. T_2, parallel to the Z
+    #     axis), certain radius and noise level.
+    #     """
+    #     for n in [0]:
+    #         for rh in [5, 6]:
+    #             for m in ['VV', 'VVCF', 'VCTV']:
+    #                 self.parametric_test_cylinder_directions_curvatures(
+    #                     10, rh, noise=n, method=m,
+    #                     page_curvature_formula=False)
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -939,12 +1024,11 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
     #     for n in [0]:
-    #         for rh in [6.5, 7, 7.5, 8, 8.5, 9, 9.5]:
+    #         for rh in [5, 6]:
     #             for m in ['VV', 'VVCF']:  # 'VCTV'
     #                 self.parametric_test_sphere_curvatures(
     #                     10, rh, ico=1280, noise=n, method=m,
-    #                     page_curvature_formula=False
-    #                 )
+    #                     page_curvature_formula=False)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -959,16 +1043,20 @@ class VectorVotingTestCase(unittest.TestCase):
     #                 10, rh, ico=1280, noise=0, inverse=True, method=m,
     #                 page_curvature_formula=False)
 
-    # def test_torus_curvatures(self):
-    #     """
-    #     Runs parametric_test_torus_curvatures with certain parameters.
-    #     """
-    #     for rh in [8]:
-    #         for m in ['VV', 'VVCF', 'VCTV']:
-    #             self.parametric_test_torus_curvatures(
-    #                 25, 10, rh, inverse=False, method=m,
-    #                 page_curvature_formula=False)
+    def test_torus_curvatures(self):
+        """
+        Runs parametric_test_torus_curvatures with certain parameters.
+        """
+        for rh in [8]:
+            for m in ['VCTV']:  # 'VV', 'VVCF',
+                self.parametric_test_torus_curvatures(
+                    25, 10, rh, inverse=False, method=m,
+                    page_curvature_formula=False)
 
 
 if __name__ == '__main__':
     unittest.main()
+    # # Torus curvature test
+    # rr = 25
+    # csr = 10
+    # torus_curvatures_and_directions(c=rr, a=csr, x=0, y=35, z=10, verbose=True)

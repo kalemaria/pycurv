@@ -127,13 +127,13 @@ def add_line_hist(values, num_bins, value_range=None, max_val=None,
     else:
         error_msg = "Range has to be a tuple of two numbers (min, max)."
         raise pexceptions.PySegInputError(expr='plot_hist', msg=error_msg)
-    # bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
+    bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
     if cumulative is True:  # TODO activate again!
         # counts = np.array([np.sum(counts[0:i+1]) for i in range(len(counts))])
         counts = np.cumsum(counts)
     if freq is True:
         counts = counts / float(len(values))  # normalized to  max 1
-    plt.plot(bin_edges[:-1], counts, ls=ls, marker=marker, c=c, label=label,
+    plt.plot(bincenters, counts, ls=ls, marker=marker, c=c, label=label,
              linewidth=2)
 
 
@@ -205,49 +205,101 @@ if __name__ == "__main__":
     #     num_bins=20, value_range=(0, 1), max_val=1, freq=True
     # )
 
-    # # cylinder T_2 and kappa_1 errors
-    # n = 0  # noise in %
-    # fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-    #         "cylinder/noise0/files4plotting/".format(n))
-    # plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-    #              "cylinder/noise0/plots/".format(n))
-    # df = pd.read_csv(fold + "cylinder_r10_h25.VCTV_rh8.csv", sep=';')
-    # VCTV_T_2_errors = df["T2Errors"].tolist()
-    # VCTV_kappa_1_errors = df["kappa1RelErrors"].tolist()
-    #
-    # VVCF_kappa_1_errors = pd.read_csv(fold + "cylinder_r10_h25.VVCF_rh8.csv",
-    #                                   sep=';')["kappa1RelErrors"].tolist()
-    # df = pd.read_csv(fold + "cylinder_r10_h25.VV_rh8.csv", sep=';')
-    # VV_T_2_errors = df["T2Errors"].tolist()
-    # VV_kappa_1_errors = df["kappa1RelErrors"].tolist()
-    #
-    # VTK_kappa_1_errors = pd.read_csv(fold + "cylinder_r10_h25.VTK.csv",
-    #                                  sep=';')["kappa1RelErrors"].tolist()
-    # plot_errors(
-    #     error_arrays=[VCTV_T_2_errors, VV_T_2_errors],
-    #     labels=["VCTV rh=8", "VV rh=8"],
-    #     line_styles=['-', '--'], markers=['^', 'v'],
-    #     colors=['b', 'c'],
-    #     title="Cylinder ({}% noise)".format(n),
-    #     xlabel="Minimal principal direction error",
-    #     ylabel="Frequency",
-    #     outfile="{}cylinder_r10_noise{}.VV_VCTV_rh8.T_2_errors_bins20_freq.png"
-    #             .format(plot_fold, n),
-    #     num_bins=20, value_range=(0, 1), max_val=1, freq=True
-    # )
-    # plot_errors(
-    #     error_arrays=[VCTV_kappa_1_errors, VVCF_kappa_1_errors,
-    #                   VV_kappa_1_errors, VTK_kappa_1_errors],
-    #     labels=["VCTV rh=8", "VVCF rh=8", "VV rh=8", "VTK"],
-    #     line_styles=['-', '-.', '--', ':'], markers=['^', 'o', 'v', 's'],
-    #     colors=['b', 'g', 'c', 'r'],
-    #     title="Cylinder ({}% noise)".format(n),
-    #     xlabel="Maximal principal curvature relative error",
-    #     ylabel="Frequency",
-    #     outfile=("{}cylinder_r10_noise{}.VV_VVCF_VCTV_rh8_vs_VTK."
-    #              "kappa_1_errors_bins20_freq.png".format(plot_fold, n)),
-    #     num_bins=20, value_range=(0, 1), max_val=1, freq=True
-    # )
+    # # cylinder kappa_1 values for different RadiusHit and methods
+    n = 0  # noise in %
+    fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+            "cylinder/noise0/files4plotting/".format(n))
+    plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+                 "cylinder/noise0/plots/".format(n))
+    for method in ['VV', 'VVCF', 'VCTV']:
+        kappa_1_rh_n1 = pd.read_csv(fold + "cylinder_r10_h25.{}_rh5.csv".format(
+            method), sep=';')["kappa1"].tolist()
+        kappa_1_rh_n2 = pd.read_csv(fold + "cylinder_r10_h25.{}_rh6.csv".format(
+            method), sep=';')["kappa1"].tolist()
+        kappa_1_rh_n3 = pd.read_csv(fold + "cylinder_r10_h25.{}_rh7.csv".format(
+            method), sep=';')["kappa1"].tolist()
+        kappa_1_rh_n4 = pd.read_csv(fold + "cylinder_r10_h25.{}_rh8.csv".format(
+            method), sep=';')["kappa1"].tolist()
+        kappa_1_rh_n5 = pd.read_csv(fold + "cylinder_r10_h25.{}_rh9.csv".format(
+            method), sep=';')["kappa1"].tolist()
+        plot_errors(
+            error_arrays=[kappa_1_rh_n1, kappa_1_rh_n2, kappa_1_rh_n3,
+                          kappa_1_rh_n4, kappa_1_rh_n5],
+            labels=["RadiusHit=5", "RadiusHit=6", "RadiusHit=7",
+                    "RadiusHit=8", "RadiusHit=9"],
+            line_styles=['-.', '-.', '--', '-', ':'],
+            markers=['x', 'v', '^', 's', 'o'],
+            colors=['b', 'c', 'g', 'y', 'r'],
+            title="{} on cylinder ({}% noise)".format(method, n),
+            xlabel="Estimated maximal principal curvature",
+            ylabel="Counts",
+            outfile=("{}cylinder_r10_h25_noise{}.{}_rh5-9.kappa_1.png".format(
+                plot_fold, n, method)),
+            num_bins=5, value_range=None, max_val=None, freq=False
+        )
+    # cylinder T_2 and kappa_1 errors
+    df = pd.read_csv(fold + "cylinder_r10_h25.VCTV_rh8.csv", sep=';')
+    VCTV_T_2_errors = df["T2Errors"].tolist()
+    VCTV_kappa_1_errors = df["kappa1RelErrors"].tolist()
+
+    VVCF_kappa_1_errors = pd.read_csv(fold + "cylinder_r10_h25.VVCF_rh8.csv",
+                                      sep=';')["kappa1RelErrors"].tolist()
+    df = pd.read_csv(fold + "cylinder_r10_h25.VV_rh8.csv", sep=';')
+    VV_T_2_errors = df["T2Errors"].tolist()
+    VV_kappa_1_errors = df["kappa1RelErrors"].tolist()
+
+    VTK_kappa_1_errors = pd.read_csv(fold + "cylinder_r10_h25.VTK.csv",
+                                     sep=';')["kappa1RelErrors"].tolist()
+    plot_errors(
+        error_arrays=[VCTV_T_2_errors, VV_T_2_errors],
+        labels=["VCTV rh=8", "VV rh=8"],
+        line_styles=['-', '--'], markers=['^', 'v'],
+        colors=['b', 'c'],
+        title="Cylinder ({}% noise)".format(n),
+        xlabel="Minimal principal direction error",
+        ylabel="Frequency",
+        outfile="{}cylinder_r10_noise{}.VV_VCTV_rh8.T_2_errors_bins20_freq.png"
+                .format(plot_fold, n),
+        num_bins=20, value_range=(0, 1), max_val=1, freq=True
+    )
+    plot_errors(  # cumulative
+        error_arrays=[VCTV_T_2_errors, VV_T_2_errors],
+        labels=["VCTV rh=8", "VV rh=8"],
+        line_styles=['-', '--'], markers=['^', 'v'],
+        colors=['b', 'c'],
+        title="Cylinder ({}% noise)".format(n),
+        xlabel="Minimal principal direction error",
+        ylabel="Cumulative frequency",
+        outfile="{}cylinder_r10_noise{}.VV_VCTV_rh8.T_2_errors_bins20_cum_freq."
+                "png".format(plot_fold, n),
+        num_bins=20, value_range=(0, 1), max_val=1, freq=True, cumulative=True
+    )
+    plot_errors(
+        error_arrays=[VCTV_kappa_1_errors, VVCF_kappa_1_errors,
+                      VV_kappa_1_errors, VTK_kappa_1_errors],
+        labels=["VCTV rh=8", "VVCF rh=8", "VV rh=8", "VTK"],
+        line_styles=['-', '-.', '--', ':'], markers=['^', 'o', 'v', 's'],
+        colors=['b', 'g', 'c', 'r'],
+        title="Cylinder ({}% noise)".format(n),
+        xlabel="Maximal principal curvature relative error",
+        ylabel="Frequency",
+        outfile=("{}cylinder_r10_noise{}.VV_VVCF_VCTV_rh8_vs_VTK."
+                 "kappa_1_errors_bins20_freq.png".format(plot_fold, n)),
+        num_bins=20, value_range=(0, 1), max_val=1, freq=True
+    )
+    plot_errors(  # cumulative
+        error_arrays=[VCTV_kappa_1_errors, VVCF_kappa_1_errors,
+                      VV_kappa_1_errors, VTK_kappa_1_errors],
+        labels=["VCTV rh=8", "VVCF rh=8", "VV rh=8", "VTK"],
+        line_styles=['-', '-.', '--', ':'], markers=['^', 'o', 'v', 's'],
+        colors=['b', 'g', 'c', 'r'],
+        title="Cylinder ({}% noise)".format(n),
+        xlabel="Maximal principal curvature relative error",
+        ylabel="Cumulative frequency",
+        outfile=("{}cylinder_r10_noise{}.VV_VVCF_VCTV_rh8_vs_VTK."
+                 "kappa_1_errors_bins20_cum_freq.png".format(plot_fold, n)),
+        num_bins=20, value_range=(0, 1), max_val=1, freq=True, cumulative=True
+    )
 
     # # inverse cylinder T_1 and kappa_2 errors
     # n = 0  # noise in %
@@ -300,51 +352,51 @@ if __name__ == "__main__":
     #     num_bins=20, value_range=(0, 1), max_val=1, freq=True
     # )
 
-    # # sphere kappa_1 and kappa_2 values using different methods
+    # sphere kappa_1 and kappa_2 values for different RadiusHit and methods
     n = 0  # noise in %
     fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
             "sphere/ico1280_noise{}/files4plotting/".format(n))
     plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
                  "sphere/ico1280_noise{}/plots/".format(n))
-    # method = 'VVCF'  # done: 'VCTV', 'VV'
-    # kappa_1_rh_n1 = pd.read_csv(fold + "sphere_r10.{}_rh6.5.csv".format(method),
-    #                             sep=';')["kappa1"].tolist()
-    # kappa_1_rh_n2 = pd.read_csv(fold + "sphere_r10.{}_rh7.csv".format(method),
-    #                             sep=';')["kappa1"].tolist()
-    # kappa_1_rh_n3 = pd.read_csv(fold + "sphere_r10.{}_rh7.5.csv".format(method),
-    #                             sep=';')["kappa1"].tolist()
-    # kappa_1_rh_n4 = pd.read_csv(fold + "sphere_r10.{}_rh8.csv".format(method),
-    #                             sep=';')["kappa1"].tolist()
-    # kappa_1_rh_n5 = pd.read_csv(fold + "sphere_r10.{}_rh8.5.csv".format(method),
-    #                             sep=';')["kappa1"].tolist()
-    # kappa_2_rh_n1 = pd.read_csv(fold + "sphere_r10.{}_rh6.5.csv".format(method),
-    #                             sep=';')["kappa2"].tolist()
-    # kappa_2_rh_n2 = pd.read_csv(fold + "sphere_r10.{}_rh7.csv".format(method),
-    #                             sep=';')["kappa2"].tolist()
-    # kappa_2_rh_n3 = pd.read_csv(fold + "sphere_r10.{}_rh7.5.csv".format(method),
-    #                             sep=';')["kappa2"].tolist()
-    # kappa_2_rh_n4 = pd.read_csv(fold + "sphere_r10.{}_rh8.csv".format(method),
-    #                             sep=';')["kappa2"].tolist()
-    # kappa_2_rh_n5 = pd.read_csv(fold + "sphere_r10.{}_rh8.5.csv".format(method),
-    #                             sep=';')["kappa2"].tolist()
-    # plot_errors(
-    #     error_arrays=[kappa_1_rh_n1 + kappa_2_rh_n1,
-    #                   kappa_1_rh_n2 + kappa_2_rh_n2,
-    #                   kappa_1_rh_n3 + kappa_2_rh_n3,
-    #                   kappa_1_rh_n4 + kappa_2_rh_n4,
-    #                   kappa_1_rh_n5 + kappa_2_rh_n5],
-    #     labels=["RadiusHit=6.5", "RadiusHit=7", "RadiusHit=7.5", "RadiusHit=8",
-    #             "RadiusHit=8.5"],
-    #     line_styles=['-.', '-.', '--', '-', ':'],
-    #     markers=['x', 'v', '^', 's', 'o'],
-    #     colors=['b', 'c', 'g', 'y', 'r'],
-    #     title="{} on sphere (icosahedron 1280, {}% noise)".format(method, n),
-    #     xlabel="Estimated principal curvatures",
-    #     ylabel="Counts",
-    #     outfile=("{}icosphere_r10_noise{}.{}_rh6.5-8.5."
-    #              "kappa_1_and_2.png".format(plot_fold, n, method)),
-    #     num_bins=5, value_range=None, max_val=None, freq=False
-    # )
+    for method in ['VV', 'VVCF', 'VCTV']:
+        kappa_1_rh_n1 = pd.read_csv(fold + "sphere_r10.{}_rh5.csv".format(method),
+                                    sep=';')["kappa1"].tolist()
+        kappa_1_rh_n2 = pd.read_csv(fold + "sphere_r10.{}_rh6.csv".format(method),
+                                    sep=';')["kappa1"].tolist()
+        kappa_1_rh_n3 = pd.read_csv(fold + "sphere_r10.{}_rh7.csv".format(method),
+                                    sep=';')["kappa1"].tolist()
+        kappa_1_rh_n4 = pd.read_csv(fold + "sphere_r10.{}_rh8.csv".format(method),
+                                    sep=';')["kappa1"].tolist()
+        kappa_1_rh_n5 = pd.read_csv(fold + "sphere_r10.{}_rh9.csv".format(method),
+                                    sep=';')["kappa1"].tolist()
+        kappa_2_rh_n1 = pd.read_csv(fold + "sphere_r10.{}_rh5.csv".format(method),
+                                    sep=';')["kappa2"].tolist()
+        kappa_2_rh_n2 = pd.read_csv(fold + "sphere_r10.{}_rh6.csv".format(method),
+                                    sep=';')["kappa2"].tolist()
+        kappa_2_rh_n3 = pd.read_csv(fold + "sphere_r10.{}_rh7.csv".format(method),
+                                    sep=';')["kappa2"].tolist()
+        kappa_2_rh_n4 = pd.read_csv(fold + "sphere_r10.{}_rh8.csv".format(method),
+                                    sep=';')["kappa2"].tolist()
+        kappa_2_rh_n5 = pd.read_csv(fold + "sphere_r10.{}_rh9.csv".format(method),
+                                    sep=';')["kappa2"].tolist()
+        plot_errors(
+            error_arrays=[kappa_1_rh_n1 + kappa_2_rh_n1,
+                          kappa_1_rh_n2 + kappa_2_rh_n2,
+                          kappa_1_rh_n3 + kappa_2_rh_n3,
+                          kappa_1_rh_n4 + kappa_2_rh_n4,
+                          kappa_1_rh_n5 + kappa_2_rh_n5],
+            labels=["RadiusHit=5", "RadiusHit=6", "RadiusHit=7",
+                    "RadiusHit=8", "RadiusHit=9"],
+            line_styles=['-.', '-.', '--', '-', ':'],
+            markers=['x', 'v', '^', 's', 'o'],
+            colors=['b', 'c', 'g', 'y', 'r'],
+            title="{} on sphere (icosahedron 1280, {}% noise)".format(method, n),
+            xlabel="Estimated principal curvatures",
+            ylabel="Counts",
+            outfile=("{}icosphere_r10_noise{}.{}_rh5-9."
+                     "kappa_1_and_2.png".format(plot_fold, n, method)),
+            num_bins=5, value_range=None, max_val=None, freq=False
+        )
     # sphere kappa_1 and kappa_2 errors
     VCTV_kappa_1_errors = pd.read_csv(fold + "sphere_r10.VCTV_rh8.csv", sep=';'
                                       )["kappa1RelErrors"].tolist()

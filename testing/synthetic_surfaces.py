@@ -474,8 +474,8 @@ def main():
 
     # Torus
     sg = SaddleGenerator()
-    rr = 20
-    csr = 5
+    rr = 25
+    csr = 10
     torus = sg.generate_parametric_torus(rr, csr)
     io.save_vtp(torus, "{}torus_rr{}_csr{}.vtp".format(fold, rr, csr))
 
