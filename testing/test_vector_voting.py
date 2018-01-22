@@ -426,24 +426,16 @@ class VectorVotingTestCase(unittest.TestCase):
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
 
+        page = True if 'page_curvature_formula' in method else False
+
         if 'CF' in method:
-            if 'page_curvature_formula' in method:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, num_points=num_points,
-                    exclude_borders=False, page_curvature_formula=True)
-            else:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, num_points=num_points,
-                    exclude_borders=False)
+            surf_VV = script(
+                tg, radius_hit=radius_hit, num_points=num_points,
+                exclude_borders=False, page_curvature_formula=page)
         else:
-            if 'page_curvature_formula' in method:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, exclude_borders=False,
-                    page_curvature_formula=True)
-            else:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, exclude_borders=False)
-        # TODO check if can write the stuff above nicer and shorter!
+            surf_VV = script(
+                tg, radius_hit=radius_hit, exclude_borders=False,
+                page_curvature_formula=page)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -728,24 +720,16 @@ class VectorVotingTestCase(unittest.TestCase):
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
 
+        page = True if 'page_curvature_formula' in method else False
+
         if 'CF' in method:
-            if 'page_curvature_formula' in method:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, num_points=num_points,
-                    exclude_borders=False, page_curvature_formula=True)
-            else:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, num_points=num_points,
-                    exclude_borders=False)
+            surf_VV = script(
+                tg, radius_hit=radius_hit, num_points=num_points,
+                exclude_borders=False, page_curvature_formula=page)
         else:
-            if 'page_curvature_formula' in method:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, exclude_borders=False,
-                    page_curvature_formula=True)
-            else:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, exclude_borders=False)
-        # TODO check if can write the stuff above nicer and shorter!
+            surf_VV = script(
+                tg, radius_hit=radius_hit, exclude_borders=False,
+                page_curvature_formula=page)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -845,7 +829,7 @@ class VectorVotingTestCase(unittest.TestCase):
                                delta=allowed_error, msg=msg)
 
     def parametric_test_torus_curvatures(
-            self, rr, csr, radius_hit, inverse=False, method='VCTV',
+            self, rr, csr, radius_hit, method='VCTV',
             page_curvature_formula=False, num_points=None):
         """
         Runs all the steps needed to calculate curvatures for a test torus
@@ -858,9 +842,6 @@ class VectorVotingTestCase(unittest.TestCase):
             radius_hit (float): radius in length unit of the graph, here voxels;
                 it should be chosen to correspond to radius of smallest features
                 of interest on the surface
-            inverse (boolean, optional): if True (default False), the sphere
-                will have normals pointing outwards (negative curvature), else
-                the other way around (choose in the way that csr < rr - csr)
             method (str): tells which method should be used: 'VV' for normal
                 vector voting, 'VVCF' for curve fitting in the two principal
                 directions estimated by VV to estimate the principal curvatures
@@ -905,25 +886,14 @@ class VectorVotingTestCase(unittest.TestCase):
         files_fold = '{}files4plotting/'.format(fold)
         if not os.path.exists(files_fold):
             os.makedirs(files_fold)
-        if inverse:
-            inverse_str = "inverse_"
-        else:
-            inverse_str = ""
         # TODO add "_inner_part" for a small saddle part:
-        base_filename = "{}{}torus_rr{}_csr{}".format(
-            files_fold, inverse_str, rr, csr)
+        base_filename = "{}torus_rr{}_csr{}".format(files_fold, rr, csr)
         surf_VV_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
-        if inverse:  # TODO remove the inverse option, not needed for torus!
-            print ("\n*** Generating a surface and a graph for an inverse "
-                   "torus with ring radius {} and cross-section radius {} "
-                   "using the method {}***"
-                   .format(rr, csr, method))
-        else:
-            print ("\n*** Generating a surface and a graph for a torus "
-                   "with ring radius {} and cross-section radius {} "
-                   "using the method {}***"
-                   .format(rr, csr, method))
+        print ("\n*** Generating a surface and a graph for a torus "
+               "with ring radius {} and cross-section radius {} "
+               "using the method {}***"
+               .format(rr, csr, method))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SaddleGenerator()
@@ -939,17 +909,11 @@ class VectorVotingTestCase(unittest.TestCase):
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
         tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-        # VTK has opposite surface normals convention than we use
-        # a graph with normals pointing outwards is generated (normal case
-        # for VTK; negative curvatures)
-        if inverse:
-            reverse_normals = False
+        # VTK has opposite surface normals convention than we use,
         # a graph with normals pointing inwards is generated (VTK normals have
-        # to be flipped, positive curvatures)
-        else:
-            reverse_normals = True
+        # to be flipped)
         tg.build_graph_from_vtk_surface(surf, verbose=False,
-                                        reverse_normals=reverse_normals)
+                                        reverse_normals=True)
         print tg.graph
 
         t_end = time.time()
@@ -991,24 +955,16 @@ class VectorVotingTestCase(unittest.TestCase):
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
 
+        page = True if 'page_curvature_formula' in method else False
+
         if 'CF' in method:
-            if 'page_curvature_formula' in method:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, num_points=num_points,
-                    exclude_borders=False, page_curvature_formula=True)
-            else:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, num_points=num_points,
-                    exclude_borders=False)
+            surf_VV = script(
+                tg, radius_hit=radius_hit, num_points=num_points,
+                exclude_borders=False, page_curvature_formula=page)
         else:
-            if 'page_curvature_formula' in method:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, exclude_borders=False,
-                    page_curvature_formula=True)
-            else:
-                surf_VV = script(
-                    tg, radius_hit=radius_hit, exclude_borders=False)
-        # TODO check if can write the stuff above nicer and shorter!
+            surf_VV = script(
+                tg, radius_hit=radius_hit, exclude_borders=False,
+                page_curvature_formula=page)
         # Saving the output (TriangleGraph object) for later inspection:
         io.save_vtp(surf_VV, surf_VV_file)
 
@@ -1020,18 +976,8 @@ class VectorVotingTestCase(unittest.TestCase):
         # For comparing to true value ranges:
         irr = rr - csr
         orr = rr + csr
-        if inverse:
-            true_kappa_1 = (- 1.0 / orr, 1.0 / irr)
-            print ("true kappa_1 between {} and {}".format(true_kappa_1[0],
-                                                           true_kappa_1[1]))
-            true_kappa_2 = - 1.0 / csr
-            print ("true kappa_2 = {}".format(true_kappa_2))
-        else:
-            true_kappa_1 = 1.0 / csr
-            print ("true kappa_1 = {}".format(true_kappa_1))
-            true_kappa_2 = (- 1.0 / irr, 1.0 / orr)
-            print ("true kappa_2 between {} and {}".format(true_kappa_2[0],
-                                                           true_kappa_2[1]))
+        print ("true kappa_1 = {}".format(1.0 / csr))
+        print ("true kappa_2 between {} and {}".format(- 1.0 / irr, 1.0 / orr))
         # TODO save the values
         # TODO calculate errors and save them
 
