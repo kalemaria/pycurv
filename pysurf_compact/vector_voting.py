@@ -482,8 +482,9 @@ def vector_voting_curve_fitting(
     return surface_VV
 
 
-def vector_curvature_tensor_voting(tg, radius_hit, epsilon=0, eta=0,
-                                   exclude_borders=True):
+def vector_curvature_tensor_voting(
+        tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
+        page_curvature_formula=False):  # TODO had to add it because of tests!
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
