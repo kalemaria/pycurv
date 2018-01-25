@@ -39,9 +39,13 @@ def relative_error_scalar(true_value, estimated_value):
 
     Returns:
         abs((true_value - estimated_value) / true_value)
+        if true_value = 0, just abs(true_value - estimated_value)
         the lower the error, the more accurate the estimated value
     """
-    return abs((true_value - estimated_value) / true_value)
+    if true_value == 0:
+        return abs(true_value - estimated_value)
+    else:
+        return abs((true_value - estimated_value) / true_value)
 
 
 def error_vector(true_vector, estimated_vector):
@@ -93,7 +97,25 @@ def beautify_number(number, precision=15):
 
 
 def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
-    # TODO docstring
+    """
+    Calculated true minimal principal curvature (kappa_2), maximal (T_1) and
+    minimal (T_2) principal directions at a point on the surface of a torus.
+
+    Args:
+        c (int): major (ring) radius
+        a (int): minor (cross-section) radius
+        x (float): X coordinate of the point on the torus surface
+        y (float): Y coordinate of the point on the torus surface
+        z (float): Z coordinate of the point on the torus surface
+        verbose: (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+        kappa_2, T_1, T_2
+
+    Note:
+        Maximal principal curvature (kappa_1) is always 1 / a.
+    """
     sin = math.sin
     cos = math.cos
     asin = math.asin
@@ -427,17 +449,13 @@ class VectorVotingTestCase(unittest.TestCase):
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
-
-        page = True if 'page_curvature_formula' in method else False
-
+        kwargs = {'radius_hit': radius_hit, 'exclude_borders': False}
+        if 'page_curvature_formula' in method:
+            kwargs['page_curvature_formula'] = True
         if 'CF' in method:
-            surf_VV = script(
-                tg, radius_hit=radius_hit, num_points=num_points,
-                exclude_borders=False, page_curvature_formula=page)
-        else:
-            surf_VV = script(
-                tg, radius_hit=radius_hit, exclude_borders=False,
-                page_curvature_formula=page)
+            kwargs['num_points'] = num_points
+        surf_VV = script(tg, **kwargs)
+
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -545,23 +563,35 @@ class VectorVotingTestCase(unittest.TestCase):
             self.assertLessEqual(error, 0.3, msg=msg)
 
         # Asserting that average principal curvatures are close to the correct
-        # ones allowing error of +-30% of the true value
-        # TODO using the calculated relative errors
+        # ones allowing error of +-30% of the maximal absolute true value
         allowed_error = 0.3 * max(abs(true_kappa_1), abs(true_kappa_2))
+        # if true_kappa_1 != 0:  # not inverse
+        #     print "Testing the average maximal principal curvature (kappa_1)..."
+        #     msg = '{} is not in [{}, {}]!'.format(
+        #         kappa_1_avg, true_kappa_1 - allowed_error,
+        #         true_kappa_1 + allowed_error)
+        #     self.assertAlmostEqual(kappa_1_avg, true_kappa_1,
+        #                            delta=allowed_error, msg=msg)
+        # else:  # inverse
+        #     print "Testing the average minimal principal curvature (kappa_2)..."
+        #     msg = '{} is not in [{}, {}]!'.format(
+        #         kappa_2_avg, true_kappa_2 - allowed_error,
+        #         true_kappa_2 + allowed_error)
+        #     self.assertAlmostEqual(kappa_2_avg, true_kappa_2,
+        #                            delta=allowed_error, msg=msg)
+
+        # Asserting that all principal curvatures are close to the correct
+        # ones allowing error of +-30% of the maximal absolute true value
         if true_kappa_1 != 0:  # not inverse
-            print "Testing the average maximal principal curvature (kappa_1)..."
-            msg = '{} is not in [{}, {}]!'.format(
-                kappa_1_avg, true_kappa_1 - allowed_error,
-                true_kappa_1 + allowed_error)
-            self.assertAlmostEqual(kappa_1_avg, true_kappa_1,
-                                   delta=allowed_error, msg=msg)
+            print "Testing the maximal principal curvature (kappa_1)..."
+            for i, error in enumerate(abs_kappa_1_errors):
+                msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+                self.assertLessEqual(error, allowed_error, msg=msg)
         else:  # inverse
-            print "Testing the average minimal principal curvature (kappa_2)..."
-            msg = '{} is not in [{}, {}]!'.format(
-                kappa_2_avg, true_kappa_2 - allowed_error,
-                true_kappa_2 + allowed_error)
-            self.assertAlmostEqual(kappa_2_avg, true_kappa_2,
-                                   delta=allowed_error, msg=msg)
+            print "Testing the minimal principal curvature (kappa_2)..."
+            for i, error in enumerate(abs_kappa_2_errors):
+                msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+                self.assertLessEqual(error, allowed_error, msg=msg)
 
     def parametric_test_sphere_curvatures(
             self, radius, radius_hit, inverse=False, res=0,
@@ -721,17 +751,13 @@ class VectorVotingTestCase(unittest.TestCase):
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
-
-        page = True if 'page_curvature_formula' in method else False
-
+        kwargs = {'radius_hit': radius_hit, 'exclude_borders': False}
+        if 'page_curvature_formula' in method:
+            kwargs['page_curvature_formula'] = True
         if 'CF' in method:
-            surf_VV = script(
-                tg, radius_hit=radius_hit, num_points=num_points,
-                exclude_borders=False, page_curvature_formula=page)
-        else:
-            surf_VV = script(
-                tg, radius_hit=radius_hit, exclude_borders=False,
-                page_curvature_formula=page)
+            kwargs['num_points'] = num_points
+        surf_VV = script(tg, **kwargs)
+
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_VV, surf_VV_file)
@@ -796,41 +822,32 @@ class VectorVotingTestCase(unittest.TestCase):
             df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
             df.to_csv(VTK_eval_file, sep=';')
 
-        # Asserting that all values of both principal curvatures are close to
-        # the true value, allowing error of +-30%:
-        # TODO using the calculated relative errors
-        # allowed_error = 0.3 * abs(true_curvature)
-        # print "Testing the maximal principal curvatures (kappa_1)..."
-        # for kappa_1 in kappa_1:
-        #     msg = '{} is not in [{}, {}]!'.format(
-        #         kappa_1, true_curvature - allowed_error,
-        #         true_curvature + allowed_error)
-        #     self.assertAlmostEqual(kappa_1, true_curvature,
-        #                            delta=allowed_error, msg=msg)
-        # print "Testing the minimal principal curvatures (kappa_2)..."
-        # for kappa_2 in kappa_2:
-        #     msg = '{} is not in [{}, {}]!'.format(
-        #         kappa_2, true_curvature - allowed_error,
-        #         true_curvature + allowed_error)
-        #     self.assertAlmostEqual(kappa_2, true_curvature,
-        #                            delta=allowed_error, msg=msg)
-
         # Asserting that average principal curvatures are close to the correct
         # ones allowing absolute error of +-30% of the true curvature
-        # TODO using the calculated relative errors
         allowed_error = 0.3 * abs(true_curvature)
-        print "Testing the average maximal principal curvature (kappa_1)..."
-        msg = '{} is not in [{}, {}]!'.format(
-            kappa_1_avg, true_curvature - allowed_error,
-            true_curvature + allowed_error)
-        self.assertAlmostEqual(kappa_1_avg, true_curvature,
-                               delta=allowed_error, msg=msg)
-        print "Testing the average minimal principal curvature (kappa_2)..."
-        msg = '{} is not in [{}, {}]!'.format(
-            kappa_2_avg, true_curvature - allowed_error,
-            true_curvature + allowed_error)
-        self.assertAlmostEqual(kappa_2_avg, true_curvature,
-                               delta=allowed_error, msg=msg)
+        # print "Testing the average maximal principal curvature (kappa_1)..."
+        # msg = '{} is not in [{}, {}]!'.format(
+        #     kappa_1_avg, true_curvature - allowed_error,
+        #     true_curvature + allowed_error)
+        # self.assertAlmostEqual(kappa_1_avg, true_curvature,
+        #                        delta=allowed_error, msg=msg)
+        # print "Testing the average minimal principal curvature (kappa_2)..."
+        # msg = '{} is not in [{}, {}]!'.format(
+        #     kappa_2_avg, true_curvature - allowed_error,
+        #     true_curvature + allowed_error)
+        # self.assertAlmostEqual(kappa_2_avg, true_curvature,
+        #                        delta=allowed_error, msg=msg)
+
+        # Asserting that all values of both principal curvatures are close to
+        # the true value, allowing error of +-30%:
+        print "Testing the maximal principal curvature (kappa_1)..."
+        for i, error in enumerate(abs_kappa_1_errors):
+            msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+            self.assertLessEqual(error, allowed_error, msg=msg)
+        print "Testing the minimal principal curvature (kappa_2)..."
+        for i, error in enumerate(abs_kappa_2_errors):
+            msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+            self.assertLessEqual(error, allowed_error, msg=msg)
 
     def parametric_test_torus_curvatures(
             self, rr, csr, radius_hit, method='VCTV',
@@ -955,17 +972,13 @@ class VectorVotingTestCase(unittest.TestCase):
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
-
-        page = True if 'page_curvature_formula' in method else False
-
+        kwargs = {'radius_hit': radius_hit, 'exclude_borders': False}
+        if 'page_curvature_formula' in method:
+            kwargs['page_curvature_formula'] = True
         if 'CF' in method:
-            surf_VV = script(
-                tg, radius_hit=radius_hit, num_points=num_points,
-                exclude_borders=False, page_curvature_formula=page)
-        else:
-            surf_VV = script(
-                tg, radius_hit=radius_hit, exclude_borders=False,
-                page_curvature_formula=page)
+            kwargs['num_points'] = num_points
+        surf_VV = script(tg, **kwargs)
+
         # Saving the output (TriangleGraph object) for later inspection:
         io.save_vtp(surf_VV, surf_VV_file)
 
@@ -1060,15 +1073,19 @@ class VectorVotingTestCase(unittest.TestCase):
             msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
             self.assertLessEqual(error, 0.3, msg=msg)
         # Asserting that all estimated kappa_1 and kappa_2 values are close to
-        # the corresponding true values, allowing error of 30%:
+        # the corresponding true values, allowing error of 30% from the true
+        # value (the maximal absolute value in case of kappa_2, because it can
+        # be 0 or negative):
         print "Testing the maximal principal curvature (kappa_1)..."
-        for i, error in enumerate(rel_kappa_1_errors):
-            msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
-            self.assertLessEqual(error, 0.3, msg=msg)
+        allowed_error = 0.3 * max(true_kappa_1)
+        for i, error in enumerate(abs_kappa_1_errors):
+            msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+            self.assertLessEqual(error, allowed_error, msg=msg)
         print "Testing the minimal principal curvature (kappa_2)..."
-        for i, error in enumerate(rel_kappa_2_errors):
-            msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
-            self.assertLessEqual(error, 0.3, msg=msg)
+        allowed_error = 0.3 * max(abs(true_kappa_2))
+        for i, error in enumerate(abs_kappa_2_errors):
+            msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+            self.assertLessEqual(error, allowed_error, msg=msg)
 
     # *** The following tests will be run by unittest ***
 
@@ -1090,12 +1107,13 @@ class VectorVotingTestCase(unittest.TestCase):
     #     planes) with known orientation (height, i.e. T_2, parallel to the Z
     #     axis), certain radius and noise level.
     #     """
+    #     p = 50
     #     for n in [0]:
-    #         for rh in [5, 6]:
+    #         for rh in [8]:
     #             for m in ['VV', 'VVCF', 'VCTV']:
     #                 self.parametric_test_cylinder_directions_curvatures(
     #                     10, rh, noise=n, method=m,
-    #                     page_curvature_formula=False)
+    #                     page_curvature_formula=False, num_points=p)
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1104,11 +1122,12 @@ class VectorVotingTestCase(unittest.TestCase):
     #     circular planes) with known orientation (height, i.e. T_1, parallel to
     #     the Z axis), certain radius and noise level.
     #     """
+    #     p = 50
     #     for rh in [8]:
     #         for m in ['VV', 'VVCF', 'VCTV']:
     #             self.parametric_test_cylinder_directions_curvatures(
     #                 10, rh, noise=0, inverse=True, method=m,
-    #                 page_curvature_formula=False)
+    #                 page_curvature_formula=False, num_points=p)
 
     # def test_sphere_curvatures(self):
     #     """
@@ -1118,15 +1137,15 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
     #     for n in [0]:
-    #         for rh in [5, 6, 7, 9]:  # 8
+    #         for rh in [8]:  # 5, 6, 7, 9
     #             for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
     #                 self.parametric_test_sphere_curvatures(
     #                     10, rh, ico=1280, noise=n, method='VVCF',
     #                     page_curvature_formula=False, num_points=p)
-                # for m in ['VV', 'VCTV']:
-                #     self.parametric_test_sphere_curvatures(
-                #         10, rh, ico=1280, noise=n, method=m,
-                #         page_curvature_formula=False)
+    #             for m in ['VV', 'VCTV']:
+    #                 self.parametric_test_sphere_curvatures(
+    #                     10, rh, ico=1280, noise=n, method=m,
+    #                     page_curvature_formula=False)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -1135,20 +1154,23 @@ class VectorVotingTestCase(unittest.TestCase):
     #
     #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
     #     """
+    #     p = 50
     #     for rh in [8]:
     #         for m in ['VV', 'VVCF', 'VCTV']:
     #             self.parametric_test_sphere_curvatures(
     #                 10, rh, ico=1280, noise=0, inverse=True, method=m,
-    #                 page_curvature_formula=False)
+    #                 page_curvature_formula=False, num_points=p)
 
     def test_torus_curvatures(self):
         """
         Runs parametric_test_torus_curvatures with certain parameters.
         """
+        p = 50
         for rh in [5, 6, 7, 8, 9]:
-            for m in ['VCTV']:  # 'VV', 'VVCF',
+            for m in ['VV', 'VVCF']:  # 'VCTV'
                 self.parametric_test_torus_curvatures(
-                    25, 10, rh, method=m, page_curvature_formula=False)
+                    25, 10, rh, method=m,
+                    page_curvature_formula=False, num_points=p)
 
 
 if __name__ == '__main__':
