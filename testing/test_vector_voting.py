@@ -1166,8 +1166,8 @@ class VectorVotingTestCase(unittest.TestCase):
         Runs parametric_test_torus_curvatures with certain parameters.
         """
         p = 50
-        for rh in [5, 6, 7, 8, 9]:
-            for m in ['VV', 'VVCF']:  # 'VCTV'
+        for rh in [2, 3, 4]:  # 5, 6, 7, 8, 9
+            for m in ['VVCF']:  # 'VV', 'VCTV'
                 self.parametric_test_torus_curvatures(
                     25, 10, rh, method=m,
                     page_curvature_formula=False, num_points=p)
