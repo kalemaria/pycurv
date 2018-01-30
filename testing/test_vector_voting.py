@@ -449,7 +449,7 @@ class VectorVotingTestCase(unittest.TestCase):
             script = vector_voting_curve_fitting
         else:  # if method == 'VCTV'
             script = vector_curvature_tensor_voting
-        kwargs = {'radius_hit': radius_hit, 'exclude_borders': False}
+        kwargs = {'radius_hit': radius_hit, 'exclude_borders': True}
         if 'page_curvature_formula' in method:
             kwargs['page_curvature_formula'] = True
         if 'CF' in method:
@@ -1100,20 +1100,20 @@ class VectorVotingTestCase(unittest.TestCase):
     #             self.parametric_test_plane_normals(
     #                 10, rh, res=10, noise=n)
 
-    # def test_cylinder_directions_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) and curvatures are
-    #     correctly estimated for an opened cylinder surface (without the circular
-    #     planes) with known orientation (height, i.e. T_2, parallel to the Z
-    #     axis), certain radius and noise level.
-    #     """
-    #     p = 50
-    #     for n in [0]:
-    #         for rh in [8]:
-    #             for m in ['VV', 'VVCF', 'VCTV']:
-    #                 self.parametric_test_cylinder_directions_curvatures(
-    #                     10, rh, noise=n, method=m,
-    #                     page_curvature_formula=False, num_points=p)
+    def test_cylinder_directions_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) and curvatures are
+        correctly estimated for an opened cylinder surface (without the circular
+        planes) with known orientation (height, i.e. T_2, parallel to the Z
+        axis), certain radius and noise level.
+        """
+        p = 50
+        for n in [0]:
+            for rh in [3, 4, 5, 6, 7]:  # 8
+                for m in ['VVCF']:  # 'VV', 'VCTV'
+                    self.parametric_test_cylinder_directions_curvatures(
+                        10, rh, noise=n, method=m,
+                        page_curvature_formula=False, num_points=p)
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1137,15 +1137,15 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
     #     for n in [0]:
-    #         for rh in [8]:  # 5, 6, 7, 9
+    #         for rh in [3.5]:  # 4, 3, 2, 1, 5, 6, 7, 8, 9
     #             for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
     #                 self.parametric_test_sphere_curvatures(
     #                     10, rh, ico=1280, noise=n, method='VVCF',
     #                     page_curvature_formula=False, num_points=p)
-    #             for m in ['VV', 'VCTV']:
-    #                 self.parametric_test_sphere_curvatures(
-    #                     10, rh, ico=1280, noise=n, method=m,
-    #                     page_curvature_formula=False)
+    #             # for m in ['VV', 'VCTV']:
+    #             #     self.parametric_test_sphere_curvatures(
+    #             #         10, rh, ico=1280, noise=n, method=m,
+    #             #         page_curvature_formula=False)
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -1155,22 +1155,22 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
     #     """
     #     p = 50
-    #     for rh in [8]:
-    #         for m in ['VV', 'VVCF', 'VCTV']:
+    #     for rh in [9]:
+    #         for m in ['VV']:  # 'VVCF', 'VCTV'
     #             self.parametric_test_sphere_curvatures(
     #                 10, rh, ico=1280, noise=0, inverse=True, method=m,
     #                 page_curvature_formula=False, num_points=p)
 
-    def test_torus_curvatures(self):
-        """
-        Runs parametric_test_torus_curvatures with certain parameters.
-        """
-        p = 50
-        for rh in [2, 3, 4]:  # 5, 6, 7, 8, 9
-            for m in ['VVCF']:  # 'VV', 'VCTV'
-                self.parametric_test_torus_curvatures(
-                    25, 10, rh, method=m,
-                    page_curvature_formula=False, num_points=p)
+    # def test_torus_curvatures(self):
+    #     """
+    #     Runs parametric_test_torus_curvatures with certain parameters.
+    #     """
+    #     p = 50
+    #     for rh in [2, 3, 4]:  # 5, 6, 7, 8, 9
+    #         for m in ['VVCF']:  # 'VV', 'VCTV'
+    #             self.parametric_test_torus_curvatures(
+    #                 25, 10, rh, method=m,
+    #                 page_curvature_formula=False, num_points=p)
 
 
 if __name__ == '__main__':
