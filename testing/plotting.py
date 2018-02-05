@@ -197,6 +197,7 @@ def plot_composite_line_hist(
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    plt.ylim(0, 1)
     plt.legend(loc='best', fancybox=True, framealpha=0.5)
     plt.grid(True)
     plt.margins(0.05)
@@ -393,24 +394,36 @@ def plot_inverse_cylinder_T_1_and_kappa_2_errors(n=0):
     )
 
 
-def plot_sphere_kappa_1_and_2_diff_rh(n=0):
-    """Plots estimated kappa_1 and kappa_2 values for an icosahedron surface
+def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False):
+    """Plots estimated kappa_1 and kappa_2 values for a sphere surface
      by different methods (VV, VVCF and VCTV) using different RadiusHit.
 
     Args:
+        r (int, optional): radius of the sphere in voxels (default 10)
         n (int, optional): noise in % (default 0)
+        ico (int, optional): if > 0 (default 1280), icosahedron results with so
+            many faces is used
+        binary (boolean, optional): if True (default False), binary sphere
+            results are used (ignoring the other options)
     """
-    fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-            "sphere/ico1280_noise{}/files4plotting/".format(n))
-    plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-                 "sphere/ico1280_noise{}/plots/".format(n))
-    basename = "sphere_r10"
-    for method in ['VVCF_50points']:  # 'VV', 'VCTV',
+    first = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/sphere/"
+    if binary:
+        second = "binary/"
+        type = "binary, radius={}".format(r)
+    else:
+        second = "ico{}_noise{}/".format(ico, n)
+        type = "icosahedron {}, radius={}, {}% noise".format(ico, r, n)
+    fold = ("{}{}files4plotting/".format(first, second))
+    plot_fold = ("{}{}plots/".format(first, second))
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+    basename = "sphere_r{}".format(r)
+    for method in ['VV', 'VCTV']:  # 'VVCF_50points'
         kappa_1_arrays = []
         kappa_2_arrays = []
         kappas_arrays = []
         labels = []
-        for rh in [2, 3, 3.5, 4, 5]:  # range(2, 7)
+        for rh in range(5, 10):  # range(2, 7)  2, 3, 3.5, 4, 5
             df = pd.read_csv("{}{}.{}_rh{}.csv".format(
                 fold, basename, method, rh), sep=';')
             kappa_1_array = df["kappa1"].tolist()
@@ -426,12 +439,11 @@ def plot_sphere_kappa_1_and_2_diff_rh(n=0):
             line_styles=['-.', '-.', '--', '-', ':'],
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
-            title="{} on sphere (icosahedron 1280, {}% noise)".format(
-                method, n),
+            title="{} on sphere ({})".format(method, type),
             xlabel="Estimated maximal principal curvature",
             ylabel="Counts",
-            outfile=("{}ico{}_noise{}.{}_rh2-5.kappa_1.png".format(
-                plot_fold, basename, n, method)),  # TODO change rh range
+            outfile=("{}{}.{}_rh5-9.kappa_1.png".format(
+                plot_fold, basename, method)),  # TODO change rh range
             num_bins=5, value_range=None, max_val=None, freq=False
         )
         plot_composite_line_hist(  # kappa_2
@@ -440,12 +452,11 @@ def plot_sphere_kappa_1_and_2_diff_rh(n=0):
             line_styles=['-.', '-.', '--', '-', ':'],
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
-            title="{} on sphere (icosahedron 1280, {}% noise)".format(
-                method, n),
+            title="{} on sphere ({})".format(method, type),
             xlabel="Estimated minimal principal curvature",
             ylabel="Counts",
-            outfile=("{}ico{}_noise{}.{}_rh2-5.kappa_2.png".format(
-                plot_fold, basename, n, method)),  # TODO change rh range
+            outfile=("{}{}.{}_rh5-9.kappa_2.png".format(
+                plot_fold, basename, method)),  # TODO change rh range
             num_bins=5, value_range=None, max_val=None, freq=False
         )
         plot_composite_line_hist(  # kappa_1 + kappa_2
@@ -454,12 +465,11 @@ def plot_sphere_kappa_1_and_2_diff_rh(n=0):
             line_styles=['-.', '-.', '--', '-', ':'],
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
-            title="{} on sphere (icosahedron 1280, {}% noise)".format(
-                method, n),
+            title="{} on sphere ({})".format(method, type),
             xlabel="Estimated principal curvatures",
             ylabel="Counts",
-            outfile=("{}ico{}_noise{}.{}_rh2-5.kappa_1_and_2.png".format(
-                plot_fold, basename, n, method)),  # TODO change rh range
+            outfile=("{}{}.{}_rh5-9.kappa_1_and_2.png".format(
+                plot_fold, basename, method)),  # TODO change rh range
             num_bins=5, value_range=None, max_val=None, freq=False
         )
 
@@ -504,20 +514,32 @@ def plot_sphere_kappa_1_and_2_fitting_diff_num_points(n=0):
     )
 
 
-def plot_sphere_kappa_1_and_2_errors(n=0):
+def plot_sphere_kappa_1_and_2_errors(r=10, n=0, ico=1280, binary=False):
     """
-    Plots estimated kappa_1 and kappa_2 errors histograms on an icosahedron
-    sphere surface for different methods (VV, VVCF and VCTV) and an optimal
-    RadiusHit for each method.
+    Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+    for different methods (VV, VVCF, VCTV and VTK) and an optimal RadiusHit for
+    each method.
 
     Args:
+        r (int, optional): radius of the sphere in voxels (default 10)
         n (int, optional): noise in % (default 0)
+        ico (int, optional): if > 0 (default 1280), icosahedron results with so
+            many faces is used
+        binary (boolean, optional): if True (default False), binary sphere
+            results are used (ignoring the other options)
     """
-    fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-            "sphere/ico1280_noise{}/files4plotting/".format(n))
-    plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-                 "sphere/ico1280_noise{}/plots/".format(n))
-    basename = "sphere_r10"
+    first = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/sphere/"
+    if binary:
+        second = "binary/"
+        type = "binary, radius={}".format(r)
+    else:
+        second = "ico{}_noise{}/".format(ico, n)
+        type = "icosahedron {}, radius={}, {}% noise".format(ico, r, n)
+    fold = ("{}{}files4plotting/".format(first, second))
+    plot_fold = ("{}{}plots/".format(first, second))
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+    basename = "sphere_r{}".format(r)
 
     df_VCTV = pd.read_csv("{}{}.VCTV_rh8.csv".format(fold, basename), sep=';')
     VCTV_kappa_1_errors = df_VCTV["kappa1RelErrors"].tolist()
@@ -546,14 +568,127 @@ def plot_sphere_kappa_1_and_2_errors(n=0):
         line_styles=['-', '-.', '--', ':'],
         markers=['^', 'o', 'v', 's'],
         colors=['b', 'g', 'c', 'r'],
-        title="Sphere (icosahedron 1280, {}% noise)".format(n),
+        title="Sphere ({})".format(type),
         xlabel="Principal curvatures relative error",
         ylabel="Cumulative frequency",
-        outfile=("{}icosphere_r10_noise{}.VV_VVCF50p_VCTV_vs_VTK."
+        outfile=("{}{}.VV_VVCF50p_VCTV_vs_VTK."
                  "kappa_1_and_2_errors_20bins_cum_freq.png".format(
-                  plot_fold, n)),
+                  plot_fold, basename)),
         num_bins=20, freq=True, cumulative=True,  # max_val=1
         value_range=(0, max([max(d) for d in data]))
+    )
+
+
+def plot_sphere_kappa_1_and_2_errors_noVVCF(r=10, n=0, ico=1280, binary=False):
+    """
+    Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+    for different methods (VV, VCTV and VTK) and an optimal RadiusHit for each
+    method.
+
+    Args:
+        r (int, optional): radius of the sphere in voxels (default 10)
+        n (int, optional): noise in % (default 0)
+        ico (int, optional): if > 0 (default 1280), icosahedron results with so
+            many faces is used
+        binary (boolean, optional): if True (default False), binary sphere
+            results are used (ignoring the other options)
+    """
+    first = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/sphere/"
+    if binary:
+        second = "binary/"
+        type = "binary, radius={}".format(r)
+    else:
+        second = "ico{}_noise{}/".format(ico, n)
+        type = "icosahedron {}, radius={}, {}% noise".format(ico, r, n)
+    fold = ("{}{}files4plotting/".format(first, second))
+    plot_fold = ("{}{}plots/".format(first, second))
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+    basename = "sphere_r{}".format(r)
+
+    df_VCTV = pd.read_csv("{}{}.VCTV_rh8.csv".format(fold, basename), sep=';')
+    VCTV_kappa_1_errors = df_VCTV["kappa1RelErrors"].tolist()
+    VCTV_kappa_2_errors = df_VCTV["kappa2RelErrors"].tolist()
+
+    df_VV = pd.read_csv("{}{}.VV_rh9.csv".format(fold, basename), sep=';')
+    VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
+    VV_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
+
+    df_VTK = pd.read_csv("{}{}.VTK.csv".format(fold, basename), sep=';')
+    VTK_kappa_1_errors = df_VTK["kappa1RelErrors"].tolist()
+    VTK_kappa_2_errors = df_VTK["kappa2RelErrors"].tolist()
+
+    data = [VCTV_kappa_1_errors + VCTV_kappa_2_errors,
+            VV_kappa_1_errors + VV_kappa_2_errors,
+            VTK_kappa_1_errors + VTK_kappa_2_errors]
+    plot_composite_line_hist(  # kappa_1 + kappa_2
+        data_arrays=data,
+        labels=["VCTV rh=8", "VV rh=9", "VTK"],
+        line_styles=['-', '--', ':'],
+        markers=['^', 'v', 's'],
+        colors=['b', 'c', 'r'],
+        title="Sphere ({})".format(type),
+        xlabel="Principal curvatures relative error",
+        ylabel="Cumulative frequency",
+        outfile=("{}{}.VV_VCTV_vs_VTK."
+                 "kappa_1_and_2_errors_20bins_cum_freq.png".format(
+                  plot_fold, basename)),
+        num_bins=20, freq=True, cumulative=True,  # max_val=1
+        value_range=(0, max([max(d) for d in data]))
+    )
+
+
+def plot_sphere_kappa_1_and_2_errors_VV_VCTV(r=10, n=0, ico=1280, binary=False):
+    """
+    Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+    for different methods (VV and VCTV) and an optimal RadiusHit for each
+    method.
+
+    Args:
+        r (int, optional): radius of the sphere in voxels (default 10)
+        n (int, optional): noise in % (default 0)
+        ico (int, optional): if > 0 (default 1280), icosahedron results with so
+            many faces is used
+        binary (boolean, optional): if True (default False), binary sphere
+            results are used (ignoring the other options)
+    """
+    first = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/sphere/"
+    if binary:
+        second = "binary/"
+        type = "binary, radius={}".format(r)
+    else:
+        second = "ico{}_noise{}/".format(ico, n)
+        type = "icosahedron {}, radius={}, {}% noise".format(ico, r, n)
+    fold = ("{}{}files4plotting/".format(first, second))
+    plot_fold = ("{}{}plots/".format(first, second))
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+    basename = "sphere_r{}".format(r)
+
+    df_VCTV = pd.read_csv("{}{}.VCTV_rh8.csv".format(fold, basename), sep=';')
+    VCTV_kappa_1_errors = df_VCTV["kappa1RelErrors"].tolist()
+    VCTV_kappa_2_errors = df_VCTV["kappa2RelErrors"].tolist()
+
+    df_VV = pd.read_csv("{}{}.VV_rh9.csv".format(fold, basename), sep=';')
+    VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
+    VV_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
+
+    data = [VCTV_kappa_1_errors + VCTV_kappa_2_errors,
+            VV_kappa_1_errors + VV_kappa_2_errors]
+    plot_composite_line_hist(  # kappa_1 + kappa_2
+        data_arrays=data,
+        labels=["VCTV rh=8", "VV rh=9"],
+        line_styles=['-', '--'],
+        markers=['^', 'v'],
+        colors=['b', 'c'],
+        title="Sphere ({})".format(type),
+        xlabel="Principal curvatures relative error",
+        ylabel="Cumulative frequency",
+        outfile=("{}{}.VV_vs_VCTV."
+                 "kappa_1_and_2_errors_20bins_cum_freq_range0.65.png".format(
+                  plot_fold, basename)),
+        num_bins=20, freq=True, cumulative=True,  # max_val=1
+        value_range=(0, 0.65)  # max([max(d) for d in data]
     )
 
 
@@ -727,4 +862,9 @@ if __name__ == "__main__":
     # plot_cylinder_T_2_and_kappa_1_errors()  # TODO VVCF_50points, optimal rh
     # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # TODO VVCF_50points, optimal rh
     # plot_torus_kappa_1_and_2_diff_rh()
-    plot_torus_kappa_1_and_2_T_1_and_2_errors()
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors()
+
+    # plot_sphere_kappa_1_and_2_diff_rh(r=10, binary=True)
+    # plot_sphere_kappa_1_and_2_errors_noVVCF(r=10, binary=True)
+    for r in [10, 20, 30]:
+        plot_sphere_kappa_1_and_2_errors_VV_VCTV(r=r, binary=True)

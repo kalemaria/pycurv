@@ -44,7 +44,7 @@ def remove_non_triangle_cells(surface):
     """
     print('{} cells including non-triangles'.format(surface.GetNumberOfCells()))
     for i in range(surface.GetNumberOfCells()):
-        # Get the cell i and remove if if it's not a triangle:
+        # Get the cell i and remove it if it's not a triangle:
         cell = surface.GetCell(i)
         if not isinstance(cell, vtk.vtkTriangle):
             surface.DeleteCell(i)
@@ -159,8 +159,8 @@ class PlaneGenerator(object):
         """
         Generates a square plane surface with triangular cells.
 
-        The sphere will have a center at (0, 0, 0) and normals (0, 0, 1) -
-        parallel to X and Y axes.
+        The plane has a center at (0, 0, 0) and normals (0, 0, 1), i.e. the
+        plane is parallel to X and Y axes.
 
         Args:
             half_size (int): half size of the plane (from center to an edge)

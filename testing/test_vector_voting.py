@@ -594,8 +594,8 @@ class VectorVotingTestCase(unittest.TestCase):
                 self.assertLessEqual(error, allowed_error, msg=msg)
 
     def parametric_test_sphere_curvatures(
-            self, radius, radius_hit, inverse=False, res=0,
-            ico=0, noise=10, save_areas=False, method='VCTV',
+            self, radius, radius_hit, inverse=False, binary=False, res=0,
+            ico=0, noise=0, save_areas=False, method='VCTV',
             page_curvature_formula=False, num_points=None):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
@@ -613,6 +613,8 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
                 the other way around
+            binary (boolean, optional): if True (default False), a binary sphere
+                is generated (ignoring the next three options)
             res (int, optional): if > 0 determines how many longitude and
                 latitude stripes the UV sphere from vtkSphereSource has, the
                 surface is triangulated; If 0 (default) and ico=0, first a
@@ -651,15 +653,18 @@ class VectorVotingTestCase(unittest.TestCase):
         elif method == 'VVCF':
             method = 'VVCF_{}points'.format(num_points)
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
-        if res > 0:  # UV sphere is used
-            fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
-                base_fold, res, noise)
-        elif ico > 0:  # icosahedron sphere with so many faces is used
-            fold = '{}synthetic_surfaces/sphere/ico{}_noise{}/'.format(
-                base_fold, ico, noise)
-        else:  # a "disco" sphere from gaussian mask is used
-            fold = '{}synthetic_surfaces/sphere/noise{}/'.format(
-                base_fold, noise)
+        if binary:
+            fold = '{}synthetic_surfaces/sphere/binary/'.format(base_fold)
+        else:
+            if res > 0:  # UV sphere is used
+                fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
+                    base_fold, res, noise)
+            elif ico > 0:  # icosahedron sphere with so many faces is used
+                fold = '{}synthetic_surfaces/sphere/ico{}_noise{}/'.format(
+                    base_fold, ico, noise)
+            else:  # a "disco" sphere from gaussian mask is used
+                fold = '{}synthetic_surfaces/sphere/noise{}/'.format(
+                    base_fold, noise)
 
         if not os.path.exists(fold):
             os.makedirs(fold)
@@ -697,25 +702,32 @@ class VectorVotingTestCase(unittest.TestCase):
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SphereGenerator()
-            if res > 0:  # generate a UV sphere surface directly with VTK
-                sphere = sg.generate_UV_sphere_surface(
-                    r=radius, latitude_res=res, longitude_res=res)
-                if noise > 0:
-                    sphere = add_gaussian_noise_to_surface(sphere, percent=noise)
+            if binary:
+                sphere = sg.generate_sphere_surface(radius)
                 io.save_vtp(sphere, surf_file)
-            elif ico > 0:
-                print ("Sorry, you have to generate the icosahedron sphere\n"
-                       "beforehand e.g. with Blender, export it as STL file\n"
-                       "and convert it to VTP file using the function\n"
-                       "pysurf_io.stl_file_to_vtp_file, optionally add noise\n"
-                       "with add_gaussian_noise_to_surface and save it as\n{}"
-                       .format(surf_file))
-                exit(0)
-            else:  # generate a sphere surface from a gaussian mask
-                sphere = sg.generate_gauss_sphere_surface(radius)
-                if noise > 0:
-                    sphere = add_gaussian_noise_to_surface(sphere, percent=noise)
-                io.save_vtp(sphere, surf_file)
+            else:
+                if res > 0:  # generate a UV sphere surface directly with VTK
+                    sphere = sg.generate_UV_sphere_surface(
+                        r=radius, latitude_res=res, longitude_res=res)
+                    if noise > 0:
+                        sphere = add_gaussian_noise_to_surface(sphere,
+                                                               percent=noise)
+                    io.save_vtp(sphere, surf_file)
+                elif ico > 0:
+                    print ("Sorry, you have to generate the icosahedron\n"
+                           "sphere beforehand e.g. with Blender, export it as\n"
+                           "STL file and convert it to VTP file using the\n"
+                           "function pysurf_io.stl_file_to_vtp_file,\n"
+                           "optionally add noise with\n"
+                           "add_gaussian_noise_to_surface and save it as\n{}"
+                           .format(surf_file))
+                    exit(0)
+                else:  # generate a sphere surface from a gaussian mask
+                    sphere = sg.generate_gauss_sphere_surface(radius)
+                    if noise > 0:
+                        sphere = add_gaussian_noise_to_surface(sphere,
+                                                               percent=noise)
+                    io.save_vtp(sphere, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
         # it into a triangle graph:
@@ -840,14 +852,14 @@ class VectorVotingTestCase(unittest.TestCase):
 
         # Asserting that all values of both principal curvatures are close to
         # the true value, allowing error of +-30%:
-        print "Testing the maximal principal curvature (kappa_1)..."
-        for i, error in enumerate(abs_kappa_1_errors):
-            msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
-            self.assertLessEqual(error, allowed_error, msg=msg)
-        print "Testing the minimal principal curvature (kappa_2)..."
-        for i, error in enumerate(abs_kappa_2_errors):
-            msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
-            self.assertLessEqual(error, allowed_error, msg=msg)
+        # print "Testing the maximal principal curvature (kappa_1)..."
+        # for i, error in enumerate(abs_kappa_1_errors):
+        #     msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+        #     self.assertLessEqual(error, allowed_error, msg=msg)
+        # print "Testing the minimal principal curvature (kappa_2)..."
+        # for i, error in enumerate(abs_kappa_2_errors):
+        #     msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+        #     self.assertLessEqual(error, allowed_error, msg=msg)
 
     def parametric_test_torus_curvatures(
             self, rr, csr, radius_hit, method='VCTV',
@@ -1100,20 +1112,20 @@ class VectorVotingTestCase(unittest.TestCase):
     #             self.parametric_test_plane_normals(
     #                 10, rh, res=10, noise=n)
 
-    def test_cylinder_directions_curvatures(self):
-        """
-        Tests whether minimal principal directions (T_2) and curvatures are
-        correctly estimated for an opened cylinder surface (without the circular
-        planes) with known orientation (height, i.e. T_2, parallel to the Z
-        axis), certain radius and noise level.
-        """
-        p = 50
-        for n in [0]:
-            for rh in [3, 4, 5, 6, 7]:  # 8
-                for m in ['VVCF']:  # 'VV', 'VCTV'
-                    self.parametric_test_cylinder_directions_curvatures(
-                        10, rh, noise=n, method=m,
-                        page_curvature_formula=False, num_points=p)
+    # def test_cylinder_directions_curvatures(self):
+    #     """
+    #     Tests whether minimal principal directions (T_2) and curvatures are
+    #     correctly estimated for an opened cylinder surface (without the circular
+    #     planes) with known orientation (height, i.e. T_2, parallel to the Z
+    #     axis), certain radius and noise level.
+    #     """
+    #     p = 50
+    #     for n in [0]:
+    #         for rh in [3, 4, 5, 6, 7]:  # 8
+    #             for m in ['VVCF']:  # 'VV', 'VCTV'
+    #                 self.parametric_test_cylinder_directions_curvatures(
+    #                     10, rh, noise=n, method=m,
+    #                     page_curvature_formula=False, num_points=p)
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1129,23 +1141,30 @@ class VectorVotingTestCase(unittest.TestCase):
     #                 10, rh, noise=0, inverse=True, method=m,
     #                 page_curvature_formula=False, num_points=p)
 
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated for a sphere with a
-    #     certain radius and noise level:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-    #     """
-    #     for n in [0]:
-    #         for rh in [3.5]:  # 4, 3, 2, 1, 5, 6, 7, 8, 9
-    #             for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-    #                 self.parametric_test_sphere_curvatures(
-    #                     10, rh, ico=1280, noise=n, method='VVCF',
-    #                     page_curvature_formula=False, num_points=p)
-    #             # for m in ['VV', 'VCTV']:
-    #             #     self.parametric_test_sphere_curvatures(
-    #             #         10, rh, ico=1280, noise=n, method=m,
-    #             #         page_curvature_formula=False)
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated for a sphere with a
+        certain radius and noise level:
+
+        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+        """
+        # Icosahedron sphere with 1280 faces:
+        # for n in [0]:
+        #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+        #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
+        #             self.parametric_test_sphere_curvatures(
+        #                 10, rh, ico=1280, noise=n, method='VVCF',
+        #                 page_curvature_formula=False, num_points=p)
+        #         for m in ['VV', 'VCTV']:
+        #             self.parametric_test_sphere_curvatures(
+        #                 10, rh, ico=1280, noise=n, method=m,
+        #                 page_curvature_formula=False)
+        # Binary sphere with different radii:
+        for r in [20, 30]:  # 10, 20, 30
+            for rh in [9]:  # 5, 6, 7, 8, 9
+                for m in ['VV']:  # 'VCTV',
+                    self.parametric_test_sphere_curvatures(r, rh, binary=True,
+                                                           method=m)
 
     # def test_inverse_sphere_curvatures(self):
     #     """

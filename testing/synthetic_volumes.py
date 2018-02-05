@@ -16,7 +16,7 @@ class SphereMask(object):
     @staticmethod
     def generate_sphere_mask(r=10, box=23, t=0):
         """
-        Generates a 3D volume with a sphere binary mask.
+        Generates a 3D volume with a binary sphere mask.
 
         Args:
             r (int): radius in voxels difference (default 10)
@@ -56,7 +56,7 @@ class SphereMask(object):
     @staticmethod
     def generate_gauss_sphere_mask(sg, box):
         """
-        Generates a 3D volume with a sphere binary mask.
+        Generates a 3D volume with a gaussian sphere mask.
 
         Args:
             sg (float): sigma of the gaussian formula
