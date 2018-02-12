@@ -8,7 +8,7 @@ import pandas as pd
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
     TriangleGraph, vector_voting, vector_voting_curve_fitting,
-    vector_curvature_tensor_voting)
+    vector_curvature_tensor_voting, normals_directions_and_curvature_estimation)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
@@ -242,9 +242,8 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-        tg.build_graph_from_vtk_surface(surf, verbose=False,
-                                        reverse_normals=False)
+        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
         print tg.graph
 
         t_end = time.time()
@@ -253,7 +252,7 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm (with curvature
-        # tensor voting, because it is be the fastest):
+        # tensor voting, because its second pass is the fastest):
         surf_vv = vector_curvature_tensor_voting(
             tg, radius_hit=radius_hit, exclude_borders=True)
         # Saving the output (TriangleGraph object) for later inspection in
@@ -302,7 +301,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_cylinder_directions_curvatures(
             self, r, radius_hit, inverse=False, res=0, h=0, noise=10,
-            method='VCTV', page_curvature_formula=False, num_points=None):
+            methods=['VV'], page_curvature_formula=False, num_points=None):
         """
         Tests whether minimal principal directions (T_2), as well as minimal and
         maximal principal curvatures are correctly estimated for an opened
@@ -331,11 +330,11 @@ class VectorVotingTestCase(unittest.TestCase):
             noise (int, optional): determines variance of the Gaussian noise in
                 percents of average triangle edge length (default 0), the noise
                 is added on triangle vertex coordinates in its normal direction
-            method (str): tells which method should be used: 'VV' for normal
-                vector voting, 'VVCF' for curve fitting in the two principal
-                directions estimated by VV to estimate the principal curvatures
-                or 'VCTV' (default) for vector and curvature tensor voting to
-                estimate the principal direction and curvatures
+            methods (list, optional): tells which method(s) should be used: 'VV'
+                for normal vector voting (default), 'VVCF' for curve fitting in
+                the two principal directions estimated by VV to estimate the
+                principal curvatures or 'VCTV' for vector and curvature tensor
+                voting to estimate the principal directions and curvatures
             page_curvature_formula (boolean, optional): if True (default False)
                 normal curvature formula from Page at al. is used for VV or VVCF
                 (see collecting_curvature_votes)
@@ -346,15 +345,6 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
-        if method != 'VV' and method != 'VVCF' and method != 'VCTV':
-            print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
-            exit(0)
-        if method == 'VV' and page_curvature_formula:
-            method = 'VV_page_curvature_formula'
-        elif method == 'VVCF' and page_curvature_formula:
-            method = 'VVCF_page_curvature_formula_{}points'.format(num_points)
-        elif method == 'VVCF':
-            method = 'VVCF_{}points'.format(num_points)
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res == 0:
             fold = '{}synthetic_surfaces/cylinder/noise{}/'.format(
@@ -388,20 +378,15 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse_str = ""
         base_filename = "{}{}cylinder_r{}_h{}".format(
             files_fold, inverse_str, r, h)
-        surf_VV_file = '{}.{}_rh{}.vtp'.format(
-            base_filename, method, radius_hit)
-        VV_eval_file = '{}.{}_rh{}.csv'.format(
-            base_filename, method, radius_hit)
         VTK_eval_file = '{}.VTK.csv'.format(base_filename)
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
-                   "cylinder with radius {}, height {} and {}% noise using the "
-                   "method {}***".format(r, h, noise, method))
+                   "cylinder with radius {}, height {} and {}% noise ***".
+                   format(r, h, noise))
         else:
             print ("\n*** Generating a surface and a graph for a cylinder with "
-                   "radius {}, height {} and {}% noise using the method {}***"
-                   .format(r, h, noise, method))
+                   "radius {}, height {} and {}% noise ***".format(r, h, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             cg = CylinderGenerator()
@@ -423,7 +408,7 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
         # VTK has opposite surface normals convention than we use
         # a graph with normals pointing outwards is generated (normal case
         # for this method; negative curvatures)
@@ -433,7 +418,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # curvatures)
         else:
             reverse_normals = True
-        tg.build_graph_from_vtk_surface(surf, verbose=False,
+        tg.build_graph_from_vtk_surface(verbose=False,
                                         reverse_normals=reverse_normals)
         print tg.graph
 
@@ -443,50 +428,13 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        if method == 'VV' or method == 'VV_page_curvature_formula':
-            script = vector_voting
-        elif 'VVCF' in method:
-            script = vector_voting_curve_fitting
-        else:  # if method == 'VCTV'
-            script = vector_curvature_tensor_voting
-        kwargs = {'radius_hit': radius_hit, 'exclude_borders': True}
-        if 'page_curvature_formula' in method:
-            kwargs['page_curvature_formula'] = True
-        if 'CF' in method:
-            kwargs['num_points'] = num_points
-        surf_VV = script(tg, **kwargs)
-
-        # Saving the output (TriangleGraph object) for later inspection in
-        # ParaView:
-        io.save_vtp(surf_VV, surf_VV_file)
-
-        # Getting the estimated principal directions along cylinder height, T_h:
-        pos = [0, 1, 2]  # vector-property value positions
-        if not inverse:  # it's the minimal direction
-            T_h = tg.graph.vertex_properties["T_2"].get_2d_array(pos)
-        else:  # it's the maximal direction
-            T_h = tg.graph.vertex_properties["T_1"].get_2d_array(pos)
-        # The shape is (3, <num_vertices>) - have to transpose to group the
-        # respective x, y, z components to sub-arrays
-        T_h = np.transpose(T_h)  # shape (<num_vertices>, 3)
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, exclude_borders=True, methods=methods,
+            page_curvature_formula=page_curvature_formula,
+            num_points=num_points)
 
         # Ground-truth T_h vector is parallel to Z axis
         true_T_h = np.array([0, 0, 1])
-
-        # Computing errors of the estimated T_h vectors wrt the true one:
-        T_h_errors = np.array(map(
-            lambda x: error_vector(true_T_h, x), T_h))
-        T_h_angular_errors = np.array(map(
-            lambda x: angular_error_vector(true_T_h, x), T_h))
-
-        # Getting principal curvatures from VV and VTK from the output graph:
-        kappa_1 = tg.get_vertex_property_array("kappa_1")
-        kappa_2 = tg.get_vertex_property_array("kappa_2")
-        vtk_kappa_1 = tg.get_vertex_property_array("max_curvature")
-        vtk_kappa_2 = tg.get_vertex_property_array("min_curvature")
-        # Calculating estimated average principal curvatures:
-        kappa_1_avg = np.mean(kappa_1)
-        kappa_2_avg = np.mean(kappa_2)
 
         # Ground-truth principal curvatures
         if inverse:
@@ -496,106 +444,155 @@ class VectorVotingTestCase(unittest.TestCase):
             true_kappa_1 = 1.0 / r
             true_kappa_2 = 0.0
 
-        # Calculating errors of the principal curvatures:
-        if true_kappa_1 != 0:  # not inverse
-            abs_kappa_1_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_1, x),
-                kappa_1))
-            rel_kappa_1_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_1, x),
-                kappa_1))
-            vtk_abs_kappa_1_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_1, x),
-                vtk_kappa_1))
-            vtk_rel_kappa_1_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_1, x),
-                vtk_kappa_1))
-        else:  # inverse
-            abs_kappa_2_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_2, x),
-                kappa_2))
-            rel_kappa_2_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_2, x),
-                kappa_2))
-            vtk_abs_kappa_2_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_2, x),
-                vtk_kappa_2))
-            vtk_rel_kappa_2_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_2, x),
-                vtk_kappa_2))
+        for method in method_tg_surf_dict.keys():
+            # Saving the output (TriangleGraph object) for later inspection in
+            # ParaView:
+            (tg, surf) = method_tg_surf_dict[method]
+            if method == 'VV' and page_curvature_formula:
+                method = 'VV_page_curvature_formula'
+            elif method == 'VVCF' and page_curvature_formula:
+                method = 'VVCF_page_curvature_formula_{}points'.format(
+                    num_points)
+            elif method == 'VVCF':
+                method = 'VVCF_{}points'.format(num_points)
+            surf_file = '{}.{}_rh{}.vtp'.format(
+                base_filename, method, radius_hit)
+            io.save_vtp(surf, surf_file)
 
-        # Writing all the VV curvature values and errors into a csv file:
-        df = pd.DataFrame()
-        df['kappa1'] = kappa_1
-        df['kappa2'] = kappa_2
-        if true_kappa_1 != 0:  # not inverse
-            df['kappa1AbsErrors'] = abs_kappa_1_errors
-            df['kappa1RelErrors'] = rel_kappa_1_errors
-            df['T2Errors'] = T_h_errors
-            df['T2AngularErrors'] = T_h_angular_errors
-        else:  # inverse
-            df['kappa2AbsErrors'] = abs_kappa_2_errors
-            df['kappa2RelErrors'] = rel_kappa_2_errors
-            df['T1Errors'] = T_h_errors
-            df['T1AngularErrors'] = T_h_angular_errors
-        df.to_csv(VV_eval_file, sep=';')
-        # The same for VTK, if the file does not exist yet:
-        if not os.path.isfile(VTK_eval_file):
-            df = pd.DataFrame()
-            df['kappa1'] = vtk_kappa_1
-            df['kappa2'] = vtk_kappa_2
+            # Evaluating each method:
+            print "\nEvaluating {}...".format(method)
+            eval_file = '{}.{}_rh{}.csv'.format(
+                base_filename, method, radius_hit)
+
+            # Getting the estimated principal directions along cylinder height:
+            pos = [0, 1, 2]  # vector-property value positions
+            if not inverse:  # it's the minimal direction
+                T_h = tg.graph.vertex_properties["T_2"].get_2d_array(pos)
+            else:  # it's the maximal direction
+                T_h = tg.graph.vertex_properties["T_1"].get_2d_array(pos)
+            # The shape is (3, <num_vertices>) - have to transpose to group the
+            # respective x, y, z components to sub-arrays
+            T_h = np.transpose(T_h)  # shape (<num_vertices>, 3)
+
+            # Computing errors of the estimated T_h vectors wrt the true one:
+            T_h_errors = np.array(map(
+                lambda x: error_vector(true_T_h, x), T_h))
+            T_h_angular_errors = np.array(map(
+                lambda x: angular_error_vector(true_T_h, x), T_h))
+
+            # Getting estimated and VTK principal curvatures from the output
+            # graph:
+            kappa_1 = tg.get_vertex_property_array("kappa_1")
+            kappa_2 = tg.get_vertex_property_array("kappa_2")
+            vtk_kappa_1 = tg.get_vertex_property_array("max_curvature")
+            vtk_kappa_2 = tg.get_vertex_property_array("min_curvature")
+            # Calculating estimated average principal curvatures:
+            # kappa_1_avg = np.mean(kappa_1)
+            # kappa_2_avg = np.mean(kappa_2)
+
+            # Calculating errors of the principal curvatures:
             if true_kappa_1 != 0:  # not inverse
-                df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
-                df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
+                abs_kappa_1_errors = np.array(map(
+                    lambda x: absolute_error_scalar(true_kappa_1, x),
+                    kappa_1))
+                rel_kappa_1_errors = np.array(map(
+                    lambda x: relative_error_scalar(true_kappa_1, x),
+                    kappa_1))
+                vtk_abs_kappa_1_errors = np.array(map(
+                    lambda x: absolute_error_scalar(true_kappa_1, x),
+                    vtk_kappa_1))
+                vtk_rel_kappa_1_errors = np.array(map(
+                    lambda x: relative_error_scalar(true_kappa_1, x),
+                    vtk_kappa_1))
             else:  # inverse
-                df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
-                df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
-            df.to_csv(VTK_eval_file, sep=';')
+                abs_kappa_2_errors = np.array(map(
+                    lambda x: absolute_error_scalar(true_kappa_2, x),
+                    kappa_2))
+                rel_kappa_2_errors = np.array(map(
+                    lambda x: relative_error_scalar(true_kappa_2, x),
+                    kappa_2))
+                vtk_abs_kappa_2_errors = np.array(map(
+                    lambda x: absolute_error_scalar(true_kappa_2, x),
+                    vtk_kappa_2))
+                vtk_rel_kappa_2_errors = np.array(map(
+                    lambda x: relative_error_scalar(true_kappa_2, x),
+                    vtk_kappa_2))
 
-        # Asserting that all estimated T_h vectors are close to the true vector,
-        # allowing error of 30%:
-        if not inverse:
-            print "Testing the minimal principal directions (T_2)..."
-        else:
-            print "Testing the maximal principal directions (T_1)..."
-        for error in T_h_errors:
-            msg = '{} is > {}!'.format(error, 0.3)
-            self.assertLessEqual(error, 0.3, msg=msg)
+            # Writing all the curvature values and errors into a csv file:
+            df = pd.DataFrame()
+            df['kappa1'] = kappa_1
+            df['kappa2'] = kappa_2
+            if true_kappa_1 != 0:  # not inverse
+                df['kappa1AbsErrors'] = abs_kappa_1_errors
+                df['kappa1RelErrors'] = rel_kappa_1_errors
+                df['T2Errors'] = T_h_errors
+                df['T2AngularErrors'] = T_h_angular_errors
+            else:  # inverse
+                df['kappa2AbsErrors'] = abs_kappa_2_errors
+                df['kappa2RelErrors'] = rel_kappa_2_errors
+                df['T1Errors'] = T_h_errors
+                df['T1AngularErrors'] = T_h_angular_errors
+            df.to_csv(eval_file, sep=';')
+            # The same for VTK, if the file does not exist yet:
+            if not os.path.isfile(VTK_eval_file):
+                df = pd.DataFrame()
+                df['kappa1'] = vtk_kappa_1
+                df['kappa2'] = vtk_kappa_2
+                if true_kappa_1 != 0:  # not inverse
+                    df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
+                    df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
+                else:  # inverse
+                    df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
+                    df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+                df.to_csv(VTK_eval_file, sep=';')
 
-        # Asserting that average principal curvatures are close to the correct
-        # ones allowing error of +-30% of the maximal absolute true value
-        allowed_error = 0.3 * max(abs(true_kappa_1), abs(true_kappa_2))
-        # if true_kappa_1 != 0:  # not inverse
-        #     print "Testing the average maximal principal curvature (kappa_1)..."
-        #     msg = '{} is not in [{}, {}]!'.format(
-        #         kappa_1_avg, true_kappa_1 - allowed_error,
-        #         true_kappa_1 + allowed_error)
-        #     self.assertAlmostEqual(kappa_1_avg, true_kappa_1,
-        #                            delta=allowed_error, msg=msg)
-        # else:  # inverse
-        #     print "Testing the average minimal principal curvature (kappa_2)..."
-        #     msg = '{} is not in [{}, {}]!'.format(
-        #         kappa_2_avg, true_kappa_2 - allowed_error,
-        #         true_kappa_2 + allowed_error)
-        #     self.assertAlmostEqual(kappa_2_avg, true_kappa_2,
-        #                            delta=allowed_error, msg=msg)
+            # Asserting that all estimated T_h vectors are close to the true
+            # vector, allowing error of 30%:
+            if not inverse:
+                print "Testing the minimal principal directions (T_2)..."
+            else:
+                print "Testing the maximal principal directions (T_1)..."
+            for error in T_h_errors:
+                msg = '{} is > {}!'.format(error, 0.3)
+                self.assertLessEqual(error, 0.3, msg=msg)
 
-        # Asserting that all principal curvatures are close to the correct
-        # ones allowing error of +-30% of the maximal absolute true value
-        if true_kappa_1 != 0:  # not inverse
-            print "Testing the maximal principal curvature (kappa_1)..."
-            for i, error in enumerate(abs_kappa_1_errors):
-                msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
-                self.assertLessEqual(error, allowed_error, msg=msg)
-        else:  # inverse
-            print "Testing the minimal principal curvature (kappa_2)..."
-            for i, error in enumerate(abs_kappa_2_errors):
-                msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
-                self.assertLessEqual(error, allowed_error, msg=msg)
+            # Asserting that average principal curvatures are close to the
+            # correct ones allowing error of +-30% of the maximal absolute true
+            # value
+            allowed_error = 0.3 * max(abs(true_kappa_1), abs(true_kappa_2))
+            # if true_kappa_1 != 0:  # not inverse
+            #      print "Testing the average maximal principal curvature " \
+            #            "(kappa_1)..."
+            #     msg = '{} is not in [{}, {}]!'.format(
+            #         kappa_1_avg, true_kappa_1 - allowed_error,
+            #         true_kappa_1 + allowed_error)
+            #     self.assertAlmostEqual(kappa_1_avg, true_kappa_1,
+            #                            delta=allowed_error, msg=msg)
+            # else:  # inverse
+            #      print "Testing the average minimal principal curvature " \
+            #            "(kappa_2)..."
+            #     msg = '{} is not in [{}, {}]!'.format(
+            #         kappa_2_avg, true_kappa_2 - allowed_error,
+            #         true_kappa_2 + allowed_error)
+            #     self.assertAlmostEqual(kappa_2_avg, true_kappa_2,
+            #                            delta=allowed_error, msg=msg)
+
+            # Asserting that all principal curvatures are close to the correct
+            # ones allowing error of +-30% of the maximal absolute true value
+            if true_kappa_1 != 0:  # not inverse
+                print "Testing the maximal principal curvature (kappa_1)..."
+                for i, error in enumerate(abs_kappa_1_errors):
+                    msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+                    self.assertLessEqual(error, allowed_error, msg=msg)
+            else:  # inverse
+                print "Testing the minimal principal curvature (kappa_2)..."
+                for i, error in enumerate(abs_kappa_2_errors):
+                    msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+                    self.assertLessEqual(error, allowed_error, msg=msg)
 
     def parametric_test_sphere_curvatures(
             self, radius, radius_hit, inverse=False, binary=False, res=0,
-            ico=0, noise=0, save_areas=False, method='VCTV',
+            ico=0, noise=0, save_areas=False, methods=['VV'],
             page_curvature_formula=False, num_points=None):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
@@ -628,11 +625,11 @@ class VectorVotingTestCase(unittest.TestCase):
                 is added on triangle vertex coordinates in its normal direction
             save_areas (boolean, optional): if True (default False), also mesh
                 triangle ares will be saved to a file
-            method (str): tells which method should be used: 'VV' for normal
-                vector voting, 'VVCF' for curve fitting in the two principal
-                directions estimated by VV to estimate the principal curvatures
-                or 'VCTV' (default) for vector and curvature tensor voting to
-                estimate the principal direction and curvatures
+            methods (list, optional): tells which method(s) should be used: 'VV'
+                for normal vector voting (default), 'VVCF' for curve fitting in
+                the two principal directions estimated by VV to estimate the
+                principal curvatures or 'VCTV' for vector and curvature tensor
+                voting to estimate the principal directions and curvatures
             page_curvature_formula (boolean, optional): if True (default False)
                 normal curvature formula from Page et al. is used for VV or VVCF
                 (see collecting_curvature_votes)
@@ -643,15 +640,6 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
-        if method != 'VV' and method != 'VVCF' and method != 'VCTV':
-            print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
-            exit(0)
-        if method == 'VV' and page_curvature_formula:
-            method = 'VV_page_curvature_formula'
-        elif method == 'VVCF' and page_curvature_formula:
-            method = 'VVCF_page_curvature_formula_{}points'.format(num_points)
-        elif method == 'VVCF':
-            method = 'VVCF_{}points'.format(num_points)
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if binary:
             fold = '{}synthetic_surfaces/sphere/binary/'.format(base_fold)
@@ -685,20 +673,16 @@ class VectorVotingTestCase(unittest.TestCase):
         else:
             inverse_str = ""
         base_filename = "{}{}sphere_r{}".format(files_fold, inverse_str, radius)
-        surf_VV_file = '{}.{}_rh{}.vtp'.format(
-            base_filename, method, radius_hit)
-        VV_eval_file = '{}.{}_rh{}.csv'.format(
-            base_filename, method, radius_hit)
         VTK_eval_file = '{}.VTK.csv'.format(base_filename)
 
         if inverse:
             print ("\n*** Generating a surface and a graph for an inverse "
-                   "sphere with radius {} and {}% noise using the method {}***"
-                   .format(radius, noise, method))
+                   "sphere with radius {} and {}% noise***"
+                   .format(radius, noise))
         else:
             print ("\n*** Generating a surface and a graph for a sphere "
-                   "with radius {} and {}% noise using the method {}***".format(
-                    radius, noise, method))
+                   "with radius {} and {}% noise***".format(
+                    radius, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SphereGenerator()
@@ -737,7 +721,7 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
         # VTK has opposite surface normals convention than we use
         # a graph with normals pointing outwards is generated (normal case
         # for VTK; negative curvatures)
@@ -747,7 +731,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # to be flipped, positive curvatures)
         else:
             reverse_normals = True
-        tg.build_graph_from_vtk_surface(surf, verbose=False,
+        tg.build_graph_from_vtk_surface(verbose=False,
                                         reverse_normals=reverse_normals)
         print tg.graph
 
@@ -757,112 +741,123 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        if method == 'VV' or method == 'VV_page_curvature_formula':
-            script = vector_voting
-        elif 'VVCF' in method:
-            script = vector_voting_curve_fitting
-        else:  # if method == 'VCTV'
-            script = vector_curvature_tensor_voting
-        kwargs = {'radius_hit': radius_hit, 'exclude_borders': False}
-        if 'page_curvature_formula' in method:
-            kwargs['page_curvature_formula'] = True
-        if 'CF' in method:
-            kwargs['num_points'] = num_points
-        surf_VV = script(tg, **kwargs)
-
-        # Saving the output (TriangleGraph object) for later inspection in
-        # ParaView:
-        io.save_vtp(surf_VV, surf_VV_file)
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, exclude_borders=False, methods=methods,
+            page_curvature_formula=page_curvature_formula,
+            num_points=num_points)
 
         # Ground truth principal curvatures
         true_curvature = 1.0 / radius
         if inverse:
             true_curvature *= -1
 
-        # Getting estimated principal curvatures from the output graph:
-        kappa_1 = tg.get_vertex_property_array("kappa_1")
-        kappa_2 = tg.get_vertex_property_array("kappa_2")
-        # Calculating average principal curvatures
-        kappa_1_avg = np.mean(kappa_1)
-        kappa_2_avg = np.mean(kappa_2)
+        for method in method_tg_surf_dict.keys():
+            # Saving the output (TriangleGraph object) for later inspection in
+            # ParaView:
+            (tg, surf) = method_tg_surf_dict[method]
+            if method == 'VV' and page_curvature_formula:
+                method = 'VV_page_curvature_formula'
+            elif method == 'VVCF' and page_curvature_formula:
+                method = 'VVCF_page_curvature_formula_{}points'.format(
+                    num_points)
+            elif method == 'VVCF':
+                method = 'VVCF_{}points'.format(num_points)
+            surf_file = '{}.{}_rh{}.vtp'.format(
+                base_filename, method, radius_hit)
+            io.save_vtp(surf, surf_file)
 
-        # Calculating errors of the principal curvatures:
-        abs_kappa_1_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x), kappa_1))
-        abs_kappa_2_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x), kappa_2))
-        rel_kappa_1_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x), kappa_1))
-        rel_kappa_2_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x), kappa_2))
+            # Evaluating each method:
+            print "\nEvaluating {}...".format(method)
+            eval_file = '{}.{}_rh{}.csv'.format(
+                base_filename, method, radius_hit)
 
-        # Writing all the curvature values and errors into a csv file:
-        df = pd.DataFrame()
-        df['kappa1'] = kappa_1
-        df['kappa1AbsErrors'] = abs_kappa_1_errors
-        df['kappa1RelErrors'] = rel_kappa_1_errors
-        df['kappa2'] = kappa_2
-        df['kappa2AbsErrors'] = abs_kappa_2_errors
-        df['kappa2RelErrors'] = rel_kappa_2_errors
-        if save_areas:
-            triangle_areas = tg.get_vertex_property_array("area")
-            df['triangleAreas'] = triangle_areas
-        df.to_csv(VV_eval_file, sep=';')
+            # Getting estimated principal curvatures from the output graph:
+            kappa_1 = tg.get_vertex_property_array("kappa_1")
+            kappa_2 = tg.get_vertex_property_array("kappa_2")
+            # Calculating average principal curvatures
+            kappa_1_avg = np.mean(kappa_1)
+            kappa_2_avg = np.mean(kappa_2)
 
-        # The same steps for VTK, if the file does not exist yet:
-        if not os.path.isfile(VTK_eval_file):
-            vtk_kappa_1_values = tg.get_vertex_property_array("max_curvature")
-            vtk_kappa_2_values = tg.get_vertex_property_array("min_curvature")
-            vtk_abs_kappa_1_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_curvature, x),
-                vtk_kappa_1_values))
-            vtk_abs_kappa_2_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_curvature, x),
-                vtk_kappa_2_values))
-            vtk_rel_kappa_1_errors = np.array(map(
-                lambda x: relative_error_scalar(true_curvature, x),
-                vtk_kappa_1_values))
-            vtk_rel_kappa_2_errors = np.array(map(
-                lambda x: relative_error_scalar(true_curvature, x),
-                vtk_kappa_2_values))
+            # Calculating errors of the principal curvatures:
+            abs_kappa_1_errors = np.array(map(
+                lambda x: absolute_error_scalar(true_curvature, x), kappa_1))
+            abs_kappa_2_errors = np.array(map(
+                lambda x: absolute_error_scalar(true_curvature, x), kappa_2))
+            rel_kappa_1_errors = np.array(map(
+                lambda x: relative_error_scalar(true_curvature, x), kappa_1))
+            rel_kappa_2_errors = np.array(map(
+                lambda x: relative_error_scalar(true_curvature, x), kappa_2))
+
+            # Writing all the curvature values and errors into a csv file:
             df = pd.DataFrame()
-            df['kappa1'] = vtk_kappa_1_values
-            df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
-            df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
-            df['kappa2'] = vtk_kappa_2_values
-            df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
-            df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
-            df.to_csv(VTK_eval_file, sep=';')
+            df['kappa1'] = kappa_1
+            df['kappa1AbsErrors'] = abs_kappa_1_errors
+            df['kappa1RelErrors'] = rel_kappa_1_errors
+            df['kappa2'] = kappa_2
+            df['kappa2AbsErrors'] = abs_kappa_2_errors
+            df['kappa2RelErrors'] = rel_kappa_2_errors
+            if save_areas:
+                triangle_areas = tg.get_vertex_property_array("area")
+                df['triangleAreas'] = triangle_areas
+            df.to_csv(eval_file, sep=';')
 
-        # Asserting that average principal curvatures are close to the correct
-        # ones allowing absolute error of +-30% of the true curvature
-        allowed_error = 0.3 * abs(true_curvature)
-        # print "Testing the average maximal principal curvature (kappa_1)..."
-        # msg = '{} is not in [{}, {}]!'.format(
-        #     kappa_1_avg, true_curvature - allowed_error,
-        #     true_curvature + allowed_error)
-        # self.assertAlmostEqual(kappa_1_avg, true_curvature,
-        #                        delta=allowed_error, msg=msg)
-        # print "Testing the average minimal principal curvature (kappa_2)..."
-        # msg = '{} is not in [{}, {}]!'.format(
-        #     kappa_2_avg, true_curvature - allowed_error,
-        #     true_curvature + allowed_error)
-        # self.assertAlmostEqual(kappa_2_avg, true_curvature,
-        #                        delta=allowed_error, msg=msg)
+            # The same steps for VTK, if the file does not exist yet:
+            if not os.path.isfile(VTK_eval_file):
+                vtk_kappa_1_values = tg.get_vertex_property_array(
+                    "max_curvature")
+                vtk_kappa_2_values = tg.get_vertex_property_array(
+                    "min_curvature")
+                vtk_abs_kappa_1_errors = np.array(map(
+                    lambda x: absolute_error_scalar(true_curvature, x),
+                    vtk_kappa_1_values))
+                vtk_abs_kappa_2_errors = np.array(map(
+                    lambda x: absolute_error_scalar(true_curvature, x),
+                    vtk_kappa_2_values))
+                vtk_rel_kappa_1_errors = np.array(map(
+                    lambda x: relative_error_scalar(true_curvature, x),
+                    vtk_kappa_1_values))
+                vtk_rel_kappa_2_errors = np.array(map(
+                    lambda x: relative_error_scalar(true_curvature, x),
+                    vtk_kappa_2_values))
+                df = pd.DataFrame()
+                df['kappa1'] = vtk_kappa_1_values
+                df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
+                df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
+                df['kappa2'] = vtk_kappa_2_values
+                df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
+                df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+                df.to_csv(VTK_eval_file, sep=';')
 
-        # Asserting that all values of both principal curvatures are close to
-        # the true value, allowing error of +-30%:
-        # print "Testing the maximal principal curvature (kappa_1)..."
-        # for i, error in enumerate(abs_kappa_1_errors):
-        #     msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
-        #     self.assertLessEqual(error, allowed_error, msg=msg)
-        # print "Testing the minimal principal curvature (kappa_2)..."
-        # for i, error in enumerate(abs_kappa_2_errors):
-        #     msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
-        #     self.assertLessEqual(error, allowed_error, msg=msg)
+            # Asserting that average principal curvatures are close to the
+            # correct ones allowing absolute error of +-30% of the true
+            # curvature
+            allowed_error = 0.3 * abs(true_curvature)
+            # print "Testing the average maximal principal curvature (kappa_1)..."
+            # msg = '{} is not in [{}, {}]!'.format(
+            #     kappa_1_avg, true_curvature - allowed_error,
+            #     true_curvature + allowed_error)
+            # self.assertAlmostEqual(kappa_1_avg, true_curvature,
+            #                        delta=allowed_error, msg=msg)
+            # print "Testing the average minimal principal curvature (kappa_2)..."
+            # msg = '{} is not in [{}, {}]!'.format(
+            #     kappa_2_avg, true_curvature - allowed_error,
+            #     true_curvature + allowed_error)
+            # self.assertAlmostEqual(kappa_2_avg, true_curvature,
+            #                        delta=allowed_error, msg=msg)
+
+            # Asserting that all values of both principal curvatures are close
+            # to the true value, allowing error of +-30%:
+            # print "Testing the maximal principal curvature (kappa_1)..."
+            # for i, error in enumerate(abs_kappa_1_errors):
+            #     msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+            #     self.assertLessEqual(error, allowed_error, msg=msg)
+            # print "Testing the minimal principal curvature (kappa_2)..."
+            # for i, error in enumerate(abs_kappa_2_errors):
+            #     msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+            #     self.assertLessEqual(error, allowed_error, msg=msg)
 
     def parametric_test_torus_curvatures(
-            self, rr, csr, radius_hit, method='VCTV',
+            self, rr, csr, radius_hit, methods=['VV'],
             page_curvature_formula=False, num_points=None):
         """
         Runs all the steps needed to calculate curvatures for a test torus
@@ -875,11 +870,11 @@ class VectorVotingTestCase(unittest.TestCase):
             radius_hit (float): radius in length unit of the graph, here voxels;
                 it should be chosen to correspond to radius of smallest features
                 of interest on the surface
-            method (str): tells which method should be used: 'VV' for normal
-                vector voting, 'VVCF' for curve fitting in the two principal
-                directions estimated by VV to estimate the principal curvatures
-                or 'VCTV' (default) for vector and curvature tensor voting to
-                estimate the principal direction and curvatures
+            methods (list, optional): tells which method(s) should be used: 'VV'
+                for normal vector voting (default), 'VVCF' for curve fitting in
+                the two principal directions estimated by VV to estimate the
+                principal curvatures or 'VCTV' for vector and curvature tensor
+                voting to estimate the principal directions and curvatures
             page_curvature_formula (boolean, optional): if True (default False)
                 normal curvature formula from Page et al. is used for VV or VVCF
                 (see collecting_curvature_votes)
@@ -893,15 +888,6 @@ class VectorVotingTestCase(unittest.TestCase):
         Returns:
             None
         """
-        if method != 'VV' and method != 'VVCF' and method != 'VCTV':
-            print("The parameter 'method' has to be 'VV', 'VVCF' or 'VCTV'")
-            exit(0)
-        if method == 'VV' and page_curvature_formula:
-            method = 'VV_page_curvature_formula'
-        elif method == 'VVCF' and page_curvature_formula:
-            method = 'VVCF_page_curvature_formula_{}points'.format(num_points)
-        elif method == 'VVCF':
-            method = 'VVCF_{}points'.format(num_points)
         fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
 
         if not os.path.exists(fold):
@@ -921,15 +907,10 @@ class VectorVotingTestCase(unittest.TestCase):
             os.makedirs(files_fold)
         # TODO add "_inner_part" for a small saddle part:
         base_filename = "{}torus_rr{}_csr{}".format(files_fold, rr, csr)
-        surf_VV_file = '{}.{}_rh{}.vtp'.format(
-            base_filename, method, radius_hit)
-        VV_eval_file = '{}.{}_rh{}.csv'.format(
-            base_filename, method, radius_hit)
         VTK_eval_file = '{}.VTK.csv'.format(base_filename)
         print ("\n*** Generating a surface and a graph for a torus "
-               "with ring radius {} and cross-section radius {} "
-               "using the method {}***"
-               .format(rr, csr, method))
+               "with ring radius {} and cross-section radius {}***"
+               .format(rr, csr))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SaddleGenerator()
@@ -944,11 +925,11 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
         # VTK has opposite surface normals convention than we use,
         # a graph with normals pointing inwards is generated (VTK normals have
         # to be flipped)
-        tg.build_graph_from_vtk_surface(surf, verbose=False,
+        tg.build_graph_from_vtk_surface(verbose=False,
                                         reverse_normals=True)
         print tg.graph
 
@@ -977,127 +958,143 @@ class VectorVotingTestCase(unittest.TestCase):
             tg.graph.vp.true_T_1[v] = true_T_1
             tg.graph.vp.true_T_2[v] = true_T_2
 
-        # Running the modified Normal Vector Voting algorithm
-        if method == 'VV' or method == 'VV_page_curvature_formula':
-            script = vector_voting
-        elif 'VVCF' in method:
-            script = vector_voting_curve_fitting
-        else:  # if method == 'VCTV'
-            script = vector_curvature_tensor_voting
-        kwargs = {'radius_hit': radius_hit, 'exclude_borders': False}
-        if 'page_curvature_formula' in method:
-            kwargs['page_curvature_formula'] = True
-        if 'CF' in method:
-            kwargs['num_points'] = num_points
-        surf_VV = script(tg, **kwargs)
-
-        # Saving the output (TriangleGraph object) for later inspection:
-        io.save_vtp(surf_VV, surf_VV_file)
-
-        # Getting the estimated and true principal directions:
+        # Getting the true principal directions and principal curvatures:
         pos = [0, 1, 2]  # vector-property value positions
-        # The shape is (3, <num_vertices>) - have to transpose to group the
-        # respective x, y, z components to sub-arrays
-        T_1 = np.transpose(tg.graph.vertex_properties["T_1"].get_2d_array(pos))
-        T_2 = np.transpose(tg.graph.vertex_properties["T_2"].get_2d_array(pos))
         true_T_1 = np.transpose(
             tg.graph.vertex_properties["true_T_1"].get_2d_array(pos))
+        print("type(true_T_1): {}".format(type(true_T_1)))  # test
         true_T_2 = np.transpose(
             tg.graph.vertex_properties["true_T_2"].get_2d_array(pos))
-
-        # Computing errors of the estimated directions wrt the true ones:
-        T_1_errors = np.array(map(
-            lambda x, y: error_vector(x, y), true_T_1, T_1))
-        T_1_angular_errors = np.array(map(
-            lambda x, y: angular_error_vector(x, y), true_T_1, T_1))
-        T_2_errors = np.array(map(
-            lambda x, y: error_vector(x, y), true_T_2, T_2))
-        T_2_angular_errors = np.array(map(
-            lambda x, y: angular_error_vector(x, y), true_T_2, T_2))
-
-        # Getting the estimated and true principal curvatures:
-        kappa_1 = tg.get_vertex_property_array("kappa_1")
-        kappa_2 = tg.get_vertex_property_array("kappa_2")
-        vtk_kappa_1 = tg.get_vertex_property_array("max_curvature")
-        vtk_kappa_2 = tg.get_vertex_property_array("min_curvature")
         true_kappa_1 = tg.get_vertex_property_array("true_kappa_1")
+        print("type(true_kappa_1): {}".format(type(true_kappa_1)))  # test
         true_kappa_2 = tg.get_vertex_property_array("true_kappa_2")
+        # return None  # test
 
-        # Computing errors of the estimated curvatures wrt the true ones:
-        abs_kappa_1_errors = np.array(map(
-            lambda x, y: absolute_error_scalar(x, y), true_kappa_1, kappa_1))
-        # abs_kappa_1_errors = []  # the same as map
-        # for x, y in zip(true_kappa_1, kappa_1):
-        #     abs_kappa_1_error = absolute_error_scalar(x, y)
-        #     abs_kappa_1_errors.append(abs_kappa_1_error)
-        # abs_kappa_1_errors = np.array(abs_kappa_1_errors)
-        rel_kappa_1_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y), true_kappa_1, kappa_1))
-        vtk_abs_kappa_1_errors = np.array(map(
-            lambda x, y: absolute_error_scalar(x, y),
-            true_kappa_1, vtk_kappa_1))
-        vtk_rel_kappa_1_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y),
-            true_kappa_1, vtk_kappa_1))
-        abs_kappa_2_errors = np.array(map(
-            lambda x, y: absolute_error_scalar(x, y), true_kappa_2, kappa_2))
-        rel_kappa_2_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y), true_kappa_2, kappa_2))
-        vtk_abs_kappa_2_errors = np.array(map(
-            lambda x, y: absolute_error_scalar(x, y),
-            true_kappa_2, vtk_kappa_2))
-        vtk_rel_kappa_2_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y),
-            true_kappa_2, vtk_kappa_2))
+        # Running the modified Normal Vector Voting algorithm:
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, exclude_borders=False, methods=methods,
+            page_curvature_formula=page_curvature_formula,
+            num_points=num_points)
 
-        # Writing all the VV curvature values and errors into a csv file:
-        df = pd.DataFrame()
-        df['kappa1'] = kappa_1
-        df['kappa2'] = kappa_2
-        df['kappa1AbsErrors'] = abs_kappa_1_errors
-        df['kappa1RelErrors'] = rel_kappa_1_errors
-        df['kappa2AbsErrors'] = abs_kappa_2_errors
-        df['kappa2RelErrors'] = rel_kappa_2_errors
-        df['T1Errors'] = T_1_errors
-        df['T1AngularErrors'] = T_1_angular_errors
-        df['T2Errors'] = T_2_errors
-        df['T2AngularErrors'] = T_2_angular_errors
-        df.to_csv(VV_eval_file, sep=';')
-        # The same for VTK, if the file does not exist yet:
-        if not os.path.isfile(VTK_eval_file):
+        for method in method_tg_surf_dict.keys():
+            # Saving the output (TriangleGraph object) for later inspection in
+            # ParaView:
+            (tg, surf) = method_tg_surf_dict[method]
+            if method == 'VV' and page_curvature_formula:
+                method = 'VV_page_curvature_formula'
+            elif method == 'VVCF' and page_curvature_formula:
+                method = 'VVCF_page_curvature_formula_{}points'.format(
+                    num_points)
+            elif method == 'VVCF':
+                method = 'VVCF_{}points'.format(num_points)
+            surf_file = '{}.{}_rh{}.vtp'.format(
+                base_filename, method, radius_hit)
+            io.save_vtp(surf, surf_file)
+
+            # Evaluating each method:
+            print "\nEvaluating {}...".format(method)
+            eval_file = '{}.{}_rh{}.csv'.format(
+                base_filename, method, radius_hit)
+
+            # Getting the estimated and true principal directions:
+            # The shape is (3, <num_vertices>) - have to transpose to group the
+            # respective x, y, z components to sub-arrays
+            T_1 = np.transpose(tg.graph.vertex_properties["T_1"].get_2d_array(pos))
+            T_2 = np.transpose(tg.graph.vertex_properties["T_2"].get_2d_array(pos))
+
+            # Computing errors of the estimated directions wrt the true ones:
+            T_1_errors = np.array(map(
+                lambda x, y: error_vector(x, y), true_T_1, T_1))
+            T_1_angular_errors = np.array(map(
+                lambda x, y: angular_error_vector(x, y), true_T_1, T_1))
+            T_2_errors = np.array(map(
+                lambda x, y: error_vector(x, y), true_T_2, T_2))
+            T_2_angular_errors = np.array(map(
+                lambda x, y: angular_error_vector(x, y), true_T_2, T_2))
+
+            # Getting the estimated principal curvatures:
+            kappa_1 = tg.get_vertex_property_array("kappa_1")
+            kappa_2 = tg.get_vertex_property_array("kappa_2")
+            vtk_kappa_1 = tg.get_vertex_property_array("max_curvature")
+            vtk_kappa_2 = tg.get_vertex_property_array("min_curvature")
+
+            # Computing errors of the estimated curvatures wrt the true ones:
+            if tg.graph is None:  # test
+                print "tg.graph is None!"  # test
+            abs_kappa_1_errors = np.array(map(
+                lambda x, y: absolute_error_scalar(x, y), true_kappa_1, kappa_1))
+            # abs_kappa_1_errors = []  # the same as map
+            # for x, y in zip(true_kappa_1, kappa_1):
+            #     abs_kappa_1_error = absolute_error_scalar(x, y)
+            #     abs_kappa_1_errors.append(abs_kappa_1_error)
+            # abs_kappa_1_errors = np.array(abs_kappa_1_errors)
+            rel_kappa_1_errors = np.array(map(
+                lambda x, y: relative_error_scalar(x, y), true_kappa_1, kappa_1))
+            vtk_abs_kappa_1_errors = np.array(map(
+                lambda x, y: absolute_error_scalar(x, y),
+                true_kappa_1, vtk_kappa_1))
+            vtk_rel_kappa_1_errors = np.array(map(
+                lambda x, y: relative_error_scalar(x, y),
+                true_kappa_1, vtk_kappa_1))
+            abs_kappa_2_errors = np.array(map(
+                lambda x, y: absolute_error_scalar(x, y), true_kappa_2, kappa_2))
+            rel_kappa_2_errors = np.array(map(
+                lambda x, y: relative_error_scalar(x, y), true_kappa_2, kappa_2))
+            vtk_abs_kappa_2_errors = np.array(map(
+                lambda x, y: absolute_error_scalar(x, y),
+                true_kappa_2, vtk_kappa_2))
+            vtk_rel_kappa_2_errors = np.array(map(
+                lambda x, y: relative_error_scalar(x, y),
+                true_kappa_2, vtk_kappa_2))
+
+            # Writing all the VV curvature values and errors into a csv file:
             df = pd.DataFrame()
-            df['kappa1'] = vtk_kappa_1
-            df['kappa2'] = vtk_kappa_2
-            df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
-            df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
-            df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
-            df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
-            df.to_csv(VTK_eval_file, sep=';')
+            df['kappa1'] = kappa_1
+            df['kappa2'] = kappa_2
+            df['kappa1AbsErrors'] = abs_kappa_1_errors
+            df['kappa1RelErrors'] = rel_kappa_1_errors
+            df['kappa2AbsErrors'] = abs_kappa_2_errors
+            df['kappa2RelErrors'] = rel_kappa_2_errors
+            df['T1Errors'] = T_1_errors
+            df['T1AngularErrors'] = T_1_angular_errors
+            df['T2Errors'] = T_2_errors
+            df['T2AngularErrors'] = T_2_angular_errors
+            df.to_csv(eval_file, sep=';')
+            # The same for VTK, if the file does not exist yet:
+            if not os.path.isfile(VTK_eval_file):
+                df = pd.DataFrame()
+                df['kappa1'] = vtk_kappa_1
+                df['kappa2'] = vtk_kappa_2
+                df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
+                df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
+                df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
+                df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+                df.to_csv(VTK_eval_file, sep=';')
 
-        # Asserting that all estimated T_1 and T_2 vectors are close to the
-        # corresponding true vector, allowing error of 30%:
-        print "Testing the maximal principal directions (T_1)..."
-        for i, error in enumerate(T_1_errors):
-            msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
-            self.assertLessEqual(error, 0.3, msg=msg)
-        print "Testing the minimal principal directions (T_2)..."
-        for i, error in enumerate(T_2_errors):
-            msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
-            self.assertLessEqual(error, 0.3, msg=msg)
-        # Asserting that all estimated kappa_1 and kappa_2 values are close to
-        # the corresponding true values, allowing error of 30% from the true
-        # value (the maximal absolute value in case of kappa_2, because it can
-        # be 0 or negative):
-        print "Testing the maximal principal curvature (kappa_1)..."
-        allowed_error = 0.3 * max(true_kappa_1)
-        for i, error in enumerate(abs_kappa_1_errors):
-            msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
-            self.assertLessEqual(error, allowed_error, msg=msg)
-        print "Testing the minimal principal curvature (kappa_2)..."
-        allowed_error = 0.3 * max(abs(true_kappa_2))
-        for i, error in enumerate(abs_kappa_2_errors):
-            msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
-            self.assertLessEqual(error, allowed_error, msg=msg)
+            # Asserting that all estimated T_1 and T_2 vectors are close to the
+            # corresponding true vector, allowing error of 30%:
+            print "Testing the maximal principal directions (T_1)..."
+            for i, error in enumerate(T_1_errors):
+                msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
+                self.assertLessEqual(error, 0.3, msg=msg)
+            print "Testing the minimal principal directions (T_2)..."
+            for i, error in enumerate(T_2_errors):
+                msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
+                self.assertLessEqual(error, 0.3, msg=msg)
+            # Asserting that all estimated kappa_1 and kappa_2 values are close
+            # to the corresponding true values, allowing error of 30% from the
+            # true value (the maximal absolute value in case of kappa_2, because
+            # it can be 0 or negative):
+            print "Testing the maximal principal curvature (kappa_1)..."
+            allowed_error = 0.3 * max(true_kappa_1)
+            for i, error in enumerate(abs_kappa_1_errors):
+                msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+                self.assertLessEqual(error, allowed_error, msg=msg)
+            print "Testing the minimal principal curvature (kappa_2)..."
+            allowed_error = 0.3 * max(abs(true_kappa_2))
+            for i, error in enumerate(abs_kappa_2_errors):
+                msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
+                self.assertLessEqual(error, allowed_error, msg=msg)
 
     # *** The following tests will be run by unittest ***
 
@@ -1121,11 +1118,10 @@ class VectorVotingTestCase(unittest.TestCase):
     #     """
     #     p = 50
     #     for n in [0]:
-    #         for rh in [3, 4, 5, 6, 7]:  # 8
-    #             for m in ['VVCF']:  # 'VV', 'VCTV'
-    #                 self.parametric_test_cylinder_directions_curvatures(
-    #                     10, rh, noise=n, method=m,
-    #                     page_curvature_formula=False, num_points=p)
+    #         for rh in [8]:  # 3, 4, 5, 6, 7
+    #             self.parametric_test_cylinder_directions_curvatures(
+    #                 10, rh, noise=n, methods=['VV', 'VCTV', 'VVCF'],
+    #                 page_curvature_formula=False, num_points=p)
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1136,35 +1132,32 @@ class VectorVotingTestCase(unittest.TestCase):
     #     """
     #     p = 50
     #     for rh in [8]:
-    #         for m in ['VV', 'VVCF', 'VCTV']:
-    #             self.parametric_test_cylinder_directions_curvatures(
-    #                 10, rh, noise=0, inverse=True, method=m,
-    #                 page_curvature_formula=False, num_points=p)
+    #         self.parametric_test_cylinder_directions_curvatures(
+    #             10, rh, noise=0, inverse=True, methods=['VV', 'VCTV', 'VVCF'],
+    #             page_curvature_formula=False, num_points=p)
 
-    def test_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated for a sphere with a
-        certain radius and noise level:
-
-        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-        """
-        # Icosahedron sphere with 1280 faces:
-        # for n in [0]:
-        #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-        #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-        #             self.parametric_test_sphere_curvatures(
-        #                 10, rh, ico=1280, noise=n, method='VVCF',
-        #                 page_curvature_formula=False, num_points=p)
-        #         for m in ['VV', 'VCTV']:
-        #             self.parametric_test_sphere_curvatures(
-        #                 10, rh, ico=1280, noise=n, method=m,
-        #                 page_curvature_formula=False)
-        # Binary sphere with different radii:
-        for r in [20, 30]:  # 10, 20, 30
-            for rh in [9]:  # 5, 6, 7, 8, 9
-                for m in ['VV']:  # 'VCTV',
-                    self.parametric_test_sphere_curvatures(r, rh, binary=True,
-                                                           method=m)
+    # def test_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated for a sphere with a
+    #     certain radius and noise level:
+    #
+    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+    #     """
+    #     # Icosahedron sphere with 1280 faces:
+    #     # for n in [0]:
+    #     #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+    #     #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
+    #     #             self.parametric_test_sphere_curvatures(
+    #     #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
+    #     #                 page_curvature_formula=False, num_points=p)
+    #     #         self.parametric_test_sphere_curvatures(
+    #     #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
+    #     #             page_curvature_formula=False)
+    #     # Binary sphere with different radii:
+    #     for r in [30]:  # 10; 20
+    #         for rh in [28]:  # 5, 6, 7, 8, 9; 18
+    #             self.parametric_test_sphere_curvatures(r, rh, binary=True,
+    #                                                    methods=['VV', 'VCTV'])
 
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -1175,21 +1168,20 @@ class VectorVotingTestCase(unittest.TestCase):
     #     """
     #     p = 50
     #     for rh in [9]:
-    #         for m in ['VV']:  # 'VVCF', 'VCTV'
-    #             self.parametric_test_sphere_curvatures(
-    #                 10, rh, ico=1280, noise=0, inverse=True, method=m,
-    #                 page_curvature_formula=False, num_points=p)
+    #         self.parametric_test_sphere_curvatures(
+    #             10, rh, ico=1280, noise=0, inverse=True,
+    #             methods=['VV', 'VCTV', 'VVCF'],
+    #             page_curvature_formula=False, num_points=p)
 
-    # def test_torus_curvatures(self):
-    #     """
-    #     Runs parametric_test_torus_curvatures with certain parameters.
-    #     """
-    #     p = 50
-    #     for rh in [2, 3, 4]:  # 5, 6, 7, 8, 9
-    #         for m in ['VVCF']:  # 'VV', 'VCTV'
-    #             self.parametric_test_torus_curvatures(
-    #                 25, 10, rh, method=m,
-    #                 page_curvature_formula=False, num_points=p)
+    def test_torus_curvatures(self):
+        """
+        Runs parametric_test_torus_curvatures with certain parameters.
+        """
+        p = 50
+        for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
+            self.parametric_test_torus_curvatures(
+                25, 10, rh, methods=['VCTV'],  # 'VV', 'VVCF',
+                page_curvature_formula=False, num_points=p)
 
 
 if __name__ == '__main__':

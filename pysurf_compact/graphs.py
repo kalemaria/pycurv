@@ -27,20 +27,24 @@ class SegmentationGraph(object):
     segmentation that will be used to build the graph.
 
     Args:
+        surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+            generated from the segmentation (in voxels)
         scale_factor_to_nm (float): pixel size in nanometers for scaling the
-            graph
+            surface and the graph
         scale_x (int): x axis length in pixels of the segmentation
         scale_y (int): y axis length in pixels of the segmentation
         scale_z (int): z axis length in pixels of the segmentation
     """
 
-    def __init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z):
+    def __init__(self, surface, scale_factor_to_nm, scale_x, scale_y, scale_z):
         """
         Constructor.
 
         Args:
+            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+                generated from the segmentation in voxels
             scale_factor_to_nm (float): pixel size in nanometers for scaling the
-                graph
+                surface and the graph
             scale_x (int): x axis length in pixels of the segmentation
             scale_y (int): y axis length in pixels of the segmentation
             scale_z (int): z axis length in pixels of the segmentation
@@ -50,11 +54,20 @@ class SegmentationGraph(object):
         """
         self.graph = Graph(directed=False)
         """graph_tool.Graph: a graph object storing the segmentation graph
-        topology, geometry and properties.
+        topology, geometry and properties (initially empty).
         """
+        if isinstance(surface, vtk.vtkPolyData):
+            self.surface = surface
+            """vtk.vtkPolyData: a signed surface (mesh of triangles) generated
+            from the segmentation (in voxels)"""
+        else:
+            error_msg = "A vtkPolyData object required as the first input."
+            raise pexceptions.PySegInputError(
+                expr='SegmentationGraph constructor',
+                msg=error_msg
+            )
         self.scale_factor_to_nm = scale_factor_to_nm
-        """float: pixel size in nanometers for scaling the coordinates and
-        distances in the graph
+        """float: pixel size in nanometers for scaling the surface and the graph
         """
         self.scale_x = scale_x
         """int: x axis length in pixels of the segmentation"""
@@ -598,7 +611,8 @@ class SegmentationGraph(object):
         """
         if (isinstance(property_name, str) and
                 property_name in self.graph.vertex_properties):
-            values = self.graph.vertex_properties[property_name].get_array()
+            values = np.array(
+                self.graph.vertex_properties[property_name].get_array())
             print '{} "{}" values'.format(len(values), property_name)
             print 'min = {}, max = {}, mean = {}'.format(
                 min(values), max(values), np.mean(values))

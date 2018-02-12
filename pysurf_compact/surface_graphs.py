@@ -233,13 +233,12 @@ def transform_vector_to_local_system(pos, normal, vector):
 class SurfaceGraph(graphs.SegmentationGraph):
     """Class defining the abstract SurfaceGraph object."""
 
-    def build_graph_from_vtk_surface(self, surface, verbose=False):
+    def build_graph_from_vtk_surface(self, verbose=False):
         """
         Base method for building a graph from a vtkPolyData surface, to be
         implemented by SurfaceGraph subclasses.
 
         Args:
-            surface (vtk.vtkPolyData): a surface of triangles
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -256,85 +255,95 @@ class PointGraph(SurfaceGraph):
     Please use constructor parameters inherited from graphs.SegmentationGraph.
     """
     # Builds the graph from a vtkPolyData surface.
-    def build_graph_from_vtk_surface(self, surface, verbose=False):
-        if isinstance(surface, vtk.vtkPolyData):
-            # rescale the surface to nm
-            surface = rescale_surface(surface, self.scale_factor_to_nm)
+    def build_graph_from_vtk_surface(self, verbose=False):
+        """
+        Builds the graph from the vtkPolyData surface, which is rescaled to
+        nanometers according to the scale factor also specified when creating
+        the PointGraph object.
 
+        Every vertex of the graph represents a surface triangle vertex,
+        and every edge of the graph connects two adjacent vertices, just like a
+        triangle edge.
+
+        Args:
+            verbose(boolean, optional): if True (default False), some extra
+                information will be printed out
+
+        Returns:
+            None
+        """
+        # rescale the surface to nm and update the attribute
+        surface = rescale_surface(self.surface, self.scale_factor_to_nm)
+        self.surface = surface
+
+        if verbose:
+            # 0. Check numbers of cells and all points.
+            print '%s cells' % surface.GetNumberOfCells()
+            print '%s points' % surface.GetNumberOfPoints()
+
+        # 1. Iterate over all cells, adding their points as vertices to the
+        # graph and connecting them by edges.
+        for i in xrange(surface.GetNumberOfCells()):
             if verbose:
-                # 0. Check numbers of cells and all points.
-                print '%s cells' % surface.GetNumberOfCells()
-                print '%s points' % surface.GetNumberOfPoints()
+                print 'Cell number %s:' % i
 
-            # 1. Iterate over all cells, adding their points as vertices to the
-            # graph and connecting them by edges.
-            for i in xrange(surface.GetNumberOfCells()):
-                if verbose:
-                    print 'Cell number %s:' % i
+            # Get all points which made up the cell & check that they are 3.
+            points_cell = surface.GetCell(i).GetPoints()
+            if points_cell.GetNumberOfPoints() == 3:
+                # 1a) Add each of the 3 points as vertex to the graph, if
+                # it has not been added yet.
+                for j in range(0, 3):
+                    x, y, z = points_cell.GetPoint(j)
+                    p = (x, y, z)
+                    if p not in self.coordinates_to_vertex_index:
+                        vd = self.graph.add_vertex()  # vertex descriptor
+                        self.graph.vp.xyz[vd] = [x, y, z]
+                        self.coordinates_to_vertex_index[p] = \
+                            self.graph.vertex_index[vd]
+                        if verbose:
+                            print ('\tThe point (%s, %s, %s) has been added'
+                                   ' to the graph as a vertex.' % (x, y, z))
 
-                # Get all points which made up the cell & check that they are 3.
-                points_cell = surface.GetCell(i).GetPoints()
-                if points_cell.GetNumberOfPoints() == 3:
-                    # 1a) Add each of the 3 points as vertex to the graph, if
-                    # it has not been added yet.
-                    for j in range(0, 3):
-                        x, y, z = points_cell.GetPoint(j)
-                        p = (x, y, z)
-                        if p not in self.coordinates_to_vertex_index:
-                            vd = self.graph.add_vertex()  # vertex descriptor
-                            self.graph.vp.xyz[vd] = [x, y, z]
-                            self.coordinates_to_vertex_index[p] = \
-                                self.graph.vertex_index[vd]
+                # 1b) Add an edge with a distance between all 3 pairs of
+                # vertices, if it has not been added yet.
+                for k in range(0, 2):
+                    x1, y1, z1 = points_cell.GetPoint(k)
+                    p1 = (x1, y1, z1)
+                    # vertex descriptor of the 1st point
+                    vd1 = self.graph.vertex(
+                        self.coordinates_to_vertex_index[p1])
+                    for l in range(k + 1, 3):
+                        x2, y2, z2 = points_cell.GetPoint(l)
+                        p2 = (x2, y2, z2)
+                        # vertex descriptor of the 2nd point
+                        vd2 = self.graph.vertex(
+                            self.coordinates_to_vertex_index[p2])
+                        if not (
+                              (p1, p2) in self.coordinates_pair_connected or
+                              (p2, p1) in self.coordinates_pair_connected):
+                            # edge descriptor
+                            ed = self.graph.add_edge(vd1, vd2)
+                            self.graph.ep.distance[ed] = \
+                                self.distance_between_voxels(p1, p2)
+                            self.coordinates_pair_connected[(p1, p2)] = True
                             if verbose:
-                                print ('\tThe point (%s, %s, %s) has been added'
-                                       ' to the graph as a vertex.' % (x, y, z))
+                                print ('\tThe neighbor points (%s, %s, %s) '
+                                       'and (%s, %s, %s) have been '
+                                       'connected by an edge with a '
+                                       'distance of %s pixels.'
+                                       % (x1, y1, z1, x2, y2, z2,
+                                          self.graph.ep.distance[ed]))
+            else:
+                print ('Oops, there are %s points in cell number %s'
+                       % (points_cell.GetNumberOfPoints(), i))
 
-                    # 1b) Add an edge with a distance between all 3 pairs of
-                    # vertices, if it has not been added yet.
-                    for k in range(0, 2):
-                        x1, y1, z1 = points_cell.GetPoint(k)
-                        p1 = (x1, y1, z1)
-                        # vertex descriptor of the 1st point
-                        vd1 = self.graph.vertex(
-                            self.coordinates_to_vertex_index[p1])
-                        for l in range(k + 1, 3):
-                            x2, y2, z2 = points_cell.GetPoint(l)
-                            p2 = (x2, y2, z2)
-                            # vertex descriptor of the 2nd point
-                            vd2 = self.graph.vertex(
-                                self.coordinates_to_vertex_index[p2])
-                            if not (
-                                  (p1, p2) in self.coordinates_pair_connected or
-                                  (p2, p1) in self.coordinates_pair_connected):
-                                # edge descriptor
-                                ed = self.graph.add_edge(vd1, vd2)
-                                self.graph.ep.distance[ed] = \
-                                    self.distance_between_voxels(p1, p2)
-                                self.coordinates_pair_connected[(p1, p2)] = True
-                                if verbose:
-                                    print ('\tThe neighbor points (%s, %s, %s) '
-                                           'and (%s, %s, %s) have been '
-                                           'connected by an edge with a '
-                                           'distance of %s pixels.'
-                                           % (x1, y1, z1, x2, y2, z2,
-                                              self.graph.ep.distance[ed]))
-                else:
-                    print ('Oops, there are %s points in cell number %s'
-                           % (points_cell.GetNumberOfPoints(), i))
-
-            # 2. Check if the numbers of vertices and edges are as they should
-            # be:
-            assert self.graph.num_vertices() == len(
-                self.coordinates_to_vertex_index)
-            assert self.graph.num_edges() == len(
-                self.coordinates_pair_connected)
-            print '%s triangle vertices' % self.graph.num_vertices()
-        else:
-            error_msg = "A vtkPolyData object required as the first input."
-            raise pexceptions.PySegInputError(
-                expr='build_graph_from_vtk_surface (PointGraph)',
-                msg=error_msg
-            )
+        # 2. Check if the numbers of vertices and edges are as they should
+        # be:
+        assert self.graph.num_vertices() == len(
+            self.coordinates_to_vertex_index)
+        assert self.graph.num_edges() == len(
+            self.coordinates_pair_connected)
+        print '%s triangle vertices' % self.graph.num_vertices()
 
 
 class TriangleGraph(SurfaceGraph):
@@ -345,20 +354,24 @@ class TriangleGraph(SurfaceGraph):
     segmentation that will be used to build the graph.
 
     Args:
+        surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+            generated from the segmentation in voxels
         scale_factor_to_nm (float): pixel size in nanometers for scaling the
-            graph
+            surface and the graph
         scale_x (int): x axis length in pixels of the segmentation
         scale_y (int): y axis length in pixels of the segmentation
         scale_z (int): z axis length in pixels of the segmentation
     """
 
-    def __init__(self, scale_factor_to_nm, scale_x, scale_y, scale_z):
+    def __init__(self, surface, scale_factor_to_nm, scale_x, scale_y, scale_z):
         """
         Constructor.
 
         Args:
+            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+                generated from the segmentation in voxels
             scale_factor_to_nm (float): pixel size in nanometers for scaling the
-                graph
+                surface and the graph
             scale_x (int): x axis length in pixels of the segmentation
             scale_y (int): y axis length in pixels of the segmentation
             scale_z (int): z axis length in pixels of the segmentation
@@ -366,9 +379,8 @@ class TriangleGraph(SurfaceGraph):
         Returns:
             None
         """
-
-        graphs.SegmentationGraph.__init__(self, scale_factor_to_nm, scale_x,
-                                          scale_y, scale_z)
+        graphs.SegmentationGraph.__init__(self, surface, scale_factor_to_nm,
+                                          scale_x, scale_y, scale_z)
 
         # Add more "internal property maps" to the graph.
         # vertex property for storing the area in nanometers squared of the
@@ -401,20 +413,14 @@ class TriangleGraph(SurfaceGraph):
         nanometers to a list of triangle-cell indices sharing this point.
         """
 
-        self.surface = vtk.vtkPolyData()
-        # TODO move surface parameter from build_graph_from_vtk_surface to the
-        # init function!
-        # TODO docstring
-
         # self.cell_id_to_vertex_id = {}
-        # # TODO docstring
 
-    def build_graph_from_vtk_surface(self, surface, verbose=False,
+    def build_graph_from_vtk_surface(self, verbose=False,
                                      reverse_normals=False):
         """
-        Builds the graph from a vtkPolyData surface, which is rescaled to
-        nanometers according to the scale factor specified when creating the
-        TriangleGraph object.
+        Builds the graph from the vtkPolyData surface, which is rescaled to
+        nanometers according to the scale factor also specified when creating
+        the TriangleGraph object.
 
         Every vertex of the graph represents the center of a surface triangle,
         and every edge of the graph connects two adjacent triangles. There are
@@ -422,286 +428,281 @@ class TriangleGraph(SurfaceGraph):
         triangle edges and a "weak" edge if they share only one edge.
 
         Args:
-            surface (vtk.vtkPolyData): a surface of triangles
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
             reverse_normals (boolean, optional): if True (default False), the
                 triangle normals are reversed during graph generation
 
         Returns:
-            the rescaled surface to nanometers (vtk.vtkPolyData)
+            rescaled surface to nanometers with VTK curvatures (vtk.vtkPolyData)
         """
-        if isinstance(surface, vtk.vtkPolyData):
-            t_begin = time.time()
 
-            # rescale the surface to nm and add it as an attribute
-            self.surface = rescale_surface(surface, self.scale_factor_to_nm)
-            surface = self.surface
+        t_begin = time.time()
 
-            print 'Adding curvatures to the vtkPolyData surface...'
-            # because VTK and we (gen_surface) have the opposite normal
-            # convention: VTK outwards pointing normals, we: inwards pointing
-            if reverse_normals:
-                invert = False
-            else:
-                invert = True
-            surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
-            surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
+        # rescale the surface to nm and update the attribute
+        surface = rescale_surface(self.surface, self.scale_factor_to_nm)
+        self.surface = surface
 
-            if verbose:
-                # 0. Check numbers of cells and all points.
-                print '%s cells' % surface.GetNumberOfCells()
-                print '%s points' % surface.GetNumberOfPoints()
-
-            point_data = surface.GetPointData()
-            n = point_data.GetNumberOfArrays()
-            min_curvatures = None
-            max_curvatures = None
-            gauss_curvatures = None
-            mean_curvatures = None
-            for i in range(n):
-                if point_data.GetArrayName(i) == "Minimum_Curvature":
-                    min_curvatures = point_data.GetArray(i)
-                if point_data.GetArrayName(i) == "Maximum_Curvature":
-                    max_curvatures = point_data.GetArray(i)
-                if point_data.GetArrayName(i) == "Gauss_Curvature":
-                    gauss_curvatures = point_data.GetArray(i)
-                if point_data.GetArrayName(i) == "Mean_Curvature":
-                    mean_curvatures = point_data.GetArray(i)
-
-            # 2. Add each triangle cell as a vertex to the graph. Ignore the
-            # non-triangle cells.
-            # Get a list of all triangle cell indices first:
-            triangle_cell_ids = []
-            for cell_id in xrange(surface.GetNumberOfCells()):
-                # Get the cell i and check if it's a triangle:
-                cell = surface.GetCell(cell_id)
-                if isinstance(cell, vtk.vtkTriangle):
-                    triangle_cell_ids.append(cell_id)
-                else:
-                    print ('Oops, the cell number %s is not a vtkTriangle but '
-                           'a %s! It will be ignored.'
-                           % (cell_id, cell.__class__.__name__))
-
-            for cell_id in triangle_cell_ids:
-                cell = surface.GetCell(cell_id)
-                if verbose:
-                    print '(Triangle) cell number %s' % cell_id
-
-                # Initialize a list for storing the points coordinates making
-                # out the cell
-                points_xyz = []
-
-                # Get the 3 points which made up the triangular cell:
-                points_cell = cell.GetPoints()
-
-                # Calculate the centroid of the triangle:
-                x_center = 0
-                y_center = 0
-                z_center = 0
-                for j in range(0, 3):
-                    x, y, z = points_cell.GetPoint(j)
-                    x_center += x
-                    y_center += y
-                    z_center += z
-
-                    # Add each point j as a key in point_in_cells and cell index
-                    # to the value list:
-                    point_j = (x, y, z)
-                    if point_j in self.point_in_cells:
-                        self.point_in_cells[point_j].append(cell_id)
-                    else:
-                        self.point_in_cells[point_j] = [cell_id]
-
-                    # Add each point j into the points coordinates list
-                    points_xyz.append([x, y, z])
-                x_center /= 3
-                y_center /= 3
-                z_center /= 3
-
-                # Calculate the area of the triangle i;
-                area = cell.TriangleArea(points_cell.GetPoint(0),
-                                         points_cell.GetPoint(1),
-                                         points_cell.GetPoint(2))
-                try:
-                    assert(area > 0)
-                except AssertionError:
-                    print ('\tThe triangle centroid (%s, %s, %s) cannot be '
-                           'added to the graph as a vertex, because the '
-                           'triangle area is not positive, but is %s. '
-                           'Points = %s.'
-                           % (x_center, y_center, z_center, area, points_xyz))
-                    continue
-
-                # Calculate the normal of the triangle i;
-                normal = np.zeros(shape=3)
-                cell.ComputeNormal(points_cell.GetPoint(0),
-                                   points_cell.GetPoint(1),
-                                   points_cell.GetPoint(2), normal)
-                if reverse_normals:
-                    normal *= -1
-
-                # Get the min, max, Gaussian and mean curvatures (calculated by
-                # VTK) for each of 3 points of the triangle i and calculate the
-                # average curvatures:
-                avg_min_curvature = 0
-                avg_max_curvature = 0
-                avg_gauss_curvature = 0
-                avg_mean_curvature = 0
-                for j in range(0, 3):
-                    point_j_id = cell.GetPointId(j)
-
-                    min_curvature_point_j = min_curvatures.GetTuple1(point_j_id)
-                    avg_min_curvature += min_curvature_point_j
-
-                    max_curvature_point_j = max_curvatures.GetTuple1(point_j_id)
-                    avg_max_curvature += max_curvature_point_j
-
-                    gauss_curvature_point_j = gauss_curvatures.GetTuple1(
-                        point_j_id)
-                    avg_gauss_curvature += gauss_curvature_point_j
-
-                    mean_curvature_point_j = mean_curvatures.GetTuple1(
-                        point_j_id)
-                    avg_mean_curvature += mean_curvature_point_j
-
-                avg_min_curvature /= 3
-                avg_max_curvature /= 3
-                avg_gauss_curvature /= 3
-                avg_mean_curvature /= 3
-
-                # Add the centroid as vertex to the graph, setting its
-                # properties:
-                vd = self.graph.add_vertex()  # vertex descriptor
-                # Note: vertex index is numbered from 0 and does not necessarily
-                # correspond to the (triangle) cell index!
-                # self.cell_id_to_vertex_id[cell_id] = self.graph.vertex_index[vd]
-                self.graph.vp.xyz[vd] = [x_center, y_center, z_center]
-                self.coordinates_to_vertex_index[(
-                    x_center, y_center, z_center)] = self.graph.vertex_index[vd]
-                self.graph.vp.area[vd] = area
-                self.graph.vp.normal[vd] = normal
-                self.graph.vp.min_curvature[vd] = avg_min_curvature
-                self.graph.vp.max_curvature[vd] = avg_max_curvature
-                self.graph.vp.gauss_curvature[vd] = avg_gauss_curvature
-                self.graph.vp.mean_curvature[vd] = avg_mean_curvature
-                self.graph.vp.points[vd] = points_xyz
-
-                if verbose:
-                    print ('\tThe triangle centroid %s has been added to the '
-                           'graph as a vertex. Triangle area = %s, normal = %s,'
-                           '\naverage minimal curvature = %s,'
-                           'average maximal curvature = %s, points = %s.'
-                           % (self.graph.vp.xyz[vd],
-                              self.graph.vp.area[vd], self.graph.vp.normal[vd],
-                              self.graph.vp.min_curvature[vd],
-                              self.graph.vp.max_curvature[vd],
-                              self.graph.vp.points[vd]))
-
-            # 3. Add edges for each cell / vertex.
-            for i, cell_id in enumerate(triangle_cell_ids):
-                # Note: i corresponds to the vertex number of each cell, because
-                # they were added in this order
-                cell = surface.GetCell(cell_id)
-                if verbose:
-                    print '(Triangle) cell number %s:' % cell_id
-
-                # Find the "neighbor cells" and how many points they share with
-                # cell i (1 or 2) as follows.
-                # For each point j of cell i, iterate over the neighbor cells
-                # sharing that point (excluding the cell i).
-                # Add each neighbor cell to the neighbor_cells list if it is not
-                # there yet and add 1 into the shared_points list.
-                # Otherwise, find the index of the cell in neighbor_cells and
-                # increase the counter of shared_points at the same index.
-                points_cell = cell.GetPoints()
-                neighbor_cells = []
-                shared_points = []
-                for j in range(points_cell.GetNumberOfPoints()):
-                    point_j = points_cell.GetPoint(j)
-                    for neighbor_cell_id in self.point_in_cells[point_j]:
-                        if neighbor_cell_id != cell_id:
-                            if neighbor_cell_id not in neighbor_cells:
-                                neighbor_cells.append(neighbor_cell_id)
-                                shared_points.append(1)
-                            else:
-                                idx = neighbor_cells.index(neighbor_cell_id)
-                                shared_points[idx] += 1
-                if verbose:
-                    print "has %s neighbor cells" % len(neighbor_cells)
-
-                # Get the vertex descriptor representing the cell i (vertex i):
-                vd_i = self.graph.vertex(i)
-
-                # Get the coordinates of the vertex i:
-                p_i = self.graph.vp.xyz[vd_i]  # a list
-                p_i = (p_i[0], p_i[1], p_i[2])  # a tuple
-
-                # Iterate over the ready neighbor_cells and shared_points lists,
-                # connecting cell i with a neighbor cell x with a "strong" edge
-                # if they share 2 edges and with a "weak" edge otherwise (if
-                # they share only 1 edge).
-                for idx, neighbor_cell_id in enumerate(neighbor_cells):
-                    # Get the vertex descriptor representing the cell x:
-                    # vertex index of the current neighbor cell
-                    x = triangle_cell_ids.index(neighbor_cell_id)
-                    # vertex descriptor of the current neighbor cell, vertex x
-                    vd_x = self.graph.vertex(x)
-
-                    # Get the coordinates of the vertex x:
-                    p_x = self.graph.vp.xyz[vd_x]
-                    p_x = (p_x[0], p_x[1], p_x[2])
-
-                    # Add an edge between the vertices i and x, if it has not
-                    # been added yet:
-                    if not (((p_i, p_x) in self.coordinates_pair_connected) or
-                            ((p_x, p_i) in self.coordinates_pair_connected)):
-                        ed = self.graph.add_edge(vd_i, vd_x)  # edge descriptor
-                        self.coordinates_pair_connected[(p_i, p_x)] = True
-
-                        # Add the distance of the edge
-                        self.graph.ep.distance[ed] = \
-                            self.distance_between_voxels(p_i, p_x)
-
-                        # Assign the "strength" property to the edge as
-                        # explained above:
-                        if shared_points[idx] == 2:
-                            is_strong = 1
-                            strength = 'strong'
-                        else:
-                            is_strong = 0
-                            strength = 'weak'
-                        self.graph.ep.is_strong[ed] = is_strong
-                        if verbose:
-                            print ('\tThe neighbor vertices (%s, %s, %s) and '
-                                   '(%s, %s, %s) have been connected by a %s '
-                                   'edge with a distance of %s pixels.'
-                                   % (p_i[0], p_i[1], p_i[2],
-                                      p_x[0], p_x[1], p_x[2], strength,
-                                      self.graph.ep.distance[ed]))
-
-            # 4. Check if the numbers of vertices and edges are as they should
-            # be:
-            assert self.graph.num_vertices() == len(triangle_cell_ids)
-            assert self.graph.num_edges() == len(
-                self.coordinates_pair_connected
-            )
-            if verbose:
-                print ('Real number of unique points: %s'
-                       % len(self.point_in_cells))
-
-            t_end = time.time()
-            duration = t_end - t_begin
-            print ('Surface graph generation took: %s min %s s'
-                   % divmod(duration, 60))
-
-            return surface  # rescaled surface to nm for writing into a file
+        print 'Adding curvatures to the vtkPolyData surface...'
+        # because VTK and we (gen_surface) have the opposite normal
+        # convention: VTK outwards pointing normals, we: inwards pointing
+        if reverse_normals:
+            invert = False
         else:
-            error_msg = "A vtkPolyData object required as the first input."
-            raise pexceptions.PySegInputError(
-                expr='build_graph_from_vtk_surface (TriangleGraph)',
-                msg=error_msg
-            )
+            invert = True
+        surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
+        surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
+
+        if verbose:
+            # 0. Check numbers of cells and all points.
+            print '%s cells' % surface.GetNumberOfCells()
+            print '%s points' % surface.GetNumberOfPoints()
+
+        point_data = surface.GetPointData()
+        n = point_data.GetNumberOfArrays()
+        min_curvatures = None
+        max_curvatures = None
+        gauss_curvatures = None
+        mean_curvatures = None
+        for i in range(n):
+            if point_data.GetArrayName(i) == "Minimum_Curvature":
+                min_curvatures = point_data.GetArray(i)
+            if point_data.GetArrayName(i) == "Maximum_Curvature":
+                max_curvatures = point_data.GetArray(i)
+            if point_data.GetArrayName(i) == "Gauss_Curvature":
+                gauss_curvatures = point_data.GetArray(i)
+            if point_data.GetArrayName(i) == "Mean_Curvature":
+                mean_curvatures = point_data.GetArray(i)
+
+        # 2. Add each triangle cell as a vertex to the graph. Ignore the
+        # non-triangle cells.
+        # Get a list of all triangle cell indices first:
+        triangle_cell_ids = []
+        for cell_id in xrange(surface.GetNumberOfCells()):
+            # Get the cell i and check if it's a triangle:
+            cell = surface.GetCell(cell_id)
+            if isinstance(cell, vtk.vtkTriangle):
+                triangle_cell_ids.append(cell_id)
+            else:
+                print ('Oops, the cell number %s is not a vtkTriangle but '
+                       'a %s! It will be ignored.'
+                       % (cell_id, cell.__class__.__name__))
+
+        for cell_id in triangle_cell_ids:
+            cell = surface.GetCell(cell_id)
+            if verbose:
+                print '(Triangle) cell number %s' % cell_id
+
+            # Initialize a list for storing the points coordinates making
+            # out the cell
+            points_xyz = []
+
+            # Get the 3 points which made up the triangular cell:
+            points_cell = cell.GetPoints()
+
+            # Calculate the centroid of the triangle:
+            x_center = 0
+            y_center = 0
+            z_center = 0
+            for j in range(0, 3):
+                x, y, z = points_cell.GetPoint(j)
+                x_center += x
+                y_center += y
+                z_center += z
+
+                # Add each point j as a key in point_in_cells and cell index
+                # to the value list:
+                point_j = (x, y, z)
+                if point_j in self.point_in_cells:
+                    self.point_in_cells[point_j].append(cell_id)
+                else:
+                    self.point_in_cells[point_j] = [cell_id]
+
+                # Add each point j into the points coordinates list
+                points_xyz.append([x, y, z])
+            x_center /= 3
+            y_center /= 3
+            z_center /= 3
+
+            # Calculate the area of the triangle i;
+            area = cell.TriangleArea(points_cell.GetPoint(0),
+                                     points_cell.GetPoint(1),
+                                     points_cell.GetPoint(2))
+            try:
+                assert(area > 0)
+            except AssertionError:
+                print ('\tThe triangle centroid (%s, %s, %s) cannot be '
+                       'added to the graph as a vertex, because the '
+                       'triangle area is not positive, but is %s. '
+                       'Points = %s.'
+                       % (x_center, y_center, z_center, area, points_xyz))
+                continue
+
+            # Calculate the normal of the triangle i;
+            normal = np.zeros(shape=3)
+            cell.ComputeNormal(points_cell.GetPoint(0),
+                               points_cell.GetPoint(1),
+                               points_cell.GetPoint(2), normal)
+            if reverse_normals:
+                normal *= -1
+
+            # Get the min, max, Gaussian and mean curvatures (calculated by
+            # VTK) for each of 3 points of the triangle i and calculate the
+            # average curvatures:
+            avg_min_curvature = 0
+            avg_max_curvature = 0
+            avg_gauss_curvature = 0
+            avg_mean_curvature = 0
+            for j in range(0, 3):
+                point_j_id = cell.GetPointId(j)
+
+                min_curvature_point_j = min_curvatures.GetTuple1(point_j_id)
+                avg_min_curvature += min_curvature_point_j
+
+                max_curvature_point_j = max_curvatures.GetTuple1(point_j_id)
+                avg_max_curvature += max_curvature_point_j
+
+                gauss_curvature_point_j = gauss_curvatures.GetTuple1(
+                    point_j_id)
+                avg_gauss_curvature += gauss_curvature_point_j
+
+                mean_curvature_point_j = mean_curvatures.GetTuple1(
+                    point_j_id)
+                avg_mean_curvature += mean_curvature_point_j
+
+            avg_min_curvature /= 3
+            avg_max_curvature /= 3
+            avg_gauss_curvature /= 3
+            avg_mean_curvature /= 3
+
+            # Add the centroid as vertex to the graph, setting its
+            # properties:
+            vd = self.graph.add_vertex()  # vertex descriptor
+            # Note: vertex index is numbered from 0 and does not necessarily
+            # correspond to the (triangle) cell index!
+            # self.cell_id_to_vertex_id[cell_id] = self.graph.vertex_index[vd]
+            self.graph.vp.xyz[vd] = [x_center, y_center, z_center]
+            self.coordinates_to_vertex_index[(
+                x_center, y_center, z_center)] = self.graph.vertex_index[vd]
+            self.graph.vp.area[vd] = area
+            self.graph.vp.normal[vd] = normal
+            self.graph.vp.min_curvature[vd] = avg_min_curvature
+            self.graph.vp.max_curvature[vd] = avg_max_curvature
+            self.graph.vp.gauss_curvature[vd] = avg_gauss_curvature
+            self.graph.vp.mean_curvature[vd] = avg_mean_curvature
+            self.graph.vp.points[vd] = points_xyz
+
+            if verbose:
+                print ('\tThe triangle centroid %s has been added to the '
+                       'graph as a vertex. Triangle area = %s, normal = %s,'
+                       '\naverage minimal curvature = %s,'
+                       'average maximal curvature = %s, points = %s.'
+                       % (self.graph.vp.xyz[vd],
+                          self.graph.vp.area[vd], self.graph.vp.normal[vd],
+                          self.graph.vp.min_curvature[vd],
+                          self.graph.vp.max_curvature[vd],
+                          self.graph.vp.points[vd]))
+
+        # 3. Add edges for each cell / vertex.
+        for i, cell_id in enumerate(triangle_cell_ids):
+            # Note: i corresponds to the vertex number of each cell, because
+            # they were added in this order
+            cell = surface.GetCell(cell_id)
+            if verbose:
+                print '(Triangle) cell number %s:' % cell_id
+
+            # Find the "neighbor cells" and how many points they share with
+            # cell i (1 or 2) as follows.
+            # For each point j of cell i, iterate over the neighbor cells
+            # sharing that point (excluding the cell i).
+            # Add each neighbor cell to the neighbor_cells list if it is not
+            # there yet and add 1 into the shared_points list.
+            # Otherwise, find the index of the cell in neighbor_cells and
+            # increase the counter of shared_points at the same index.
+            points_cell = cell.GetPoints()
+            neighbor_cells = []
+            shared_points = []
+            for j in range(points_cell.GetNumberOfPoints()):
+                point_j = points_cell.GetPoint(j)
+                for neighbor_cell_id in self.point_in_cells[point_j]:
+                    if neighbor_cell_id != cell_id:
+                        if neighbor_cell_id not in neighbor_cells:
+                            neighbor_cells.append(neighbor_cell_id)
+                            shared_points.append(1)
+                        else:
+                            idx = neighbor_cells.index(neighbor_cell_id)
+                            shared_points[idx] += 1
+            if verbose:
+                print "has %s neighbor cells" % len(neighbor_cells)
+
+            # Get the vertex descriptor representing the cell i (vertex i):
+            vd_i = self.graph.vertex(i)
+
+            # Get the coordinates of the vertex i:
+            p_i = self.graph.vp.xyz[vd_i]  # a list
+            p_i = (p_i[0], p_i[1], p_i[2])  # a tuple
+
+            # Iterate over the ready neighbor_cells and shared_points lists,
+            # connecting cell i with a neighbor cell x with a "strong" edge
+            # if they share 2 edges and with a "weak" edge otherwise (if
+            # they share only 1 edge).
+            for idx, neighbor_cell_id in enumerate(neighbor_cells):
+                # Get the vertex descriptor representing the cell x:
+                # vertex index of the current neighbor cell
+                x = triangle_cell_ids.index(neighbor_cell_id)
+                # vertex descriptor of the current neighbor cell, vertex x
+                vd_x = self.graph.vertex(x)
+
+                # Get the coordinates of the vertex x:
+                p_x = self.graph.vp.xyz[vd_x]
+                p_x = (p_x[0], p_x[1], p_x[2])
+
+                # Add an edge between the vertices i and x, if it has not
+                # been added yet:
+                if not (((p_i, p_x) in self.coordinates_pair_connected) or
+                        ((p_x, p_i) in self.coordinates_pair_connected)):
+                    ed = self.graph.add_edge(vd_i, vd_x)  # edge descriptor
+                    self.coordinates_pair_connected[(p_i, p_x)] = True
+
+                    # Add the distance of the edge
+                    self.graph.ep.distance[ed] = \
+                        self.distance_between_voxels(p_i, p_x)
+
+                    # Assign the "strength" property to the edge as
+                    # explained above:
+                    if shared_points[idx] == 2:
+                        is_strong = 1
+                        strength = 'strong'
+                    else:
+                        is_strong = 0
+                        strength = 'weak'
+                    self.graph.ep.is_strong[ed] = is_strong
+                    if verbose:
+                        print ('\tThe neighbor vertices (%s, %s, %s) and '
+                               '(%s, %s, %s) have been connected by a %s '
+                               'edge with a distance of %s pixels.'
+                               % (p_i[0], p_i[1], p_i[2],
+                                  p_x[0], p_x[1], p_x[2], strength,
+                                  self.graph.ep.distance[ed]))
+
+        # 4. Check if the numbers of vertices and edges are as they should
+        # be:
+        assert self.graph.num_vertices() == len(triangle_cell_ids)
+        assert self.graph.num_edges() == len(
+            self.coordinates_pair_connected
+        )
+        if verbose:
+            print ('Real number of unique points: %s'
+                   % len(self.point_in_cells))
+
+        t_end = time.time()
+        duration = t_end - t_begin
+        print ('Surface graph generation took: %s min %s s'
+               % divmod(duration, 60))
+
+        return surface  # rescaled surface to nm with VTK curvatures
+        # TODO check if still have to return the surface (can get it from the
+        # instance)
 
     def graph_to_triangle_poly(self, verbose=False):
         """
@@ -823,8 +824,8 @@ class TriangleGraph(SurfaceGraph):
         if "is_on_border" not in self.graph.vertex_properties:
             print 'Finding vertices at the graph border...'
             # Add a vertex property for storing the number of strong edges:
-            self.graph.vp.num_strong_edges = \
-                self.graph.new_vertex_property("int")
+            self.graph.vp.num_strong_edges = self.graph.new_vertex_property(
+                "int")
             # Sum up the "strong" edges coming out of each vertex and add them
             # to the new property:
             num_strong_edges = incident_edges_op(self.graph, "out", "sum",
@@ -835,8 +836,8 @@ class TriangleGraph(SurfaceGraph):
 
             # Add a boolean vertex property telling whether a vertex is on
             # border:
-            self.graph.vp.is_on_border = \
-                self.graph.new_vertex_property("boolean")
+            self.graph.vp.is_on_border = self.graph.new_vertex_property(
+                "boolean")
             # indices of vertices with less than 3 strong edges (= vertices on
             # border)
             border_vertices_indices = np.where(
@@ -1708,9 +1709,9 @@ class TriangleGraph(SurfaceGraph):
     def estimate_directions_and_fit_curves(self, vertex_v, B_v, radius_hit,
                                            num_points, verbose=False):
         """
-        For a vertex v and its calculated matrix B_v (output of
-        collecting_votes2), calculates the principal directions (T_1 and T_2)
-        and curvatures (kappa_1 and kappa_2) at this vertex.
+        For a vertex v and its calculated matrix B_v, calculates the principal
+        directions (T_1 and T_2) and curvatures (kappa_1 and kappa_2) at this
+        vertex.
 
         This is done using eigen-decomposition of B_v: the eigenvectors
         corresponding to the two largest eigenvalues are the principal

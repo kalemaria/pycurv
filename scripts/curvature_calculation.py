@@ -5,7 +5,7 @@ import gzip
 from os import remove
 
 from pysurf_compact import (
-    vector_voting, vector_voting_sign_correction, run_gen_surface,
+    vector_voting, run_gen_surface,
     TriangleGraph, split_segmentation, pexceptions, PointGraph)
 from pysurf_compact import pysurf_io as io
 
@@ -46,6 +46,7 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
     Returns:
         None
     """
+    # TODO get rid of k, introduce radius_hit directly!
     epsilon = 0
     eta = 0
     region_file_base = "%s%s_ERregion" % (fold, tomo)
@@ -425,6 +426,7 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
     Returns:
         None
     """
+    # TODO get rid of g_max and k, introduce radius_hit directly!
     if g_max > 0:
         surf_vv_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
             base_filename, g_max, epsilon, eta)
@@ -468,8 +470,8 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
         # Find the average triangle edge length (l_ave) and calculate g_max:
         # (Do this here because in vector_voting average weak edge length of
         # the triangle graph is used, since the surface not passed)
-        pg = PointGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-        pg.build_graph_from_vtk_surface(surf)
+        pg = PointGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        pg.build_graph_from_vtk_surface()
         l_ave = pg.calculate_average_edge_length()
         print "average triangle edge length = {}".format(l_ave)
         g_max = k * l_ave
@@ -480,8 +482,8 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
            .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
     # Running the modified Normal Vector Voting algorithm:
-    surf_vv = vector_voting_sign_correction(
-        tg, k=0, g_max=g_max, epsilon=epsilon, eta=eta, exclude_borders=False)
+    surf_vv = vector_voting(
+        tg, radius_hit=g_max, epsilon=epsilon, eta=eta, exclude_borders=False)
     # TODO exclude_borders=True if want no borders
     # Saving the output (TriangleGraph object) for later inspection in
     # ParaView:
