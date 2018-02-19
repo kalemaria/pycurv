@@ -4,6 +4,7 @@ import os.path
 import numpy as np
 import math
 import pandas as pd
+import cProfile
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
@@ -152,9 +153,9 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
     # N = [cos(u) * cos(v), sin(u) * cos(v), sin(v)]
     # maximal and minimal principal directions
     T_1 = [- cos(u) * sin(v), - sin(u) * sin(v), cos(v)]
-    # assert(round(np.linalg.norm(T_1), 5) == 1.0)
+    # assert(round(math.sqrt(np.dot(T_1, T_1)), 5) == 1.0)
     T_2 = [- sin(u), cos(u), 0]
-    # assert(round(np.linalg.norm(T_2), 5) == 1.0)
+    # assert(round(math.sqrt(np.dot(T_2, T_2)), 5) == 1.0)
     # round almost 0 to 0 and remove minus before 0
     # N = [beautify_number(e) for e in N]
     T_1 = [beautify_number(e) for e in T_1]
@@ -1185,4 +1186,5 @@ class VectorVotingTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    # unittest.main()
+    cProfile.run('unittest.main()', '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/files4plotting/torus_rr25_csr10.VCTV_rh8_cProfile_math.sqrt_np.dot.stats')

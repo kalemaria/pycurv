@@ -2,7 +2,7 @@ import vtk
 import numpy as np
 import time
 from scipy import ndimage, optimize
-from scipy.linalg import expm3, norm
+from scipy.linalg import expm3
 import math
 from graph_tool import Graph, GraphView, incident_edges_op
 from graph_tool.topology import (shortest_distance, label_largest_component,
@@ -172,7 +172,7 @@ def perpendicular_vector(iv, debug=False):
             print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
             print("resulting vector: ({}, {}, {})".format(ov[0], ov[1], ov[2]))
             return None
-    len_outv = norm(ov)
+    len_outv = math.sqrt(np.dot(ov, ov))
     if len_outv == 0:
         print("Resulting vector has length 0")
         print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
@@ -185,13 +185,14 @@ def rotation_matrix(axis, theta):
     # TODO docstring
     # from B. M. https://stackoverflow.com/questions/6802577/
     # python-rotation-of-3d-vector
-    a = axis / norm(axis)  # unit vector along axis
+    a = axis / math.sqrt(np.dot(axis, axis))  # unit vector along axis
     A = np.cross(np.eye(3), a)  # skew-symmetric matrix associated to a
     return expm3(A * theta)
 
 
 def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
     # TODO docstring, wrapper for rotation_matrix
+    sqrt = math.sqrt
     dot = np.dot
     acos = math.acos
     pi = math.pi
@@ -206,7 +207,7 @@ def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
 
     u = dot(R, v)
     if debug:
-        cos_tetha = dot(v, u) / norm(v) / norm(u)
+        cos_tetha = dot(v, u) / sqrt(dot(v, v)) / sqrt(dot(u, u))
         try:
             theta2 = acos(cos_tetha)
         except ValueError:
@@ -1228,7 +1229,7 @@ class TriangleGraph(SurfaceGraph):
         normal = self.graph.vp.normal
         array = np.array
         xyz = self.graph.vp.xyz
-        vector_length = np.linalg.norm  # same as: np.sqrt(sum(vc_i**2))
+        sqrt = math.sqrt
         dot = np.dot
         outer = np.outer
         area = self.graph.vp.area
@@ -1268,7 +1269,7 @@ class TriangleGraph(SurfaceGraph):
             N = array(N)
 
             vc_i = c_i - v
-            vc_i_len = vector_length(vc_i)
+            vc_i_len = sqrt(dot(vc_i, vc_i))
             vc_i_norm = vc_i / vc_i_len
 
             # tetha_i is the angle between the vectors N and vc_i
@@ -1472,7 +1473,7 @@ class TriangleGraph(SurfaceGraph):
         xyz = self.graph.vp.xyz
         array = np.array
         dot = np.dot
-        vector_length = np.linalg.norm
+        sqrt = math.sqrt
         pi = math.pi
         cross = np.cross
         acos = math.acos
@@ -1542,7 +1543,7 @@ class TriangleGraph(SurfaceGraph):
             v_i = array(xyz[vertex_v_i])
             vv_i = v_i - v
             t_i = vv_i - dot(N_v, vv_i) * N_v
-            t_i_len = vector_length(t_i)
+            t_i_len = sqrt(dot(t_i, t_i))
             T_i = t_i / t_i_len
 
             # Third, calculate the normal curvature kappa_i:
@@ -1553,7 +1554,7 @@ class TriangleGraph(SurfaceGraph):
             # n_i: projection of N_v_i on the plane containing N_v rooted at v
             # and v_i
             n_i = N_v_i - dot(P_i, N_v_i) * P_i
-            n_i_len = vector_length(n_i)
+            n_i_len = sqrt(dot(n_i, n_i))
             # tetha is the turning angle between n_i and N_v
             cos_tetha = dot(N_v, n_i) / n_i_len
             try:
@@ -1566,7 +1567,7 @@ class TriangleGraph(SurfaceGraph):
                 tetha = acos(cos_tetha)
             if page_curvature_formula is False:
                 # formula from Tong and Tang paper:
-                kappa_i = abs(2 * cos((pi - tetha) / 2) / vector_length(vv_i))
+                kappa_i = abs(2 * cos((pi - tetha) / 2) / sqrt(dot(vv_i, vv_i)))
                 # curvature sign has to be like this according to Page's paper:
                 # kappa_i_sign = signum(dot(T_i, n_i))
                 # but negated according to Tang & Medioni's definition (suitable
@@ -1848,7 +1849,7 @@ class TriangleGraph(SurfaceGraph):
         points = vtk.vtkPoints()
         positions_2D_x = []
         positions_2D_y = []
-        vector_length = np.linalg.norm
+        sqrt = math.sqrt
         dot = np.dot
         # dist: distance on the tangent line between the perpendicular lines
         dist = float(radius_hit) / num_points
@@ -1891,7 +1892,8 @@ class TriangleGraph(SurfaceGraph):
                 # If euclidean distance between p0 and pos is > radius_hit (i.e.
                 # pos is not between p1 and p2), exclude and stop searching in
                 # that direction
-                if vector_length(p0 - pos) > radius_hit:
+                pos_p0 = sqrt(dot(p0 - pos, p0 - pos))
+                if pos_p0 > radius_hit:
                     if debug or verbose:
                         print "Point NOT within geodesic radius to the tangent"
                     break
@@ -1900,7 +1902,7 @@ class TriangleGraph(SurfaceGraph):
                 sign = signum(dot(normal, pos - v))
                 # Calculate 2D coordinates of point pos
                 pos_2D_x = float(direction * curr_dist)
-                pos_2D_y = float(sign * vector_length(p0 - pos))
+                pos_2D_y = float(sign * pos_p0)
 
                 if i >= 2:
                     # If a high jump happens, i.e. distance to previous point
@@ -1910,8 +1912,10 @@ class TriangleGraph(SurfaceGraph):
                         [positions_2D_x[-1], positions_2D_y[-1]])
                     before_last_pos = np.array(
                         [positions_2D_x[-2], positions_2D_y[-2]])
-                    current_pos_dist = vector_length(current_pos - last_pos)
-                    last_pos_dist = vector_length(last_pos - before_last_pos)
+                    current_pos_dist = sqrt(dot(current_pos - last_pos,
+                                                current_pos - last_pos))
+                    last_pos_dist = sqrt(dot(last_pos - before_last_pos,
+                                             last_pos - before_last_pos))
                     if current_pos_dist > 1.5 * last_pos_dist:
                         if debug or verbose:
                             print "Point too far away from the previous one"
@@ -1996,7 +2000,7 @@ class TriangleGraph(SurfaceGraph):
 
         # Define some frequently used functions in the loop:
         multiply = np.multiply
-        vector_length = np.linalg.norm
+        sqrt = math.sqrt
         dot = np.dot
         outer = np.outer
 
@@ -2037,7 +2041,7 @@ class TriangleGraph(SurfaceGraph):
                 # sense to give up if there is no continuation of the surface at
                 # radius_hit distance just in one or some of the 8 directions
 
-            b = vector_length(r_t - c)
+            b = sqrt(dot(r_t - c, r_t - c))
             if b > radius_hit:
                 if verbose:
                     print("b = {}, higher than RadiusHit = {}".format(
@@ -2144,3 +2148,193 @@ class TriangleGraph(SurfaceGraph):
         self.graph.vp.curvedness_VV[vertex_r] = math.sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
         return kappa_1, kappa_2, T_1, T_2
+
+    # def gen_curv_vote_2D(self, vertex_r, radius_hit, verbose=False):
+    #     # TODO docstring
+    #     # Get the coordinates of vertex r and its estimated normal N_r (as numpy
+    #     # array, input of the original method):
+    #     r = np.array(self.graph.vp.xyz[vertex_r])
+    #     N_r = np.array(self.graph.vp.N_v[vertex_r])
+    #     if verbose:
+    #         print("\nr = ({}, {}, {})".format(r[0], r[1], r[2]))
+    #         print("N_r = ({}, {}, {})".format(N_r[0], N_r[1], N_r[2]))
+    #
+    #     # Define a cellLocator to be able to compute intersections between lines
+    #     # and the surface:
+    #     locator = vtk.vtkCellLocator()
+    #     locator.SetDataSet(self.surface)
+    #     locator.BuildLocator()
+    #     tolerance = 0.001
+    #
+    #     # Define some frequently used functions in the loop:
+    #     multiply = np.multiply
+    #     sqrt = math.sqrt
+    #     dot = np.dot
+    #     outer = np.outer
+    #     transpose = np.transpose
+    #
+    #     # a vector on tangent plane T_r(S)
+    #     votedir = perpendicular_vector(N_r, debug=verbose)
+    #     if votedir is None:
+    #         print("Error: calculation of a perpendicular vector failed")
+    #         exit(0)
+    #     # M_r = np.zeros(shape=(2, 2))  # when transform votedir to 2D
+    #     M_r = np.zeros(shape=(3, 3))
+    #     R = rotation_matrix(N_r, math.pi/4)
+    #     num_valid_votes = 0
+    #     for i in range(8):
+    #         # rotate the vector by 45 degrees (pi/4 radians) around N_r axis
+    #         votedir = rotate_vector(votedir, math.pi/4, matrix=R, debug=verbose)
+    #         r_t = r + votedir * radius_hit
+    #
+    #         # Find intersection point c between the surface and line segment l
+    #         # going through r_t and parallel to N_r:
+    #         # point on line l from r_t in normal direction
+    #         p1 = r_t + multiply(N_r, radius_hit)
+    #         # point on line l from r_t in opposite normal direction
+    #         p2 = r_t - multiply(N_r, radius_hit)
+    #         # Outputs (we need only c, which is the x, y, z position
+    #         # of the intersection):
+    #         t = vtk.mutable(0)
+    #         c = [0.0, 0.0, 0.0]
+    #         pcoords = [0.0, 0.0, 0.0]
+    #         sub_id = vtk.mutable(0)
+    #         cell_id = vtk.mutable(0)
+    #         locator.IntersectWithLine(p1, p2, tolerance, t, c, pcoords,
+    #                                   sub_id, cell_id)
+    #         # If there is no intersection, c stays like initialized:
+    #         if c == [0.0, 0.0, 0.0]:
+    #             if verbose:
+    #                 print("No intersection point found")
+    #             continue  # in paper "return None", but I think if does not make
+    #             # sense to give up if there is no continuation of the surface at
+    #             # radius_hit distance just in one or some of the 8 directions
+    #
+    #         b = sqrt(dot(r_t - c, r_t - c))
+    #         if b > radius_hit:
+    #             if verbose:
+    #                 print("b = {}, higher than RadiusHit = {}".format(
+    #                     b, radius_hit))
+    #             continue  # in paper "return None" ...
+    #         k_rc = 2 * b / (b ** 2 + radius_hit ** 2)
+    #         # sign(c) = 1 if c is above the tangent plane T_r(S)
+    #         #          -1 if c is below T_r(S)
+    #         #           0 if c lies on T_r(S)
+    #         sign_c = signum(dot(N_r, c - r))
+    #
+    #         outer_product = outer(votedir, votedir)
+    #         multiplicator = sign_c * k_rc
+    #         M_r += multiply(outer_product, multiplicator)
+    #         num_valid_votes += 1
+    #
+    #         if verbose:
+    #             print("\nvotedir = ({}, {}, {})".format(
+    #                 votedir[0], votedir[1], votedir[2]))
+    #             print("r_t = ({}, {}, {})".format(r_t[0], r_t[1], r_t[2]))
+    #             print("c = ({}, {}, {})".format(c[0], c[1], c[2]))
+    #             print("b = {}".format(b))
+    #             print("k_rc = {}".format(k_rc))
+    #             print("sign_c = {}".format(sign_c))
+    #
+    #     M_r /= 8  # or:
+    #     # M_r /= num_valid_votes  # TODO check more!
+    #
+    #     # TODO Hauseholder transformation to turn M_r matrix to 2x2
+    #     E_1 = np.array([1, 0, 0])
+    #     sub_vector_length = sqrt(dot(E_1 - N_r, E_1 - N_r))
+    #     add_vector_length = sqrt(dot(E_1 + N_r, E_1 + N_r))
+    #     if sub_vector_length > add_vector_length:
+    #         W_r = (E_1 - N_r) / sub_vector_length
+    #     else:
+    #         W_r = (E_1 + N_r) / add_vector_length
+    #     # print "W_r:"
+    #     # print W_r
+    #     # Q_r = np.eye(3) - 2 * np.outer(W_r, W_r)
+    #     #Q_r = np.eye(3) -2 * np.outer(N_r, N_r)
+    #     # print "Q_r:"
+    #     # print Q_r
+    #     print "M_r:"
+    #     print M_r
+    #     M_r_new = multiply(multiply(transpose(Q_r), M_r), Q_r)
+    #     print "M_r_new:"
+    #     print M_r_new  # did not work!
+    #
+    #     # TODO Diagonalize the 2x2 matrix in closed form with a Given's rotation
+    #
+    #     # Decompose the symmetric matrix M_r:
+    #     # eigenvalues are in increasing order and eigenvectors are in columns of
+    #     # the returned quadratic matrix
+    #     eigenvalues, eigenvectors = np.linalg.eigh(M_r)
+    #     # Eigenvalues from highest to lowest:
+    #     lambda_1 = eigenvalues[2]  # in 2D eigenvalues[1]
+    #     lambda_2 = eigenvalues[1]  # in 2D eigenvalues[0]
+    #     lambda_3 = eigenvalues[0]
+    #     # Eigenvectors that correspond to the highest two eigenvalues are the
+    #     # estimated principal directions:
+    #     T_1 = eigenvectors[:, 2]  # in 2D eigenvectors[:, 1]
+    #     T_2 = eigenvectors[:, 1]  # in 2D eigenvectors[:, 0]
+    #     T_3 = eigenvectors[:, 0]
+    #     try:
+    #         assert(round(abs(T_3[0]), 7) == round(abs(N_r[0]), 7) and
+    #                round(abs(T_3[1]), 7) == round(abs(N_r[1]), 7) and
+    #                round(abs(T_3[2]), 7) == round(abs(N_r[2]), 7))
+    #     except AssertionError:
+    #         if verbose:
+    #             print "T_3 has to be equal to the normal |N_r|, but:"
+    #             print("T_1 = {}".format(T_1))
+    #             print("T_2 = {}".format(T_2))
+    #             print("T_3 = {}".format(T_3))
+    #             print("N_r = {}".format(N_r))
+    #             print("lambda_1 = {}".format(lambda_1))
+    #             print("lambda_2 = {}".format(lambda_2))
+    #             print("lambda_3 = {}".format(lambda_3))
+    #         if (round(abs(T_1[0]), 7) == round(abs(N_r[0]), 7) and
+    #                 round(abs(T_1[1]), 7) == round(abs(N_r[1]), 7) and
+    #                 round(abs(T_1[2]), 7) == round(abs(N_r[2]), 7)):
+    #             T_1 = T_3
+    #             lambda_1 = lambda_3
+    #             # T_3 = N_r; lambda_3 = 0
+    #             if verbose:
+    #                 print("Exchanged T_1 with T_3 and lambda_1 with lambda_3")
+    #         elif (round(abs(T_2[0]), 7) == round(abs(N_r[0]), 7) and
+    #                 round(abs(T_2[1]), 7) == round(abs(N_r[1]), 7) and
+    #                 round(abs(T_2[2]), 7) == round(abs(N_r[2]), 7)):
+    #             T_2 = T_3
+    #             lambda_2 = lambda_3
+    #             # T_3 = N_r; lambda_3 = 0
+    #             if verbose:
+    #                 print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
+    #         else:
+    #             print("Error: no eigenvector equals to the normal |N_r| found")
+    #             exit(0)
+    #     # Estimated principal curvatures:
+    #     kappa_1 = 3 * lambda_1 - lambda_2
+    #     kappa_2 = 3 * lambda_2 - lambda_1
+    #     # Curvatures and directions might be interchanged:
+    #     if kappa_1 < kappa_2:
+    #         T_1, T_2 = T_2, T_1
+    #         kappa_1, kappa_2 = kappa_2, kappa_1
+    #     # TODO transform 2D vectors T_1 and T_2 to 3D
+    #     if verbose:
+    #         print("\nNumber valid votes = {}".format(num_valid_votes))
+    #         print("T_1 = {}".format(T_1))
+    #         print("T_2 = {}".format(T_2))
+    #         print("kappa_1 = {}".format(kappa_1))
+    #         print("kappa_2 = {}".format(kappa_2))
+    #
+    #     # Add T_1, T_2, kappa_1, kappa_2, derived Gaussian and mean curvatures
+    #     # as well as shape index and curvedness as properties to the graph:
+    #     self.graph.vp.T_1[vertex_r] = T_1
+    #     self.graph.vp.T_2[vertex_r] = T_2
+    #     self.graph.vp.kappa_1[vertex_r] = kappa_1
+    #     self.graph.vp.kappa_2[vertex_r] = kappa_2
+    #     self.graph.vp.gauss_curvature_VV[vertex_r] = kappa_1 * kappa_2
+    #     self.graph.vp.mean_curvature_VV[vertex_r] = (kappa_1 + kappa_2) / 2
+    #     if kappa_1 == 0 and kappa_2 == 0:
+    #         self.graph.vp.shape_index_VV[vertex_r] = 0
+    #     else:
+    #         self.graph.vp.shape_index_VV[vertex_r] = 2 / math.pi * math.atan(
+    #             (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
+    #     self.graph.vp.curvedness_VV[vertex_r] = math.sqrt(
+    #         (kappa_1 ** 2 + kappa_2 ** 2) / 2)
+    #     return kappa_1, kappa_2, T_1, T_2
