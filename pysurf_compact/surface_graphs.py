@@ -1231,7 +1231,7 @@ class TriangleGraph(SurfaceGraph):
         xyz = self.graph.vp.xyz
         sqrt = math.sqrt
         dot = np.dot
-        outer = np.outer
+        outer = np.multiply.outer
         area = self.graph.vp.area
         exp = math.exp
 
@@ -1477,7 +1477,7 @@ class TriangleGraph(SurfaceGraph):
         pi = math.pi
         cross = np.cross
         acos = math.acos
-        outer = np.outer
+        outer = np.multiply.outer
         cos = math.cos
 
         # Get the coordinates of vertex v and its estimated normal N_v (as numpy
@@ -2002,7 +2002,8 @@ class TriangleGraph(SurfaceGraph):
         multiply = np.multiply
         sqrt = math.sqrt
         dot = np.dot
-        outer = np.outer
+        outer = np.multiply.outer
+        pi = math.pi
 
         # a vector on tangent plane T_r(S)
         votedir = perpendicular_vector(N_r, debug=verbose)
@@ -2011,11 +2012,11 @@ class TriangleGraph(SurfaceGraph):
             exit(0)
         # M_r = np.zeros(shape=(2, 2))  # when transform votedir to 2D
         M_r = np.zeros(shape=(3, 3))
-        R = rotation_matrix(N_r, math.pi/4)
+        R = rotation_matrix(N_r, pi/4)
         num_valid_votes = 0
         for i in range(8):
             # rotate the vector by 45 degrees (pi/4 radians) around N_r axis
-            votedir = rotate_vector(votedir, math.pi/4, matrix=R, debug=verbose)
+            votedir = rotate_vector(votedir, pi/4, matrix=R, debug=verbose)
             r_t = r + votedir * radius_hit
 
             # Find intersection point c between the surface and line segment l
@@ -2143,9 +2144,9 @@ class TriangleGraph(SurfaceGraph):
         if kappa_1 == 0 and kappa_2 == 0:
             self.graph.vp.shape_index_VV[vertex_r] = 0
         else:
-            self.graph.vp.shape_index_VV[vertex_r] = 2 / math.pi * math.atan(
+            self.graph.vp.shape_index_VV[vertex_r] = 2 / pi * math.atan(
                 (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
-        self.graph.vp.curvedness_VV[vertex_r] = math.sqrt(
+        self.graph.vp.curvedness_VV[vertex_r] = sqrt(
             (kappa_1 ** 2 + kappa_2 ** 2) / 2)
         return kappa_1, kappa_2, T_1, T_2
 
@@ -2170,7 +2171,7 @@ class TriangleGraph(SurfaceGraph):
     #     multiply = np.multiply
     #     sqrt = math.sqrt
     #     dot = np.dot
-    #     outer = np.outer
+    #     outer = np.multiply.outer
     #     transpose = np.transpose
     #
     #     # a vector on tangent plane T_r(S)
@@ -2249,8 +2250,8 @@ class TriangleGraph(SurfaceGraph):
     #         W_r = (E_1 + N_r) / add_vector_length
     #     # print "W_r:"
     #     # print W_r
-    #     # Q_r = np.eye(3) - 2 * np.outer(W_r, W_r)
-    #     #Q_r = np.eye(3) -2 * np.outer(N_r, N_r)
+    #     # Q_r = np.eye(3) - 2 * outer(W_r, W_r)
+    #     #Q_r = np.eye(3) -2 * outer(N_r, N_r)
     #     # print "Q_r:"
     #     # print Q_r
     #     print "M_r:"
@@ -2335,6 +2336,6 @@ class TriangleGraph(SurfaceGraph):
     #     else:
     #         self.graph.vp.shape_index_VV[vertex_r] = 2 / math.pi * math.atan(
     #             (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
-    #     self.graph.vp.curvedness_VV[vertex_r] = math.sqrt(
+    #     self.graph.vp.curvedness_VV[vertex_r] = sqrt(
     #         (kappa_1 ** 2 + kappa_2 ** 2) / 2)
     #     return kappa_1, kappa_2, T_1, T_2

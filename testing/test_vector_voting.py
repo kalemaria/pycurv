@@ -1187,4 +1187,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     # unittest.main()
-    cProfile.run('unittest.main()', '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/files4plotting/torus_rr25_csr10.VCTV_rh8_cProfile_math.sqrt_np.dot.stats')
+    cProfile.run('unittest.main()',
+                 '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
+                 'files4plotting/torus_rr25_csr10.VCTV_rh8_cProfile_'
+                 'np.multiply.outer.stats')
