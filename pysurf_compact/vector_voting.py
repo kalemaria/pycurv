@@ -3,6 +3,7 @@ import numpy as np
 # from scipy import stats
 import math
 from graph_tool import load_graph
+from graph_tool.topology import shortest_distance
 
 import pexceptions
 from surface_graphs import TriangleGraph
@@ -673,7 +674,8 @@ def vector_curvature_tensor_voting(
 
 def normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
-        methods=['VV'], page_curvature_formula=False, num_points=None):
+        methods=['VV'], page_curvature_formula=False, num_points=None,
+        full_dist_map=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -702,6 +704,9 @@ def normals_directions_and_curvature_estimation(
         num_points (int, optional): number of points to sample in each estimated
             principal direction in order to fit parabola and estimate curvature
             (necessary is 'VVCF' is in methods list)
+        full_dist_map (boolean, optional): if True, a full distance map is
+            calculated for the whole graph, otherwise a local distance map is
+            calculated later for each vertex (default)
     Returns:
         a dictionary mapping the method name ('VV', 'VVCF' and 'VCTV') to the
         tuple of two elements: TriangleGraph graph and vtkPolyData surface of
@@ -777,6 +782,20 @@ def normals_directions_and_curvature_estimation(
     duration0 = t_end0 - t_begin0
     print 'Preparation took: %s min %s s' % divmod(duration0, 60)
 
+    if full_dist_map is True:
+        # * Distance map between all pairs of vertices *
+        t_begin0 = time.time()
+        print "\nCalculating the full distance map..."
+        full_dist_map = shortest_distance(tg.graph,
+                                          weights=tg.graph.ep.distance)
+        # <class 'graph_tool.PropertyMap'>
+        t_end0 = time.time()
+        duration0 = t_end0 - t_begin0
+        print 'Calculation of the full distance map took: %s min %s s' % divmod(
+            duration0, 60)
+    else:
+        full_dist_map = None
+
     # Main algorithm
 
     # * For all vertices, collecting normal vector votes, while calculating
@@ -795,7 +814,7 @@ def normals_directions_and_curvature_estimation(
     classes_counts = {}
     for v in tg.graph.vertices():
         neighbor_idx_to_dist, V_v = collecting_normal_votes(
-            v, g_max, A_max, sigma, verbose=False)
+            v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
         all_num_neighbors.append(len(neighbor_idx_to_dist))
         all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
         class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
@@ -846,7 +865,7 @@ def normals_directions_and_curvature_estimation(
     # Save the graph to a file for use by different methods in the second run:
     import os
     cwd = os.getcwd()
-    graph_file = cwd + "/temp.gt"
+    graph_file = cwd + "/temp.gt"  # TODO different file names if parallelize
     tg.graph.save(graph_file)
 
     t_end0 = time.time()

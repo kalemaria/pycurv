@@ -594,7 +594,8 @@ class VectorVotingTestCase(unittest.TestCase):
     def parametric_test_sphere_curvatures(
             self, radius, radius_hit, inverse=False, binary=False, res=0,
             ico=0, noise=0, save_areas=False, methods=['VV'],
-            page_curvature_formula=False, num_points=None):
+            page_curvature_formula=False, num_points=None,
+            full_dist_map=False):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
@@ -637,6 +638,9 @@ class VectorVotingTestCase(unittest.TestCase):
             num_points (int): for VVCF, number of points to sample in each
                 estimated principal direction in order to fit parabola and
                 estimate curvature
+            full_dist_map (boolean, optional): if True, a full distance map is
+                calculated for the whole graph, otherwise a local distance map
+                is calculated for each vertex (default)
 
         Returns:
             None
@@ -745,7 +749,7 @@ class VectorVotingTestCase(unittest.TestCase):
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
             tg, radius_hit, exclude_borders=False, methods=methods,
             page_curvature_formula=page_curvature_formula,
-            num_points=num_points)
+            num_points=num_points, full_dist_map=full_dist_map)
 
         # Ground truth principal curvatures
         true_curvature = 1.0 / radius
@@ -859,7 +863,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_torus_curvatures(
             self, rr, csr, radius_hit, methods=['VV'],
-            page_curvature_formula=False, num_points=None):
+            page_curvature_formula=False, num_points=None, full_dist_map=False):
         """
         Runs all the steps needed to calculate curvatures for a test torus
         with given radii using normal vector voting (VV), VV combined with curve
@@ -882,6 +886,9 @@ class VectorVotingTestCase(unittest.TestCase):
             num_points (int): for VVCF, number of points to sample in each
                 estimated principal direction in order to fit parabola and
                 estimate curvature
+            full_dist_map (boolean, optional): if True, a full distance map is
+                calculated for the whole graph, otherwise a local distance map
+                is calculated for each vertex (default)
 
         Notes:
             * csr should be much smaller than rr (csr < rr - csr).
@@ -975,7 +982,7 @@ class VectorVotingTestCase(unittest.TestCase):
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
             tg, radius_hit, exclude_borders=False, methods=methods,
             page_curvature_formula=page_curvature_formula,
-            num_points=num_points)
+            num_points=num_points, full_dist_map=full_dist_map)
 
         for method in method_tg_surf_dict.keys():
             # Saving the output (TriangleGraph object) for later inspection in
@@ -1137,30 +1144,31 @@ class VectorVotingTestCase(unittest.TestCase):
     #             10, rh, noise=0, inverse=True, methods=['VV', 'VCTV', 'VVCF'],
     #             page_curvature_formula=False, num_points=p)
 
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated for a sphere with a
-    #     certain radius and noise level:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-    #     """
-    #     # Icosahedron sphere with 1280 faces:
-    #     # for n in [0]:
-    #     #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-    #     #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-    #     #             self.parametric_test_sphere_curvatures(
-    #     #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
-    #     #                 page_curvature_formula=False, num_points=p)
-    #     #         self.parametric_test_sphere_curvatures(
-    #     #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
-    #     #             page_curvature_formula=False)
-    #     # Binary sphere with different radii:
-    #     for r in [30]:  # 10; 20
-    #         for rh in [28]:  # 5, 6, 7, 8, 9; 18
-    #             self.parametric_test_sphere_curvatures(r, rh, binary=True,
-    #                                                    methods=['VV', 'VCTV'])
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated for a sphere with a
+        certain radius and noise level:
 
-    # def test_inverse_sphere_curvatures(self):
+        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+        """
+        # Icosahedron sphere with 1280 faces:
+        # for n in [0]:
+        #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+        #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
+        #             self.parametric_test_sphere_curvatures(
+        #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
+        #                 page_curvature_formula=False, num_points=p)
+        #         self.parametric_test_sphere_curvatures(
+        #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
+        #             page_curvature_formula=False)
+        # Binary sphere with different radii:
+        for r in [20]:  # 10; 20; 30
+            for rh in [18]:  # 5, 6, 7, 8, 9; 18; 28
+                self.parametric_test_sphere_curvatures(
+                    r, rh, binary=True, methods=['VV', 'VCTV'],
+                    full_dist_map=False)
+
+                # def test_inverse_sphere_curvatures(self):
     #     """
     #     Tests whether curvatures are correctly estimated for an inverse sphere
     #     with a certain radius and noise level:
@@ -1174,20 +1182,24 @@ class VectorVotingTestCase(unittest.TestCase):
     #             methods=['VV', 'VCTV', 'VVCF'],
     #             page_curvature_formula=False, num_points=p)
 
-    def test_torus_curvatures(self):
-        """
-        Runs parametric_test_torus_curvatures with certain parameters.
-        """
-        p = 50
-        for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
-            self.parametric_test_torus_curvatures(
-                25, 10, rh, methods=['VCTV'],  # 'VV', 'VVCF',
-                page_curvature_formula=False, num_points=p)
+    # def test_torus_curvatures(self):
+    #     """
+    #     Runs parametric_test_torus_curvatures with certain parameters.
+    #     """
+    #     p = 50
+    #     for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
+    #         self.parametric_test_torus_curvatures(
+    #             25, 10, rh, methods=['VCTV'],  # 'VV', 'VVCF',
+    #             page_curvature_formula=False, num_points=p, full_dist_map=True)
 
 
 if __name__ == '__main__':
     # unittest.main()
-    cProfile.run('unittest.main()',
-                 '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
-                 'files4plotting/torus_rr25_csr10.VCTV_rh8_cProfile_'
-                 'np.multiply.outer.stats')
+    # torus_stats_file = ('/fs/pool/pool-ruben/Maria/curvature/'
+    #              'synthetic_surfaces/torus/files4plotting/'
+    #              'torus_rr25_csr10.VCTV_rh8_cProfile_full_dist_map.stats')
+    # cProfile.run('unittest.main()', torus_stats_file)
+    bin_sphere_stats_file = ('/fs/pool/pool-ruben/Maria/curvature/'
+                 'synthetic_surfaces/sphere/binary/files4plotting/'
+                 'sphere_r20.VVrh18_VCTVrh18_cProfile_partial_dist_maps.stats')
+    cProfile.run('unittest.main()', bin_sphere_stats_file)

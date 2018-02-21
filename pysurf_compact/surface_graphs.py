@@ -1189,7 +1189,7 @@ class TriangleGraph(SurfaceGraph):
     # the normal vector voting algorithm of Page et al., 2002. *
 
     def collecting_normal_votes(self, vertex_v, g_max, A_max, sigma,
-                                verbose=False):
+                                full_dist_map=None, verbose=False):
         """
         For a vertex v, collects the normal votes of all triangles within its
         geodesic neighborhood and calculates the weighted covariance matrix sum
@@ -1216,6 +1216,12 @@ class TriangleGraph(SurfaceGraph):
                 triangle-graph
             sigma (float): sigma, defined as 3*sigma = g_max, so that votes
                 beyond the neighborhood can be ignored
+            full_dist_map (boolean, optional): if True, a full distance map is
+            calculated for the whole graph, otherwise a local distance map is
+            calculated later for each vertex (default)
+            full_dist_map (graph_tool.PropertyMap, optional): the full distance
+                map for the whole graph; if None, a local distance map is
+                calculated later for each vertex (default)
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -1240,7 +1246,8 @@ class TriangleGraph(SurfaceGraph):
         v = array(v)
 
         # Find the neighboring vertices of vertex v to be returned:
-        neighbor_idx_to_dist = self.find_geodesic_neighbors(vertex_v, g_max)
+        neighbor_idx_to_dist = self.find_geodesic_neighbors(
+            vertex_v, g_max, full_dist_map=full_dist_map)
         try:
             assert len(neighbor_idx_to_dist) > 0
         except AssertionError:

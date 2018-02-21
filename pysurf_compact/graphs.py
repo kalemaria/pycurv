@@ -562,7 +562,8 @@ class SegmentationGraph(object):
             print "Average length: %s" % average_edge_length
         return average_edge_length
 
-    def find_geodesic_neighbors(self, v, g_max, verbose=False):
+    def find_geodesic_neighbors(self, v, g_max, full_dist_map=None,
+                                verbose=False):
         """
         Finds geodesic neighbor vertices of a given vertex v in the graph that
         are within a given maximal geodesic distance g_max from it.
@@ -574,6 +575,9 @@ class SegmentationGraph(object):
             v (graph_tool.Vertex): the source vertex
             g_max: maximal geodesic distance (in nanometers, if the graph was
                 scaled)
+            full_dist_map (graph_tool.PropertyMap, optional): the full distance
+                map for the whole graph; if None, a local distance map is
+                calculated for each vertex (default)
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -581,10 +585,14 @@ class SegmentationGraph(object):
             a dictionary mapping a neighbor vertex index to the geodesic
             distance from vertex v
         """
-        dist_v = shortest_distance(self.graph, source=v, target=None,
-                                   weights=self.graph.ep.distance,
-                                   max_dist=g_max)
-        dist_v = dist_v.get_array()
+        if full_dist_map is not None:
+            dist_v = full_dist_map[v].get_array()
+        else:
+            dist_v = shortest_distance(self.graph, source=v, target=None,
+                                       weights=self.graph.ep.distance,
+                                       max_dist=g_max)
+            dist_v = dist_v.get_array()
+        # numpy array of distances from v to all vertices, in vertex index order
 
         neighbor_id_to_dist = dict()
 
