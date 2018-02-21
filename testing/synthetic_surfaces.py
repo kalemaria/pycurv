@@ -32,25 +32,30 @@ def is_positive_number(arg, input_error=True):
         return False
 
 
-def remove_non_triangle_cells(surface):
+def remove_non_triangle_cells(surface, verbose=False):
     """
     Removes non-triangle cells( e.g. lines and vertices) from the given surface.
 
     Args:
         surface (vtk.vtkPolyData): a surface
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
 
     Returns:
         cleaned surface with only triangular cells (vtk.vtkPolyData)
     """
-    print('{} cells including non-triangles'.format(surface.GetNumberOfCells()))
+    if verbose:
+        print('{} cells including non-triangles'.format(
+            surface.GetNumberOfCells()))
     for i in range(surface.GetNumberOfCells()):
         # Get the cell i and remove it if it's not a triangle:
         cell = surface.GetCell(i)
         if not isinstance(cell, vtk.vtkTriangle):
             surface.DeleteCell(i)
     surface.RemoveDeletedCells()
-    print('{} cells after deleting non-triangle cells'.format(
-        surface.GetNumberOfCells()))
+    if verbose:
+        print('{} cells after deleting non-triangle cells'.format(
+            surface.GetNumberOfCells()))
     return surface
 
 
@@ -150,6 +155,57 @@ def __copy_and_name_array(da, name):
         return None
 
 
+def is_coordinate_on_sphere_surface(x, y, z, r, error=0.0):
+    """
+    Checks whether a coordinate is on smooth sphere surface. Only works if the
+    sphere is centered at (0, 0, 0)!
+    Args:
+        x (float): x coordinate
+        y (float): y coordinate
+        z (float): z coordinate
+        r (int or float): smooth sphere radius
+        error (float): allowed relative +/- error of the radius
+
+    Returns:
+        True if the coordinate is close to the sphere surface within the error,
+        False if it is not
+    """
+    sq_dist_from_center = x ** 2 + y ** 2 + z ** 2
+    if ((1 - error) * r) ** 2 <= sq_dist_from_center <= ((1 + error) * r) ** 2:
+        return True
+    else:
+        return False
+
+
+def are_triangle_vertices_on_smooth_sphere_surface(surface, r, center=[0, 0, 0],
+                                                   error=0.0):
+    """
+    Checks and prints out how many triangle vertices (from total) of the given
+    surface are on smooth sphere surface.
+    Args:
+        surface (vtk.vtkPolyData): sphere surface approximated by triangles
+        r (int or float): smooth sphere radius
+        center (float[3]): coordinates in the center of the sphere surface
+        error (float): allowed relative +/- error of the radius
+
+    Returns:
+        None
+    """
+    num_points_on_smooth_sphere_surface = 0
+    # for each triangle vertex (point)
+    # After subtracting center from all points, the new center becomes (0, 0, 0)
+    for i in xrange(surface.GetNumberOfPoints()):
+        point = np.asarray(surface.GetPoint(i))
+        x = point[0] - center[0]
+        y = point[1] - center[1]
+        z = point[2] - center[2]
+        if is_coordinate_on_sphere_surface(x, y, z, r, error=error) is True:
+            num_points_on_smooth_sphere_surface += 1
+
+    print "From {} points, {} are on smooth sphere surface".format(
+        surface.GetNumberOfPoints(), num_points_on_smooth_sphere_surface)
+
+
 class PlaneGenerator(object):
     """
     A class for generating triangular-mesh surface of a plane.
@@ -196,7 +252,7 @@ class SphereGenerator(object):
     """
     @staticmethod
     def generate_UV_sphere_surface(r=10.0, latitude_res=100,
-                                   longitude_res=100):
+                                   longitude_res=100, verbose=False):
         """
         Generates a UV sphere surface with only triangular cells.
 
@@ -204,13 +260,16 @@ class SphereGenerator(object):
             r (float, optional): sphere radius (default 10.0)
             latitude_res (int, optional): latitude resolution (default 100)
             longitude_res (int, optional): latitude resolution (default 100)
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
 
         Returns:
             a sphere surface (vtk.vtkPolyData)
         """
-        print("Generating a sphere with radius={}, latitude resolution={} and "
-              "longitude resolution={}".format(r, latitude_res,
-                                               longitude_res))
+        if verbose:
+            print("Generating a sphere with radius={}, latitude resolution={} "
+                  "and longitude resolution={}".format(r, latitude_res,
+                                                       longitude_res))
         is_positive_number(r)
         sphere = vtk.vtkSphereSource()
         # the origin around which the sphere should be centered
@@ -238,7 +297,8 @@ class SphereGenerator(object):
         cleaner.Update()
 
         # Might contain non-triangle cells after cleaning - remove them
-        sphere_surface = remove_non_triangle_cells(cleaner.GetOutput())
+        sphere_surface = remove_non_triangle_cells(cleaner.GetOutput(),
+                                                   verbose=verbose)
         return sphere_surface
 
     @staticmethod
@@ -287,6 +347,8 @@ class SphereGenerator(object):
         box = int(math.ceil(r * 2.5))
         sm = SphereMask()
         mask_np = sm.generate_gauss_sphere_mask(sg, box)
+        # center_voxel = [box / 2, box / 2, box / 2]
+        # print center_voxel
         mask_vti = io.numpy_to_vti(mask_np)
 
         # Calculate threshold th to get the desired radius r
@@ -445,16 +507,20 @@ def main():
     # io.save_vtp(noisy_plane,
     #             "{}plane_half_size10_res30_noise10.vtp".format(fold))
 
-    # # UV Sphere
-    # sg = SphereGenerator()
-    # sphere = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
-    #                                        longitude_res=50)
+    # UV Sphere
+    sg = SphereGenerator()
+    sphere = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
+                                           longitude_res=50)
+    are_triangle_vertices_on_smooth_sphere_surface(sphere, r=10, error=0.001)
     # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
     # io.save_vtp(sphere_noise, fold + "sphere_r10_res50_noise10.vtp")
 
     # Sphere from gauss mask
-    # sg = SphereGenerator()
-    # sphere = sg.generate_gauss_sphere_surface(r=10)
+    sg = SphereGenerator()
+    sphere = sg.generate_gauss_sphere_surface(r=10)
+    # io.save_vtp(sphere, "{}gauss_sphere_r10.vtp".format(fold))
+    are_triangle_vertices_on_smooth_sphere_surface(
+        sphere, r=10, center=[12, 12, 12], error=0.009)
     # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
     # io.save_vtp(sphere_noise, "{}gauss_sphere_r10_noise10.vtp".format(fold))
 
@@ -473,11 +539,11 @@ def main():
     # io.save_vtp(poly_noise, "sphere/ico1280_noise10/sphere_r10.surface.vtp")
 
     # Torus
-    sg = SaddleGenerator()
-    rr = 25
-    csr = 10
-    torus = sg.generate_parametric_torus(rr, csr)
-    io.save_vtp(torus, "{}torus_rr{}_csr{}.vtp".format(fold, rr, csr))
+    # sg = SaddleGenerator()
+    # rr = 25
+    # csr = 10
+    # torus = sg.generate_parametric_torus(rr, csr)
+    # io.save_vtp(torus, "{}torus_rr{}_csr{}.vtp".format(fold, rr, csr))
 
 
 if __name__ == "__main__":
