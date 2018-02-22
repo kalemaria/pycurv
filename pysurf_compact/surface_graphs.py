@@ -2020,7 +2020,7 @@ class TriangleGraph(SurfaceGraph):
         # M_r = np.zeros(shape=(2, 2))  # when transform votedir to 2D
         M_r = np.zeros(shape=(3, 3))
         R = rotation_matrix(N_r, pi/4)
-        num_valid_votes = 0
+        # num_valid_votes = 0
         for i in range(8):
             # rotate the vector by 45 degrees (pi/4 radians) around N_r axis
             votedir = rotate_vector(votedir, pi/4, matrix=R, debug=verbose)
@@ -2045,7 +2045,7 @@ class TriangleGraph(SurfaceGraph):
             if c == [0.0, 0.0, 0.0]:
                 if verbose:
                     print("No intersection point found")
-                continue  # in paper "return None", but I think if does not make
+                return None  # like in paper, but I think if does not make
                 # sense to give up if there is no continuation of the surface at
                 # radius_hit distance just in one or some of the 8 directions
 
@@ -2054,7 +2054,7 @@ class TriangleGraph(SurfaceGraph):
                 if verbose:
                     print("b = {}, higher than RadiusHit = {}".format(
                         b, radius_hit))
-                continue  # in paper "return None" ...
+                return None  # like in paper ...
             k_rc = 2 * b / (b ** 2 + radius_hit ** 2)
             # sign(c) = 1 if c is above the tangent plane T_r(S)
             #          -1 if c is below T_r(S)
@@ -2066,7 +2066,7 @@ class TriangleGraph(SurfaceGraph):
             outer_product = outer(votedir, votedir)
             multiplicator = sign_c * k_rc
             M_r += multiply(outer_product, multiplicator)
-            num_valid_votes += 1
+            # num_valid_votes += 1
 
             if verbose:
                 print("\nvotedir = ({}, {}, {})".format(
@@ -2077,8 +2077,7 @@ class TriangleGraph(SurfaceGraph):
                 print("k_rc = {}".format(k_rc))
                 print("sign_c = {}".format(sign_c))
 
-        M_r /= 8  # or:
-        # M_r /= num_valid_votes  # TODO check more!
+        M_r /= 8  # or: M_r /= num_valid_votes  # TODO check more!
         # Decompose the symmetric matrix M_r:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix
@@ -2134,8 +2133,8 @@ class TriangleGraph(SurfaceGraph):
             kappa_1, kappa_2 = kappa_2, kappa_1
         # TODO transform 2D vectors T_1 and T_2 to 3D
         if verbose:
-            print("\nNumber valid votes = {}".format(num_valid_votes))
-            print("T_1 = {}".format(T_1))
+            # print("\nNumber valid votes = {}".format(num_valid_votes))
+            print("\nT_1 = {}".format(T_1))
             print("T_2 = {}".format(T_2))
             print("kappa_1 = {}".format(kappa_1))
             print("kappa_2 = {}".format(kappa_2))

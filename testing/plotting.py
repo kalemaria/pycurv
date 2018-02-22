@@ -871,6 +871,6 @@ if __name__ == "__main__":
 
     # plot_sphere_kappa_1_and_2_diff_rh(r=10, binary=True)
     # plot_sphere_kappa_1_and_2_errors_noVVCF(r=10, binary=True)
-    for r in [20]:  # 10, 20, 30
-        plot_sphere_kappa_1_and_2_errors_VV_VCTV(r=r, rhVV=18, rhVCTV=18,
+    for r in [30]:  # 10, 20, 30
+        plot_sphere_kappa_1_and_2_errors_VV_VCTV(r=r, rhVV=28, rhVCTV=28,
                                                  binary=True)

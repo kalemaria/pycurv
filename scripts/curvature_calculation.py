@@ -1,12 +1,14 @@
+import sys
 import time
 from os.path import isfile
 from graph_tool import load_graph
 import gzip
 from os import remove
+import cProfile
 
 from pysurf_compact import (
-    vector_voting, run_gen_surface,
-    TriangleGraph, split_segmentation, pexceptions, PointGraph)
+    normals_directions_and_curvature_estimation, vector_voting, run_gen_surface,
+    TriangleGraph, split_segmentation)
 from pysurf_compact import pysurf_io as io
 
 """
@@ -20,7 +22,7 @@ __author__ = 'kalemanov'
 
 
 def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
-             k):
+             radius_hit):
     """
     Function for running all processing steps to estimate membrane curvature.
 
@@ -39,14 +41,13 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
         scale_x (int): size of the membrane mask in X dimension
         scale_y (int): size of the membrane mask in Y dimension
         scale_z (int): size of the membrane mask in Z dimension
-        k (int): parameter of Normal Vector Voting algorithm determining the
-            neighborhood size, g_max = k * average weak triangle graph edge
-            length
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
 
     Returns:
         None
     """
-    # TODO get rid of k, introduce radius_hit directly!
     epsilon = 0
     eta = 0
     region_file_base = "%s%s_ERregion" % (fold, tomo)
@@ -59,27 +60,28 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
     region_surf_with_borders_files = []
     region_surf_VV_files = []
     all_file_base = "%s%s_ER" % (fold, tomo)
-    all_kappa_1_file = ("%s.VV_k%s_epsilon%s_eta%s.max_curvature.txt"
-                        % (all_file_base, k, epsilon, eta))
-    all_kappa_2_file = ("%s.VV_k%s_epsilon%s_eta%s.min_curvature.txt"
-                        % (all_file_base, k, epsilon, eta))
-    all_gauss_curvature_VV_file = ("%s.VV_k%s_epsilon%s_eta%s.gauss_curvature"
-                                   ".txt" % (all_file_base, k, epsilon, eta))
-    all_mean_curvature_VV_file = ("%s.VV_k%s_epsilon%s_eta%s.mean_curvature.txt"
-                                  % (all_file_base, k, epsilon, eta))
-    all_shape_index_VV_file = ("%s.VV_k%s_epsilon%s_eta%s.shape_index.txt"
-                               % (all_file_base, k, epsilon, eta))
-    all_curvedness_VV_file = ("%s.VV_k%s_epsilon%s_eta%s.curvedness.txt"
-                              % (all_file_base, k, epsilon, eta))
+    all_kappa_1_file = ("%s.VV_rh%s_epsilon%s_eta%s.max_curvature.txt"
+                        % (all_file_base, radius_hit, epsilon, eta))
+    all_kappa_2_file = ("%s.VV_rh%s_epsilon%s_eta%s.min_curvature.txt"
+                        % (all_file_base, radius_hit, epsilon, eta))
+    all_gauss_curvature_VV_file = (
+        "%s.VV_rh%s_epsilon%s_eta%s.gauss_curvature.txt" % (
+            all_file_base, radius_hit, epsilon, eta))
+    all_mean_curvature_VV_file = ("%s.VV_rh%s_epsilon%s_eta%s.mean_curvature.txt"
+                                  % (all_file_base, radius_hit, epsilon, eta))
+    all_shape_index_VV_file = ("%s.VV_rh%s_epsilon%s_eta%s.shape_index.txt"
+                               % (all_file_base, radius_hit, epsilon, eta))
+    all_curvedness_VV_file = ("%s.VV_rh%s_epsilon%s_eta%s.curvedness.txt"
+                              % (all_file_base, radius_hit, epsilon, eta))
     all_surf_with_borders_vtp_file = ('%s.cleaned_surface_with_borders_nm.vtp'
                                       % all_file_base)
-    all_surf_VV_vtp_file = ('%s.cleaned_surface_nm.VV_k%s_epsilon%s_eta%s.vtp'
-                            % (all_file_base, k, epsilon, eta))
+    all_surf_VV_vtp_file = ('%s.cleaned_surface_nm.VV_rh%s_epsilon%s_eta%s.vtp'
+                            % (all_file_base, radius_hit, epsilon, eta))
 
     # Split the segmentation into regions:
-    regions, mask_file = split_segmentation(seg_file, lbl=label, close=True,
-                                            close_cube_size=3, close_iter=1,
-                                            min_region_size=100)
+    regions, mask_file = split_segmentation(
+        seg_file, lbl=label, close=True, close_cube_size=3, close_iter=1,
+        min_region_size=100)
     for i, region in enumerate(regions):
         print "\n\nRegion %s" % (i + 1)
 
@@ -95,11 +97,10 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
 
         # ***Part 2: surface cleaning***
         scale_factor_to_nm = pixel_size
-        cleaned_scaled_surf_file = (surf_file_base +
-                                    '.cleaned_surface_with_borders_nm.vtp')
-        cleaned_scaled_graph_file = (surf_file_base +
-                                     '.cleaned_triangle_graph_with_borders_nm'
-                                     '.gt')
+        cleaned_scaled_surf_file = (
+            surf_file_base + '.cleaned_surface_with_borders_nm.vtp')
+        cleaned_scaled_graph_file = (
+            surf_file_base + '.cleaned_triangle_graph_with_borders_nm.gt')
         # The cleaned scaled surface .vtp file does not exist yet if no cleaned
         # scaled surface .vtp file was generated, then also no cleaned scaled
         # graph .gt file was written -> have to generate the scaled graph from
@@ -112,8 +113,9 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
 
             print ('\nBuilding the TriangleGraph from the vtkPolyData surface '
                    'with curvatures...')
-            tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-            scaled_surf = tg.build_graph_from_vtk_surface(surf, verbose=False)
+            tg = TriangleGraph(
+                surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+            scaled_surf = tg.build_graph_from_vtk_surface(verbose=False)
             print ('The graph has %s vertices and %s edges'
                    % (tg.graph.num_vertices(), tg.graph.num_edges()))
 
@@ -163,9 +165,9 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
 
                 print '\nBuilding the triangle graph from the surface...'
                 scale_factor_to_nm = 1  # the surface is already scaled in nm
-                tg = TriangleGraph(scale_factor_to_nm,
+                tg = TriangleGraph(surf, scale_factor_to_nm,
                                    scale_x, scale_y, scale_z)
-                tg.build_graph_from_vtk_surface(surf, verbose=False)
+                tg.build_graph_from_vtk_surface(verbose=False)
                 print ('The graph has %s vertices and %s edges'
                        % (tg.graph.num_vertices(), tg.graph.num_edges()))
                 tg.graph.list_properties()
@@ -186,33 +188,33 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
             # Running the Normal Vector Voting algorithm and saving the output:
             cleaned_scaled_graph_VV_file = (
                 surf_file_base +
-                '.cleaned_triangle_graph_nm.VV_k%s_epsilon%s_eta%s.gt'
-                % (k, epsilon, eta)
+                '.cleaned_triangle_graph_nm.VV_rh%s_epsilon%s_eta%s.gt'
+                % (radius_hit, epsilon, eta)
             )
             cleaned_scaled_surf_VV_file = (
                 surf_file_base +
-                '.cleaned_surface_nm.VV_k%s_epsilon%s_eta%s.vtp'
-                % (k, epsilon, eta)
+                '.cleaned_surface_nm.VV_rh%s_epsilon%s_eta%s.vtp'
+                % (radius_hit, epsilon, eta)
             )
-            kappa_1_file = ("%s%s.VV_k%s_epsilon%s_eta%s.max_curvature.txt"
-                            % (region_file_base, i + 1, k, epsilon, eta))
-            kappa_2_file = ("%s%s.VV_k%s_epsilon%s_eta%s.min_curvature.txt"
-                            % (region_file_base, i + 1, k, epsilon, eta))
+            kappa_1_file = "%s%s.VV_rh%s_epsilon%s_eta%s.max_curvature.txt" % (
+                region_file_base, i + 1, radius_hit, epsilon, eta)
+            kappa_2_file = "%s%s.VV_rh%s_epsilon%s_eta%s.min_curvature.txt" % (
+                region_file_base, i + 1, radius_hit, epsilon, eta)
             gauss_curvature_VV_file = (
-                "%s%s.VV_k%s_epsilon%s_eta%s.gauss_curvature.txt"
-                % (region_file_base, i + 1, k, epsilon, eta)
-            )
+                "%s%s.VV_rh%s_epsilon%s_eta%s.gauss_curvature.txt"
+                % (region_file_base, i + 1, radius_hit, epsilon, eta))
             mean_curvature_VV_file = (
-                "%s%s.VV_k%s_epsilon%s_eta%s.mean_curvature.txt"
-                % (region_file_base, i + 1, k, epsilon, eta)
-            )
-            shape_index_VV_file = ("%s%s.VV_k%s_epsilon%s_eta%s.shape_index.txt"
-                                   % (region_file_base, i + 1, k, epsilon, eta))
-            curvedness_VV_file = ("%s%s.VV_k%s_epsilon%s_eta%s.curvedness.txt"
-                                  % (region_file_base, i + 1, k, epsilon, eta))
+                "%s%s.VV_rh%s_epsilon%s_eta%s.mean_curvature.txt"
+                % (region_file_base, i + 1, radius_hit, epsilon, eta))
+            shape_index_VV_file = (
+                "%s%s.VV_rh%s_epsilon%s_eta%s.shape_index.txt" % (
+                    region_file_base, i + 1, radius_hit, epsilon, eta))
+            curvedness_VV_file = (
+                "%s%s.VV_rh%s_epsilon%s_eta%s.curvedness.txt" % (
+                    region_file_base, i + 1, radius_hit, epsilon, eta))
             # does not calculate curvatures for triangles at borders and removes
             # them in the end
-            surf_VV = vector_voting(tg, k, epsilon=epsilon, eta=eta,
+            surf_VV = vector_voting(tg, radius_hit, epsilon=epsilon, eta=eta,
                                     exclude_borders=True)
             print ('The graph without outer borders and with VV curvatures has '
                    '%s vertices and %s edges'
@@ -236,18 +238,16 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
             all_kappa_1_values.extend(kappa_1_values.tolist())
             kappa_2_values = tg.get_vertex_property_array("kappa_2")
             all_kappa_2_values.extend(kappa_2_values.tolist())
-            gauss_curvature_VV_values = \
-                tg.get_vertex_property_array("gauss_curvature_VV")
+            gauss_curvature_VV_values = tg.get_vertex_property_array(
+                "gauss_curvature_VV")
             all_gauss_curvature_VV_values.extend(
-                gauss_curvature_VV_values.tolist()
-            )
-            mean_curvature_VV_values = \
-                tg.get_vertex_property_array("mean_curvature_VV")
+                gauss_curvature_VV_values.tolist())
+            mean_curvature_VV_values = tg.get_vertex_property_array(
+                "mean_curvature_VV")
             all_mean_curvature_VV_values.extend(
-                mean_curvature_VV_values.tolist()
-            )
-            shape_index_VV_values = \
-                tg.get_vertex_property_array("shape_index_VV")
+                mean_curvature_VV_values.tolist())
+            shape_index_VV_values = tg.get_vertex_property_array(
+                "shape_index_VV")
             all_shape_index_VV_values.extend(shape_index_VV_values.tolist())
             curvedness_VV_values = tg.get_vertex_property_array("curvedness_VV")
             all_curvedness_VV_values.extend(curvedness_VV_values.tolist())
@@ -303,17 +303,19 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
 
     # Converting vtkPolyData selected cell arrays from the '.vtp' file to 3-D
     # volumes and saving them as '.mrc.gz' files.
-    __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
-                                scale_x, scale_y, scale_z, k, epsilon, eta,
-                                log_files=True)  # max voxel value & .log files
-    __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
-                                scale_x, scale_y, scale_z, k, epsilon, eta,
-                                mean=True)  # mean voxel value & no .log files
+    # max voxel value & .log files:
+    __vtp_arrays_to_mrc_volumes(
+        all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y,
+        scale_z, radius_hit, epsilon, eta, log_files=True)
+    # mean voxel value & no .log files:
+    __vtp_arrays_to_mrc_volumes(
+        all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y,
+        scale_z, radius_hit, epsilon, eta, mean=True)
 
 
-def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
-                                scale_x, scale_y, scale_z, k, epsilon, eta,
-                                mean=False, log_files=False):
+def __vtp_arrays_to_mrc_volumes(
+        all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y,
+        scale_z, radius_hit, epsilon, eta, mean=False, log_files=False):
     """
     This subfunction converts vtkPolyData cell arrays from a '.vtp' file to 3-D
     volumes and saves them as '.mrc.gz' files.
@@ -331,9 +333,9 @@ def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
             workflow)
         scale_z (int): size of the membrane mask in Z dimension (as passed to
             workflow)
-        k (int): parameter of Normal Vector Voting algorithm determining the
-            neighborhood size, g_max = k * average weak triangle graph edge
-            length (as passed to workflow)
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
         epsilon (int): as defined in workflow
         eta (int): as defined in workflow
         mean (boolean, optional): if True (default False), in case multiple
@@ -345,7 +347,7 @@ def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
     Returns:
         None
     """
-    array_name1 = "kappa_1"
+    array_name1 = "kappa_1"  # TODO use a loop for the 3 repetitive things!
     name1 = "max_curvature"
     array_name2 = "kappa_2"
     name2 = "min_curvature"
@@ -356,12 +358,12 @@ def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
         voxel_mean_str = ".voxel_mean"
     else:
         voxel_mean_str = ""
-    mrcfilename1 = ('%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc'
-                    % (all_file_base, k, epsilon, eta, name1, voxel_mean_str))
-    mrcfilename2 = ('%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc'
-                    % (all_file_base, k, epsilon, eta, name2, voxel_mean_str))
-    mrcfilename3 = ('%s.VV_k%s_epsilon%s_eta%s.%s.volume%s.mrc'
-                    % (all_file_base, k, epsilon, eta, name3, voxel_mean_str))
+    mrcfilename1 = '%s.VV_rh%s_epsilon%s_eta%s.%s.volume%s.mrc' % (
+        all_file_base, radius_hit, epsilon, eta, name1, voxel_mean_str)
+    mrcfilename2 = '%s.VV_rh%s_epsilon%s_eta%s.%s.volume%s.mrc' % (
+        all_file_base, radius_hit, epsilon, eta, name2, voxel_mean_str)
+    mrcfilename3 = '%s.VV_rh%s_epsilon%s_eta%s.%s.volume%s.mrc' % (
+        all_file_base, radius_hit, epsilon, eta, name3, voxel_mean_str)
     if log_files:
         logfilename1 = mrcfilename1[0:-4] + '.log'
         logfilename2 = mrcfilename2[0:-4] + '.log'
@@ -397,18 +399,14 @@ def __vtp_arrays_to_mrc_volumes(all_file_base, all_surf_VV_vtp_file, pixel_size,
 
 
 def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
-                    scale_y, scale_z, k=3, g_max=0, epsilon=0, eta=0):
+                    scale_y, scale_z, radius_hit, epsilon=0, eta=0):
     """
     bla bla
 
     Args:
-
-        k (int, optional): parameter of Normal Vector Voting algorithm
-            determining the geodesic neighborhood radius:
-            g_max = k * average weak triangle graph edge length (default 3)
-        g_max (float, optional): geodesic neighborhood radius in length unit
-            of the graph, here voxels; if positive (default 0) this g_max
-            will be used and k will be ignored
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
         epsilon (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease
             junction" (class 2), default 0
@@ -426,19 +424,7 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
     Returns:
         None
     """
-    # TODO get rid of g_max and k, introduce radius_hit directly!
-    if g_max > 0:
-        surf_vv_file = '{}.VV_g_max{}_epsilon{}_eta{}.vtp'.format(
-            base_filename, g_max, epsilon, eta)
-    elif k > 0:
-        surf_vv_file = '{}.VV_k{}_epsilon{}_eta{}.vtp'.format(
-            base_filename, k, epsilon, eta)
-    else:
-        error_msg = ("Either g_max or k must be positive (if both are "
-                     "positive, the specified g_max will be used).")
-        raise pexceptions.PySegInputError(
-            expr='simple_workflow', msg=error_msg)
-
+    # TODO finish the docstring
     # Reading in the .vtp file with the test triangle mesh and transforming
     # it into a triangle graph:
     t_begin = time.time()
@@ -447,12 +433,12 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
     surf = io.load_poly(fold + surf_file)
     print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
            'curvatures...')
-    tg = TriangleGraph(scale_factor_to_nm, scale_x, scale_y, scale_z)
-    tg.build_graph_from_vtk_surface(surf, verbose=False,
-                                    reverse_normals=False)
+    tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+    tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
     print ('The graph has %s vertices and %s edges'
            % (tg.graph.num_vertices(), tg.graph.num_edges()))
 
+    # Remove the wrong borders (surface generation artifact)
     print '\nFinding triangles that are 3 pixels to surface borders...'
     tg.find_vertices_near_border(3 * scale_factor_to_nm, purge=True)
     print ('The graph has %s vertices and %s edges'
@@ -460,39 +446,37 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
 
     print '\nFinding small connected components of the graph...'
     tg.find_small_connected_components(threshold=100, purge=True)
-    print ('The graph has %s vertices and %s edges and following '
-           'properties'
+    print ('The graph has %s vertices and %s edges and following properties'
            % (tg.graph.num_vertices(), tg.graph.num_edges()))
     tg.graph.list_properties()
-
-    if k > 0:
-        print "k = {}".format(k)
-        # Find the average triangle edge length (l_ave) and calculate g_max:
-        # (Do this here because in vector_voting average weak edge length of
-        # the triangle graph is used, since the surface not passed)
-        pg = PointGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
-        pg.build_graph_from_vtk_surface()
-        l_ave = pg.calculate_average_edge_length()
-        print "average triangle edge length = {}".format(l_ave)
-        g_max = k * l_ave
 
     t_end = time.time()
     duration = t_end - t_begin
     print ('Graph construction from surface and cleaning took: {} min {} s'
            .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
-    # Running the modified Normal Vector Voting algorithm:
-    surf_vv = vector_voting(
-        tg, radius_hit=g_max, epsilon=epsilon, eta=eta, exclude_borders=False)
-    # TODO exclude_borders=True if want no borders
-    # Saving the output (TriangleGraph object) for later inspection in
-    # ParaView:
-    io.save_vtp(surf_vv, fold + surf_vv_file)
+    # Running the modified Normal Vector Voting algorithms:
+    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
+            fold, base_filename, radius_hit, epsilon, eta)
+    method_tg_surf_dict = normals_directions_and_curvature_estimation(
+        tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=False,
+        methods=['VCTV', 'VV'], full_dist_map=False, graph_file=gt_file)
+    # TODO exclude_borders=True if want no curvature estimation at borders
+    for method in method_tg_surf_dict.keys():
+        # Saving the output (TriangleGraph object) for later inspection in
+        # ParaView:
+        (tg, surf) = method_tg_surf_dict[method]
+        surf_file = '{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+            base_filename, method, radius_hit, epsilon, eta)
+        io.save_vtp(surf, surf_file)
 
 
-def main():
+def main(membrane):
     """
-    Main function for running the workflow function for example data.
+    Main function for running the workflow function for real data.
+
+    Args:
+        membrane(string): what membrane segmentation to use 'cER' or 'PM'
 
     Returns:
         None
@@ -509,34 +493,28 @@ def main():
     # scale_x = 620
     # scale_y = 620
     # scale_z = 80
-    # k = 3
+    # radius_hit = 3  # TODO change
     # workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
-    #          k)
+    #          radius_hit)
 
-    # Javier's cER
+    # Javier's cER or PM (given by "segmentation" parameter)
     fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/only_without_borders/"
     pixel_size = 1.044
     scale_x = 320
     scale_y = 520
     scale_z = 210
-    g_max = 6.5
-    surf_file = "t3_ny01_cropped_cER.surface.vtp"
-    base_filename = "t3_ny01_cropped_cER"
+    radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
+    surf_file = "t3_ny01_cropped_{}.surface.vtp".format(membrane)
+    base_filename = "t3_ny01_cropped_{}".format(membrane)
     simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
-                    scale_y, scale_z, k=0, g_max=g_max, epsilon=0, eta=0)
-    t_end = time.time()
-    duration = t_end - t_begin
-    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
-
-    # Javier's PM
-    t_begin = time.time()
-    surf_file = "t3_ny01_cropped_PM.surface.vtp"
-    base_filename = "t3_ny01_cropped_PM"
-    simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
-                    scale_y, scale_z, k=0, g_max=g_max, epsilon=0, eta=0)
+                    scale_y, scale_z, radius_hit, epsilon=0, eta=0)
     t_end = time.time()
     duration = t_end - t_begin
     print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
 
 if __name__ == "__main__":
-    main()
+    segmentation = sys.argv[1]
+    print(segmentation)
+    # main(segmentation)
+    stats_file = 't3_ny01_cropped_{}.VCTV_VV_rh6.stats'.format(segmentation)
+    cProfile.run('main(segmentation)', stats_file)
