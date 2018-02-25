@@ -1661,7 +1661,7 @@ class TriangleGraph(SurfaceGraph):
                 print("T_1 = {}".format(T_1))
                 print("T_2 = {}".format(T_2))
                 print("T_3 = {}".format(T_3))
-                print("N_r = {}".format(N_v))
+                print("N_v = {}".format(N_v))
                 print("lambda_1 = {}".format(b_1))
                 print("lambda_2 = {}".format(b_2))
                 print("lambda_3 = {}".format(b_3))
@@ -1680,7 +1680,11 @@ class TriangleGraph(SurfaceGraph):
                 if verbose:
                     print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
-                print("Error: no eigenvector equal to the normal |N_v| found")
+                print("Error: no eigenvector which equals to the normal found")
+                print("T_1 = {}".format(T_1))
+                print("T_2 = {}".format(T_2))
+                print("T_3 = {}".format(T_3))
+                print("N_v = {}".format(N_v))
                 exit(0)
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
@@ -2045,7 +2049,7 @@ class TriangleGraph(SurfaceGraph):
             if c == [0.0, 0.0, 0.0]:
                 if verbose:
                     print("No intersection point found")
-                return None  # like in paper, but I think if does not make
+                continue  # in paper "return None", but I think if does not make
                 # sense to give up if there is no continuation of the surface at
                 # radius_hit distance just in one or some of the 8 directions
 
@@ -2054,7 +2058,7 @@ class TriangleGraph(SurfaceGraph):
                 if verbose:
                     print("b = {}, higher than RadiusHit = {}".format(
                         b, radius_hit))
-                return None  # like in paper ...
+                continue  # in paper "return None" ...
             k_rc = 2 * b / (b ** 2 + radius_hit ** 2)
             # sign(c) = 1 if c is above the tangent plane T_r(S)
             #          -1 if c is below T_r(S)
@@ -2077,7 +2081,7 @@ class TriangleGraph(SurfaceGraph):
                 print("k_rc = {}".format(k_rc))
                 print("sign_c = {}".format(sign_c))
 
-        M_r /= 8  # or: M_r /= num_valid_votes  # TODO check more!
+        M_r /= 8
         # Decompose the symmetric matrix M_r:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix
@@ -2122,7 +2126,11 @@ class TriangleGraph(SurfaceGraph):
                 if verbose:
                     print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
             else:
-                print("Error: no eigenvector equals to the normal |N_r| found")
+                print("Error: no eigenvector which equals to the normal found")
+                print("T_1 = {}".format(T_1))
+                print("T_2 = {}".format(T_2))
+                print("T_3 = {}".format(T_3))
+                print("N_r = {}".format(N_r))
                 exit(0)
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2
@@ -2188,7 +2196,7 @@ class TriangleGraph(SurfaceGraph):
     #     # M_r = np.zeros(shape=(2, 2))  # when transform votedir to 2D
     #     M_r = np.zeros(shape=(3, 3))
     #     R = rotation_matrix(N_r, math.pi/4)
-    #     num_valid_votes = 0
+    #     # num_valid_votes = 0
     #     for i in range(8):
     #         # rotate the vector by 45 degrees (pi/4 radians) around N_r axis
     #         votedir = rotate_vector(votedir, math.pi/4, matrix=R, debug=verbose)
@@ -2232,7 +2240,7 @@ class TriangleGraph(SurfaceGraph):
     #         outer_product = outer(votedir, votedir)
     #         multiplicator = sign_c * k_rc
     #         M_r += multiply(outer_product, multiplicator)
-    #         num_valid_votes += 1
+    #         # num_valid_votes += 1
     #
     #         if verbose:
     #             print("\nvotedir = ({}, {}, {})".format(
@@ -2243,8 +2251,7 @@ class TriangleGraph(SurfaceGraph):
     #             print("k_rc = {}".format(k_rc))
     #             print("sign_c = {}".format(sign_c))
     #
-    #     M_r /= 8  # or:
-    #     # M_r /= num_valid_votes  # TODO check more!
+    #     M_r /= 8
     #
     #     # TODO Hauseholder transformation to turn M_r matrix to 2x2
     #     E_1 = np.array([1, 0, 0])
@@ -2312,7 +2319,11 @@ class TriangleGraph(SurfaceGraph):
     #             if verbose:
     #                 print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
     #         else:
-    #             print("Error: no eigenvector equals to the normal |N_r| found")
+    #             print("Error: no eigenvector which equals to the normal found")
+    #             print("T_1 = {}".format(T_1))
+    #             print("T_2 = {}".format(T_2))
+    #             print("T_3 = {}".format(T_3))
+    #             print("N_r = {}".format(N_r))
     #             exit(0)
     #     # Estimated principal curvatures:
     #     kappa_1 = 3 * lambda_1 - lambda_2
@@ -2323,8 +2334,8 @@ class TriangleGraph(SurfaceGraph):
     #         kappa_1, kappa_2 = kappa_2, kappa_1
     #     # TODO transform 2D vectors T_1 and T_2 to 3D
     #     if verbose:
-    #         print("\nNumber valid votes = {}".format(num_valid_votes))
-    #         print("T_1 = {}".format(T_1))
+    #         # print("\nNumber valid votes = {}".format(num_valid_votes))
+    #         print("\nT_1 = {}".format(T_1))
     #         print("T_2 = {}".format(T_2))
     #         print("kappa_1 = {}".format(kappa_1))
     #         print("kappa_2 = {}".format(kappa_2))

@@ -446,9 +446,8 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
 
     print '\nFinding small connected components of the graph...'
     tg.find_small_connected_components(threshold=100, purge=True)
-    print ('The graph has %s vertices and %s edges and following properties'
+    print ('The graph has %s vertices and %s edges'
            % (tg.graph.num_vertices(), tg.graph.num_edges()))
-    tg.graph.list_properties()
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -460,7 +459,8 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
             fold, base_filename, radius_hit, epsilon, eta)
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=False,
-        methods=['VCTV', 'VV'], full_dist_map=False, graph_file=gt_file)
+        methods=['VCTV'], full_dist_map=False, graph_file=gt_file)
+    # TODO add 'VV' method
     # TODO exclude_borders=True if want no curvature estimation at borders
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
@@ -514,7 +514,6 @@ def main(membrane):
 
 if __name__ == "__main__":
     segmentation = sys.argv[1]
-    print(segmentation)
-    # main(segmentation)
-    stats_file = 't3_ny01_cropped_{}.VCTV_VV_rh6.stats'.format(segmentation)
-    cProfile.run('main(segmentation)', stats_file)
+    main(segmentation)
+    # stats_file = 't3_ny01_cropped_{}.VCTV_VV_rh6.stats'.format(segmentation)
+    # cProfile.run('main(segmentation)', stats_file)

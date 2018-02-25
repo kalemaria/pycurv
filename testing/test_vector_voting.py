@@ -8,8 +8,9 @@ import cProfile
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import (
-    TriangleGraph, vector_voting, vector_voting_curve_fitting,
-    vector_curvature_tensor_voting, normals_directions_and_curvature_estimation)
+    TriangleGraph, vector_curvature_tensor_voting,
+    normals_directions_and_curvature_estimation, normals_estimation,
+    preparation_for_curvature_estimation, curvature_estimation)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
@@ -302,7 +303,8 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_cylinder_directions_curvatures(
             self, r, radius_hit, inverse=False, res=0, h=0, noise=10,
-            methods=['VV'], page_curvature_formula=False, num_points=None):
+            methods=['VV'], page_curvature_formula=False, num_points=None,
+            full_dist_map=False):
         """
         Tests whether minimal principal directions (T_2), as well as minimal and
         maximal principal curvatures are correctly estimated for an opened
@@ -429,10 +431,22 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=True, methods=methods,
-            page_curvature_formula=page_curvature_formula,
-            num_points=num_points)
+        # method_tg_surf_dict = normals_directions_and_curvature_estimation(
+        #     tg, radius_hit, exclude_borders=True, methods=methods,
+        #     page_curvature_formula=page_curvature_formula,
+        #     num_points=num_points)
+        tg, all_neighbor_idx_to_dist, sigma = normals_estimation(
+            tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
+        tg = preparation_for_curvature_estimation(
+            tg, exclude_borders=True, graph_file="temp.gt")
+        method_tg_surf_dict = {}
+        for method in methods:
+            tg_curv, surface_curv = curvature_estimation(
+                tg, radius_hit, sigma, all_neighbor_idx_to_dist,
+                exclude_borders=True, graph_file='temp.gt', method=method,
+                page_curvature_formula=page_curvature_formula,
+                num_points=num_points)
+            method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
         # Ground-truth T_h vector is parallel to Z axis
         true_T_h = np.array([0, 0, 1])
@@ -937,8 +951,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # VTK has opposite surface normals convention than we use,
         # a graph with normals pointing inwards is generated (VTK normals have
         # to be flipped)
-        tg.build_graph_from_vtk_surface(verbose=False,
-                                        reverse_normals=True)
+        tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=True)
         print tg.graph
 
         t_end = time.time()
@@ -970,19 +983,28 @@ class VectorVotingTestCase(unittest.TestCase):
         pos = [0, 1, 2]  # vector-property value positions
         true_T_1 = np.transpose(
             tg.graph.vertex_properties["true_T_1"].get_2d_array(pos))
-        print("type(true_T_1): {}".format(type(true_T_1)))  # test
         true_T_2 = np.transpose(
             tg.graph.vertex_properties["true_T_2"].get_2d_array(pos))
         true_kappa_1 = tg.get_vertex_property_array("true_kappa_1")
-        print("type(true_kappa_1): {}".format(type(true_kappa_1)))  # test
         true_kappa_2 = tg.get_vertex_property_array("true_kappa_2")
-        # return None  # test
 
         # Running the modified Normal Vector Voting algorithm:
-        method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=False, methods=methods,
-            page_curvature_formula=page_curvature_formula,
-            num_points=num_points, full_dist_map=full_dist_map)
+        # method_tg_surf_dict = normals_directions_and_curvature_estimation(
+        #     tg, radius_hit, exclude_borders=False, methods=methods,
+        #     page_curvature_formula=page_curvature_formula,
+        #     num_points=num_points, full_dist_map=full_dist_map)
+        tg, all_neighbor_idx_to_dist, sigma = normals_estimation(
+            tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
+        tg = preparation_for_curvature_estimation(
+            tg, exclude_borders=False, graph_file="temp.gt")
+        method_tg_surf_dict = {}
+        for method in methods:
+            tg_curv, surface_curv = curvature_estimation(
+                tg, radius_hit, sigma, all_neighbor_idx_to_dist,
+                exclude_borders=False, graph_file='temp.gt', method=method,
+                page_curvature_formula=page_curvature_formula,
+                num_points=num_points)
+            method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
         for method in method_tg_surf_dict.keys():
             # Saving the output (TriangleGraph object) for later inspection in
@@ -1117,19 +1139,19 @@ class VectorVotingTestCase(unittest.TestCase):
     #             self.parametric_test_plane_normals(
     #                 10, rh, res=10, noise=n)
 
-    # def test_cylinder_directions_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) and curvatures are
-    #     correctly estimated for an opened cylinder surface (without the circular
-    #     planes) with known orientation (height, i.e. T_2, parallel to the Z
-    #     axis), certain radius and noise level.
-    #     """
-    #     p = 50
-    #     for n in [0]:
-    #         for rh in [8]:  # 3, 4, 5, 6, 7
-    #             self.parametric_test_cylinder_directions_curvatures(
-    #                 10, rh, noise=n, methods=['VV', 'VCTV', 'VVCF'],
-    #                 page_curvature_formula=False, num_points=p)
+    def test_cylinder_directions_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) and curvatures are
+        correctly estimated for an opened cylinder surface (without the circular
+        planes) with known orientation (height, i.e. T_2, parallel to the Z
+        axis), certain radius and noise level.
+        """
+        p = 50
+        for n in [0]:
+            for rh in [8]:  # 3, 4, 5, 6, 7
+                self.parametric_test_cylinder_directions_curvatures(
+                    10, rh, noise=n, methods=['VCTV'],  # 'VV', 'VVCF'
+                    page_curvature_formula=False, num_points=p)
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1144,29 +1166,29 @@ class VectorVotingTestCase(unittest.TestCase):
     #             10, rh, noise=0, inverse=True, methods=['VV', 'VCTV', 'VVCF'],
     #             page_curvature_formula=False, num_points=p)
 
-    def test_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated for a sphere with a
-        certain radius and noise level:
-
-        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-        """
-        # Icosahedron sphere with 1280 faces:
-        # for n in [0]:
-        #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-        #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-        #             self.parametric_test_sphere_curvatures(
-        #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
-        #                 page_curvature_formula=False, num_points=p)
-        #         self.parametric_test_sphere_curvatures(
-        #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
-        #             page_curvature_formula=False)
-        # Binary sphere with different radii:
-        for r in [20]:  # 10; 20; 30
-            for rh in [18]:  # 5, 6, 7, 8, 9; 18; 28
-                self.parametric_test_sphere_curvatures(
-                    r, rh, binary=True, methods=['VV', 'VCTV'],
-                    full_dist_map=False)
+    # def test_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated for a sphere with a
+    #     certain radius and noise level:
+    #
+    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+    #     """
+    #     # Icosahedron sphere with 1280 faces:
+    #     # for n in [0]:
+    #     #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+    #     #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
+    #     #             self.parametric_test_sphere_curvatures(
+    #     #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
+    #     #                 page_curvature_formula=False, num_points=p)
+    #     #         self.parametric_test_sphere_curvatures(
+    #     #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
+    #     #             page_curvature_formula=False)
+    #     # Binary sphere with different radii:
+    #     for r in [20]:  # 10; 20; 30
+    #         for rh in [18]:  # 5, 6, 7, 8, 9; 18; 28
+    #             self.parametric_test_sphere_curvatures(
+    #                 r, rh, binary=True, methods=['VV', 'VCTV'],
+    #                 full_dist_map=False)
 
                 # def test_inverse_sphere_curvatures(self):
     #     """
@@ -1189,17 +1211,17 @@ class VectorVotingTestCase(unittest.TestCase):
     #     p = 50
     #     for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
     #         self.parametric_test_torus_curvatures(
-    #             25, 10, rh, methods=['VCTV'],  # 'VV', 'VVCF',
+    #             25, 10, rh, methods=['VCTV', 'VV', 'VVCF'],
     #             page_curvature_formula=False, num_points=p, full_dist_map=True)
 
 
 if __name__ == '__main__':
-    # unittest.main()
+    unittest.main()
     # torus_stats_file = ('/fs/pool/pool-ruben/Maria/curvature/'
     #              'synthetic_surfaces/torus/files4plotting/'
     #              'torus_rr25_csr10.VCTV_rh8_cProfile_full_dist_map.stats')
     # cProfile.run('unittest.main()', torus_stats_file)
-    bin_sphere_stats_file = ('/fs/pool/pool-ruben/Maria/curvature/'
-                 'synthetic_surfaces/sphere/binary/files4plotting/'
-                 'sphere_r20.VVrh18_VCTVrh18_cProfile_partial_dist_maps.stats')
-    cProfile.run('unittest.main()', bin_sphere_stats_file)
+    # bin_sphere_stats_file = ('/fs/pool/pool-ruben/Maria/curvature/'
+    #              'synthetic_surfaces/sphere/binary/files4plotting/'
+    #              'sphere_r20.VVrh18_VCTVrh18_cProfile_partial_dist_maps.stats')
+    # cProfile.run('unittest.main()', bin_sphere_stats_file)
