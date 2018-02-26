@@ -255,8 +255,11 @@ class VectorVotingTestCase(unittest.TestCase):
 
         # Running the modified Normal Vector Voting algorithm (with curvature
         # tensor voting, because its second pass is the fastest):
-        surf_vv = vector_curvature_tensor_voting(
-            tg, radius_hit=radius_hit, exclude_borders=True)
+        # surf_vv = vector_curvature_tensor_voting(
+        #     tg, radius_hit=radius_hit, exclude_borders=True)
+        results = normals_directions_and_curvature_estimation(
+            tg, radius_hit, exclude_borders=False, methods=['VCTV'])
+        surf_vv = results['VCTV'][1]
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         io.save_vtp(surf_vv, surf_vv_file)
@@ -435,14 +438,16 @@ class VectorVotingTestCase(unittest.TestCase):
         #     tg, radius_hit, exclude_borders=True, methods=methods,
         #     page_curvature_formula=page_curvature_formula,
         #     num_points=num_points)
-        tg, all_neighbor_idx_to_dist, sigma = normals_estimation(
+        tg, all_neighbor_idx_to_dist = normals_estimation(
             tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
-        tg = preparation_for_curvature_estimation(
-            tg, exclude_borders=True, graph_file="temp.gt")
+        tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
+            preparation_for_curvature_estimation(tg, exclude_borders=True,
+                                                 graph_file="temp.gt")
         method_tg_surf_dict = {}
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
-                tg, radius_hit, sigma, all_neighbor_idx_to_dist,
+                tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
+                tg.scale_z, radius_hit, all_neighbor_idx_to_dist,
                 exclude_borders=True, graph_file='temp.gt', method=method,
                 page_curvature_formula=page_curvature_formula,
                 num_points=num_points)
@@ -993,14 +998,16 @@ class VectorVotingTestCase(unittest.TestCase):
         #     tg, radius_hit, exclude_borders=False, methods=methods,
         #     page_curvature_formula=page_curvature_formula,
         #     num_points=num_points, full_dist_map=full_dist_map)
-        tg, all_neighbor_idx_to_dist, sigma = normals_estimation(
+        tg, all_neighbor_idx_to_dist = normals_estimation(
             tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
-        tg = preparation_for_curvature_estimation(
-            tg, exclude_borders=False, graph_file="temp.gt")
+        tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
+            preparation_for_curvature_estimation(tg, exclude_borders=False,
+                                                 graph_file="temp.gt")
         method_tg_surf_dict = {}
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
-                tg, radius_hit, sigma, all_neighbor_idx_to_dist,
+                tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
+                tg.scale_z, radius_hit, all_neighbor_idx_to_dist,
                 exclude_borders=False, graph_file='temp.gt', method=method,
                 page_curvature_formula=page_curvature_formula,
                 num_points=num_points)
@@ -1128,30 +1135,30 @@ class VectorVotingTestCase(unittest.TestCase):
 
     # *** The following tests will be run by unittest ***
 
-    # def test_plane_normals(self):
-    #     """
-    #     Tests whether normals are correctly estimated for a plane surface with
-    #     known orientation (parallel to to X and Y axes), certain size,
-    #     resolution and noise level.
-    #     """
-    #     for n in [10]:
-    #         for rh in [4, 6, 8]:
-    #             self.parametric_test_plane_normals(
-    #                 10, rh, res=10, noise=n)
+    def test_plane_normals(self):
+        """
+        Tests whether normals are correctly estimated for a plane surface with
+        known orientation (parallel to to X and Y axes), certain size,
+        resolution and noise level.
+        """
+        for n in [0]:  # 10
+            for rh in [6]:  # 4, 8
+                self.parametric_test_plane_normals(
+                    10, rh, res=10, noise=n)
 
-    def test_cylinder_directions_curvatures(self):
-        """
-        Tests whether minimal principal directions (T_2) and curvatures are
-        correctly estimated for an opened cylinder surface (without the circular
-        planes) with known orientation (height, i.e. T_2, parallel to the Z
-        axis), certain radius and noise level.
-        """
-        p = 50
-        for n in [0]:
-            for rh in [8]:  # 3, 4, 5, 6, 7
-                self.parametric_test_cylinder_directions_curvatures(
-                    10, rh, noise=n, methods=['VCTV'],  # 'VV', 'VVCF'
-                    page_curvature_formula=False, num_points=p)
+    # def test_cylinder_directions_curvatures(self):
+    #     """
+    #     Tests whether minimal principal directions (T_2) and curvatures are
+    #     correctly estimated for an opened cylinder surface (without the circular
+    #     planes) with known orientation (height, i.e. T_2, parallel to the Z
+    #     axis), certain radius and noise level.
+    #     """
+    #     p = 50
+    #     for n in [0]:
+    #         for rh in [8]:  # 3, 4, 5, 6, 7
+    #             self.parametric_test_cylinder_directions_curvatures(
+    #                 10, rh, noise=n, methods=['VCTV'],  # 'VV', 'VVCF'
+    #                 page_curvature_formula=False, num_points=p)
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """

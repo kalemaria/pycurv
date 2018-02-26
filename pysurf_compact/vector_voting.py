@@ -1168,7 +1168,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     duration1 = t_end1 - t_begin1
     print 'First run took: %s min %s s' % divmod(duration1, 60)
 
-    return tg, all_neighbor_idx_to_dist, sigma
+    return tg, all_neighbor_idx_to_dist
 
 
 def preparation_for_curvature_estimation(
@@ -1221,18 +1221,19 @@ def preparation_for_curvature_estimation(
     print '\nSaving the graph took: %s min %s s' % divmod(duration0, 60)
     print tg.graph
 
-    return tg
+    return tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z
 
 
 def curvature_estimation(
-        tg, radius_hit, sigma, all_neighbor_idx_to_dist, exclude_borders=False,
+        scaled_surface, scale_factor_to_nm, scale_x, scale_y, scale_z,
+        radius_hit, all_neighbor_idx_to_dist, exclude_borders=False,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
         num_points=None):
     # TODO docstring if remains
     t_begin0 = time.time()
     tg_curv = TriangleGraph(
-        surface=tg.surface, scale_factor_to_nm=tg.scale_factor_to_nm,
-        scale_x=tg.scale_x, scale_y=tg.scale_y, scale_z=tg.scale_z)
+        surface=scaled_surface, scale_factor_to_nm=scale_factor_to_nm,
+        scale_x=scale_x, scale_y=scale_y, scale_z=scale_z)
     tg_curv.graph = load_graph(graph_file)
     t_end0 = time.time()
     duration0 = t_end0 - t_begin0
@@ -1266,6 +1267,8 @@ def curvature_estimation(
         tg_curv.graph.vp.fit_error_2 = tg_curv.graph.new_vertex_property(
             "float")
 
+    g_max = math.pi * radius_hit / 2.0
+    sigma = g_max / 3.0
     for i, v in enumerate(tg_curv.graph.vertices()):
         # Estimate principal directions and curvatures (and calculate the
         # Gaussian and mean curvatures, shape index and curvedness) for
@@ -1276,10 +1279,16 @@ def curvature_estimation(
                 # None is returned if curvature at v cannot be estimated
                 result = gen_curv_vote(v, radius_hit, verbose=False)
             else:  # VV or VVCF
+                if all_neighbor_idx_to_dist is None:
+                    # Find the neighboring vertices of vertex v to be returned:
+                    neighbor_idx_to_dist = tg_curv.find_geodesic_neighbors(
+                        v, g_max)
+                else:
+                    neighbor_idx_to_dist = all_neighbor_idx_to_dist[i]
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
                 result = collecting_curvature_votes(
-                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
+                        v, neighbor_idx_to_dist, sigma, verbose=False,
                         page_curvature_formula=page_curvature_formula)
                 if result is not None:
                     if method == "VV":

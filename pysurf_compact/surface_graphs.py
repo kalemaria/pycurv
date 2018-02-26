@@ -1685,7 +1685,10 @@ class TriangleGraph(SurfaceGraph):
                 print("T_2 = {}".format(T_2))
                 print("T_3 = {}".format(T_3))
                 print("N_v = {}".format(N_v))
-                exit(0)
+                print("lambda_1 = {}".format(b_1))
+                print("lambda_2 = {}".format(b_2))
+                print("lambda_3 = {}".format(b_3))
+                return None
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
         kappa_2 = 3 * b_2 - b_1
@@ -1770,7 +1773,7 @@ class TriangleGraph(SurfaceGraph):
                 print("T_1 = {}".format(T_1))
                 print("T_2 = {}".format(T_2))
                 print("T_3 = {}".format(T_3))
-                print("N_r = {}".format(N_v))
+                print("N_v = {}".format(N_v))
                 print("lambda_1 = {}".format(b_1))
                 print("lambda_2 = {}".format(b_2))
                 print("lambda_3 = {}".format(b_3))
@@ -1790,7 +1793,14 @@ class TriangleGraph(SurfaceGraph):
                     print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
                 print("Error: no eigenvector equal to the normal |N_v| found")
-                exit(0)
+                print("T_1 = {}".format(T_1))
+                print("T_2 = {}".format(T_2))
+                print("T_3 = {}".format(T_3))
+                print("N_v = {}".format(N_v))
+                print("lambda_1 = {}".format(b_1))
+                print("lambda_2 = {}".format(b_2))
+                print("lambda_3 = {}".format(b_3))
+                return None
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
         var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
@@ -2131,7 +2141,10 @@ class TriangleGraph(SurfaceGraph):
                 print("T_2 = {}".format(T_2))
                 print("T_3 = {}".format(T_3))
                 print("N_r = {}".format(N_r))
-                exit(0)
+                print("lambda_1 = {}".format(lambda_1))
+                print("lambda_2 = {}".format(lambda_2))
+                print("lambda_3 = {}".format(lambda_3))
+                return None
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2
         kappa_2 = 3 * lambda_2 - lambda_1
@@ -2324,7 +2337,10 @@ class TriangleGraph(SurfaceGraph):
     #             print("T_2 = {}".format(T_2))
     #             print("T_3 = {}".format(T_3))
     #             print("N_r = {}".format(N_r))
-    #             exit(0)
+    #             print("lambda_1 = {}".format(lambda_1))
+    #             print("lambda_2 = {}".format(lambda_2))
+    #             print("lambda_3 = {}".format(lambda_3))
+    #             return None
     #     # Estimated principal curvatures:
     #     kappa_1 = 3 * lambda_1 - lambda_2
     #     kappa_2 = 3 * lambda_2 - lambda_1

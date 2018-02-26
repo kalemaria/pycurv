@@ -8,7 +8,8 @@ import cProfile
 
 from pysurf_compact import (
     normals_directions_and_curvature_estimation, vector_voting, run_gen_surface,
-    TriangleGraph, split_segmentation)
+    TriangleGraph, split_segmentation, normals_estimation,
+    preparation_for_curvature_estimation, curvature_estimation, rescale_surface)
 from pysurf_compact import pysurf_io as io
 
 """
@@ -400,31 +401,7 @@ def __vtp_arrays_to_mrc_volumes(
 
 def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
                     scale_y, scale_z, radius_hit, epsilon=0, eta=0):
-    """
-    bla bla
-
-    Args:
-        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
-            it should be chosen to correspond to radius of smallest features of
-            interest on the surface
-        epsilon (int, optional): parameter of Normal Vector Voting algorithm
-            influencing the number of triangles classified as "crease
-            junction" (class 2), default 0
-        eta (int, optional): parameter of Normal Vector Voting algorithm
-            influencing the number of triangles classified as "crease
-            junction" (class 2) and "no preferred orientation" (class 3),
-            default 0
-
-    Notes:
-        * Either g_max or k must be positive (if both are positive, the
-          specified g_max will be used).
-        * If epsilon = 0 and eta = 0 (default), all triangles will be
-          classified as "surface patch" (class 1).
-
-    Returns:
-        None
-    """
-    # TODO finish the docstring
+    # TODO docstring if remains
     # Reading in the .vtp file with the test triangle mesh and transforming
     # it into a triangle graph:
     t_begin = time.time()
@@ -471,6 +448,77 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
         io.save_vtp(surf, surf_file)
 
 
+def simple_workflow_part1(
+        fold, surf_file, scale_factor_to_nm, scale_x, scale_y, scale_z,
+        base_filename, radius_hit, epsilon=0, eta=0, full_dist_map=False,
+        exclude_borders=False):
+    # TODO docstring if remains
+    # Reading in the .vtp file with the test triangle mesh and transforming
+    # it into a triangle graph:
+    t_begin = time.time()
+
+    print '\nReading in the surface file to get a vtkPolyData surface...'
+    surf = io.load_poly(fold + surf_file)
+    print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+           'curvatures...')
+    tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+    tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
+    print ('The graph has %s vertices and %s edges'
+           % (tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    # Remove the wrong borders (surface generation artifact)
+    print '\nFinding triangles that are 3 pixels to surface borders...'
+    tg.find_vertices_near_border(3 * scale_factor_to_nm, purge=True)
+    print ('The graph has %s vertices and %s edges'
+           % (tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    print '\nFinding small connected components of the graph...'
+    tg.find_small_connected_components(threshold=100, purge=True)
+    print ('The graph has %s vertices and %s edges'
+           % (tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print ('Graph construction from surface and cleaning took: {} min {} s'
+           .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
+
+    # Running the first run of modified Normal Vector Voting algorithm:
+    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
+            fold, base_filename, radius_hit, epsilon, eta)
+    # method_tg_surf_dict = normals_directions_and_curvature_estimation(
+    #     tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=False,
+    #     methods=['VCTV'], full_dist_map=False, graph_file=gt_file)
+    tg, all_neighbor_idx_to_dist = normals_estimation(
+        tg, radius_hit, epsilon=epsilon, eta=eta,
+        full_dist_map=full_dist_map)
+    tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
+        preparation_for_curvature_estimation(
+            tg, exclude_borders=exclude_borders, graph_file=gt_file)
+
+
+def simple_workflow_part2(
+        fold, surf_file, base_filename, scale_factor_to_nm, scale_x, scale_y,
+        scale_z, radius_hit, epsilon=0, eta=0, exclude_borders=False,
+        methods=['VCTV']):
+    # TODO docstring if remains
+    print '\nReading in the surface file to get a vtkPolyData surface...'
+    surf = io.load_poly(fold + surf_file)
+    # rescale the surface to nm
+    scaled_surf = rescale_surface(surf, scale_factor_to_nm)
+    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
+            fold, base_filename, radius_hit, epsilon, eta)
+    for method in methods:
+        tg_curv, surface_curv = curvature_estimation(
+            scaled_surf, scale_factor_to_nm, scale_x, scale_y, scale_z,
+            radius_hit, all_neighbor_idx_to_dist=None,
+            exclude_borders=exclude_borders, graph_file=gt_file, method=method)
+        # Saving the output (TriangleGraph object) for later inspection in
+        # ParaView:
+        surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta)
+        io.save_vtp(surface_curv, surf_file)
+
+
 def main(membrane):
     """
     Main function for running the workflow function for real data.
@@ -506,8 +554,13 @@ def main(membrane):
     radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
     surf_file = "t3_ny01_cropped_{}.surface.vtp".format(membrane)
     base_filename = "t3_ny01_cropped_{}".format(membrane)
-    simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
-                    scale_y, scale_z, radius_hit, epsilon=0, eta=0)
+    # simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
+    #                 scale_y, scale_z, radius_hit, epsilon=0, eta=0)
+    simple_workflow_part2(
+        fold, surf_file, base_filename, pixel_size, scale_x, scale_y,
+        scale_z, radius_hit, epsilon=0, eta=0, exclude_borders=False,
+        methods=['VV'])  # done with 'VCTV'
+    # TODO exclude_borders=True if want no curvature estimation at borders
     t_end = time.time()
     duration = t_end - t_begin
     print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
