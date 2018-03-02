@@ -2274,12 +2274,12 @@ class TriangleGraph(SurfaceGraph):
     #         W_r = (E_1 - N_r) / sub_vector_length
     #     else:
     #         W_r = (E_1 + N_r) / add_vector_length
-    #     # print "W_r:"
-    #     # print W_r
-    #     # Q_r = np.eye(3) - 2 * outer(W_r, W_r)
-    #     #Q_r = np.eye(3) -2 * outer(N_r, N_r)
-    #     # print "Q_r:"
-    #     # print Q_r
+    #     print "W_r:"
+    #     print W_r
+    #     Q_r = np.eye(3) - 2 * outer(W_r, W_r)
+    #     # Q_r = np.eye(3) - 2 * outer(N_r, N_r)
+    #     print "Q_r:"
+    #     print Q_r
     #     print "M_r:"
     #     print M_r
     #     M_r_new = multiply(multiply(transpose(Q_r), M_r), Q_r)

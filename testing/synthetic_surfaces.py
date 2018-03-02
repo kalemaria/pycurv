@@ -492,7 +492,7 @@ class SaddleGenerator(object):
 
 def main():
     """
-    Main function generating some sphere and cylinder surfaces.
+    Main function generating some surfaces.
 
     Returns:
         None
