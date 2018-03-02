@@ -490,6 +490,83 @@ class SaddleGenerator(object):
         return surface
 
 
+class ConeGenerator(object):
+    # TODO docstring
+
+    @staticmethod
+    def generate_cone(r, h, res, subdivisions=0, decimate=0.0,
+                      smoothing_iterations=0, verbose=False):
+        # TODO docstring
+        if verbose:
+            print "Generating a cone surface..."
+        cone = vtk.vtkConeSource()
+        cone.SetRadius(r)
+        cone.SetHeight(h)
+        cone.SetResolution(res)
+        cone.Update()
+        cone_surface = cone.GetOutput()
+        if verbose:
+            print("{} points".format(cone_surface.GetNumberOfPoints()))
+            print("{} triangles".format(cone_surface.GetNumberOfCells()))
+
+        if subdivisions > 0:
+            # cone_loop = vtk.vtkLoopSubdivisionFilter()
+            # cone_loop.SetNumberOfSubdivisions(subdivisions)
+            # cone_loop.SetInputData(cone_surface)
+            # cone_loop.Update()
+
+            # cone_butterfly = vtk.vtkButterflySubdivisionFilter()
+            # cone_butterfly.SetNumberOfSubdivisions(subdivisions)
+            # cone_butterfly.SetInputData(cone_surface)
+            # cone_butterfly.Update()
+
+            cone_linear = vtk.vtkLinearSubdivisionFilter()
+            cone_linear.SetNumberOfSubdivisions(subdivisions)
+            cone_linear.SetInputData(cone_surface)
+            cone_linear.Update()
+            cone_surface = cone_linear.GetOutput()
+            if verbose:
+                print("{} points after subdivision".format(
+                    cone_surface.GetNumberOfPoints()))
+                print("{} triangles after subdivision".format(
+                    cone_surface.GetNumberOfCells()))
+
+        if decimate > 0:
+            cone_decimate = vtk.vtkDecimatePro()
+            cone_decimate.SetInputData(cone_surface)
+            cone_decimate.SetTargetReduction(decimate)
+            cone_decimate.PreserveTopologyOn()
+            cone_decimate.SplittingOn()
+            cone_decimate.BoundaryVertexDeletionOn()
+            cone_decimate.Update()
+            cone_surface = cone_decimate.GetOutput()
+            if verbose:
+                print("{} points after decimation".format(
+                    cone_surface.GetNumberOfPoints()))
+                print("{} triangles after decimation".format(
+                    cone_surface.GetNumberOfCells()))
+
+        if smoothing_iterations > 0:
+            cone_smooth = vtk.vtkWindowedSincPolyDataFilter()
+            cone_smooth.SetInputData(cone_surface)
+            cone_smooth.SetNumberOfIterations(smoothing_iterations)
+            cone_smooth.BoundarySmoothingOn()
+            cone_smooth.FeatureEdgeSmoothingOn()
+            cone_smooth.SetFeatureAngle(90.0)
+            cone_smooth.SetPassBand(0.1)  # the lower the more smoothing
+            cone_smooth.NonManifoldSmoothingOn()
+            cone_smooth.NormalizeCoordinatesOn()
+            cone_smooth.Update()
+            cone_surface = cone_smooth.GetOutput()
+            if verbose:
+                print("{} points after smoothing".format(
+                    cone_surface.GetNumberOfPoints()))
+                print("{} triangles after smoothing".format(
+                    cone_surface.GetNumberOfCells()))
+
+        return cone_surface
+
+
 def main():
     """
     Main function generating some surfaces.
@@ -508,19 +585,19 @@ def main():
     #             "{}plane_half_size10_res30_noise10.vtp".format(fold))
 
     # UV Sphere
-    sg = SphereGenerator()
-    sphere = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
-                                           longitude_res=50)
-    are_triangle_vertices_on_smooth_sphere_surface(sphere, r=10, error=0.001)
+    # sg = SphereGenerator()
+    # sphere = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
+    #                                        longitude_res=50)
+    # are_triangle_vertices_on_smooth_sphere_surface(sphere, r=10, error=0.001)
     # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
     # io.save_vtp(sphere_noise, fold + "sphere_r10_res50_noise10.vtp")
 
     # Sphere from gauss mask
-    sg = SphereGenerator()
-    sphere = sg.generate_gauss_sphere_surface(r=10)
+    # sg = SphereGenerator()
+    # sphere = sg.generate_gauss_sphere_surface(r=10)
     # io.save_vtp(sphere, "{}gauss_sphere_r10.vtp".format(fold))
-    are_triangle_vertices_on_smooth_sphere_surface(
-        sphere, r=10, center=[12, 12, 12], error=0.009)
+    # are_triangle_vertices_on_smooth_sphere_surface(
+    #     sphere, r=10, center=[12, 12, 12], error=0.009)
     # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
     # io.save_vtp(sphere_noise, "{}gauss_sphere_r10_noise10.vtp".format(fold))
 
@@ -544,6 +621,23 @@ def main():
     # csr = 10
     # torus = sg.generate_parametric_torus(rr, csr)
     # io.save_vtp(torus, "{}torus_rr{}_csr{}.vtp".format(fold, rr, csr))
+
+    # Cone
+    pg = ConeGenerator()
+    r = 6
+    h = 8
+    res = 38
+    # cone = pg.generate_cone(r, h, res)
+    # io.save_vtp(cone, "{}cone/cone_r{}_h{}_res{}.vtp".format(fold, r, h, res))
+    subdiv = 3
+    decimate = 0.8
+    iter = 0
+    cone_smooth = pg.generate_cone(r, h, res, subdiv, decimate, iter,
+                                   verbose=True)
+    io.save_vtp(
+        cone_smooth,
+        "{}cone/cone_r{}_h{}_res{}_linear_subdiv{}_decimate{}_smooth_iter{}.vtp"
+        .format(fold, r, h, res, subdiv, decimate, iter))
 
 
 if __name__ == "__main__":
