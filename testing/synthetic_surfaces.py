@@ -1,11 +1,11 @@
 import vtk
 import math
 import numpy as np
-import os
+# import os
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import pexceptions, surface_graphs
-from synthetic_volumes import SphereMask, CylinderMask
+from synthetic_volumes import SphereMask, CylinderMask, ConeMask
 
 """A set of functions and classes for generating artificial surfaces of
 geometrical objects."""
@@ -155,6 +155,27 @@ def __copy_and_name_array(da, name):
         return None
 
 
+def isosurface_from_mask(mask_np, threshold=1.0):
+    """
+    Generates a isosurface using the Marching Cubes method.
+
+    Args:
+        mask_np (numpy.ndarray): a 3D binary mask
+        threshold (optional, float): threshold for isosurface (default 1.0)
+
+    Returns:
+        a surface (vtk.vtkPolyData)
+    """
+    mask_vti = io.numpy_to_vti(mask_np)
+    surfaces = vtk.vtkMarchingCubes()
+    surfaces.SetInputData(mask_vti)
+    surfaces.ComputeNormalsOn()
+    surfaces.ComputeGradientsOn()
+    surfaces.SetValue(0, threshold)
+    surfaces.Update()
+    return surfaces.GetOutput()
+
+
 def is_coordinate_on_sphere_surface(x, y, z, r, error=0.0):
     """
     Checks whether a coordinate is on smooth sphere surface. Only works if the
@@ -302,7 +323,7 @@ class SphereGenerator(object):
         return sphere_surface
 
     @staticmethod
-    def generate_sphere_surface(r):
+    def generate_binary_sphere_surface(r):
         """
         Generates a sphere surface with a given radius using a filled binary
         sphere mask and the Marching Cubes method. The resulting surface tends
@@ -318,17 +339,9 @@ class SphereGenerator(object):
         box = int(math.ceil(r * 2.5))
         sm = SphereMask()
         mask_np = sm.generate_sphere_mask(r, box)
-        mask_vti = io.numpy_to_vti(mask_np)
 
-        # Iso-surface
-        surfaces = vtk.vtkMarchingCubes()
-        surfaces.SetInputData(mask_vti)
-        surfaces.ComputeNormalsOn()
-        surfaces.ComputeGradientsOn()
-        surfaces.SetValue(0, 1)
-        surfaces.Update()
-
-        return surfaces.GetOutput()
+        # Generate iso-surface from the mask
+        return isosurface_from_mask(mask_np)
 
     @staticmethod
     def generate_gauss_sphere_surface(r):
@@ -349,20 +362,12 @@ class SphereGenerator(object):
         mask_np = sm.generate_gauss_sphere_mask(sg, box)
         # center_voxel = [box / 2, box / 2, box / 2]
         # print center_voxel
-        mask_vti = io.numpy_to_vti(mask_np)
 
         # Calculate threshold th to get the desired radius r
         th = math.exp(-(r ** 2) / (2 * (sg ** 2)))
 
-        # Iso-surface
-        surfaces = vtk.vtkMarchingCubes()
-        surfaces.SetInputData(mask_vti)
-        surfaces.ComputeNormalsOn()
-        surfaces.ComputeGradientsOn()
-        surfaces.SetValue(0, th)
-        surfaces.Update()
-
-        return surfaces.GetOutput()
+        # Generate iso-surface from the mask
+        return isosurface_from_mask(mask_np, threshold=th)
 
 
 class CylinderGenerator(object):
@@ -432,20 +437,12 @@ class CylinderGenerator(object):
         box = int(math.ceil(r * 2.5))
         cm = CylinderMask()
         mask_np = cm.generate_gauss_cylinder_mask(sg, box)
-        mask_vti = io.numpy_to_vti(mask_np)
 
         # Calculate threshold th to get the desired radius r
         th = math.exp(-(r ** 2) / (2 * (sg ** 2)))
 
-        # Iso-surface
-        surfaces = vtk.vtkMarchingCubes()
-        surfaces.SetInputData(mask_vti)
-        surfaces.ComputeNormalsOn()
-        surfaces.ComputeGradientsOn()
-        surfaces.SetValue(0, th)
-        surfaces.Update()
-
-        return surfaces.GetOutput()
+        # Generate iso-surface from the mask
+        return isosurface_from_mask(mask_np, threshold=th)
 
 
 class SaddleGenerator(object):
@@ -566,6 +563,27 @@ class ConeGenerator(object):
 
         return cone_surface
 
+    @staticmethod
+    def generate_binary_cone_surface(r, h):
+        """
+        Generates a cone surface with a given radius and height using a filled
+        binary cone mask and the Marching Cubes method. The resulting surface
+        tends to follow the sharp voxels outline.
+
+        Args:
+            r (int): cone radius
+            h (int): cone height
+
+        Returns:
+            a cone surface (vtk.vtkPolyData)
+        """
+        # Generate a cone mask with radius == r and height == h
+        box = max(2 * r + 1, h + 1) + 2
+        cm = ConeMask()
+        mask_np = cm.generate_cone_mask(r, h, box)
+        # Generate iso-surface from the mask
+        return isosurface_from_mask(mask_np)
+
 
 def main():
     """
@@ -624,20 +642,25 @@ def main():
 
     # Cone
     pg = ConeGenerator()
+    # r = 6
+    # h = 8
+    # res = 38
+    # # cone = pg.generate_cone(r, h, res)
+    # # io.save_vtp(cone, "{}cone/cone_r{}_h{}_res{}.vtp".format(fold, r, h, res))
+    # subdiv = 3
+    # decimate = 0.8
+    # iter = 0
+    # cone_smooth = pg.generate_cone(r, h, res, subdiv, decimate, iter,
+    #                                verbose=True)
+    # io.save_vtp(
+    #     cone_smooth,
+    #     "{}cone/cone_r{}_h{}_res{}_linear_subdiv{}_decimate{}_smooth_iter{}.vtp"
+    #     .format(fold, r, h, res, subdiv, decimate, iter))
+
     r = 6
-    h = 8
-    res = 38
-    # cone = pg.generate_cone(r, h, res)
-    # io.save_vtp(cone, "{}cone/cone_r{}_h{}_res{}.vtp".format(fold, r, h, res))
-    subdiv = 3
-    decimate = 0.8
-    iter = 0
-    cone_smooth = pg.generate_cone(r, h, res, subdiv, decimate, iter,
-                                   verbose=True)
-    io.save_vtp(
-        cone_smooth,
-        "{}cone/cone_r{}_h{}_res{}_linear_subdiv{}_decimate{}_smooth_iter{}.vtp"
-        .format(fold, r, h, res, subdiv, decimate, iter))
+    h = 6
+    cone_binary = pg.generate_binary_cone_surface(r, h)
+    io.save_vtp(cone_binary, "{}cone/cone_r{}_h{}.vtp".format(fold, r, h))
 
 
 if __name__ == "__main__":

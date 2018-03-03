@@ -396,7 +396,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             cg = CylinderGenerator()
-            if res == 0:  # generate surface from a mask with gen_surface
+            if res == 0:  # generate surface from a gaussian mask
                 cylinder = cg.generate_gauss_cylinder_surface(r)
             else:  # generate surface directly with VTK
                 print "Warning: cylinder contains planes!"
@@ -711,7 +711,7 @@ class VectorVotingTestCase(unittest.TestCase):
         if not os.path.isfile(surf_file):
             sg = SphereGenerator()
             if binary:
-                sphere = sg.generate_sphere_surface(radius)
+                sphere = sg.generate_binary_sphere_surface(radius)
                 io.save_vtp(sphere, surf_file)
             else:
                 if res > 0:  # generate a UV sphere surface directly with VTK
