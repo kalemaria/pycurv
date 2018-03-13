@@ -239,17 +239,19 @@ def main():
     Returns:
         None
     """
-    fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
+    # fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
+    fold = "/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/"
     if not os.path.exists(fold):
         os.makedirs(fold)
 
-    # # Generate a gaussian sphere mask
-    # sm = SphereMask()
-    # sm_sg = 33
-    # sm_box = 251
-    # gauss_sphere = sm.generate_gauss_sphere_mask(sm_sg, sm_box)
-    # io.save_numpy(gauss_sphere, "{}gauss_sphere_sg{}_box{}.mrc".format(
-    #     fold, sm_sg, sm_box))
+    # Generate a gaussian sphere mask
+    sm = SphereMask()
+    r = 10
+    sg = r / 3.0
+    box = int(math.ceil(r * 2.5))
+    gauss_sphere = sm.generate_gauss_sphere_mask(sg, box)
+    io.save_numpy(gauss_sphere, "{}gauss_sphere_mask_r{}_box{}.mrc".format(
+        fold, r, box))
 
     # # Generate a filled sphere mask
     # sm = SphereMask()
@@ -311,16 +313,16 @@ def main():
     # cone_mask = cm.generate_cone_mask(r, h, box, t=t)
     # io.save_numpy(cone_mask, surf_filebase + ".mrc")
 
-    # Generate a hollow cone mask
-    r = 6
-    h = 6
-    t = 1
-    surf_filebase = '{}cone/cone_r{}_h{}_t{}'.format(fold, r, h, t)
-    cm = ConeMask()
-    box = max(2 * r + 1, h + 1) + 2
-    cone_mask = cm.generate_cone_mask(r, h, box, t=t, opened=True)
-    io.save_numpy(cone_mask, surf_filebase + ".mrc")
-    run_gen_surface(cone_mask, surf_filebase, purge_ratio=1)
+    # # Generate a hollow cone mask
+    # r = 6
+    # h = 6
+    # t = 1
+    # surf_filebase = '{}cone/cone_r{}_h{}_t{}'.format(fold, r, h, t)
+    # cm = ConeMask()
+    # box = max(2 * r + 1, h + 1) + 2
+    # cone_mask = cm.generate_cone_mask(r, h, box, t=t, opened=True)
+    # io.save_numpy(cone_mask, surf_filebase + ".mrc")
+    # run_gen_surface(cone_mask, surf_filebase, purge_ratio=1)
 
 
 if __name__ == "__main__":

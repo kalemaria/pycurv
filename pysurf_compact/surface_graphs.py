@@ -846,9 +846,11 @@ class TriangleGraph(SurfaceGraph):
             self.graph.vp.is_on_border.a = np.zeros(
                 shape=self.graph.num_vertices())
             self.graph.vp.is_on_border.a[border_vertices_indices] = 1
-            print ('%s vertices are at the graph border.'
-                   % len(border_vertices_indices))
-            return border_vertices_indices
+        else:
+            border_vertices_indices = np.where(
+                self.graph.vp.is_on_border.a == 1)[0]
+        print ('%s vertices are at the graph border.'
+               % len(border_vertices_indices))
 
         if purge is True:
             print ('Filtering out the vertices at the graph borders and their '
@@ -866,6 +868,8 @@ class TriangleGraph(SurfaceGraph):
             # Update graph's dictionary coordinates_to_vertex_index:
             self.update_coordinates_to_vertex_index()
 
+        return border_vertices_indices
+
     def find_vertices_near_border(self, b, purge=False):
         """
         Finds vertices that are within a given distance in nanometers to the
@@ -880,41 +884,40 @@ class TriangleGraph(SurfaceGraph):
         Returns:
             None
         """
-        t_very_begin = time.time()
-        border_vertices_indices = self.find_graph_border()
+        if "is_near_border" not in self.graph.vertex_properties:
+            border_vertices_indices = self.find_graph_border()
 
-        print ('For each graph border vertex, finding vertices within geodesic '
-               'distance %s to it...' % b)
-        vertex_id_within_b_to_border = dict()
-        for border_v_i in border_vertices_indices:
-            border_v = self.graph.vertex(border_v_i)
-            dist_border_v = shortest_distance(self.graph, source=border_v,
-                                              target=None,
-                                              weights=self.graph.ep.distance,
-                                              max_dist=b)
-            dist_border_v = dist_border_v.get_array()
+            print ('For each graph border vertex, finding vertices within '
+                   'geodesic distance %s to it...' % b)
+            vertex_id_within_b_to_border = dict()
+            for border_v_i in border_vertices_indices:
+                border_v = self.graph.vertex(border_v_i)
+                dist_border_v = shortest_distance(
+                    self.graph, source=border_v, target=None,
+                    weights=self.graph.ep.distance, max_dist=b)
+                dist_border_v = dist_border_v.get_array()
 
-            idxs = np.where(dist_border_v <= b)[0]
-            for idx in idxs:
-                dist = dist_border_v[idx]
-                try:
-                    vertex_id_within_b_to_border[idx] = min(
-                        dist, vertex_id_within_b_to_border[idx]
-                    )
-                except KeyError:
-                    vertex_id_within_b_to_border[idx] = dist
-        print ('%s vertices are within distance %s nm to the graph border.'
-               % (len(vertex_id_within_b_to_border), b))
+                idxs = np.where(dist_border_v <= b)[0]
+                for idx in idxs:
+                    dist = dist_border_v[idx]
+                    try:
+                        vertex_id_within_b_to_border[idx] = min(
+                            dist, vertex_id_within_b_to_border[idx])
+                    except KeyError:
+                        vertex_id_within_b_to_border[idx] = dist
+            print ('%s vertices are within distance %s nm to the graph border.'
+                   % (len(vertex_id_within_b_to_border), b))
 
-        # Add a boolean vertex property telling whether a vertex is within
-        # distance b to border:
-        self.graph.vp.is_near_border = self.graph.new_vertex_property("boolean")
-        for v in self.graph.vertices():
-            v_i = self.graph.vertex_index[v]
-            if v_i in vertex_id_within_b_to_border:
-                self.graph.vp.is_near_border[v] = 1
-            else:
-                self.graph.vp.is_near_border[v] = 0
+            # Add a boolean vertex property telling whether a vertex is within
+            # distance b to border:
+            self.graph.vp.is_near_border = self.graph.new_vertex_property(
+                "boolean")
+            for v in self.graph.vertices():
+                v_i = self.graph.vertex_index[v]
+                if v_i in vertex_id_within_b_to_border:
+                    self.graph.vp.is_near_border[v] = 1
+                else:
+                    self.graph.vp.is_near_border[v] = 0
 
         if purge is True:
             print 'Filtering out those vertices and their edges...'
@@ -930,11 +933,6 @@ class TriangleGraph(SurfaceGraph):
             del self.graph.vertex_properties["is_near_border"]
             # Update graph's dictionary coordinates_to_vertex_index:
             self.update_coordinates_to_vertex_index()
-
-        t_very_end = time.time()
-        duration = t_very_end - t_very_begin
-        print ('Finding vertices near border took: %s min %s s'
-               % divmod(duration, 60))
 
     def find_vertices_outside_mask(self, mask, label=1, allowed_dist=0):
         """

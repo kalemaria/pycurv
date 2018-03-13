@@ -256,7 +256,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # Running the modified Normal Vector Voting algorithm (with curvature
         # tensor voting, because its second pass is the fastest):
         results = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=False, methods=['VCTV'])
+            tg, radius_hit, exclude_borders=0, methods=['VCTV'])
         surf_vv = results['VCTV'][1]
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
@@ -303,7 +303,7 @@ class VectorVotingTestCase(unittest.TestCase):
             self.assertLessEqual(error, 0.3, msg=msg)
 
     def parametric_test_cylinder_directions_curvatures(
-            self, r, radius_hit, inverse=False, res=0, h=0, noise=10,
+            self, r, radius_hit, eb, inverse=False, res=0, h=0, noise=0,
             methods=['VV'], page_curvature_formula=False, num_points=None,
             full_dist_map=False):
         """
@@ -319,6 +319,8 @@ class VectorVotingTestCase(unittest.TestCase):
             radius_hit (float): radius in length unit of the graph, here voxels;
                 it should be chosen to correspond to radius of smallest features
                 of interest on the surface
+            eb (float): distance from borders to exclude in length unit of the
+                graph, here voxels
             inverse (boolean, optional): if True (default False), the sphere
                 will have normals pointing outwards (negative curvature), else
                 the other way around
@@ -380,8 +382,8 @@ class VectorVotingTestCase(unittest.TestCase):
             inverse_str = "inverse_"
         else:
             inverse_str = ""
-        base_filename = "{}{}cylinder_r{}_h{}".format(
-            files_fold, inverse_str, r, h)
+        base_filename = "{}{}cylinder_r{}_h{}_eb{}".format(
+            files_fold, inverse_str, r, h, eb)
         VTK_eval_file = '{}.VTK.csv'.format(base_filename)
 
         if inverse:
@@ -432,24 +434,24 @@ class VectorVotingTestCase(unittest.TestCase):
             divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
         # Running the modified Normal Vector Voting algorithm:
-        # method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        #     tg, radius_hit, exclude_borders=True, methods=methods,
-        #     page_curvature_formula=page_curvature_formula,
-        #     num_points=num_points)
-        tg, all_neighbor_idx_to_dist = normals_estimation(
-            tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
-        tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
-            preparation_for_curvature_estimation(tg, exclude_borders=True,
-                                                 graph_file="temp.gt")
-        method_tg_surf_dict = {}
-        for method in methods:
-            tg_curv, surface_curv = curvature_estimation(
-                tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
-                tg.scale_z, radius_hit, all_neighbor_idx_to_dist,
-                exclude_borders=True, graph_file='temp.gt', method=method,
-                page_curvature_formula=page_curvature_formula,
-                num_points=num_points)
-            method_tg_surf_dict[method] = (tg_curv, surface_curv)
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, exclude_borders=eb, methods=methods,
+            page_curvature_formula=page_curvature_formula,
+            num_points=num_points)
+        # tg, all_neighbor_idx_to_dist = normals_estimation(
+        #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
+        # tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
+        #     preparation_for_curvature_estimation(tg, exclude_borders=eb,
+        #                                          graph_file="temp.gt")
+        # method_tg_surf_dict = {}
+        # for method in methods:
+        #     tg_curv, surface_curv = curvature_estimation(
+        #         tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
+        #         tg.scale_z, radius_hit, all_neighbor_idx_to_dist,
+        #         exclude_borders=eb, graph_file='temp.gt', method=method,
+        #         page_curvature_formula=page_curvature_formula,
+        #         num_points=num_points)
+        #     method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
         # Ground-truth T_h vector is parallel to Z axis
         true_T_h = np.array([0, 0, 1])
@@ -741,7 +743,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
         # Running the modified Normal Vector Voting algorithm:
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=False, methods=methods,
+            tg, radius_hit, exclude_borders=0, methods=methods,
             page_curvature_formula=page_curvature_formula,
             num_points=num_points, full_dist_map=full_dist_map)
 
@@ -950,24 +952,24 @@ class VectorVotingTestCase(unittest.TestCase):
         true_kappa_2 = tg.get_vertex_property_array("true_kappa_2")
 
         # Running the modified Normal Vector Voting algorithm:
-        # method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        #     tg, radius_hit, exclude_borders=False, methods=methods,
-        #     page_curvature_formula=page_curvature_formula,
-        #     num_points=num_points, full_dist_map=full_dist_map)
-        tg, all_neighbor_idx_to_dist = normals_estimation(
-            tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
-        tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
-            preparation_for_curvature_estimation(tg, exclude_borders=False,
-                                                 graph_file="temp.gt")
-        method_tg_surf_dict = {}
-        for method in methods:
-            tg_curv, surface_curv = curvature_estimation(
-                tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
-                tg.scale_z, radius_hit, all_neighbor_idx_to_dist,
-                exclude_borders=False, graph_file='temp.gt', method=method,
-                page_curvature_formula=page_curvature_formula,
-                num_points=num_points)
-            method_tg_surf_dict[method] = (tg_curv, surface_curv)
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, exclude_borders=0, methods=methods,
+            page_curvature_formula=page_curvature_formula,
+            num_points=num_points, full_dist_map=full_dist_map)
+        # tg, all_neighbor_idx_to_dist = normals_estimation(
+        #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
+        # tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
+        #     preparation_for_curvature_estimation(tg, exclude_borders=0,
+        #                                          graph_file="temp.gt")
+        # method_tg_surf_dict = {}
+        # for method in methods:
+        #     tg_curv, surface_curv = curvature_estimation(
+        #         tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
+        #         tg.scale_z, radius_hit, all_neighbor_idx_to_dist,
+        #         exclude_borders=0, graph_file='temp.gt', method=method,
+        #         page_curvature_formula=page_curvature_formula,
+        #         num_points=num_points)
+        #     method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
         for method in method_tg_surf_dict.keys():
             # Saving the output (TriangleGraph object) for later inspection in
@@ -1131,12 +1133,12 @@ class VectorVotingTestCase(unittest.TestCase):
             if res == 0:  # generate surface from a binary mask
                 print "Warning: cone contains a plane!"
                 cone = cg.generate_binary_cone_surface(r, h)
-                exclude_borders = False
+                exclude_borders = 0
             else:  # generate surface directly with VTK
                 cone = cg.generate_cone(r, h, res, subdivisions=3, decimate=0.8)
                 if noise > 0:
                     cone = add_gaussian_noise_to_surface(cone, percent=noise)
-                exclude_borders = True
+                exclude_borders = 1  # TODO think to exclude more
             io.save_vtp(cone, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
@@ -1193,19 +1195,19 @@ class VectorVotingTestCase(unittest.TestCase):
     #             self.parametric_test_plane_normals(
     #                 10, rh, res=10, noise=n)
 
-    # def test_cylinder_directions_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) and curvatures are
-    #     correctly estimated for an opened cylinder surface (without the circular
-    #     planes) with known orientation (height, i.e. T_2, parallel to the Z
-    #     axis), certain radius and noise level.
-    #     """
-    #     p = 50
-    #     for n in [0]:
-    #         for rh in [8]:  # 3, 4, 5, 6, 7
-    #             self.parametric_test_cylinder_directions_curvatures(
-    #                 10, rh, noise=n, methods=['VCTV'],  # 'VV', 'VVCF'
-    #                 page_curvature_formula=False, num_points=p)
+    def test_cylinder_directions_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) and curvatures are
+        correctly estimated for an opened cylinder surface (without the circular
+        planes) with known orientation (height, i.e. T_2, parallel to the Z
+        axis), certain radius and noise level.
+        """
+        p = 50
+        for n in [0]:
+            for rh in [5, 6, 7, 9]:  # 8
+                self.parametric_test_cylinder_directions_curvatures(
+                    10, rh, eb=5, noise=n, methods=['VCTV', 'VV', 'VVCF'],
+                    page_curvature_formula=False, num_points=p)
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1268,14 +1270,14 @@ class VectorVotingTestCase(unittest.TestCase):
     #             25, 10, rh, methods=['VCTV', 'VV', 'VVCF'],
     #             page_curvature_formula=False, num_points=p, full_dist_map=True)
 
-    def test_cone(self):
-        p = 50
-        rh = 5
-        res = 38  # 0
-        for n in [10]:
-            self.parametric_test_cone(
-                6, 6, radius_hit=rh, res=res, noise=n, num_points=p,
-                methods=['VCTV', 'VV', 'VVCF'], page_curvature_formula=False)
+    # def test_cone(self):
+    #     p = 50
+    #     rh = 5
+    #     res = 38  # 0
+    #     for n in [10]:
+    #         self.parametric_test_cone(
+    #             6, 6, radius_hit=rh, res=res, noise=n, num_points=p,
+    #             methods=['VCTV', 'VV', 'VVCF'], page_curvature_formula=False)
 
 
 if __name__ == '__main__':

@@ -252,8 +252,8 @@ def plot_cylinder_kappa_1_diff_rh(n=0):
             "cylinder/noise0/files4plotting/".format(n))
     plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
                  "cylinder/noise0/plots/".format(n))
-    basename = "cylinder_r10_h25"
-    for method in ['VV', 'VCTV', 'VVCF']:  # TODO 'VVCF_50points'?
+    basename = "cylinder_r10_h25_eb5"
+    for method in ['VV', 'VCTV', 'VVCF_50points']:
         kappa_arrays = []
         labels = []
         for rh in range(5, 10):
@@ -289,12 +289,12 @@ def plot_cylinder_T_2_and_kappa_1_errors(n=0):
             "cylinder/noise0/files4plotting/".format(n))
     plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
                  "cylinder/noise0/plots/".format(n))
-    basename = "cylinder_r10_h25"
+    basename = "cylinder_r10_h25_eb5"
     df = pd.read_csv("{}{}.VCTV_rh5.csv".format(fold, basename), sep=';')
     VCTV_T_2_errors = df["T2Errors"].tolist()
     VCTV_kappa_1_errors = df["kappa1RelErrors"].tolist()
 
-    VVCF_kappa_1_errors = pd.read_csv("{}{}.VVCF_rh5.csv".format(
+    VVCF_kappa_1_errors = pd.read_csv("{}{}.VVCF_50points_rh5.csv".format(
         fold, basename), sep=';')["kappa1RelErrors"].tolist()
 
     df = pd.read_csv("{}{}.VV_rh5.csv".format(fold, basename), sep=';')
@@ -860,7 +860,7 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(n=0):
 if __name__ == "__main__":
     # plot_plane_normals()
     # plot_sphere_kappa_1_and_2_fitting_diff_num_points()
-    # plot_sphere_kappa_1_and_2_diff_rh()
+    plot_sphere_kappa_1_and_2_diff_rh()
     # plot_sphere_kappa_1_and_2_errors()
     # plot_inverse_sphere_kappa_1_and_2_errors()
     # plot_cylinder_kappa_1_diff_rh()  # TODO later VVCF_50points with lower rh
@@ -871,6 +871,6 @@ if __name__ == "__main__":
 
     # plot_sphere_kappa_1_and_2_diff_rh(r=10, binary=True)
     # plot_sphere_kappa_1_and_2_errors_noVVCF(r=10, binary=True)
-    for r in [30]:  # 10, 20, 30
-        plot_sphere_kappa_1_and_2_errors_VV_VCTV(r=r, rhVV=28, rhVCTV=28,
-                                                 binary=True)
+    # for r in [30]:  # 10, 20, 30
+    #     plot_sphere_kappa_1_and_2_errors_VV_VCTV(r=r, rhVV=28, rhVCTV=28,
+    #                                              binary=True)

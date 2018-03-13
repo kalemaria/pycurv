@@ -671,7 +671,7 @@ def vector_curvature_tensor_voting(
 
 
 def normals_directions_and_curvature_estimation(
-        tg, radius_hit, epsilon=0, eta=0, exclude_borders=False,
+        tg, radius_hit, epsilon=0, eta=0, exclude_borders=0,
         methods=['VV'], page_curvature_formula=False, num_points=None,
         full_dist_map=False, graph_file='temp.gt'):
     """
@@ -691,9 +691,9 @@ def normals_directions_and_curvature_estimation(
             influencing the number of triangles classified as "crease junction"
             (class 2) and "no preferred orientation" (class 3, see Notes),
             default 0
-        exclude_borders (boolean, optional): if True, principle curvatures and
-            directions are not estimated for triangles at surface borders
-            (default False)
+        exclude_borders (boolean, optional): if > 0, principle curvatures and
+            directions are not estimated for triangles within this distance to
+            surface borders (default 0)
         methods (list, optional): all methods to run in the second pass ('VV',
             'VVCF' and 'VCTV' are possible, default is 'VV')
         page_curvature_formula (boolean, optional): if True (default False),
@@ -721,350 +721,18 @@ def normals_directions_and_curvature_estimation(
     """
     t_begin = time.time()
 
-    # Preparation (calculations that are the same for the whole graph)
-    t_begin0 = time.time()
-    print '\nPreparing for running modified Vector Voting...'
+    tg, all_neighbor_idx_to_dist = normals_estimation(
+        tg, radius_hit, epsilon, eta, full_dist_map)
 
-    # * Maximal geodesic neighborhood distance g_max for normal vector voting *
-    # g_max is 1/4 of circle circumference with radius=radius_hit
-    g_max = math.pi * radius_hit / 2
-    print "radius_hit = {}".format(radius_hit)
-    print "g_max = {}".format(g_max)
-
-    # * sigma *
-    sigma = g_max / 3.0
-
-    # * Maximal triangle area *
-    A, _ = tg.get_areas()
-    A_max = np.max(A)
-    print "Maximal triangle area = %s" % A_max
-
-    # * Orientation classification parameters *
-    print "epsilon = %s" % epsilon
-    print "eta = %s" % eta
-
-    # * Adding vertex properties to be filled in classifying_orientation *
-    # vertex property storing the orientation class of the vertex: 1 if it
-    # belongs to a surface patch, 2 if it belongs to a crease junction or 3 if
-    # it doesn't have a preferred orientation:
-    tg.graph.vp.orientation_class = tg.graph.new_vertex_property("int")
-    # vertex property for storing the estimated normal of the corresponding
-    # triangle (if the vertex belongs to class 1; scaled in nm):
-    tg.graph.vp.N_v = tg.graph.new_vertex_property("vector<float>")
-    # vertex property for storing the estimated tangent of the corresponding
-    # triangle (if the vertex belongs to class 2; scaled in nm):
-    tg.graph.vp.T_v = tg.graph.new_vertex_property("vector<float>")
-
-    # * Adding vertex properties to be filled by all curvature methods *
-    # vertex properties for storing the estimated principal directions of the
-    # maximal and minimal curvatures of the corresponding triangle (if the
-    # vertex belongs to class 1; scaled in nm):
-    tg.graph.vp.T_1 = tg.graph.new_vertex_property("vector<float>")
-    tg.graph.vp.T_2 = tg.graph.new_vertex_property("vector<float>")
-    # vertex properties for storing the estimated maximal and minimal curvatures
-    # of the corresponding triangle (if the vertex belongs to class 1; scaled in
-    # nm):
-    tg.graph.vp.kappa_1 = tg.graph.new_vertex_property("float")
-    tg.graph.vp.kappa_2 = tg.graph.new_vertex_property("float")
-    # vertex property for storing the Gaussian curvature calculated from kappa_1
-    # and kappa_2 at the corresponding triangle:
-    tg.graph.vp.gauss_curvature_VV = tg.graph.new_vertex_property("float")
-    # vertex property for storing the mean curvature calculated from kappa_1 and
-    # kappa_2 at the corresponding triangle:
-    tg.graph.vp.mean_curvature_VV = tg.graph.new_vertex_property("float")
-    # vertex property for storing the shape index calculated from kappa_1 and
-    # kappa_2 at the corresponding triangle:
-    tg.graph.vp.shape_index_VV = tg.graph.new_vertex_property("float")
-    # vertex property for storing the curvedness calculated from kappa_1 and
-    # kappa_2 at the corresponding triangle:
-    tg.graph.vp.curvedness_VV = tg.graph.new_vertex_property("float")
-
-    t_end0 = time.time()
-    duration0 = t_end0 - t_begin0
-    print 'Preparation took: %s min %s s' % divmod(duration0, 60)
-
-    if full_dist_map is True:
-        # * Distance map between all pairs of vertices *
-        t_begin0 = time.time()
-        print "\nCalculating the full distance map..."
-        full_dist_map = shortest_distance(  # <class 'graph_tool.PropertyMap'>
-            tg.graph, weights=tg.graph.ep.distance)
-        t_end0 = time.time()
-        duration0 = t_end0 - t_begin0
-        print 'Calculation of the full distance map took: %s min %s s' % divmod(
-            duration0, 60)
-    else:
-        full_dist_map = None
-
-    # Main algorithm
-
-    # * For all vertices, collecting normal vector votes, while calculating
-    # average number of the geodesic neighbors, and classifying the orientation
-    # of each vertex *
-    print "\nRunning modified Vector Voting for all vertices..."
-
-    print ("\nFirst run: classifying orientation and estimating normals for "
-           "surface patches and tangents for creases...")
-    t_begin1 = time.time()
-
-    collecting_normal_votes = tg.collecting_normal_votes
-    all_num_neighbors = []
-    all_neighbor_idx_to_dist = []
-    classifying_orientation = tg.classifying_orientation
-    classes_counts = {}
-    for v in tg.graph.vertices():
-        neighbor_idx_to_dist, V_v = collecting_normal_votes(
-            v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
-        all_num_neighbors.append(len(neighbor_idx_to_dist))
-        all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
-        class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
-                                          verbose=False)
-        try:
-            classes_counts[class_v] += 1
-        except KeyError:
-            classes_counts[class_v] = 1
-
-    # Printing out some numbers concerning the first run:
-    avg_num_geodesic_neighbors = (sum(x for x in all_num_neighbors) /
-                                  len(all_num_neighbors))
-    print ("Average number of geodesic neighbors for all vertices: %s"
-           % avg_num_geodesic_neighbors)
-    print "%s surface patches" % classes_counts[1]
-    if 2 in classes_counts:
-        print "%s crease junctions" % classes_counts[2]
-    if 3 in classes_counts:
-        print "%s no preferred orientation" % classes_counts[3]
-
-    t_end1 = time.time()
-    duration1 = t_end1 - t_begin1
-    print 'First run took: %s min %s s' % divmod(duration1, 60)
-
-    condition1 = "orientation_class[v] == 1"
-    condition2 = "orientation_class[v] != 1 or (B_v is None and result is None)"
-
-    if exclude_borders:  # Exclude triangles at the borders from curvatures
-        # calculation and remove them in the end
-
-        t_begin0 = time.time()
-
-        print ('\nFinding triangles that are at surface borders and '
-               'excluding them from curvatures calculation...')
-        # Mark vertices at borders with vertex property 'is_on_border', do not
-        # delete
-        tg.find_graph_border(purge=False)
-
-        t_end0 = time.time()
-        duration0 = t_end0 - t_begin0
-        print 'Finding graph border took: %s min %s s' % divmod(duration0, 60)
-
-        condition1 += " and is_on_border[v] == 0"
-        condition2 += " or is_on_border[v] == 1"
-
-    # Save the graph to a file for use by different methods in the second run:
-    t_begin0 = time.time()
-    tg.graph.save(graph_file)  # TODO maybe delete it in the end
-    t_end0 = time.time()
-    duration0 = t_end0 - t_begin0
-    print '\nSaving the graph took: %s min %s s' % divmod(duration0, 60)
-    print tg.graph
+    preparation_for_curvature_estimation(tg, exclude_borders, graph_file)
 
     results = {}
-
-    if 'VCTV' in methods:
-        t_begin0 = time.time()
-
-        tg_VCTV = TriangleGraph(
-            surface=tg.surface, scale_factor_to_nm=tg.scale_factor_to_nm,
-            scale_x=tg.scale_x, scale_y=tg.scale_y, scale_z=tg.scale_z)
-        tg_VCTV.graph = load_graph(graph_file)
-
-        t_end0 = time.time()
-        duration0 = t_end0 - t_begin0
-        print '\nLoading the graph took: %s min %s s' % divmod(duration0, 60)
-        print tg_VCTV.graph
-
-        print ("\nSecond run: estimating principle curvatures and directions "
-               "for surface patches using vector curvature tensor voting "
-               "(VCTV)...")
-        t_begin2 = time.time()
-
-        orientation_class = tg_VCTV.graph.vp.orientation_class
-        gen_curv_vote = tg_VCTV.gen_curv_vote
-        if exclude_borders:
-            is_on_border = tg_VCTV.graph.vp.is_on_border
-
-        for i, v in enumerate(tg_VCTV.graph.vertices()):
-            # Estimate principal directions and curvatures (and calculate the
-            # Gaussian and mean curvatures, shape index and curvedness) for
-            # vertices belonging to a surface patch and not on border
-            B_v = None  # initialization
-            result = None  # initialization
-            if eval(condition1):
-                # None is returned if curvature at v cannot be estimated
-                result = gen_curv_vote(v, radius_hit, verbose=False)
-            # For crease, no preferably oriented vertices, vertices on border or
-            # vertices lacking neighbors, add placeholders to the corresponding
-            # vertex properties
-            if eval(condition2):
-                tg_VCTV.graph.vp.T_1[v] = np.zeros(shape=3)
-                tg_VCTV.graph.vp.T_2[v] = np.zeros(shape=3)
-                tg_VCTV.graph.vp.kappa_1[v] = 0
-                tg_VCTV.graph.vp.kappa_2[v] = 0
-                tg_VCTV.graph.vp.gauss_curvature_VV[v] = 0
-                tg_VCTV.graph.vp.mean_curvature_VV[v] = 0
-                tg_VCTV.graph.vp.shape_index_VV[v] = 0
-                tg_VCTV.graph.vp.curvedness_VV[v] = 0
-
-        if exclude_borders:
-            tg_VCTV.find_graph_border(purge=True)
-
-        # Transforming the resulting graph to a surface with triangles:
-        surface_VCTV = tg_VCTV.graph_to_triangle_poly()
-
-        results['VCTV'] = (tg_VCTV, surface_VCTV)
-
-        t_end2 = time.time()
-        duration2 = t_end2 - t_begin2
-        print 'Second run of VCTV took: %s min %s s' % divmod(duration2, 60)
-
-    if 'VV' in methods:
-        t_begin0 = time.time()
-
-        tg_VV = TriangleGraph(
-            surface=tg.surface, scale_factor_to_nm=tg.scale_factor_to_nm,
-            scale_x=tg.scale_x, scale_y=tg.scale_y, scale_z=tg.scale_z)
-        tg_VV.graph = load_graph(graph_file)
-
-        t_end0 = time.time()
-        duration0 = t_end0 - t_begin0
-        print '\nLoading the graph took: %s min %s s' % divmod(duration0, 60)
-        print tg_VV.graph
-
-        print ("\nSecond run: estimating principle curvatures and directions "
-               "for surface patches using vector voting (VV)...")
-        t_begin2 = time.time()
-
-        orientation_class = tg_VV.graph.vp.orientation_class
-        collecting_curvature_votes = tg_VV.collecting_curvature_votes
-        estimate_curvature = tg_VV.estimate_curvature
-        if exclude_borders:
-            is_on_border = tg_VV.graph.vp.is_on_border
-
-        for i, v in enumerate(tg_VV.graph.vertices()):
-            # Estimate principal directions and curvatures (and calculate the
-            # Gaussian and mean curvatures, shape index and curvedness) for
-            # vertices belonging to a surface patch and not on border
-            B_v = None  # initialization
-            result = None  # initialization
-            if eval(condition1):
-                # None is returned if v does not have any neighbor belonging to
-                # a surface patch
-                B_v = collecting_curvature_votes(
-                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
-                        page_curvature_formula=page_curvature_formula)
-            if B_v is not None:
-                estimate_curvature(v, B_v, verbose=False)
-            # For crease, no preferably oriented vertices, vertices on border or
-            # vertices lacking neighbors, add placeholders to the corresponding
-            # vertex properties
-            if eval(condition2):
-                tg_VV.graph.vp.T_1[v] = np.zeros(shape=3)
-                tg_VV.graph.vp.T_2[v] = np.zeros(shape=3)
-                tg_VV.graph.vp.kappa_1[v] = 0
-                tg_VV.graph.vp.kappa_2[v] = 0
-                tg_VV.graph.vp.gauss_curvature_VV[v] = 0
-                tg_VV.graph.vp.mean_curvature_VV[v] = 0
-                tg_VV.graph.vp.shape_index_VV[v] = 0
-                tg_VV.graph.vp.curvedness_VV[v] = 0
-
-        if exclude_borders:
-            tg_VV.find_graph_border(purge=True)
-
-        # Transforming the resulting graph to a surface with triangles:
-        surface_VV = tg_VV.graph_to_triangle_poly()
-
-        results['VV'] = (tg_VV, surface_VV)
-
-        t_end2 = time.time()
-        duration2 = t_end2 - t_begin2
-        print 'Second run of VV took: %s min %s s' % divmod(duration2, 60)
-
-    if 'VVCF' in methods:
-        t_begin0 = time.time()
-
-        tg_VVCF = TriangleGraph(
-            surface=tg.surface, scale_factor_to_nm=tg.scale_factor_to_nm,
-            scale_x=tg.scale_x, scale_y=tg.scale_y, scale_z=tg.scale_z)
-        tg_VVCF.graph = load_graph(graph_file)
-
-        t_end0 = time.time()
-        duration0 = t_end0 - t_begin0
-        print '\nLoading the graph took: %s min %s s' % divmod(duration0, 60)
-        print tg_VVCF.graph
-
-        print ("\nSecond run: estimating principle curvatures and directions "
-               "for surface patches using vector voting with curve fitting "
-               "(VVCF)...")
-        t_begin2 = time.time()
-
-        orientation_class = tg_VVCF.graph.vp.orientation_class
-        collecting_curvature_votes = tg_VVCF.collecting_curvature_votes
-        estimate_directions_and_fit_curves = \
-            tg_VVCF.estimate_directions_and_fit_curves
-        if exclude_borders:
-            is_on_border = tg_VVCF.graph.vp.is_on_border
-
-        # * Adding vertex properties to be filled in estimate_directions_and_fit
-        # curves *
-        # vertex properties for storing curve fitting errors (variances) in
-        # maximal and minimal principal directions at the vertex (belonging to
-        # class 1):
-        tg_VVCF.graph.vp.fit_error_1 = tg_VVCF.graph.new_vertex_property(
-            "float")
-        tg_VVCF.graph.vp.fit_error_2 = tg_VVCF.graph.new_vertex_property(
-            "float")
-
-        for i, v in enumerate(tg_VVCF.graph.vertices()):
-            # Estimate principal directions and curvatures (and calculate the
-            # Gaussian and mean curvatures, shape index and curvedness) for
-            # vertices belonging to a surface patch and not on border
-            B_v = None  # initialization
-            result = None  # initialization
-            if eval(condition1):
-                # None is returned if v does not have any neighbor belonging to
-                # a surface patch
-                B_v = collecting_curvature_votes(
-                        v, all_neighbor_idx_to_dist[i], sigma, verbose=False,
-                        page_curvature_formula=page_curvature_formula)
-            if B_v is not None:
-                estimate_directions_and_fit_curves(v, B_v, radius_hit,
-                                                   num_points, verbose=False)
-            # For crease, no preferably oriented vertices, vertices on border or
-            # vertices lacking neighbors, add placeholders to the corresponding
-            # vertex properties
-            if eval(condition2):
-                tg_VVCF.graph.vp.T_1[v] = np.zeros(shape=3)
-                tg_VVCF.graph.vp.T_2[v] = np.zeros(shape=3)
-                tg_VVCF.graph.vp.fit_error_1[v] = 0
-                tg_VVCF.graph.vp.fit_error_2[v] = 0
-                tg_VVCF.graph.vp.kappa_1[v] = 0
-                tg_VVCF.graph.vp.kappa_2[v] = 0
-                tg_VVCF.graph.vp.gauss_curvature_VV[v] = 0
-                tg_VVCF.graph.vp.mean_curvature_VV[v] = 0
-                tg_VVCF.graph.vp.shape_index_VV[v] = 0
-                tg_VVCF.graph.vp.curvedness_VV[v] = 0
-
-        if exclude_borders:
-            tg_VVCF.find_graph_border(purge=True)
-
-        # Transforming the resulting graph to a surface with triangles:
-        surface_VVCF = tg_VVCF.graph_to_triangle_poly()
-
-        results['VVCF'] = (tg_VVCF, surface_VVCF)
-
-        t_end2 = time.time()
-        duration2 = t_end2 - t_begin2
-        print 'Second run of VVCF took: %s min %s s' % divmod(duration2, 60)
+    for method in methods:
+        tg_curv, surface_curv = curvature_estimation(
+            tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
+            tg.scale_z, radius_hit, all_neighbor_idx_to_dist, exclude_borders,
+            graph_file, method, page_curvature_formula, num_points)
+        results[method] = (tg_curv, surface_curv)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -1172,7 +840,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
 
 
 def preparation_for_curvature_estimation(
-        tg, exclude_borders=False, graph_file='temp.gt'):
+        tg, exclude_borders=0, graph_file='temp.gt'):
     # TODO docstring if remains
     # * Adding vertex properties to be filled by all curvature methods *
     # vertex properties for storing the estimated principal directions of the
@@ -1198,24 +866,25 @@ def preparation_for_curvature_estimation(
     # kappa_2 at the corresponding triangle:
     tg.graph.vp.curvedness_VV = tg.graph.new_vertex_property("float")
 
-    if exclude_borders:  # Exclude triangles at the borders from curvatures
+    if exclude_borders > 0:  # Exclude triangles at the borders from curvatures
         # calculation and remove them in the end
 
         t_begin0 = time.time()
 
-        print ('\nFinding triangles that are at surface borders and '
-               'excluding them from curvatures calculation...')
-        # Mark vertices at borders with vertex property 'is_on_border', do not
+        print ('\nFinding triangles that are {} nm to surface borders and '
+               'excluding them from curvatures calculation...'.format(
+                exclude_borders))
+        # Mark vertices at borders with vertex property 'is_near_border', do not
         # delete
-        tg.find_graph_border(purge=False)
+        tg.find_vertices_near_border(exclude_borders, purge=False)
 
         t_end0 = time.time()
         duration0 = t_end0 - t_begin0
-        print 'Finding graph border took: %s min %s s' % divmod(duration0, 60)
+        print 'Finding borders took: %s min %s s' % divmod(duration0, 60)
 
     # Save the graph to a file for use by different methods in the second run:
     t_begin0 = time.time()
-    tg.graph.save(graph_file)  # TODO maybe delete it in the end
+    tg.graph.save(graph_file)
     t_end0 = time.time()
     duration0 = t_end0 - t_begin0
     print '\nSaving the graph took: %s min %s s' % divmod(duration0, 60)
@@ -1226,7 +895,7 @@ def preparation_for_curvature_estimation(
 
 def curvature_estimation(
         scaled_surface, scale_factor_to_nm, scale_x, scale_y, scale_z,
-        radius_hit, all_neighbor_idx_to_dist, exclude_borders=False,
+        radius_hit, all_neighbor_idx_to_dist, exclude_borders=0,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
         num_points=None):
     # TODO docstring if remains
@@ -1247,7 +916,7 @@ def curvature_estimation(
     orientation_class = tg_curv.graph.vp.orientation_class
     condition1 = "orientation_class[v] == 1"
     condition2 = "orientation_class[v] != 1 or result is None"
-    if exclude_borders:
+    if exclude_borders > 0:
         is_on_border = tg_curv.graph.vp.is_on_border
         condition1 += " and is_on_border[v] == 0"
         condition2 += " or is_on_border[v] == 1"
@@ -1310,8 +979,8 @@ def curvature_estimation(
             tg_curv.graph.vp.shape_index_VV[v] = 0
             tg_curv.graph.vp.curvedness_VV[v] = 0
 
-    if exclude_borders:
-        tg_curv.find_graph_border(purge=True)
+    if exclude_borders > 0:
+        tg_curv.find_vertices_near_border(exclude_borders, purge=True)
 
     # Transforming the resulting graph to a surface with triangles:
     surface_curv = tg_curv.graph_to_triangle_poly()

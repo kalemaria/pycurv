@@ -400,7 +400,9 @@ def __vtp_arrays_to_mrc_volumes(
 
 
 def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
-                    scale_y, scale_z, radius_hit, epsilon=0, eta=0):
+                    scale_y, scale_z, radius_hit, epsilon=0, eta=0,
+                    full_dist_map=False, exclude_borders=0,
+                    methods=['VCTV', 'VV']):
     # TODO docstring if remains
     # Reading in the .vtp file with the test triangle mesh and transforming
     # it into a triangle graph:
@@ -432,26 +434,26 @@ def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
            .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
     # Running the modified Normal Vector Voting algorithms:
-    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
-            fold, base_filename, radius_hit, epsilon, eta)
+    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}_eb{}.gt'.format(
+            fold, base_filename, radius_hit, epsilon, eta, exclude_borders)
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=False,
-        methods=['VCTV'], full_dist_map=False, graph_file=gt_file)
-    # TODO add 'VV' method
-    # TODO exclude_borders=True if want no curvature estimation at borders
+        tg, radius_hit, epsilon=epsilon, eta=eta,
+        exclude_borders=exclude_borders, methods=['VCTV', 'VV'],
+        full_dist_map=False, graph_file=gt_file)
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (tg, surf) = method_tg_surf_dict[method]
-        surf_file = '{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
-            base_filename, method, radius_hit, epsilon, eta)
+        surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}_eb{}.vtp'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta,
+            exclude_borders)
         io.save_vtp(surf, surf_file)
 
 
 def simple_workflow_part1(
-        fold, surf_file, scale_factor_to_nm, scale_x, scale_y, scale_z,
-        base_filename, radius_hit, epsilon=0, eta=0, full_dist_map=False,
-        exclude_borders=False):
+        fold, surf_file, base_filename, scale_factor_to_nm, scale_x, scale_y,
+        scale_z, radius_hit, epsilon=0, eta=0, full_dist_map=False,
+        exclude_borders=0):
     # TODO docstring if remains
     # Reading in the .vtp file with the test triangle mesh and transforming
     # it into a triangle graph:
@@ -483,14 +485,10 @@ def simple_workflow_part1(
            .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
     # Running the first run of modified Normal Vector Voting algorithm:
-    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
-            fold, base_filename, radius_hit, epsilon, eta)
-    # method_tg_surf_dict = normals_directions_and_curvature_estimation(
-    #     tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=False,
-    #     methods=['VCTV'], full_dist_map=False, graph_file=gt_file)
+    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}_eb{}.gt'.format(
+            fold, base_filename, radius_hit, epsilon, eta, exclude_borders)
     tg, all_neighbor_idx_to_dist = normals_estimation(
-        tg, radius_hit, epsilon=epsilon, eta=eta,
-        full_dist_map=full_dist_map)
+        tg, radius_hit, epsilon=epsilon, eta=eta, full_dist_map=full_dist_map)
     tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
         preparation_for_curvature_estimation(
             tg, exclude_borders=exclude_borders, graph_file=gt_file)
@@ -498,15 +496,15 @@ def simple_workflow_part1(
 
 def simple_workflow_part2(
         fold, surf_file, base_filename, scale_factor_to_nm, scale_x, scale_y,
-        scale_z, radius_hit, epsilon=0, eta=0, exclude_borders=False,
-        methods=['VCTV']):
+        scale_z, radius_hit, epsilon=0, eta=0, exclude_borders=0,
+        methods=['VCTV', 'VV']):
     # TODO docstring if remains
     print '\nReading in the surface file to get a vtkPolyData surface...'
     surf = io.load_poly(fold + surf_file)
     # rescale the surface to nm
     scaled_surf = rescale_surface(surf, scale_factor_to_nm)
-    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
-            fold, base_filename, radius_hit, epsilon, eta)
+    gt_file = '{}{}.NVV_rh{}_epsilon{}_eta{}_eb{}.gt'.format(
+            fold, base_filename, radius_hit, epsilon, eta, exclude_borders)
     for method in methods:
         tg_curv, surface_curv = curvature_estimation(
             scaled_surf, scale_factor_to_nm, scale_x, scale_y, scale_z,
@@ -514,8 +512,9 @@ def simple_workflow_part2(
             exclude_borders=exclude_borders, graph_file=gt_file, method=method)
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
-        surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
-            fold, base_filename, method, radius_hit, epsilon, eta)
+        surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}_eb{}.vtp'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta,
+            exclude_borders)
         io.save_vtp(surface_curv, surf_file)
 
 
@@ -529,6 +528,33 @@ def main(membrane):
     Returns:
         None
     """
+    t_begin = time.time()
+
+    # Javier's cER or PM (given by "segmentation" parameter)
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/exclude_borders_5/"
+    pixel_size = 1.044
+    scale_x = 320
+    scale_y = 520
+    scale_z = 210
+    radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
+    surf_file = "t3_ny01_cropped_{}.surface.vtp".format(membrane)
+    base_filename = "t3_ny01_cropped_{}".format(membrane)
+    simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
+                    scale_y, scale_z, radius_hit, epsilon=0, eta=0,
+                    exclude_borders=5, methods=['VCTV', 'VV'])
+    simple_workflow_part1(
+        fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
+        radius_hit, epsilon=0, eta=0, full_dist_map=False, exclude_borders=5)
+    simple_workflow_part2(
+        fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
+        radius_hit, epsilon=0, eta=0, exclude_borders=5, methods=['VCTV', 'VV'])
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
+
+
+def main2():
     t_begin = time.time()
 
     # TODO change those parameters for each tomogram & label:
@@ -545,28 +571,36 @@ def main(membrane):
     # workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
     #          radius_hit)
 
-    # Javier's cER or PM (given by "segmentation" parameter)
-    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/only_without_borders/"
-    pixel_size = 1.044
-    scale_x = 320
-    scale_y = 520
-    scale_z = 210
-    radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
-    surf_file = "t3_ny01_cropped_{}.surface.vtp".format(membrane)
-    base_filename = "t3_ny01_cropped_{}".format(membrane)
-    # simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
-    #                 scale_y, scale_z, radius_hit, epsilon=0, eta=0)
-    simple_workflow_part2(
-        fold, surf_file, base_filename, pixel_size, scale_x, scale_y,
-        scale_z, radius_hit, epsilon=0, eta=0, exclude_borders=False,
-        methods=['VV'])  # done with 'VCTV'
-    # TODO exclude_borders=True if want no curvature estimation at borders
+    # Felix's vesicle:
+    fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/'
+            'vesicle3_t74/')
+    # tomo = "t74"
+    # seg_file = "%s%s_vesicle3_bin6.Labels.mrc" % (fold, tomo)
+    # label = 1
+    surf_file = "t74_vesicle3.surface.vtp"
+    base_filename = "t74_vesicle3"
+    pixel_size = 2.526
+    scale_x = 100
+    scale_y = 100
+    scale_z = 50
+    radius_hit = 6  # nm
+    simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
+                    scale_y, scale_z, radius_hit, epsilon=0, eta=0,
+                    exclude_borders=0, methods=['VCTV', 'VV'])
+
     t_end = time.time()
     duration = t_end - t_begin
     print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
 
 if __name__ == "__main__":
-    segmentation = sys.argv[1]
-    main(segmentation)
-    # stats_file = 't3_ny01_cropped_{}.VCTV_VV_rh6.stats'.format(segmentation)
+    # segmentation = sys.argv[1]
+    # # main(segmentation)
+    # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/exclude_borders_5/"
+    # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_rh6.stats'.format(
+    #     fold, segmentation)
     # cProfile.run('main(segmentation)', stats_file)
+
+    fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/'
+            'vesicle3_t74/')
+    stats_file = '{}t74_vesicle3.VCTV_VV_rh6_eb0.stats'.format(fold)
+    cProfile.run('main2()', stats_file)
