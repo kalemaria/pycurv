@@ -4,7 +4,7 @@ import numpy as np
 # import os
 
 from pysurf_compact import pysurf_io as io
-from pysurf_compact import pexceptions, surface_graphs
+from pysurf_compact import pexceptions, surface_graphs  # , run_gen_surface
 from synthetic_volumes import SphereMask, CylinderMask, ConeMask
 
 """A set of functions and classes for generating artificial surfaces of
@@ -344,26 +344,31 @@ class SphereGenerator(object):
         return isosurface_from_mask(mask_np)
 
     @staticmethod
-    def generate_gauss_sphere_surface(r):
+    def generate_gauss_sphere_surface(r, mask=None):
         """
         Generates a sphere surface with a given radius using a gaussian sphere
         mask and the Marching Cubes method. The resulting surface is smooth.
 
         Args:
             r (int): sphere radius
+            mask (numpy.ndarray, optional): custom sphere mask, e.g. with a
+                missing wedge
 
         Returns:
             a sphere surface (vtk.vtkPolyData)
         """
-        # Generate a gauss sphere mask with 3 * sigma == radius r
         sg = r / 3.0
-        box = int(math.ceil(r * 2.5))
-        sm = SphereMask()
-        mask_np = sm.generate_gauss_sphere_mask(sg, box)
-        # center_voxel = [box / 2, box / 2, box / 2]
-        # print center_voxel
 
-        # Calculate threshold th to get the desired radius r
+        if mask is None:
+            # Generate a gauss sphere mask with 3 * sigma == radius r
+            box = int(math.ceil(r * 2.5))
+            sm = SphereMask()
+            mask_np = sm.generate_gauss_sphere_mask(sg, box)
+        else:
+            # Use the given mask
+            mask_np = mask
+
+        # Calculate threshold to get the desired radius r
         th = math.exp(-(r ** 2) / (2 * (sg ** 2)))
 
         # Generate iso-surface from the mask
@@ -592,7 +597,8 @@ def main():
     Returns:
         None
     """
-    fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+    # fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+    fold = "/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/"
 
     # # Plane
     # pg = PlaneGenerator()
@@ -610,14 +616,42 @@ def main():
     # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
     # io.save_vtp(sphere_noise, fold + "sphere_r10_res50_noise10.vtp")
 
-    # Sphere from gauss mask
+    # # Sphere from gauss mask
     # sg = SphereGenerator()
     # sphere = sg.generate_gauss_sphere_surface(r=10)
-    # io.save_vtp(sphere, "{}gauss_sphere_r10.vtp".format(fold))
+    # io.save_vtp(sphere, "{}gauss_sphere_surf_r10.vtp".format(fold))
     # are_triangle_vertices_on_smooth_sphere_surface(
     #     sphere, r=10, center=[12, 12, 12], error=0.009)
     # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
     # io.save_vtp(sphere_noise, "{}gauss_sphere_r10_noise10.vtp".format(fold))
+
+    # # Sphere from gauss mask with missing wedge
+    # mask_mrc = "{}gauss_sphere_mask_r10_box25_with_wedge30deg.mrc".format(fold)
+    # surf_vtp = "{}gauss_sphere_surf_r10_with_wedge30deg.vtp".format(fold)
+    # sphere_wedge_30deg_mask = io.load_tomo(mask_mrc)
+    # sg = SphereGenerator()
+    # sphere_wedge_30deg_surf = sg.generate_gauss_sphere_surface(
+    #     r=10, mask=sphere_wedge_30deg_mask)
+    # io.save_vtp(sphere_wedge_30deg_surf, surf_vtp)
+
+    # # Sphere from smoothed binary mask without missing wedge
+    # mask_mrc = "{}smooth_sphere_r10_t1_box25.mrc".format(fold)
+    # sphere_mask = io.load_tomo(mask_mrc)
+    # sphere_isosurf = isosurface_from_mask(sphere_mask, threshold=0.11)
+    # isosurf_vtp = "{}smooth_sphere_r10_t1_isosurf.vtp".format(fold)
+    # io.save_vtp(sphere_isosurf, isosurf_vtp)
+
+    # Sphere from smoothed binary mask with missing wedge
+    mask_mrc = "{}smooth_sphere_r50_t1_box125_with_wedge30deg.mrc".format(fold)
+    sphere_wedge_30deg_mask = io.load_tomo(mask_mrc)
+    sphere_wedge_30deg_isosurf = isosurface_from_mask(
+        sphere_wedge_30deg_mask, threshold=0.3)  # 0.11
+    isosurf_vtp = "{}smooth_sphere_r50_t1_with_wedge30deg_isosurf.vtp".format(
+        fold)
+    io.save_vtp(sphere_wedge_30deg_isosurf, isosurf_vtp)
+    # # does not work with Antonio's surface generation:
+    # surf_base = "{}smooth_sphere_r10_t1_with_wedge30deg".format(fold)
+    # run_gen_surface(sphere_wedge_30deg_mask, surf_base, lbl=0.11, mask=False)
 
     # # Cylinder
     # cg = CylinderGenerator()
@@ -641,7 +675,7 @@ def main():
     # io.save_vtp(torus, "{}torus_rr{}_csr{}.vtp".format(fold, rr, csr))
 
     # Cone
-    pg = ConeGenerator()
+    # pg = ConeGenerator()
     # r = 6
     # h = 8
     # res = 38
@@ -657,10 +691,10 @@ def main():
     #     "{}cone/cone_r{}_h{}_res{}_linear_subdiv{}_decimate{}_smooth_iter{}.vtp"
     #     .format(fold, r, h, res, subdiv, decimate, iter))
 
-    r = 6
-    h = 6
-    cone_binary = pg.generate_binary_cone_surface(r, h)
-    io.save_vtp(cone_binary, "{}cone/cone_r{}_h{}.vtp".format(fold, r, h))
+    # r = 6
+    # h = 6
+    # cone_binary = pg.generate_binary_cone_surface(r, h)
+    # io.save_vtp(cone_binary, "{}cone/cone_r{}_h{}.vtp".format(fold, r, h))
 
 
 if __name__ == "__main__":

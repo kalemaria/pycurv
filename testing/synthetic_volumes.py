@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import os
+from scipy import ndimage
 
 from pysurf_compact import pysurf_io as io
 from pysurf_compact import pexceptions, run_gen_surface
@@ -244,14 +245,14 @@ def main():
     if not os.path.exists(fold):
         os.makedirs(fold)
 
-    # Generate a gaussian sphere mask
-    sm = SphereMask()
-    r = 10
-    sg = r / 3.0
-    box = int(math.ceil(r * 2.5))
-    gauss_sphere = sm.generate_gauss_sphere_mask(sg, box)
-    io.save_numpy(gauss_sphere, "{}gauss_sphere_mask_r{}_box{}.mrc".format(
-        fold, r, box))
+    # # Generate a gaussian sphere mask
+    # sm = SphereMask()
+    # r = 10
+    # sg = r / 3.0
+    # box = int(math.ceil(r * 2.5))
+    # gauss_sphere = sm.generate_gauss_sphere_mask(sg, box)
+    # io.save_numpy(gauss_sphere, "{}gauss_sphere_mask_r{}_box{}.mrc".format(
+    #     fold, r, box))
 
     # # Generate a filled sphere mask
     # sm = SphereMask()
@@ -262,15 +263,24 @@ def main():
     # # From the mask, generate a surface (is correct)
     # run_gen_surface(sphere, "{}sphere_r{}".format(fold, r))
 
-    # # Generate a hollow sphere mask
-    # sm = SphereMask()
-    # r = 20  # r=10: 1856 cells, r=15: 4582 cells, r=20: 8134 cells
-    # thickness = 1
-    # sphere = sm.generate_sphere_mask(r, box=(2 * r + 3), t=thickness)
-    # io.save_numpy(sphere, "{}sphere_r{}_t{}.mrc".format(fold, r, thickness))
-    #
+    # Generate a hollow sphere mask
+    sm = SphereMask()
+    r = 50  # r=10: 1856 cells, r=15: 4582 cells, r=20: 8134 cells
+    box = int(math.ceil(r * 2.5))
+    thickness = 1
+    sphere = sm.generate_sphere_mask(r, box, t=thickness)
+    # io.save_numpy(sphere, "{}sphere_r{}_t{}_box{}.mrc".format(
+    #     fold, r, thickness, box))
     # # From the mask, generate a surface (is correct)
     # run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
+    # Gaussian smoothing
+    sigma = 0.2
+    smooth_sphere = ndimage.filters.gaussian_filter(
+        sphere.astype(np.float), sigma)
+    print(np.min(smooth_sphere))
+    print(np.max(smooth_sphere))
+    io.save_numpy(smooth_sphere, "{}smooth_sphere_r{}_t{}_box{}.mrc".format(
+        fold, r, thickness, box))
 
     # # Generate a gaussian cylinder mask
     # cm = CylinderMask()
