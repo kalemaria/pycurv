@@ -673,7 +673,7 @@ def vector_curvature_tensor_voting(
 def normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=0,
         methods=['VV'], page_curvature_formula=False, num_points=None,
-        full_dist_map=False, graph_file='temp.gt'):
+        full_dist_map=False, graph_file='temp.gt', area2=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -691,7 +691,7 @@ def normals_directions_and_curvature_estimation(
             influencing the number of triangles classified as "crease junction"
             (class 2) and "no preferred orientation" (class 3, see Notes),
             default 0
-        exclude_borders (boolean, optional): if > 0, principle curvatures and
+        exclude_borders (int, optional): if > 0, principle curvatures and
             directions are not estimated for triangles within this distance to
             surface borders (default 0)
         methods (list, optional): all methods to run in the second pass ('VV',
@@ -707,6 +707,9 @@ def normals_directions_and_curvature_estimation(
             calculated later for each vertex (default)
         graph_file (string, optional): name for a temporary graph file
             after the first run of the algorithm (default 'temp.gt')
+        area2 (boolean, optional): if True (default False), votes are
+            weighted by triangle area also in the second step (principle
+            directions and curvatures estimation)
     Returns:
         a dictionary mapping the method name ('VV', 'VVCF' and 'VCTV') to the
         tuple of two elements: TriangleGraph graph and vtkPolyData surface of
@@ -731,7 +734,7 @@ def normals_directions_and_curvature_estimation(
         tg_curv, surface_curv = curvature_estimation(
             tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
             tg.scale_z, radius_hit, all_neighbor_idx_to_dist, exclude_borders,
-            graph_file, method, page_curvature_formula, num_points)
+            graph_file, method, page_curvature_formula, num_points, area2)
         results[method] = (tg_curv, surface_curv)
 
     t_end = time.time()
@@ -897,7 +900,7 @@ def curvature_estimation(
         scaled_surface, scale_factor_to_nm, scale_x, scale_y, scale_z,
         radius_hit, all_neighbor_idx_to_dist, exclude_borders=0,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
-        num_points=None):
+        num_points=None, area2=False):
     # TODO docstring if remains
     t_begin0 = time.time()
     tg_curv = TriangleGraph(
@@ -938,6 +941,12 @@ def curvature_estimation(
 
     g_max = math.pi * radius_hit / 2.0
     sigma = g_max / 3.0
+    if area2:  # * Maximal triangle area *
+        A, _ = tg_curv.get_areas()
+        A_max = np.max(A)
+        print "Maximal triangle area = %s" % A_max
+    else:
+        A_max = None
     for i, v in enumerate(tg_curv.graph.vertices()):
         # Estimate principal directions and curvatures (and calculate the
         # Gaussian and mean curvatures, shape index and curvedness) for
@@ -958,7 +967,8 @@ def curvature_estimation(
                 # a surface patch
                 result = collecting_curvature_votes(
                         v, neighbor_idx_to_dist, sigma, verbose=False,
-                        page_curvature_formula=page_curvature_formula)
+                        page_curvature_formula=page_curvature_formula,
+                        A_max=A_max)
                 if result is not None:
                     if method == "VV":
                         estimate_curvature(v, result, verbose=False)

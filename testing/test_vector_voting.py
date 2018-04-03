@@ -305,7 +305,7 @@ class VectorVotingTestCase(unittest.TestCase):
     def parametric_test_cylinder_directions_curvatures(
             self, r, radius_hit, eb, inverse=False, res=0, h=0, noise=0,
             methods=['VV'], page_curvature_formula=False, num_points=None,
-            full_dist_map=False):
+            full_dist_map=False, area2=False):
         """
         Tests whether minimal principal directions (T_2), as well as minimal and
         maximal principal curvatures are correctly estimated for an opened
@@ -347,6 +347,12 @@ class VectorVotingTestCase(unittest.TestCase):
             num_points (int): for VVCF, number of points to sample in each
                 estimated principal direction in order to fit parabola and
                 estimate curvature
+            full_dist_map (boolean, optional): if True, a full distance map is
+                calculated for the whole graph, otherwise a local distance map
+                is calculated for each vertex (default)
+            area2 (boolean, optional): if True (default False), votes are
+                weighted by triangle area also in the second step (principle
+                directions and curvatures estimation)
 
         Returns:
             None
@@ -437,7 +443,7 @@ class VectorVotingTestCase(unittest.TestCase):
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
             tg, radius_hit, exclude_borders=eb, methods=methods,
             page_curvature_formula=page_curvature_formula,
-            num_points=num_points)
+            num_points=num_points, full_dist_map=full_dist_map, area2=area2)
         # tg, all_neighbor_idx_to_dist = normals_estimation(
         #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
         # tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
@@ -470,6 +476,9 @@ class VectorVotingTestCase(unittest.TestCase):
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV' and page_curvature_formula:
                 method = 'VV_page_curvature_formula'
+            if ((method == 'VV' or method == 'VV_page_curvature_formula') and
+                    area2):
+                method = '{}_area2'.format(method)
             elif method == 'VVCF' and page_curvature_formula:
                 method = 'VVCF_page_curvature_formula_{}points'.format(
                     num_points)
@@ -591,7 +600,7 @@ class VectorVotingTestCase(unittest.TestCase):
             self, radius, radius_hit, inverse=False, binary=False, res=0,
             ico=0, noise=0, save_areas=False, methods=['VV'],
             page_curvature_formula=False, num_points=None,
-            full_dist_map=False):
+            full_dist_map=False, area2=False):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
@@ -637,6 +646,9 @@ class VectorVotingTestCase(unittest.TestCase):
             full_dist_map (boolean, optional): if True, a full distance map is
                 calculated for the whole graph, otherwise a local distance map
                 is calculated for each vertex (default)
+            area2 (boolean, optional): if True (default False), votes are
+                weighted by triangle area also in the second step (principle
+                directions and curvatures estimation)
 
         Returns:
             None
@@ -745,7 +757,7 @@ class VectorVotingTestCase(unittest.TestCase):
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
             tg, radius_hit, exclude_borders=0, methods=methods,
             page_curvature_formula=page_curvature_formula,
-            num_points=num_points, full_dist_map=full_dist_map)
+            num_points=num_points, full_dist_map=full_dist_map, area2=area2)
 
         # Ground truth principal curvatures
         true_curvature = 1.0 / radius
@@ -758,6 +770,9 @@ class VectorVotingTestCase(unittest.TestCase):
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV' and page_curvature_formula:
                 method = 'VV_page_curvature_formula'
+            if ((method == 'VV' or method == 'VV_page_curvature_formula') and
+                    area2):
+                method = '{}_area2'.format(method)
             elif method == 'VVCF' and page_curvature_formula:
                 method = 'VVCF_page_curvature_formula_{}points'.format(
                     num_points)
@@ -840,7 +855,8 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_torus_directions_curvatures(
             self, rr, csr, radius_hit, methods=['VV'],
-            page_curvature_formula=False, num_points=None, full_dist_map=False):
+            page_curvature_formula=False, num_points=None, full_dist_map=False,
+            area2=False):
         """
         Runs all the steps needed to calculate curvatures for a test torus
         with given radii using normal vector voting (VV), VV combined with curve
@@ -866,6 +882,9 @@ class VectorVotingTestCase(unittest.TestCase):
             full_dist_map (boolean, optional): if True, a full distance map is
                 calculated for the whole graph, otherwise a local distance map
                 is calculated for each vertex (default)
+            area2 (boolean, optional): if True (default False), votes are
+                weighted by triangle area also in the second step (principle
+                directions and curvatures estimation)
 
         Notes:
             * csr should be much smaller than rr (csr < rr - csr).
@@ -955,7 +974,7 @@ class VectorVotingTestCase(unittest.TestCase):
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
             tg, radius_hit, exclude_borders=0, methods=methods,
             page_curvature_formula=page_curvature_formula,
-            num_points=num_points, full_dist_map=full_dist_map)
+            num_points=num_points, full_dist_map=full_dist_map, area2=area2)
         # tg, all_neighbor_idx_to_dist = normals_estimation(
         #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
         # tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
@@ -977,6 +996,9 @@ class VectorVotingTestCase(unittest.TestCase):
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV' and page_curvature_formula:
                 method = 'VV_page_curvature_formula'
+            if ((method == 'VV' or method == 'VV_page_curvature_formula') and
+                    area2):
+                method = '{}_area2'.format(method)
             elif method == 'VVCF' and page_curvature_formula:
                 method = 'VVCF_page_curvature_formula_{}points'.format(
                     num_points)
@@ -1098,7 +1120,8 @@ class VectorVotingTestCase(unittest.TestCase):
 
     def parametric_test_cone(
             self, r, h, radius_hit, res=0, noise=0, methods=['VV'],
-            page_curvature_formula=False, num_points=None, full_dist_map=False):
+            page_curvature_formula=False, num_points=None, full_dist_map=False,
+            area2=False):
         # TODO docstring
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res == 0:
@@ -1133,12 +1156,10 @@ class VectorVotingTestCase(unittest.TestCase):
             if res == 0:  # generate surface from a binary mask
                 print "Warning: cone contains a plane!"
                 cone = cg.generate_binary_cone_surface(r, h)
-                exclude_borders = 0
             else:  # generate surface directly with VTK
                 cone = cg.generate_cone(r, h, res, subdivisions=3, decimate=0.8)
                 if noise > 0:
                     cone = add_gaussian_noise_to_surface(cone, percent=noise)
-                exclude_borders = 1  # TODO think to exclude more
             io.save_vtp(cone, surf_file)
 
         # Reading in the .vtp file with the test triangle mesh and transforming
@@ -1163,9 +1184,9 @@ class VectorVotingTestCase(unittest.TestCase):
 
         # Running the modified Normal Vector Voting algorithm:
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=exclude_borders, methods=methods,
-            page_curvature_formula=page_curvature_formula,
-            num_points=num_points)
+            tg, radius_hit, exclude_borders=1,  # TODO think to exclude more
+            methods=methods, page_curvature_formula=page_curvature_formula,
+            num_points=num_points, full_dist_map=full_dist_map, area2=area2)
 
         for method in method_tg_surf_dict.keys():
             # Saving the output (TriangleGraph object) for later inspection in
@@ -1173,6 +1194,9 @@ class VectorVotingTestCase(unittest.TestCase):
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV' and page_curvature_formula:
                 method = 'VV_page_curvature_formula'
+            if ((method == 'VV' or method == 'VV_page_curvature_formula') and
+                    area2):
+                method = '{}_area2'.format(method)
             elif method == 'VVCF' and page_curvature_formula:
                 method = 'VVCF_page_curvature_formula_{}points'.format(
                     num_points)
@@ -1202,12 +1226,15 @@ class VectorVotingTestCase(unittest.TestCase):
     #     circular planes) with known orientation (height, i.e. T_2, parallel to
     #     the Z axis), certain radius and noise level.
     #     """
-    #     p = 50
+    #     # p = 50
     #     for n in [0]:
-    #         for rh in [3, 4]:  # 5, 6, 7, 8, 9
+    #         for rh in [5]:  # 3, 4, 5, 6, 7, 8, 9
     #             self.parametric_test_cylinder_directions_curvatures(
-    #                 10, rh, eb=5, noise=n, methods=['VVCF'],  # 'VCTV', 'VV',
-    #                 page_curvature_formula=False, num_points=p)
+    #                 10, rh, eb=1, noise=n, methods=['VV'],  # 'VCTV', 'VVCF',
+    #                 page_curvature_formula=False, area2=True)  # num_points=p
+    #             self.parametric_test_cylinder_directions_curvatures(
+    #                 10, rh, eb=5, noise=n, methods=['VV'],  # 'VCTV', 'VVCF',
+    #                 page_curvature_formula=False, area2=True)  # num_points=p
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1222,68 +1249,71 @@ class VectorVotingTestCase(unittest.TestCase):
     #             10, rh, noise=0, inverse=True, methods=['VV', 'VCTV', 'VVCF'],
     #             page_curvature_formula=False, num_points=p)
 
-    def test_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated for a sphere with a
-        certain radius and noise level:
-
-        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-        """
-        # Icosahedron sphere with 1280 faces:
-        # for n in [0]:
-        #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-        #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-        #             self.parametric_test_sphere_curvatures(
-        #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
-        #                 page_curvature_formula=False, num_points=p)
-        #         self.parametric_test_sphere_curvatures(
-        #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
-        #             page_curvature_formula=False)
-        # Binary sphere with different radii:
-        # for r in [20]:  # 10; 20; 30
-        #     for rh in [18]:  # 5, 6, 7, 8, 9; 18; 28
-        #         self.parametric_test_sphere_curvatures(
-        #             r, rh, binary=True, methods=['VV', 'VCTV'],
-        #             full_dist_map=False)
-        # Gaussian sphere with different radii:
-        for r in [20, 30]:  # 10; 20; 30
-            for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
-                self.parametric_test_sphere_curvatures(
-                    r, rh, methods=['VV', 'VCTV'], full_dist_map=True)
-
-    # def test_inverse_sphere_curvatures(self):
+    # def test_sphere_curvatures(self):
     #     """
-    #     Tests whether curvatures are correctly estimated for an inverse sphere
-    #     with a certain radius and noise level:
+    #     Tests whether curvatures are correctly estimated for a sphere with a
+    #     certain radius and noise level:
     #
-    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
-    #     p = 50
-    #     for rh in [9]:
-    #         self.parametric_test_sphere_curvatures(
-    #             10, rh, ico=1280, noise=0, inverse=True,
-    #             methods=['VV', 'VCTV', 'VVCF'],
-    #             page_curvature_formula=False, num_points=p)
+    #     # Icosahedron sphere with 1280 faces:
+    #     # for n in [0]:
+    #     #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+    #     #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
+    #     #             self.parametric_test_sphere_curvatures(
+    #     #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
+    #     #                 page_curvature_formula=False, num_points=p)
+    #     #         self.parametric_test_sphere_curvatures(
+    #     #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
+    #     #             page_curvature_formula=False)
+    #     # Binary sphere with different radii:
+    #     # for r in [20, 30]:  # 10
+    #     #     for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
+    #     #         self.parametric_test_sphere_curvatures(
+    #     #             r, rh, binary=True, methods=['VV'],  # , 'VCTV'
+    #     #             full_dist_map=False, area2=True)
+    #     # Gaussian sphere with different radii:
+    #     for r in [10]:  # 20, 30
+    #         for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
+    #             self.parametric_test_sphere_curvatures(
+    #                 r, rh, methods=['VV'], full_dist_map=True, area2=True,
+    #                 page_curvature_formula=True)
+
+    def test_inverse_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated for an inverse sphere
+        with a certain radius and noise level:
+
+        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+        """
+        # p = 50
+        for rh in [9]:
+            self.parametric_test_sphere_curvatures(
+                10, rh, ico=0, noise=0, inverse=True,
+                methods=['VV'],  # 'VCTV', 'VVCF'
+                page_curvature_formula=True, area2=True)  # num_points=p
 
     # def test_torus_curvatures(self):
     #     """
     #     Runs parametric_test_torus_directions_curvatures with certain
     #     parameters.
     #     """
-    #     p = 50
+    #     # p = 50
     #     for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
     #         self.parametric_test_torus_directions_curvatures(
-    #             25, 10, rh, methods=['VCTV', 'VV', 'VVCF'],
-    #             page_curvature_formula=False, num_points=p, full_dist_map=True)
+    #             25, 10, rh, methods=['VV'],  # 'VCTV', 'VVCF'
+    #             page_curvature_formula=True, full_dist_map=True,
+    #             area2=False)  # num_points=p,
 
     # def test_cone(self):
-    #     p = 50
+    #     # p = 50
     #     rh = 5
     #     res = 38  # 0
-    #     for n in [10]:
+    #     for n in [0]:  # 10
     #         self.parametric_test_cone(
-    #             6, 6, radius_hit=rh, res=res, noise=n, num_points=p,
-    #             methods=['VCTV', 'VV', 'VVCF'], page_curvature_formula=False)
+    #             6, 6, radius_hit=rh, res=res, noise=n,  # num_points=p,
+    #             methods=['VV'],  # 'VCTV', 'VVCF'
+    #             page_curvature_formula=False, area2=True)
 
 
 if __name__ == '__main__':

@@ -342,6 +342,70 @@ def plot_cylinder_T_2_and_kappa_1_errors(n=0, y_range=None):
     )
 
 
+def plot_cylinder_T_2_and_kappa_1_errors_VV_VVarea2_VCTV(n=0, y_range=None,
+                                                         exclude_borders=5):
+    """Plots estimated kappa_2 and T_1 errors histograms on a cylinder surface
+    for different methods (VV, VVCF and VCTV) and optimal RadiusHit for each
+    method.
+
+    Args:
+        n (int, optional): noise in % (default 0)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default None)
+        exclude_borders (int, optional): how many voxels from border were
+            excluded for curvature calculation (default 5)
+    """
+    fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+            "cylinder/noise0/files4plotting/".format(n))
+    plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+                 "cylinder/noise0/plots/".format(n))
+    basename = "cylinder_r10_h25_eb{}".format(exclude_borders)
+    df = pd.read_csv("{}{}.VCTV_rh7.csv".format(fold, basename), sep=';')
+    VCTV_T_2_errors = df["T2Errors"].tolist()
+    VCTV_kappa_1_errors = df["kappa1RelErrors"].tolist()
+
+    df = pd.read_csv("{}{}.VV_rh5.csv".format(fold, basename), sep=';')
+    VV_T_2_errors = df["T2Errors"].tolist()
+    VV_kappa_1_errors = df["kappa1RelErrors"].tolist()
+
+    df = pd.read_csv("{}{}.VV_area2_rh5.csv".format(fold, basename), sep=';')
+    VV_area2_T_2_errors = df["T2Errors"].tolist()
+    VV_area2_kappa_1_errors = df["kappa1RelErrors"].tolist()
+
+    VTK_kappa_1_errors = pd.read_csv("{}{}.VTK.csv".format(fold, basename),
+                                     sep=';')["kappa1RelErrors"].tolist()
+    data = [VCTV_T_2_errors, VV_T_2_errors, VV_area2_T_2_errors]
+    plot_composite_line_hist(
+        data_arrays=data,
+        labels=["VCTV rh=7", "VV rh=5", "VV area2 rh=5"],
+        line_styles=['-', '--', '-.'], markers=['^', 'v', 'o'],
+        colors=['b', 'c', 'g'],
+        title="Cylinder ({}% noise)".format(n),
+        xlabel="Minimal principal direction error",
+        ylabel="Cumulative frequency",
+        outfile="{}{}_noise{}.VV_VVarea2_rh5_VCTV_rh7.T_2_errors_bins20"
+                "_cum_freq.png".format(plot_fold, basename, n),
+        num_bins=20, freq=True, cumulative=True,  # max_val=1
+        value_range=(0, 0.005),  # (0, max([max(d) for d in data]))
+        y_range=y_range
+    )
+    data = [VCTV_kappa_1_errors, VV_kappa_1_errors, VV_area2_kappa_1_errors,
+            VTK_kappa_1_errors]
+    plot_composite_line_hist(
+        data_arrays=data,
+        labels=["VCTV rh=7", "VV rh=5", "VV area2 rh=5", "VTK"],  # "VVCF rh=4",
+        line_styles=['-', '--', '-.', ':'], markers=['^', 'v', 'o', 's'],
+        colors=['b', 'c', 'g', 'r'],
+        title="Cylinder ({}% noise)".format(n),
+        xlabel="Maximal principal curvature relative error",
+        ylabel="Cumulative frequency",
+        outfile=("{}{}_noise{}.VV_VVarea2_VCTV_best_rh_vs_VTK.kappa_1_errors_"
+                 "bins20_cum_freq.png".format(plot_fold, basename, n)),
+        num_bins=20, freq=True, cumulative=True,  # max_val=1
+        value_range=(0, max([max(d) for d in data])), y_range=y_range
+    )
+
+
 def plot_inverse_cylinder_T_1_and_kappa_2_errors(n=0):
     """Plots estimated kappa_2 and T_1 errors histograms on an inverse cylinder
     surface for different methods (VV, VVCF and VCTV) and optimal RadiusHit for
@@ -402,7 +466,8 @@ def plot_inverse_cylinder_T_1_and_kappa_2_errors(n=0):
     )
 
 
-def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False):
+def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False,
+                                      methods=['VV'], rhs=range(5, 10)):
     """Plots estimated kappa_1 and kappa_2 values for a sphere surface
      by different methods (VV, VVCF and VCTV) using different RadiusHit.
 
@@ -413,6 +478,12 @@ def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False):
             many faces are used; if 0, Gaussian sphere results are used
         binary (boolean, optional): if True (default False), binary sphere
             results are used (ignoring the other options)
+        methods (list, optional): tells which method(s) should be used: 'VV'
+            for normal vector voting (default), 'VVCF' for curve fitting in
+            the two principal directions estimated by VV to estimate the
+            principal curvatures or 'VCTV' for vector and curvature tensor
+            voting to estimate the principal directions and curvatures
+        rhs (list, optional): wanted RadiusHit parameter values (default 5-9)
     """
     first = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/sphere/"
     if binary:
@@ -429,12 +500,12 @@ def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False):
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "sphere_r{}".format(r)
-    for method in ['VV', 'VCTV']:  # 'VVCF_50points'
+    for method in methods:
         kappa_1_arrays = []
         kappa_2_arrays = []
         kappas_arrays = []
         labels = []
-        for rh in range(5, 10):  # range(2, 7)  2, 3, 3.5, 4, 5
+        for rh in rhs:
             df = pd.read_csv("{}{}.{}_rh{}.csv".format(
                 fold, basename, method, rh), sep=';')
             kappa_1_array = df["kappa1"].tolist()
@@ -453,8 +524,8 @@ def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False):
             title="{} on sphere ({})".format(method, type),
             xlabel="Estimated maximal principal curvature",
             ylabel="Counts",
-            outfile=("{}{}.{}_rh5-9.kappa_1.png".format(
-                plot_fold, basename, method)),  # TODO change rh range
+            outfile=("{}{}.{}_rh{}-{}.kappa_1.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1])),
             num_bins=5, value_range=None, max_val=None, freq=False
         )
         plot_composite_line_hist(  # kappa_2
@@ -466,8 +537,8 @@ def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False):
             title="{} on sphere ({})".format(method, type),
             xlabel="Estimated minimal principal curvature",
             ylabel="Counts",
-            outfile=("{}{}.{}_rh5-9.kappa_2.png".format(
-                plot_fold, basename, method)),  # TODO change rh range
+            outfile=("{}{}.{}_rh{}-{}.kappa_2.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1])),
             num_bins=5, value_range=None, max_val=None, freq=False
         )
         plot_composite_line_hist(  # kappa_1 + kappa_2
@@ -479,8 +550,8 @@ def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False):
             title="{} on sphere ({})".format(method, type),
             xlabel="Estimated principal curvatures",
             ylabel="Counts",
-            outfile=("{}{}.{}_rh5-9.kappa_1_and_2.png".format(
-                plot_fold, basename, method)),  # TODO change rh range
+            outfile=("{}{}.{}_rh{}-{}.kappa_1_and_2.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1])),
             num_bins=5, value_range=None, max_val=None, freq=False
         )
 
@@ -664,6 +735,82 @@ def plot_sphere_kappa_1_and_2_errors_noVVCF(
 
 def plot_sphere_kappa_1_and_2_errors_VV_VCTV(
         r=10, rhVV=8, rhVCTV=8, n=0, ico=1280, binary=False, value_range=None,
+        y_range=None, area2=False):
+    """
+    Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+    for different methods (VV and VCTV) and an optimal RadiusHit for each
+    method.
+
+    Args:
+        r (int, optional): radius of the sphere in voxels (default 10)
+        rhVV (int, optional): radius_hit for VV (default 8)
+        rhVCTV (int, optional): radius_hit for VCTV (default 8)
+        n (int, optional): noise in % (default 0)
+        ico (int, optional): if > 0 (default 1280), icosahedron results with so
+            many faces are used; if 0, Gaussian sphere results are used
+        binary (boolean, optional): if True (default False), binary sphere
+            results are used (ignoring the other options)
+        value_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default None)
+        area2 (boolean, optional): if True (default False), votes are
+            weighted by triangle area also in the second step (principle
+            directions and curvatures estimation)
+    """
+    first = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/sphere/"
+    if binary:
+        second = "binary/"
+        type = "binary, radius={}".format(r)
+    elif ico > 0:
+        second = "ico{}_noise{}/".format(ico, n)
+        type = "icosahedron {}, radius={}, {}% noise".format(ico, r, n)
+    else:
+        second = "noise{}/".format(n)
+        type = "Gaussian, radius={}, {}% noise".format(r, n)
+    fold = ("{}{}files4plotting/".format(first, second))
+    plot_fold = ("{}{}plots/".format(first, second))
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+    basename = "sphere_r{}".format(r)
+
+    df_VCTV = pd.read_csv("{}{}.VCTV_rh{}.csv".format(fold, basename, rhVCTV),
+                          sep=';')
+    VCTV_kappa_1_errors = df_VCTV["kappa1RelErrors"].tolist()
+    VCTV_kappa_2_errors = df_VCTV["kappa2RelErrors"].tolist()
+
+    if area2:
+        a = "_area2"
+    else:
+        a = ""
+    df_VV = pd.read_csv("{}{}.VV{}_rh{}.csv".format(fold, basename, a, rhVV),
+                        sep=';')
+    VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
+    VV_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
+
+    data = [VCTV_kappa_1_errors + VCTV_kappa_2_errors,
+            VV_kappa_1_errors + VV_kappa_2_errors]
+    if value_range is None:
+        value_range = (0, max([max(d) for d in data]))
+    plot_composite_line_hist(  # kappa_1 + kappa_2
+        data_arrays=data,
+        labels=["VCTV rh={}".format(rhVCTV), "VV{} rh={}".format(a, rhVV)],
+        line_styles=['-', '--'],
+        markers=['^', 'v'],
+        colors=['b', 'c'],
+        title="Sphere ({})".format(type),
+        xlabel="Principal curvatures relative error",
+        ylabel="Cumulative frequency",
+        outfile=("{}{}.VVrh{}{}_vs_VCTVrh{}."
+                 "kappa_1_and_2_errors_20bins_cum_freq_range{}.png".format(
+                  plot_fold, basename, rhVV, a, rhVCTV, value_range[1])),
+        num_bins=20, freq=True, cumulative=True,  # max_val=1
+        value_range=value_range, y_range=y_range
+    )
+
+
+def plot_sphere_kappa_1_and_2_errors_VV_VVarea2_VCTV(
+        r=10, rhVV=8, rhVCTV=8, n=0, ico=1280, binary=False, value_range=None,
         y_range=None):
     """
     Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
@@ -710,22 +857,31 @@ def plot_sphere_kappa_1_and_2_errors_VV_VCTV(
     VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
     VV_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
 
+    df_VV = pd.read_csv("{}{}.VV_area2_rh{}.csv".format(fold, basename, rhVV),
+                        sep=';')
+    VV_area2_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
+    VV_area2_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
+
     data = [VCTV_kappa_1_errors + VCTV_kappa_2_errors,
-            VV_kappa_1_errors + VV_kappa_2_errors]
+            VV_kappa_1_errors + VV_kappa_2_errors,
+            VV_area2_kappa_1_errors + VV_area2_kappa_2_errors]
+    if value_range is None:
+        value_range = (0, max([max(d) for d in data]))
     plot_composite_line_hist(  # kappa_1 + kappa_2
         data_arrays=data,
-        labels=["VCTV rh={}".format(rhVCTV), "VV rh={}".format(rhVV)],
-        line_styles=['-', '--'],
-        markers=['^', 'v'],
-        colors=['b', 'c'],
+        labels=["VCTV rh={}".format(rhVCTV), "VV rh={}".format(rhVV),
+                "VV area2 rh={}".format(rhVV)],
+        line_styles=['-', '--', '-.'],
+        markers=['^', 'v', 'o'],
+        colors=['b', 'c', 'g'],
         title="Sphere ({})".format(type),
         xlabel="Principal curvatures relative error",
         ylabel="Cumulative frequency",
-        outfile=("{}{}.VVrh{}_vs_VCTVrh{}."
-                 "kappa_1_and_2_errors_20bins_cum_freq_range0.65.png".format(
-                  plot_fold, basename, rhVV, rhVCTV)),
+        outfile=("{}{}.VV_VVarea2rh{}_vs_VCTVrh{}."
+                 "kappa_1_and_2_errors_20bins_cum_freq_range{}.png".format(
+                  plot_fold, basename, rhVV, rhVCTV, value_range[1])),
         num_bins=20, freq=True, cumulative=True,  # max_val=1
-        value_range=value_range, y_range=y_range  # max([max(d) for d in data]
+        value_range=value_range, y_range=y_range
     )
 
 
@@ -782,12 +938,9 @@ def plot_inverse_sphere_kappa_1_and_2_errors(n=0):
     )
 
 
-def plot_torus_kappa_1_and_2_diff_rh(n=0):
+def plot_torus_kappa_1_and_2_diff_rh():
     """Plots estimated kappa_1 and kappa_2 values for a torus surface
      by different methods (VV, VVCF and VCTV) using different RadiusHit.
-
-    Args:
-        n (int, optional): noise in % (default 0)
     """
     fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
             "torus/files4plotting/")
@@ -823,14 +976,112 @@ def plot_torus_kappa_1_and_2_diff_rh(n=0):
             )
 
 
-def plot_torus_kappa_1_and_2_T_1_and_2_errors(n=0, y_range=None):
+def plot_torus_kappa_1_and_2_T_1_and_2_errors_noVVCF(
+        rhVV=8, rhVCTV=8, n=0, value_range_T=None, value_range_kappa=None,
+        y_range=None, area2=False):
     """
     Plots estimated kappa_1 and kappa_2 as well as T_1 and T_2 errors histograms
-    on a torus surface for different methods (VV, VVCF and VCTV) and an optimal
+    on a torus surface for different methods (VV, and VCTV) and an optimal
     RadiusHit for each method.
 
     Args:
+        rhVV (int, optional): radius_hit for VV (default 8)
+        rhVCTV (int, optional): radius_hit for VCTV (default 8)
         n (int, optional): noise in % (default 0)
+        value_range_T (tuple, optional): a tuple of two values to limit the
+            range at X axis of principal directions plots (default None)
+        value_range_kappa (tuple, optional): a tuple of two values to limit the
+            range at X axis of principal curvatures plots (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default None)
+        area2 (boolean, optional): if True (default False), votes are
+            weighted by triangle area also in the second step (principle
+            directions and curvatures estimation)
+    """
+    fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+            "torus/files4plotting/")
+    plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+                 "torus/plots/")
+    basename = "torus_rr25_csr10"
+    principal_components = {1: "maximal", 2: "minimal"}
+    for i in principal_components.keys():
+        df = pd.read_csv("{}{}.VCTV_rh{}.csv".format(fold, basename, rhVCTV),
+                         sep=';')
+        VCTV_T_errors = df["T{}Errors".format(i)].tolist()
+        VCTV_kappa_errors = df["kappa{}RelErrors".format(i)].tolist()
+
+        # VVCF_kappa_errors = pd.read_csv("{}{}.VVCF_50points_rh3.csv".format(
+        #     fold, basename), sep=';')["kappa{}RelErrors".format(i)].tolist()
+
+        if area2:
+            a = "_area2"
+        else:
+            a = ""
+        df = pd.read_csv("{}{}.VV{}_rh{}.csv".format(fold, basename, a, rhVV),
+                         sep=';')
+        VV_T_errors = df["T{}Errors".format(i)].tolist()  # same for VVCF
+        VV_kappa_errors = df["kappa{}RelErrors".format(i)].tolist()
+
+        VTK_kappa_errors = pd.read_csv("{}{}.VTK.csv".format(
+            fold, basename), sep=';')["kappa{}RelErrors".format(
+                i)].tolist()
+        data = [VCTV_T_errors, VV_T_errors]
+        if value_range_T is None:
+            value_range_T = (0, max([max(d) for d in data]))
+        plot_composite_line_hist(
+            data_arrays=data,
+            labels=["VCTV rh={}".format(rhVCTV), "VV{} rh={}".format(a, rhVV)],
+            line_styles=['-', '--'], markers=['^', 'v'],
+            colors=['b', 'c'],
+            title="Torus (major radius=25, minor radius=10)",
+            xlabel="{} principal direction error".format(
+                principal_components[i]),
+            ylabel="Cumulative frequency",
+            outfile="{}{}.VVrh{}{}_vs_VCTVrh{}.T_{}_errors_bins20_cum_freq.png"
+                    .format(plot_fold, basename, rhVV, a, rhVCTV, i),
+            num_bins=20, freq=True, cumulative=True,
+            value_range=value_range_T,
+            y_range=y_range  # , max_val=1
+        )
+        data = [VCTV_kappa_errors,  # VVCF_kappa_errors,
+                VV_kappa_errors, VTK_kappa_errors]
+        if value_range_kappa is None:
+            value_range_kappa = (0, max([max(d) for d in data]))
+        plot_composite_line_hist(
+            data_arrays=data,
+            labels=["VCTV rh={}".format(rhVCTV), "VV{} rh={}".format(a, rhVV),
+                    "VTK"],  # "VVCF rh=3",
+            line_styles=['-', '--', ':'], markers=['^', 'v', 's'],  # '-.', 'o',
+            colors=['b', 'c', 'r'],  # 'g',
+            title="Torus (major radius=25, minor radius=10)",
+            xlabel="{} principal curvature relative error".format(
+                principal_components[i]),
+            ylabel="Cumulative frequency",
+            outfile=("{}{}.VVrh{}{}_VCTVrh{}_vs_VTK."  # VVCF_50points_
+                     "kappa_{}_errors_bins20_cum_freq.png".format(
+                      plot_fold, basename, rhVV, a, rhVCTV, i)),
+            num_bins=20, freq=True, cumulative=True,
+            value_range=value_range_kappa,
+            y_range=y_range  # , max_val=1
+        )
+
+
+def plot_torus_kappa_1_and_2_T_1_and_2_errors_VTK_VV_VVarea2_VCTV(
+        rhVV=8, rhVCTV=8, n=0, value_range_T=None, value_range_kappa=None,
+        y_range=None):
+    """
+    Plots estimated kappa_1 and kappa_2 as well as T_1 and T_2 errors histograms
+    on a torus surface for different methods (VV, VVarea2 and VCTV) and an
+    optimal RadiusHit for each method.
+
+    Args:
+        rhVV (int, optional): radius_hit for VV (default 8)
+        rhVCTV (int, optional): radius_hit for VCTV (default 8)
+        n (int, optional): noise in % (default 0)
+        value_range_T (tuple, optional): a tuple of two values to limit the
+            range at X axis of principal directions plots (default None)
+        value_range_kappa (tuple, optional): a tuple of two values to limit the
+            range at X axis of principal curvatures plots (default None)
         y_range (tuple, optional): a tuple of two values to limit the range
             at Y axis (default None)
     """
@@ -841,51 +1092,63 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(n=0, y_range=None):
     basename = "torus_rr25_csr10"
     principal_components = {1: "maximal", 2: "minimal"}
     for i in principal_components.keys():
-        df = pd.read_csv("{}{}.VCTV_rh8.csv".format(fold, basename), sep=';')
+        df = pd.read_csv("{}{}.VCTV_rh{}.csv".format(fold, basename, rhVCTV),
+                         sep=';')
         VCTV_T_errors = df["T{}Errors".format(i)].tolist()
         VCTV_kappa_errors = df["kappa{}RelErrors".format(i)].tolist()
 
-        # VVCF_kappa_errors = pd.read_csv("{}{}.VVCF_50points_rh3.csv".format(
-        #     fold, basename), sep=';')["kappa{}RelErrors".format(i)].tolist()
-
-        df = pd.read_csv("{}{}.VV_rh8.csv".format(fold, basename), sep=';')
-        VV_T_errors = df["T{}Errors".format(i)].tolist()  # same for VVCF
+        df = pd.read_csv("{}{}.VV_rh{}.csv".format(fold, basename, rhVV),
+                         sep=';')
+        VV_T_errors = df["T{}Errors".format(i)].tolist()
         VV_kappa_errors = df["kappa{}RelErrors".format(i)].tolist()
+
+        df = pd.read_csv("{}{}.VV_area2_rh{}.csv".format(fold, basename, rhVV),
+                         sep=';')
+        VV_area2_T_errors = df["T{}Errors".format(i)].tolist()
+        VV_area2_kappa_errors = df["kappa{}RelErrors".format(i)].tolist()
 
         VTK_kappa_errors = pd.read_csv("{}{}.VTK.csv".format(
             fold, basename), sep=';')["kappa{}RelErrors".format(
                 i)].tolist()
-        data = [VCTV_T_errors, VV_T_errors]
+
+        data = [VCTV_T_errors, VV_T_errors, VV_area2_T_errors]
+        if value_range_T is None:
+            value_range = (0, max([max(d) for d in data]))
         plot_composite_line_hist(
             data_arrays=data,
-            labels=["VCTV rh=8", "VV rh=8"],
-            line_styles=['-', '--'], markers=['^', 'v'],
-            colors=['b', 'c'],
+            labels=["VCTV rh={}".format(rhVCTV), "VV rh={}".format(rhVV),
+                    "VV area2 rh={}".format(rhVV)],
+            line_styles=['-', '--', '-.'], markers=['^', 'v', 'o'],
+            colors=['b', 'c', 'g'],
             title="Torus (major radius=25, minor radius=10)",
             xlabel="{} principal direction error".format(
                 principal_components[i]),
             ylabel="Cumulative frequency",
-            outfile="{}{}.VV_VCTV_rh8.T_{}_errors_bins20_cum_freq."
-                    "png".format(plot_fold, basename, i),
+            outfile="{}{}.VV_VVarea2rh{}_vs_VCTVrh{}.T_{}_errors_bins20_"
+                    "cum_freq.png".format(plot_fold, basename, rhVV, rhVCTV, i),
             num_bins=20, freq=True, cumulative=True,
-            value_range=(0, max([max(d) for d in data])),
+            value_range=value_range,
             y_range=y_range  # , max_val=1
         )
-        data = [VCTV_kappa_errors,  # VVCF_kappa_errors,
-                VV_kappa_errors, VTK_kappa_errors]
+        data = [VCTV_kappa_errors, VV_kappa_errors,
+                VV_area2_kappa_errors, VTK_kappa_errors]
+        if value_range_kappa is None:
+            value_range = (0, max([max(d) for d in data]))
         plot_composite_line_hist(
             data_arrays=data,
-            labels=["VCTV rh=8", "VV rh=8", "VTK"],  # "VVCF rh=3",
-            line_styles=['-', '--', ':'], markers=['^', 'v', 's'],  # '-.', 'o',
-            colors=['b', 'c', 'r'],  # 'g',
+            labels=["VCTV rh={}".format(rhVCTV), "VV rh={}".format(rhVV),
+                    "VV area2 rh={}".format(rhVV), "VTK"],
+            line_styles=['-', '--', '-.', ':'], markers=['^', 'v', 'o', 's'],
+            colors=['b', 'c', 'g', 'r'],
             title="Torus (major radius=25, minor radius=10)",
             xlabel="{} principal curvature relative error".format(
                 principal_components[i]),
             ylabel="Cumulative frequency",
-            outfile=("{}{}.VV_VCTV_rh8_vs_VTK.kappa_{}_errors_" # VVCF_50points_
-                     "bins20_cum_freq.png".format(plot_fold, basename, i)),
+            outfile=("{}{}.VV_VVarea2rh{}_VCTVrh{}_vs_VTK."
+                     "kappa_{}_errors_bins20_cum_freq.png".format(
+                      plot_fold, basename, rhVV, rhVCTV, i)),
             num_bins=20, freq=True, cumulative=True,
-            value_range=(0, max([max(d) for d in data])),
+            value_range=value_range,
             y_range=y_range  # , max_val=1
         )
 
@@ -897,27 +1160,35 @@ if __name__ == "__main__":
     # plot_sphere_kappa_1_and_2_errors()
     # plot_inverse_sphere_kappa_1_and_2_errors()
     # plot_cylinder_kappa_1_diff_rh()
-    plot_cylinder_T_2_and_kappa_1_errors(y_range=(-0.05, 1.05))
+    plot_cylinder_T_2_and_kappa_1_errors_VV_VVarea2_VCTV(y_range=(-0.05, 1.05),
+                                                         exclude_borders=1)
     # plot_inverse_cylinder_T_1_and_kappa_2_errors()
     # plot_torus_kappa_1_and_2_diff_rh()
-    # plot_torus_kappa_1_and_2_T_1_and_2_errors(y_range=(-0.05, 1.05))
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_noVVCF(y_range=(-0.05, 1.05),
+    #                                                  area2=True)
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_VTK_VV_VVarea2_VCTV(
+    #     y_range=(-0.05, 1.05))
 
-    # gaussian sphere
+    # # gaussian sphere
     # for r in [10, 20, 30]:
-    #     plot_sphere_kappa_1_and_2_errors_noVVCF(
-    #         r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, y_range=(-0.05, 1.05))
-    #     plot_sphere_kappa_1_and_2_errors_VV_VCTV(
-    #         r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, value_range=(0, 0.65),
+    # #     plot_sphere_kappa_1_and_2_errors_noVVCF(
+    # #         r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, y_range=(-0.05, 1.05))
+    #     plot_sphere_kappa_1_and_2_errors_VV_VVarea2_VCTV(
+    #         r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, value_range=(0, 0.178),
     #         y_range=(-0.05, 1.05))
 
     # binary sphere
-    # plot_sphere_kappa_1_and_2_diff_rh(r=10, binary=True)
+    # plot_sphere_kappa_1_and_2_diff_rh(r=10, binary=True, methods=["VV_area2"],
+    #                                   rhs=range(5, 10))
     # for r in [10, 20, 30]:
-    #     plot_sphere_kappa_1_and_2_errors_noVVCF(
-    #         r=r, rhVV=9, rhVCTV=8, ico=0, binary=True, y_range=(-0.05, 1.05))
-    #     plot_sphere_kappa_1_and_2_errors_VV_VCTV(
-    #         r=r, rhVV=9, rhVCTV=8, ico=0, binary=True, value_range=(0, 0.65),
-    #         y_range=(-0.05, 1.05))
+    #     # plot_sphere_kappa_1_and_2_errors_noVVCF(
+    #     #     r=r, rhVV=9, rhVCTV=8, ico=0, binary=True, y_range=(-0.05, 1.05))
+    #     # plot_sphere_kappa_1_and_2_errors_VV_VCTV(
+    #     #     r=r, rhVV=9, rhVCTV=8, ico=0, binary=True, #value_range=(0, 0.65),
+    #     #     y_range=(-0.05, 1.05), area2=True)
+    #     plot_sphere_kappa_1_and_2_errors_VV_VVarea2_VCTV(
+    #         r=r, rhVV=9, rhVCTV=8, ico=0, binary=True, y_range=(-0.05, 1.05),
+    #         value_range=(0, 0.65))
     # plot_sphere_kappa_1_and_2_errors_VV_VCTV(
     #     r=20, rhVV=18, rhVCTV=18, ico=0, binary=True, value_range=(0, 0.65),
     #     y_range=(-0.05, 1.05))

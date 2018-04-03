@@ -1424,7 +1424,7 @@ class TriangleGraph(SurfaceGraph):
 
     def collecting_curvature_votes(
             self, vertex_v, neighbor_idx_to_dist, sigma, verbose=False,
-            page_curvature_formula=False):
+            page_curvature_formula=False, A_max=None):
         """
         For a vertex v, collects the curvature and tangent votes of all
         triangles within its geodesic neighborhood belonging to a surface patch
@@ -1467,6 +1467,9 @@ class TriangleGraph(SurfaceGraph):
                 the estimated normal of v_i (N_v_i) onto the arc plane (formed
                 by v, N_v and v_i) divided by the arc length (geodesic distance
                 between v and v_i).
+            A_max (boolean, optional): if given (default None), votes are
+                weighted by triangle area like in the first step (normals
+                estimation)
         Returns:
             the 3x3 symmetric matrix B_v (numpy.ndarray)
         """
@@ -1484,6 +1487,7 @@ class TriangleGraph(SurfaceGraph):
         acos = math.acos
         outer = np.multiply.outer
         cos = math.cos
+        area = self.graph.vp.area
 
         # Get the coordinates of vertex v and its estimated normal N_v (as numpy
         # array):
@@ -1506,7 +1510,11 @@ class TriangleGraph(SurfaceGraph):
                 # Weight depending on the geodesic distance to the neighboring
                 # vertex v_i from the vertex v, g_i:
                 g_i = neighbor_idx_to_dist[idx_v_i]
-                w_i = exp(- g_i / sigma)
+                if A_max is None:
+                    w_i = exp(- g_i / sigma)
+                else:
+                    A_i = area[vertex_v_i]
+                    w_i = A_i / A_max * exp(- g_i / sigma)
                 all_w_i.append(w_i)
 
         all_w_i = array(all_w_i)
@@ -1570,19 +1578,23 @@ class TriangleGraph(SurfaceGraph):
                 elif cos_tetha < 0:
                     cos_tetha = 0.0
                 tetha = acos(cos_tetha)
-            if page_curvature_formula is False:
-                # formula from Tong and Tang paper:
-                kappa_i = abs(2 * cos((pi - tetha) / 2) / sqrt(dot(vv_i, vv_i)))
-                # curvature sign has to be like this according to Page's paper:
-                # kappa_i_sign = signum(dot(T_i, n_i))
-                # but negated according to Tang & Medioni's definition (suitable
-                # for our surface normals convention):
-                kappa_i_sign = -1 * signum(dot(T_i, n_i))
-                kappa_i *= kappa_i_sign
-            else:  # formula from Page et al. paper:
+            # curvature sign has to be like this according to Page's paper:
+            # kappa_i_sign = signum(dot(T_i, n_i))
+            # but negated according to Tang & Medioni's definition (suitable
+            # for our surface normals convention):
+            kappa_i_sign = -1 * signum(dot(T_i, n_i))
+            if page_curvature_formula:  # formula from Page et al. paper:
                 s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
-                kappa_i = tetha / s
+                kappa_i = tetha / s  # old version
                 # decomposition does not work if multiply kappa_i with its sign
+                # new ideas:
+                # if kappa_i_sign < 0:
+                #     # tetha = 2 * pi - tetha
+                #     tetha = tetha + pi
+                # kappa_i = kappa_i_sign * tetha / s
+            else:  # formula from Tong and Tang paper:
+                kappa_i = abs(2 * cos((pi - tetha) / 2) / sqrt(dot(vv_i, vv_i)))
+                kappa_i *= kappa_i_sign
 
             # Recover the corresponding weight, which was calculated and
             # normalized before:
