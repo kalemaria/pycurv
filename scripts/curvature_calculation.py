@@ -4,6 +4,7 @@ from os.path import isfile
 from graph_tool import load_graph
 import gzip
 from os import remove
+import pandas as pd
 import cProfile
 
 from pysurf_compact import (
@@ -399,12 +400,12 @@ def __vtp_arrays_to_mrc_volumes(
         print 'Archive %s.gz was written' % mrcfilename
 
 
-def simple_workflow(fold, surf_file, base_filename, scale_factor_to_nm, scale_x,
-                    scale_y, scale_z, radius_hit, epsilon=0, eta=0,
-                    full_dist_map=False, exclude_borders=0,
-                    methods=['VCTV', 'VV']):
+def simple_workflow(
+        fold, surf_file, base_filename, scale_factor_to_nm, scale_x, scale_y,
+        scale_z, radius_hit, epsilon=0, eta=0, exclude_borders=0,
+        methods=['VCTV', 'VV']):
     # TODO docstring if remains
-    # Reading in the .vtp file with the test triangle mesh and transforming
+    # Reading in the .vtp file with the triangle mesh and transforming
     # it into a triangle graph:
     t_begin = time.time()
 
@@ -455,7 +456,7 @@ def simple_workflow_part1(
         scale_z, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         exclude_borders=0):
     # TODO docstring if remains
-    # Reading in the .vtp file with the test triangle mesh and transforming
+    # Reading in the .vtp file with the triangle mesh and transforming
     # it into a triangle graph:
     t_begin = time.time()
 
@@ -518,6 +519,118 @@ def simple_workflow_part2(
         io.save_vtp(surface_curv, surf_file)
 
 
+def new_workflow(
+        fold, surf_file, base_filename, scale_factor_to_nm, scale_x, scale_y,
+        scale_z, radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+        remove_wrong_borders=True):
+    # TODO docstring if remains
+    # Reading in the .vtp file with the triangle mesh and transforming
+    # it into a triangle graph:
+    t_begin = time.time()
+
+    print '\nReading in the surface file to get a vtkPolyData surface...'
+    surf = io.load_poly(fold + surf_file)
+    print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+           'curvatures...')
+    tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+    tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
+    print ('The graph has {} vertices and {} edges'.format(
+        tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    if remove_wrong_borders:
+        # Remove the wrong borders (surface generation artifact)
+        print '\nFinding triangles that are 3 pixels to surface borders...'
+        tg.find_vertices_near_border(3 * scale_factor_to_nm, purge=True)
+        print ('The graph has {} vertices and {} edges'.format(
+            tg.graph.num_vertices(), tg.graph.num_edges()))
+        # and filter out possibly occurring small disconnected fragments
+        print '\nFinding small connected components of the graph...'
+        tg.find_small_connected_components(threshold=100, purge=True)
+        print ('The graph has {} vertices and {} edges'.format(
+            tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print ('Graph construction from surface (and cleaning) took: {} min {} s'
+           .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
+
+    # Running the modified Normal Vector Voting algorithms:
+    gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
+            fold, base_filename, radius_hit, epsilon, eta)
+    method_tg_surf_dict = normals_directions_and_curvature_estimation(
+        tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
+        methods=['VCTV', 'VV'], full_dist_map=False, graph_file=gt_file1,
+        area2=True)
+    for method in method_tg_surf_dict.keys():
+        # Saving the output (graph and surface object) for later filtering or
+        # inspection in ParaView:
+        (tg, surf) = method_tg_surf_dict[method]
+        if method == 'VV':
+            method = 'VV_area2'
+        gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta)
+        tg.graph.save(gt_file)
+        surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta)
+        io.save_vtp(surf, surf_file)
+
+
+def extract_curvatures_after_new_workflow(
+        fold, base_filename, scale_factor_to_nm, scale_x, scale_y, scale_z,
+        radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'], exclude_borders=0):
+    # TODO docstring if remains
+    for method in methods:
+        if method == 'VV':
+            method = 'VV_area2'
+        # input graph and surface files
+        gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta)
+        surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta)
+        # output csv file
+        if exclude_borders == 0:
+            eb = ""
+        else:
+            eb = "_excluding{}borders".format(exclude_borders)
+        csv_file = '{}{}.{}_rh{}_epsilon{}_eta{}{}.csv'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta, eb)
+
+        # Create TriangleGraph object and load the graph file
+        surf = io.load_poly(surf_file)
+        tg = TriangleGraph(
+            surface=surf, scale_factor_to_nm=scale_factor_to_nm,
+            scale_x=scale_x, scale_y=scale_y, scale_z=scale_z)
+        tg.graph = load_graph(gt_file)
+
+        __extract_curvatures_from_graph(tg, csv_file, exclude_borders)
+
+
+def __extract_curvatures_from_graph(tg, csv_file, exclude_borders):
+    # If don't want to include curvatures near borders, filter out those
+    if exclude_borders > 0:
+        tg.find_vertices_near_border(exclude_borders, purge=True)
+
+    # Getting estimated principal curvatures from the output graph:
+    kappa_1 = tg.get_vertex_property_array("kappa_1")
+    kappa_2 = tg.get_vertex_property_array("kappa_2")
+    gauss_curvature = tg.get_vertex_property_array("gauss_curvature_VV")
+    mean_curvature = tg.get_vertex_property_array("mean_curvature_VV")
+    shape_index = tg.get_vertex_property_array("shape_index_VV")
+    curvedness = tg.get_vertex_property_array("curvedness_VV")
+    triangle_areas = tg.get_vertex_property_array("area")
+
+    # Writing all the curvature values and errors into a csv file:
+    df = pd.DataFrame()
+    df["kappa1"] = kappa_1
+    df["kappa2"] = kappa_2
+    df["gauss_curvature"] = gauss_curvature
+    df["mean_curvature"] = mean_curvature
+    df["shape_index"] = shape_index
+    df["curvedness"] = curvedness
+    df["triangleAreas"] = triangle_areas
+    df.to_csv(csv_file, sep=';')
+
+
 def main(membrane):
     """
     Main function for running the workflow function for real data.
@@ -531,7 +644,7 @@ def main(membrane):
     t_begin = time.time()
 
     # Javier's cER or PM (given by "segmentation" parameter)
-    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/exclude_borders_5/"
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/only_without_borders/"
     pixel_size = 1.044
     scale_x = 320
     scale_y = 520
@@ -539,15 +652,23 @@ def main(membrane):
     radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
     surf_file = "t3_ny01_cropped_{}.surface.vtp".format(membrane)
     base_filename = "t3_ny01_cropped_{}".format(membrane)
-    simple_workflow(fold, surf_file, base_filename, pixel_size, scale_x,
-                    scale_y, scale_z, radius_hit, epsilon=0, eta=0,
-                    exclude_borders=5, methods=['VCTV', 'VV'])
-    simple_workflow_part1(
-        fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
-        radius_hit, epsilon=0, eta=0, full_dist_map=False, exclude_borders=5)
-    simple_workflow_part2(
-        fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
-        radius_hit, epsilon=0, eta=0, exclude_borders=5, methods=['VCTV', 'VV'])
+    # simple_workflow(
+    #     fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
+    #     radius_hit, epsilon=0, eta=0, exclude_borders=5, methods=['VCTV', 'VV'])
+    # simple_workflow_part1(
+    #     fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
+    #     radius_hit, epsilon=0, eta=0, full_dist_map=False, exclude_borders=5)
+    # simple_workflow_part2(
+    #     fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
+    #     radius_hit, epsilon=0, eta=0, exclude_borders=5, methods=['VCTV', 'VV'])
+    new_workflow(
+        fold, surf_file, base_filename, pixel_size, scale_x, scale_y,
+        scale_z, radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+        remove_wrong_borders=True)
+    extract_curvatures_after_new_workflow(
+        fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
+        radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+        exclude_borders=radius_hit)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -592,15 +713,54 @@ def main2():
     duration = t_end - t_begin
     print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
 
-if __name__ == "__main__":
-    # segmentation = sys.argv[1]
-    # # main(segmentation)
-    # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/exclude_borders_5/"
-    # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_rh6.stats'.format(
-    #     fold, segmentation)
-    # cProfile.run('main(segmentation)', stats_file)
 
-    fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/'
-            'vesicle3_t74/')
-    stats_file = '{}t74_vesicle3.VCTV_VV_rh6_eb0.stats'.format(fold)
-    cProfile.run('main2()', stats_file)
+def main3():
+    t_begin = time.time()
+
+    fold = '/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/'
+    box = 50
+    rh = 8
+
+    # # normal sphere (control)
+    # surf_file = 'bin_sphere_r20_t1.surface.vtp'
+    # base_filename = 'bin_sphere_r20_t1'
+    # # new_workflow(
+    # #     fold, surf_file, base_filename, scale_factor_to_nm=1, scale_x=box,
+    # #     scale_y=box, scale_z=box, radius_hit=rh, epsilon=0, eta=0,
+    # #     methods=['VCTV', 'VV'], remove_wrong_borders=False)
+    # extract_curvatures_after_new_workflow(
+    #     fold, base_filename, scale_factor_to_nm=1, scale_x=box, scale_y=box,
+    #     scale_z=box, radius_hit=rh, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+    #     exclude_borders=0)
+
+    # sphere with missing wedge
+    surf_file = 'bin_sphere_r20_t1_with_wedge30deg.surface.vtp'
+    base_filename = 'bin_sphere_r20_t1_with_wedge30deg'
+    # new_workflow(
+    #     fold, surf_file, base_filename, scale_factor_to_nm=1, scale_x=box,
+    #     scale_y=box, scale_z=box, radius_hit=rh, epsilon=0, eta=0,
+    #     methods=['VCTV', 'VV'], remove_wrong_borders=True)
+    extract_curvatures_after_new_workflow(
+        fold, base_filename, scale_factor_to_nm=1, scale_x=box, scale_y=box,
+        scale_z=box, radius_hit=rh, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+        exclude_borders=8)
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print('\nTotal elapsed time: {} min {} s'.format(
+        divmod(duration, 60)[0], divmod(duration, 60)[1]))
+
+if __name__ == "__main__":
+    segmentation = sys.argv[1]
+    # main(segmentation)
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/only_without_borders/"
+    stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh6.stats'.format(
+        fold, segmentation)
+    cProfile.run('main(segmentation)', stats_file)
+
+    # fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/'
+    #         'vesicle3_t74/')
+    # stats_file = '{}t74_vesicle3.VCTV_VV_rh6_eb0.stats'.format(fold)
+    # cProfile.run('main2()', stats_file)
+
+    # main3()

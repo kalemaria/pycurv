@@ -4,7 +4,7 @@ import numpy as np
 # import os
 
 from pysurf_compact import pysurf_io as io
-from pysurf_compact import pexceptions, surface_graphs  # , run_gen_surface
+from pysurf_compact import pexceptions, surface_graphs, run_gen_surface
 from synthetic_volumes import SphereMask, CylinderMask, ConeMask
 
 """A set of functions and classes for generating artificial surfaces of
@@ -634,24 +634,43 @@ def main():
     #     r=10, mask=sphere_wedge_30deg_mask)
     # io.save_vtp(sphere_wedge_30deg_surf, surf_vtp)
 
-    # # Sphere from smoothed binary mask without missing wedge
-    # mask_mrc = "{}smooth_sphere_r10_t1_box25.mrc".format(fold)
-    # sphere_mask = io.load_tomo(mask_mrc)
-    # sphere_isosurf = isosurface_from_mask(sphere_mask, threshold=0.11)
-    # isosurf_vtp = "{}smooth_sphere_r10_t1_isosurf.vtp".format(fold)
-    # io.save_vtp(sphere_isosurf, isosurf_vtp)
+    # Sphere from smoothed binary mask without missing wedge
+    r = 20
+    box = int(2.5 * r)
+    thresh = 0.4  # 0.3 for r=50, 0.45 for r=10
+    mask_mrc = "{}smooth_sphere_r{}_t1_box{}.mrc".format(fold, r, box)
+    mask = io.load_tomo(mask_mrc)
+    # Isosurface - generates a double surface:
+    isosurf = isosurface_from_mask(mask, threshold=thresh)
+    isosurf_vtp = "{}smooth_sphere_r{}_t1_isosurf.vtp".format(fold, r)
+    io.save_vtp(isosurf, isosurf_vtp)
+    # Turn to a binary mask:
+    bin_mask = (mask > thresh).astype(int)
+    bin_mask_mrc = "{}bin_sphere_r{}_t1_box{}.mrc".format(fold, r, box)
+    io.save_numpy(bin_mask, bin_mask_mrc)
+    # and generate signed-surface:
+    surf_base = "{}bin_sphere_r{}_t1".format(fold, r)
+    run_gen_surface(bin_mask, surf_base, lbl=1, mask=True)  # r=10: 1856 cells
+    # r= 20: 8134 cells
 
     # Sphere from smoothed binary mask with missing wedge
-    mask_mrc = "{}smooth_sphere_r50_t1_box125_with_wedge30deg.mrc".format(fold)
-    sphere_wedge_30deg_mask = io.load_tomo(mask_mrc)
-    sphere_wedge_30deg_isosurf = isosurface_from_mask(
-        sphere_wedge_30deg_mask, threshold=0.3)  # 0.11
-    isosurf_vtp = "{}smooth_sphere_r50_t1_with_wedge30deg_isosurf.vtp".format(
-        fold)
-    io.save_vtp(sphere_wedge_30deg_isosurf, isosurf_vtp)
-    # # does not work with Antonio's surface generation:
-    # surf_base = "{}smooth_sphere_r10_t1_with_wedge30deg".format(fold)
-    # run_gen_surface(sphere_wedge_30deg_mask, surf_base, lbl=0.11, mask=False)
+    mask_mrc = "{}smooth_sphere_r{}_t1_box{}_with_wedge30deg.mrc".format(
+        fold, r, box)
+    mask = io.load_tomo(mask_mrc)
+    # Isosurface - generates a double surface:
+    isosurf = isosurface_from_mask(mask, threshold=thresh)
+    isosurf_vtp = "{}smooth_sphere_r{}_t1_with_wedge30deg_isosurf.vtp".format(
+        fold, r)
+    io.save_vtp(isosurf, isosurf_vtp)
+    # Turn to a binary mask:
+    bin_mask = (mask > thresh).astype(int)
+    bin_mask_mrc = "{}bin_sphere_r{}_t1_box{}_with_wedge30deg.mrc".format(
+        fold, r, box)
+    io.save_numpy(bin_mask, bin_mask_mrc)
+    # and generate signed-surface:
+    surf_base = "{}bin_sphere_r{}_t1_with_wedge30deg".format(fold, r)
+    run_gen_surface(bin_mask, surf_base, lbl=1, mask=True)  # r=10: 2446 cells
+    # r= 20: 9065 cells
 
     # # Cylinder
     # cg = CylinderGenerator()

@@ -265,14 +265,14 @@ def main():
 
     # Generate a hollow sphere mask
     sm = SphereMask()
-    r = 50  # r=10: 1856 cells, r=15: 4582 cells, r=20: 8134 cells
+    r = 20  # r=10: 1856 cells, r=15: 4582 cells, r=20: 8134 cells, r=50
     box = int(math.ceil(r * 2.5))
     thickness = 1
     sphere = sm.generate_sphere_mask(r, box, t=thickness)
-    # io.save_numpy(sphere, "{}sphere_r{}_t{}_box{}.mrc".format(
-    #     fold, r, thickness, box))
-    # # From the mask, generate a surface (is correct)
-    # run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
+    io.save_numpy(sphere, "{}sphere_r{}_t{}_box{}.mrc".format(
+        fold, r, thickness, box))
+    # From the mask, generate a surface
+    run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
     # Gaussian smoothing
     sigma = 0.2
     smooth_sphere = ndimage.filters.gaussian_filter(

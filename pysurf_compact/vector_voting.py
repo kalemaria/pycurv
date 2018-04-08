@@ -673,7 +673,7 @@ def vector_curvature_tensor_voting(
 def normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=0,
         methods=['VV'], page_curvature_formula=False, num_points=None,
-        full_dist_map=False, graph_file='temp.gt', area2=False):
+        full_dist_map=False, graph_file='temp.gt', area2=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, principle curvatures and directions for a surface using its
@@ -886,12 +886,12 @@ def preparation_for_curvature_estimation(
         print 'Finding borders took: %s min %s s' % divmod(duration0, 60)
 
     # Save the graph to a file for use by different methods in the second run:
-    t_begin0 = time.time()
+    # t_begin0 = time.time()
     tg.graph.save(graph_file)
-    t_end0 = time.time()
-    duration0 = t_end0 - t_begin0
-    print '\nSaving the graph took: %s min %s s' % divmod(duration0, 60)
-    print tg.graph
+    # t_end0 = time.time()
+    # duration0 = t_end0 - t_begin0
+    # print '\nSaving the graph took: %s min %s s' % divmod(duration0, 60)
+    # print tg.graph
 
     return tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z
 
@@ -900,17 +900,17 @@ def curvature_estimation(
         scaled_surface, scale_factor_to_nm, scale_x, scale_y, scale_z,
         radius_hit, all_neighbor_idx_to_dist, exclude_borders=0,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
-        num_points=None, area2=False):
+        num_points=None, area2=True):
     # TODO docstring if remains
-    t_begin0 = time.time()
+    # t_begin0 = time.time()
     tg_curv = TriangleGraph(
         surface=scaled_surface, scale_factor_to_nm=scale_factor_to_nm,
         scale_x=scale_x, scale_y=scale_y, scale_z=scale_z)
     tg_curv.graph = load_graph(graph_file)
-    t_end0 = time.time()
-    duration0 = t_end0 - t_begin0
-    print '\nLoading the graph took: %s min %s s' % divmod(duration0, 60)
-    print tg_curv.graph
+    # t_end0 = time.time()
+    # duration0 = t_end0 - t_begin0
+    # print '\nLoading the graph took: %s min %s s' % divmod(duration0, 60)
+    # print tg_curv.graph
 
     print ("\nSecond run: estimating principle curvatures and directions "
            "for surface patches using {}...".format(method))
