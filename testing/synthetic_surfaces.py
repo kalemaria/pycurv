@@ -637,19 +637,21 @@ def main():
     # Sphere from smoothed binary mask without missing wedge
     r = 20
     box = int(2.5 * r)
-    thresh = 0.4  # 0.3 for r=50, 0.45 for r=10
+    thresh = 0.6  # 0.3 for r=50, 0.45 for r=10, 0.4 for r=20 first
     mask_mrc = "{}smooth_sphere_r{}_t1_box{}.mrc".format(fold, r, box)
     mask = io.load_tomo(mask_mrc)
     # Isosurface - generates a double surface:
     isosurf = isosurface_from_mask(mask, threshold=thresh)
-    isosurf_vtp = "{}smooth_sphere_r{}_t1_isosurf.vtp".format(fold, r)
+    isosurf_vtp = "{}smooth_sphere_r{}_t1_isosurf_thresh{}.vtp".format(
+        fold, r, thresh)
     io.save_vtp(isosurf, isosurf_vtp)
     # Turn to a binary mask:
     bin_mask = (mask > thresh).astype(int)
-    bin_mask_mrc = "{}bin_sphere_r{}_t1_box{}.mrc".format(fold, r, box)
+    bin_mask_mrc = "{}bin_sphere_r{}_t1_box{}_thresh{}.mrc".format(
+        fold, r, box, thresh)
     io.save_numpy(bin_mask, bin_mask_mrc)
     # and generate signed-surface:
-    surf_base = "{}bin_sphere_r{}_t1".format(fold, r)
+    surf_base = "{}bin_sphere_r{}_t1_thresh{}".format(fold, r, thresh)
     run_gen_surface(bin_mask, surf_base, lbl=1, mask=True)  # r=10: 1856 cells
     # r= 20: 8134 cells
 
@@ -659,18 +661,19 @@ def main():
     mask = io.load_tomo(mask_mrc)
     # Isosurface - generates a double surface:
     isosurf = isosurface_from_mask(mask, threshold=thresh)
-    isosurf_vtp = "{}smooth_sphere_r{}_t1_with_wedge30deg_isosurf.vtp".format(
-        fold, r)
+    isosurf_vtp = ("{}smooth_sphere_r{}_t1_with_wedge30deg_isosurf_thresh{}.vtp"
+                   .format(fold, r, thresh))
     io.save_vtp(isosurf, isosurf_vtp)
     # Turn to a binary mask:
     bin_mask = (mask > thresh).astype(int)
-    bin_mask_mrc = "{}bin_sphere_r{}_t1_box{}_with_wedge30deg.mrc".format(
-        fold, r, box)
+    bin_mask_mrc = ("{}bin_sphere_r{}_t1_box{}_with_wedge30deg_thresh{}.mrc"
+                    .format(fold, r, box, thresh))
     io.save_numpy(bin_mask, bin_mask_mrc)
     # and generate signed-surface:
-    surf_base = "{}bin_sphere_r{}_t1_with_wedge30deg".format(fold, r)
+    surf_base = "{}bin_sphere_r{}_t1_with_wedge30deg_thresh{}".format(
+        fold, r, thresh)
     run_gen_surface(bin_mask, surf_base, lbl=1, mask=True)  # r=10: 2446 cells
-    # r= 20: 9065 cells
+    # r= 20: 9065 cells with thresh 0.4, 9228 with thresh 0.6
 
     # # Cylinder
     # cg = CylinderGenerator()

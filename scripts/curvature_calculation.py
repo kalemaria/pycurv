@@ -5,6 +5,8 @@ from graph_tool import load_graph
 import gzip
 from os import remove
 import pandas as pd
+import numpy as np
+from scipy import ndimage
 import cProfile
 
 from pysurf_compact import (
@@ -520,38 +522,66 @@ def simple_workflow_part2(
 
 
 def new_workflow(
-        fold, surf_file, base_filename, scale_factor_to_nm, scale_x, scale_y,
-        scale_z, radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
-        remove_wrong_borders=True):
+        fold, base_filename, scale_factor_to_nm, scale_x, scale_y, scale_z,
+        radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+        seg_file=None, label=1, holes=0, remove_wrong_borders=True):
     # TODO docstring if remains
     # Reading in the .vtp file with the triangle mesh and transforming
     # it into a triangle graph:
     t_begin = time.time()
 
-    print '\nReading in the surface file to get a vtkPolyData surface...'
-    surf = io.load_poly(fold + surf_file)
-    print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-           'curvatures...')
+    surf_file = base_filename + ".surface.vtp"
+    if not isfile(fold + surf_file):
+        if seg_file is None or not isfile(fold + seg_file):
+            print ("Error: the segmentation file {} not given or not found"
+                   .format(fold + seg_file))  # TODO using pyseg error?
+            exit(1)
+        # Load the segmentation numpy array from a file and get only the
+        # requested labels as 1 and the background as 0:
+        print ("\nMaking the segmentation binary...")
+        seg = io.load_tomo(fold + seg_file)
+        assert(isinstance(seg, np.ndarray))
+        data_type = seg.dtype
+        binary_seg = (seg == label).astype(data_type)
+        if holes != 0:  # reduce / increase holes in the segmentation
+            cube_size = abs(holes)
+            cube = np.ones((cube_size, cube_size, cube_size))
+            if holes > 0:  # close (reduce) holes
+                print ("\nReducing holes in the segmentation...")
+                binary_seg = ndimage.binary_closing(
+                    binary_seg, structure=cube, iterations=1).astype(data_type)
+            else:  # open (increase) holes
+                print ("\nIncreasing holes in the segmentation...")
+                binary_seg = ndimage.binary_opening(
+                    binary_seg, structure=cube, iterations=1).astype(data_type)
+        # Write the resulting binary segmentation into a file:
+        binary_seg_file = "{}{}.binary_seg.mrc".format(fold, base_filename)
+        io.save_numpy(binary_seg, binary_seg_file)
+        print ("\nGenerating a surface from the binary segmentation...")
+        surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
+    else:
+        print ('\nReading in the surface from file...')
+        surf = io.load_poly(fold + surf_file)
+    print ('\nBuilding a triangle graph from the surface...')
     tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
     tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
     print ('The graph has {} vertices and {} edges'.format(
         tg.graph.num_vertices(), tg.graph.num_edges()))
-
     if remove_wrong_borders:
         # Remove the wrong borders (surface generation artifact)
-        print '\nFinding triangles that are 3 pixels to surface borders...'
+        print ('\nFinding triangles that are 3 pixels to surface borders...')
         tg.find_vertices_near_border(3 * scale_factor_to_nm, purge=True)
         print ('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
         # and filter out possibly occurring small disconnected fragments
-        print '\nFinding small connected components of the graph...'
+        print ('\nFinding small connected components of the graph...')
         tg.find_small_connected_components(threshold=100, purge=True)
         print ('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
 
     t_end = time.time()
     duration = t_end - t_begin
-    print ('Graph construction from surface (and cleaning) took: {} min {} s'
+    print ('Surface and graph generation (and cleaning) took: {} min {} s'
            .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
     # Running the modified Normal Vector Voting algorithms:
@@ -582,33 +612,48 @@ def extract_curvatures_after_new_workflow(
     for method in methods:
         if method == 'VV':
             method = 'VV_area2'
+        print("Method: {}".format(method))
         # input graph and surface files
-        gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+        gt_infile = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
             fold, base_filename, method, radius_hit, epsilon, eta)
-        surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+        surf_infile = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
             fold, base_filename, method, radius_hit, epsilon, eta)
-        # output csv file
-        if exclude_borders == 0:
-            eb = ""
-        else:
+        # output csv, gt and vtp files
+        csv_outfile = '{}{}.{}_rh{}_epsilon{}_eta{}.csv'.format(
+            fold, base_filename, method, radius_hit, epsilon, eta)
+        gt_outfile = None
+        vtp_outfile = None
+        if exclude_borders > 0:
             eb = "_excluding{}borders".format(exclude_borders)
-        csv_file = '{}{}.{}_rh{}_epsilon{}_eta{}{}.csv'.format(
-            fold, base_filename, method, radius_hit, epsilon, eta, eb)
+            gt_outfile = '{}{}.{}_rh{}_epsilon{}_eta{}{}.gt'.format(
+                fold, base_filename, method, radius_hit, epsilon, eta, eb)
+            csv_outfile = '{}{}.{}_rh{}_epsilon{}_eta{}{}.csv'.format(
+                fold, base_filename, method, radius_hit, epsilon, eta, eb)
+            vtp_outfile = '{}{}.{}_rh{}_epsilon{}_eta{}{}.vtp'.format(
+                fold, base_filename, method, radius_hit, epsilon, eta, eb)
 
         # Create TriangleGraph object and load the graph file
-        surf = io.load_poly(surf_file)
+        surf = io.load_poly(surf_infile)
         tg = TriangleGraph(
             surface=surf, scale_factor_to_nm=scale_factor_to_nm,
             scale_x=scale_x, scale_y=scale_y, scale_z=scale_z)
-        tg.graph = load_graph(gt_file)
+        tg.graph = load_graph(gt_infile)
 
-        __extract_curvatures_from_graph(tg, csv_file, exclude_borders)
+        __extract_curvatures_from_graph(tg, csv_outfile, exclude_borders,
+                                        gt_outfile, vtp_outfile)
 
 
-def __extract_curvatures_from_graph(tg, csv_file, exclude_borders):
+def __extract_curvatures_from_graph(tg, csv_file, exclude_borders,
+                                    gt_file=None, vtp_file=None):
     # If don't want to include curvatures near borders, filter out those
     if exclude_borders > 0:
         tg.find_vertices_near_border(exclude_borders, purge=True)
+        if gt_file is not None:
+            tg.graph.save(gt_file)
+        if vtp_file is not None:
+            # Transforming the resulting graph to a surface with triangles:
+            surf = tg.graph_to_triangle_poly()
+            io.save_vtp(surf, vtp_file)
 
     # Getting estimated principal curvatures from the output graph:
     kappa_1 = tg.get_vertex_property_array("kappa_1")
@@ -643,32 +688,37 @@ def main(membrane):
     """
     t_begin = time.time()
 
-    # Javier's cER or PM (given by "segmentation" parameter)
-    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/only_without_borders/"
+    # Javier's cER or PM (given by membrane parameter)
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
     pixel_size = 1.044
     scale_x = 320
     scale_y = 520
     scale_z = 210
     radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
-    surf_file = "t3_ny01_cropped_{}.surface.vtp".format(membrane)
+
     base_filename = "t3_ny01_cropped_{}".format(membrane)
-    # simple_workflow(
-    #     fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
-    #     radius_hit, epsilon=0, eta=0, exclude_borders=5, methods=['VCTV', 'VV'])
-    # simple_workflow_part1(
-    #     fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
-    #     radius_hit, epsilon=0, eta=0, full_dist_map=False, exclude_borders=5)
-    # simple_workflow_part2(
-    #     fold, surf_file, base_filename, pixel_size, scale_x, scale_y, scale_z,
-    #     radius_hit, epsilon=0, eta=0, exclude_borders=5, methods=['VCTV', 'VV'])
-    new_workflow(
-        fold, surf_file, base_filename, pixel_size, scale_x, scale_y,
-        scale_z, radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
-        remove_wrong_borders=True)
-    extract_curvatures_after_new_workflow(
-        fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-        radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
-        exclude_borders=radius_hit)
+    # holes = 0  # a positive number means closing with a cube of that size,
+    # # a negative number means opening with a cube of that size
+    # base_filename = "t3_ny01_cropped_{}_holes{}".format(membrane, holes)
+
+    # if membrane == "PM":
+    #     lbl = 1
+    # else:  # if membrane == "cER":
+    #     lbl = 2
+    # print("\nCalculating curvatures for {}".format(membrane))
+    # new_workflow(
+    #     fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
+    #     radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+    #     seg_file="t3_ny01_lbl.Labels_cropped.mrc", label=lbl,
+    #     holes=holes, remove_wrong_borders=True)
+
+    for b in range(0, 6):
+        print("\nExtracting curvatures for {} without {} nm from border".format(
+            membrane, b))
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
+            radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+            exclude_borders=b)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -721,29 +771,30 @@ def main3():
     box = 50
     rh = 8
 
-    # # normal sphere (control)
-    # surf_file = 'bin_sphere_r20_t1.surface.vtp'
-    # base_filename = 'bin_sphere_r20_t1'
-    # # new_workflow(
-    # #     fold, surf_file, base_filename, scale_factor_to_nm=1, scale_x=box,
-    # #     scale_y=box, scale_z=box, radius_hit=rh, epsilon=0, eta=0,
-    # #     methods=['VCTV', 'VV'], remove_wrong_borders=False)
-    # extract_curvatures_after_new_workflow(
-    #     fold, base_filename, scale_factor_to_nm=1, scale_x=box, scale_y=box,
-    #     scale_z=box, radius_hit=rh, epsilon=0, eta=0, methods=['VCTV', 'VV'],
-    #     exclude_borders=0)
-
-    # sphere with missing wedge
-    surf_file = 'bin_sphere_r20_t1_with_wedge30deg.surface.vtp'
-    base_filename = 'bin_sphere_r20_t1_with_wedge30deg'
-    # new_workflow(
-    #     fold, surf_file, base_filename, scale_factor_to_nm=1, scale_x=box,
-    #     scale_y=box, scale_z=box, radius_hit=rh, epsilon=0, eta=0,
-    #     methods=['VCTV', 'VV'], remove_wrong_borders=True)
+    print("\nNormal sphere (control)")
+    base_filename = 'bin_sphere_r20_t1_thresh0.6'
+    new_workflow(
+        fold, base_filename, scale_factor_to_nm=1, scale_x=box,
+        scale_y=box, scale_z=box, radius_hit=rh, epsilon=0, eta=0,
+        methods=['VCTV', 'VV'], remove_wrong_borders=False)
+    print("\nExtracting all curvatures")
     extract_curvatures_after_new_workflow(
         fold, base_filename, scale_factor_to_nm=1, scale_x=box, scale_y=box,
         scale_z=box, radius_hit=rh, epsilon=0, eta=0, methods=['VCTV', 'VV'],
-        exclude_borders=8)
+        exclude_borders=0)
+
+    print("\nSphere with missing wedge")
+    base_filename = 'bin_sphere_r20_t1_with_wedge30deg_thresh0.6'
+    new_workflow(
+        fold, base_filename, scale_factor_to_nm=1, scale_x=box,
+        scale_y=box, scale_z=box, radius_hit=rh, epsilon=0, eta=0,
+        methods=['VCTV', 'VV'], remove_wrong_borders=True)
+    for b in range(0, 9):
+        print("\nExtracting curvatures without {} nm from border".format(b))
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, scale_factor_to_nm=1, scale_x=box, scale_y=box,
+            scale_z=box, radius_hit=rh, epsilon=0, eta=0,
+            methods=['VCTV', 'VV'], exclude_borders=b)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -751,16 +802,18 @@ def main3():
         divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
 if __name__ == "__main__":
-    segmentation = sys.argv[1]
+    # main("cER")
+    # main("PM")
+    # segmentation = sys.argv[1]
     # main(segmentation)
-    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/only_without_borders/"
-    stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh6.stats'.format(
-        fold, segmentation)
-    cProfile.run('main(segmentation)', stats_file)
+    # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
+    # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh6.stats'.format(
+    #     fold, segmentation)
+    # cProfile.run('main(segmentation)', stats_file)
 
     # fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/'
     #         'vesicle3_t74/')
     # stats_file = '{}t74_vesicle3.VCTV_VV_rh6_eb0.stats'.format(fold)
     # cProfile.run('main2()', stats_file)
 
-    # main3()
+    main3()

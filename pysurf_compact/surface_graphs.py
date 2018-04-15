@@ -2144,14 +2144,7 @@ class TriangleGraph(SurfaceGraph):
                 if verbose:
                     print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
             else:
-                print("Error: no eigenvector which equals to the normal found")
-                print("T_1 = {}".format(T_1))
-                print("T_2 = {}".format(T_2))
-                print("T_3 = {}".format(T_3))
-                print("N_r = {}".format(N_r))
-                print("lambda_1 = {}".format(lambda_1))
-                print("lambda_2 = {}".format(lambda_2))
-                print("lambda_3 = {}".format(lambda_3))
+                # print("Error: no eigenvector which equals to the normal found")
                 return None
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2

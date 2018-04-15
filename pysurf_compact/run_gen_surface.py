@@ -40,8 +40,7 @@ def close_holes(infile, cube_size, iterations, outfile):
 
 
 def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
-                    purge_ratio=1, save_input_as_vti=False,
-                    verbose=False):
+                    purge_ratio=1, save_input_as_vti=False, verbose=False):
     """
     Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle
     surface for objects in a segmented volume with a given label.
