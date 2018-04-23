@@ -1219,19 +1219,19 @@ class VectorVotingTestCase(unittest.TestCase):
     #             self.parametric_test_plane_normals(
     #                 10, rh, res=10, noise=n)
 
-    # def test_cylinder_directions_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) and curvatures are
-    #     correctly estimated for an opened cylinder surface (without the
-    #     circular planes) with known orientation (height, i.e. T_2, parallel to
-    #     the Z axis), certain radius and noise level.
-    #     """
-    #     # p = 50
-    #     for n in [0]:
-    #         for rh in [3, 4, 5, 6, 7, 8, 9]:
-    #             self.parametric_test_cylinder_directions_curvatures(
-    #                 10, rh, eb=0, noise=n, methods=['VCTV', 'VV'],  # 'VVCF',
-    #                 page_curvature_formula=False, area2=True)  # num_points=p
+    def test_cylinder_directions_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) and curvatures are
+        correctly estimated for an opened cylinder surface (without the
+        circular planes) with known orientation (height, i.e. T_2, parallel to
+        the Z axis), certain radius and noise level.
+        """
+        # p = 50
+        for n in [0]:
+            for rh in [6, 7, 8, 9]:
+                self.parametric_test_cylinder_directions_curvatures(
+                    10, rh, eb=5, noise=n, methods=['VV'],  # 'VCTV', 'VVCF',
+                    page_curvature_formula=False, area2=True)  # num_points=p
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1246,35 +1246,35 @@ class VectorVotingTestCase(unittest.TestCase):
     #             10, rh, noise=0, inverse=True, methods=['VV', 'VCTV', 'VVCF'],
     #             page_curvature_formula=False, num_points=p)
 
-    def test_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated for a sphere with a
-        certain radius and noise level:
-
-        kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-        """
-        # Icosahedron sphere with 1280 faces:
-        # for n in [0]:
-        #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-        #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-        #             self.parametric_test_sphere_curvatures(
-        #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
-        #                 page_curvature_formula=False, num_points=p)
-        #         self.parametric_test_sphere_curvatures(
-        #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
-        #             page_curvature_formula=False)
-        # Binary sphere with different radii:
-        for r in [30]:  # 10; 20; 30
-            for rh in [28]:  # 5, 6, 7, 8, 9, 10; 18; 28
-                self.parametric_test_sphere_curvatures(
-                    r, rh, binary=True, methods=['VV'],  # , 'VCTV'
-                    full_dist_map=False, area2=True)
-        # # Gaussian sphere with different radii:
-        # for r in [10]:  # 20, 30
-        #     for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
-        #         self.parametric_test_sphere_curvatures(
-        #             r, rh, methods=['VV'], full_dist_map=True, area2=True,
-        #             page_curvature_formula=True)
+    # def test_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated for a sphere with a
+    #     certain radius and noise level:
+    #
+    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
+    #     """
+    #     # Icosahedron sphere with 1280 faces:
+    #     # for n in [0]:
+    #     #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+    #     #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
+    #     #             self.parametric_test_sphere_curvatures(
+    #     #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
+    #     #                 page_curvature_formula=False, num_points=p)
+    #     #         self.parametric_test_sphere_curvatures(
+    #     #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
+    #     #             page_curvature_formula=False)
+    #     # Binary sphere with different radii:
+    #     for r in [30]:  # 10; 20; 30
+    #         for rh in [28]:  # 5, 6, 7, 8, 9, 10; 18; 28
+    #             self.parametric_test_sphere_curvatures(
+    #                 r, rh, binary=True, methods=['VV'],  # , 'VCTV'
+    #                 full_dist_map=False, area2=True)
+    #     # # Gaussian sphere with different radii:
+    #     # for r in [10]:  # 20, 30
+    #     #     for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
+    #     #         self.parametric_test_sphere_curvatures(
+    #     #             r, rh, methods=['VV'], full_dist_map=True, area2=True,
+    #     #             page_curvature_formula=True)
 
     # def test_inverse_sphere_curvatures(self):
     #     """

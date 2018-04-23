@@ -524,7 +524,8 @@ def simple_workflow_part2(
 def new_workflow(
         fold, base_filename, scale_factor_to_nm, scale_x, scale_y, scale_z,
         radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
-        seg_file=None, label=1, holes=0, remove_wrong_borders=True):
+        seg_file=None, label=1, holes=0, remove_wrong_borders=True,
+        remove_small_components=100):
     # TODO docstring if remains
     # Reading in the .vtp file with the triangle mesh and transforming
     # it into a triangle graph:
@@ -550,34 +551,57 @@ def new_workflow(
                 print ("\nReducing holes in the segmentation...")
                 binary_seg = ndimage.binary_closing(
                     binary_seg, structure=cube, iterations=1).astype(data_type)
-            else:  # open (increase) holes
-                print ("\nIncreasing holes in the segmentation...")
-                binary_seg = ndimage.binary_opening(
-                    binary_seg, structure=cube, iterations=1).astype(data_type)
-        # Write the resulting binary segmentation into a file:
-        binary_seg_file = "{}{}.binary_seg.mrc".format(fold, base_filename)
-        io.save_numpy(binary_seg, binary_seg_file)
+                # Write the resulting binary segmentation into a file:
+                binary_seg_file = "{}{}.binary_seg.mrc".format(
+                    fold, base_filename)
+                io.save_numpy(binary_seg, binary_seg_file)
+            # else:  # open (increase) holes - removed everything
+            #     print ("\nIncreasing holes in the segmentation...")
+            #     binary_seg = ndimage.binary_opening(
+            #         binary_seg, structure=cube, iterations=1).astype(data_type)
         print ("\nGenerating a surface from the binary segmentation...")
         surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
     else:
         print ('\nReading in the surface from file...')
         surf = io.load_poly(fold + surf_file)
-    print ('\nBuilding a triangle graph from the surface...')
-    tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
-    tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
-    print ('The graph has {} vertices and {} edges'.format(
-        tg.graph.num_vertices(), tg.graph.num_edges()))
-    if remove_wrong_borders:
-        # Remove the wrong borders (surface generation artifact)
-        print ('\nFinding triangles that are 3 pixels to surface borders...')
-        tg.find_vertices_near_border(3 * scale_factor_to_nm, purge=True)
+
+    clean_graph_file = '{}.scaled_cleaned.gt'.format(base_filename)
+    clean_surf_file = '{}.scaled_cleaned.vtp'.format(base_filename)
+    if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
+        print ('\nBuilding a triangle graph from the surface...')
+        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
         print ('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
-        # and filter out possibly occurring small disconnected fragments
-        print ('\nFinding small connected components of the graph...')
-        tg.find_small_connected_components(threshold=100, purge=True)
-        print ('The graph has {} vertices and {} edges'.format(
-            tg.graph.num_vertices(), tg.graph.num_edges()))
+        # Remove the wrong borders (surface generation artefact)
+        b = 0
+        if remove_wrong_borders:
+            b += 3  # 3 pixels artefact borders of signed surface generation
+        if holes < 0:
+            b += abs(holes)
+        if b > 0:
+            print ('\nFinding triangles that are {} pixels to surface '
+                   'borders...'.format(b))
+            tg.find_vertices_near_border(b * scale_factor_to_nm, purge=True)
+            print ('The graph has {} vertices and {} edges'.format(
+                tg.graph.num_vertices(), tg.graph.num_edges()))
+        # Filter out possibly occurring small disconnected fragments
+        if remove_small_components > 0:
+            print ('\nFinding small connected components of the graph...')
+            tg.find_small_connected_components(
+                threshold=remove_small_components, purge=True)
+            print ('The graph has {} vertices and {} edges'.format(
+                tg.graph.num_vertices(), tg.graph.num_edges()))
+        # Saving the scaled (and cleaned) graph and surface:
+        tg.graph.save(fold + clean_graph_file)
+        surf_clean = tg.graph_to_triangle_poly()
+        io.save_vtp(surf_clean, fold + clean_surf_file)
+    else:
+        print ('\nReading in the cleaned graph and surface from files...')
+        surf_clean = io.load_poly(fold + clean_surf_file)
+        tg = TriangleGraph(
+            surf_clean, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg.graph = load_graph(fold + clean_graph_file)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -689,30 +713,48 @@ def main(membrane):
     t_begin = time.time()
 
     # Javier's cER or PM (given by membrane parameter)
-    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
-    pixel_size = 1.044
-    scale_x = 320
-    scale_y = 520
-    scale_z = 210
-    radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
+    # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/tcb_t3_ny01/new_workflow/"
+    # seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
+    # base_filename = "t3_ny01_cropped_{}".format(membrane)
+    # pixel_size = 1.044
+    # scale_x = 320
+    # scale_y = 520
+    # scale_z = 210
+    # radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
+    # holes = -3  # a positive number means closing with a cube of that size,
+    # a negative number means removing surface borders of that size (in pixels)
+    # before curvature estimation (opening with a cube of that size removes
+    # everything)
 
-    base_filename = "t3_ny01_cropped_{}".format(membrane)
-    # holes = 0  # a positive number means closing with a cube of that size,
-    # # a negative number means opening with a cube of that size
-    # base_filename = "t3_ny01_cropped_{}_holes{}".format(membrane, holes)
+    fold = ("/fs/pool/pool-ruben/Maria/curvature/Javier/scs_171108_l2_t4_ny01/"
+            "cropped_ends/")
+    seg_file = "scs_171108_l2_t4_ny01_lbl.labels_cropped.mrc"
+    base_filename = "scs_171108_l2_t4_ny01_{}".format(membrane)
+    pixel_size = 1.368  # same for whole new data set
+    scale_x = 927
+    scale_y = scale_x
+    scale_z = 189
+    radius_hit = 6
+    holes = 3  # surface was better than with 0 and 5
 
-    # if membrane == "PM":
-    #     lbl = 1
-    # else:  # if membrane == "cER":
-    #     lbl = 2
-    # print("\nCalculating curvatures for {}".format(membrane))
-    # new_workflow(
-    #     fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-    #     radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
-    #     seg_file="t3_ny01_lbl.Labels_cropped.mrc", label=lbl,
-    #     holes=holes, remove_wrong_borders=True)
+    if holes != 0:
+        base_filename = "{}_holes{}".format(base_filename, holes)
+    if membrane == "PM":
+        lbl = 1
+    elif membrane == "cER":
+        lbl = 2
+    else:
+        print("Membrane not known.")
+        exit(0)
 
-    for b in range(0, 6):
+    print("\nCalculating curvatures for {}".format(membrane))
+    new_workflow(
+        fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
+        radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+        seg_file=seg_file, label=lbl, holes=holes,
+        remove_wrong_borders=True, remove_small_components=200)
+
+    for b in range(0, 3):
         print("\nExtracting curvatures for {} without {} nm from border".format(
             membrane, b))
         extract_curvatures_after_new_workflow(
@@ -802,7 +844,7 @@ def main3():
         divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
 if __name__ == "__main__":
-    # main("cER")
+    main("cER")
     # main("PM")
     # segmentation = sys.argv[1]
     # main(segmentation)
@@ -816,4 +858,4 @@ if __name__ == "__main__":
     # stats_file = '{}t74_vesicle3.VCTV_VV_rh6_eb0.stats'.format(fold)
     # cProfile.run('main2()', stats_file)
 
-    main3()
+    # main3()
