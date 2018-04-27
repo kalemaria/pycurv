@@ -720,40 +720,54 @@ def main(membrane, rh):
 
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
 
-    # The famous tcb (from old data set, done)
-    fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
-    seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
-    base_filename = "t3_ny01_cropped_{}".format(membrane)
-    pixel_size = 1.044
-    scale_x = 320
-    scale_y = 520
-    scale_z = 210
-    radius_hit = rh  # ~ 12 voxels diameter at the base of NLR (done with rh=6 and 10)
-    holes = 3
+    # The "famous" tcb (done cER RH=6 and 10 + PM RH=6, running cER RH=15)
+    # (~ 12 voxels diameter at the base of high curvature regions):
+    # fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
+    # seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
+    # base_filename = "t3_ny01_cropped_{}".format(membrane)
+    # pixel_size = 1.044  # from old data set!
 
-    # The "sheety" scs (from new data set, done)
-    # tomo = "scs_171108_l2_t4_ny01"
-    # fold = "{}{}/cropped_ends/".format(base_fold, tomo)  # RH=5, 6
-    # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6, 10, 15, 20
-    # seg_file = "{}_lbl.labels_cropped.mrc".format(tomo)
-    # lbl = 1  # TODO comment out the following lbl setting (only for cutout!)
-    # base_filename = "{}_{}".format(tomo, membrane)
-
-    # tomo = "scs_171108_l1_t2_ny01"  # The good one scs (done)
-    # tomo = "tcb_170924_l1_t3_cleaned_pt_ny01"  # (running on winzererfaehndl)
+    # The huge one tcb (done cER RH=6, but many holes, surface splits):
+    # tomo = "tcb_170924_l1_t3_cleaned_pt_ny01"
     # fold = "{}{}/".format(base_fold, tomo)
     # seg_file = "{}_lbl.labels.mrc".format(tomo)
     # base_filename = "{}_{}".format(tomo, membrane)
-    #
     # pixel_size = 1.368  # same for whole new data set
-    # scale_x = 927  # scales do not matter (TODO remove from the functions?)
-    # scale_y = scale_x
-    # scale_z = 189
-    # radius_hit = rh
-    # holes = 3  # surface was better for the "sheety" one than with 0 and 5
 
+    # The good one tcb (running cER RH=15):
+    tomo = "tcb_170924_l2_t2_ny01"
+    fold = "{}{}/".format(base_fold, tomo)
+    seg_file = "{}_lbl.labels.mrc".format(tomo)
+    base_filename = "{}_{}".format(tomo, membrane)
+    pixel_size = 1.368
+
+    # The "sheety" scs (done cER RH=6, but holes and ridges):
+    # tomo = "scs_171108_l2_t4_ny01"
+    # fold = "{}{}/cropped_ends/".format(base_fold, tomo)
+    # # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6, 10, 15, 20
+    # # lbl = 1
+    # seg_file = "{}_lbl.labels_cropped.mrc".format(tomo)
+    # base_filename = "{}_{}".format(tomo, membrane)
+    # pixel_size = 1.368
+
+    # The "good one" scs (done cER RH=6, running cER RH=15):
+    # tomo = "scs_171108_l1_t2_ny01"
+    # fold = "{}{}/".format(base_fold, tomo)
+    # # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6,10,12,15,18
+    # # lbl = 1
+    # seg_file = "{}_lbl.labels.mrc".format(tomo)
+    # base_filename = "{}_{}".format(tomo, membrane)
+    # pixel_size = 1.368
+
+    # same for all:
+    scale_x = 1  # scales do not matter (TODO remove from the functions)
+    scale_y = 1
+    scale_z = 1
+    holes = 3  # surface was better for the "sheety" one with 3 than with 0 or 5
+    radius_hit = rh
     if holes != 0:
         base_filename = "{}_holes{}".format(base_filename, holes)
+    # TODO comment out the following lbl setting for cutout!
     if membrane == "PM":
         lbl = 1
     elif membrane == "cER":
@@ -762,7 +776,7 @@ def main(membrane, rh):
         print("Membrane not known.")
         exit(0)
 
-    print("\nCalculating curvatures for {}".format(membrane))
+    print("\nCalculating curvatures for {}".format(base_filename))
     new_workflow(
         fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
         radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
