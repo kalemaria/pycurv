@@ -416,8 +416,8 @@ class TriangleGraph(SurfaceGraph):
 
         # self.cell_id_to_vertex_id = {}
 
-    def build_graph_from_vtk_surface(self, verbose=False,
-                                     reverse_normals=False):
+    def build_graph_from_vtk_surface(
+            self, verbose=False, reverse_normals=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
         nanometers according to the scale factor also specified when creating
@@ -440,9 +440,10 @@ class TriangleGraph(SurfaceGraph):
 
         t_begin = time.time()
 
-        # rescale the surface to nm and update the attribute
-        surface = rescale_surface(self.surface, self.scale_factor_to_nm)
-        self.surface = surface
+        if self.scale_factor_to_nm != 1:
+            # rescale the surface to nm and update the attribute
+            self.surface = rescale_surface(
+                self.surface, self.scale_factor_to_nm)
 
         print 'Adding curvatures to the vtkPolyData surface...'
         # because VTK and we (gen_surface) have the opposite normal
@@ -451,15 +452,17 @@ class TriangleGraph(SurfaceGraph):
             invert = False
         else:
             invert = True
-        surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
-        surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
+        self.surface = add_curvature_to_vtk_surface(
+            self.surface, "Minimum", invert)
+        self.surface = add_curvature_to_vtk_surface(
+            self.surface, "Maximum", invert)
 
         if verbose:
             # 0. Check numbers of cells and all points.
-            print '%s cells' % surface.GetNumberOfCells()
-            print '%s points' % surface.GetNumberOfPoints()
+            print '%s cells' % self.surface.GetNumberOfCells()
+            print '%s points' % self.surface.GetNumberOfPoints()
 
-        point_data = surface.GetPointData()
+        point_data = self.surface.GetPointData()
         n = point_data.GetNumberOfArrays()
         min_curvatures = None
         max_curvatures = None
@@ -479,9 +482,9 @@ class TriangleGraph(SurfaceGraph):
         # non-triangle cells.
         # Get a list of all triangle cell indices first:
         triangle_cell_ids = []
-        for cell_id in xrange(surface.GetNumberOfCells()):
+        for cell_id in xrange(self.surface.GetNumberOfCells()):
             # Get the cell i and check if it's a triangle:
-            cell = surface.GetCell(cell_id)
+            cell = self.surface.GetCell(cell_id)
             if isinstance(cell, vtk.vtkTriangle):
                 triangle_cell_ids.append(cell_id)
             else:
@@ -490,7 +493,7 @@ class TriangleGraph(SurfaceGraph):
                        % (cell_id, cell.__class__.__name__))
 
         for cell_id in triangle_cell_ids:
-            cell = surface.GetCell(cell_id)
+            cell = self.surface.GetCell(cell_id)
             if verbose:
                 print '(Triangle) cell number %s' % cell_id
 
@@ -608,7 +611,7 @@ class TriangleGraph(SurfaceGraph):
         for i, cell_id in enumerate(triangle_cell_ids):
             # Note: i corresponds to the vertex number of each cell, because
             # they were added in this order
-            cell = surface.GetCell(cell_id)
+            cell = self.surface.GetCell(cell_id)
             if verbose:
                 print '(Triangle) cell number %s:' % cell_id
 
@@ -689,9 +692,7 @@ class TriangleGraph(SurfaceGraph):
         # 4. Check if the numbers of vertices and edges are as they should
         # be:
         assert self.graph.num_vertices() == len(triangle_cell_ids)
-        assert self.graph.num_edges() == len(
-            self.coordinates_pair_connected
-        )
+        assert self.graph.num_edges() == len(self.coordinates_pair_connected)
         if verbose:
             print ('Real number of unique points: %s'
                    % len(self.point_in_cells))
@@ -701,7 +702,7 @@ class TriangleGraph(SurfaceGraph):
         print ('Surface graph generation took: %s min %s s'
                % divmod(duration, 60))
 
-        return surface  # rescaled surface to nm with VTK curvatures
+        # return surface  # rescaled surface to nm with VTK curvatures
         # TODO check if still have to return the surface (can get it from the
         # instance)
 
@@ -832,8 +833,8 @@ class TriangleGraph(SurfaceGraph):
             num_strong_edges = incident_edges_op(self.graph, "out", "sum",
                                                  self.graph.ep.is_strong,
                                                  self.graph.vp.num_strong_edges)
-            print ('number of strong edges: min = %s, max = %s'
-                   % (min(num_strong_edges.a), max(num_strong_edges.a)))
+            # print ('number of strong edges: min = %s, max = %s'
+            #        % (min(num_strong_edges.a), max(num_strong_edges.a)))
 
             # Add a boolean vertex property telling whether a vertex is on
             # border:

@@ -1219,19 +1219,19 @@ class VectorVotingTestCase(unittest.TestCase):
     #             self.parametric_test_plane_normals(
     #                 10, rh, res=10, noise=n)
 
-    def test_cylinder_directions_curvatures(self):
-        """
-        Tests whether minimal principal directions (T_2) and curvatures are
-        correctly estimated for an opened cylinder surface (without the
-        circular planes) with known orientation (height, i.e. T_2, parallel to
-        the Z axis), certain radius and noise level.
-        """
-        # p = 50
-        for n in [0]:
-            for rh in [6, 7, 8, 9]:
-                self.parametric_test_cylinder_directions_curvatures(
-                    10, rh, eb=5, noise=n, methods=['VV'],  # 'VCTV', 'VVCF',
-                    page_curvature_formula=False, area2=True)  # num_points=p
+    # def test_cylinder_directions_curvatures(self):
+    #     """
+    #     Tests whether minimal principal directions (T_2) and curvatures are
+    #     correctly estimated for an opened cylinder surface (without the
+    #     circular planes) with known orientation (height, i.e. T_2, parallel to
+    #     the Z axis), certain radius and noise level.
+    #     """
+    #     # p = 50
+    #     for n in [0]:
+    #         for rh in [6, 7, 8, 9]:
+    #             self.parametric_test_cylinder_directions_curvatures(
+    #                 10, rh, eb=5, noise=n, methods=['VV'],  # 'VCTV', 'VVCF',
+    #                 page_curvature_formula=False, area2=True)  # num_points=p
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1302,15 +1302,15 @@ class VectorVotingTestCase(unittest.TestCase):
     #             page_curvature_formula=True, full_dist_map=True,
     #             area2=False)  # num_points=p,
 
-    # def test_cone(self):
-    #     # p = 50
-    #     n = 0  # 10
-    #     res = 38  # 0
-    #     for rh in [5]:  # 1, 2, 3, 4
-    #         self.parametric_test_cone(
-    #             6, 6, radius_hit=rh, res=res, noise=n,  # num_points=p,
-    #             methods=['VCTV'],  # 'VV', 'VVCF'
-    #             page_curvature_formula=False, area2=True)
+    def test_cone(self):
+        # p = 50
+        n = 0  # 10
+        res = 38  # 0
+        for rh in [1, 2, 3, 4, 6]:  # was 5
+            self.parametric_test_cone(
+                6, 6, radius_hit=rh, res=res, noise=n,  # num_points=p,
+                methods=['VV', 'VCTV'],  # 'VVCF'
+                page_curvature_formula=False, area2=True)
 
 
 if __name__ == '__main__':

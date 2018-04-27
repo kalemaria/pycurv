@@ -941,7 +941,7 @@ def curvature_estimation(
 
     g_max = math.pi * radius_hit / 2.0
     sigma = g_max / 3.0
-    if area2:  # * Maximal triangle area *
+    if (method == "VV" or method == "VVCF") and area2:
         A, _ = tg_curv.get_areas()
         A_max = np.max(A)
         print "Maximal triangle area = %s" % A_max

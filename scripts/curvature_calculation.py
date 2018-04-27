@@ -527,6 +527,11 @@ def new_workflow(
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
         remove_small_components=100):
     # TODO docstring if remains
+    # holes (int): a positive number means closing with a cube of that size,
+    # a negative number means removing surface borders of that size (in pixels)
+    # before curvature estimation (opening with a cube of that size removes
+    # everything)
+
     # Reading in the .vtp file with the triangle mesh and transforming
     # it into a triangle graph:
     t_begin = time.time()
@@ -589,7 +594,7 @@ def new_workflow(
         if remove_small_components > 0:
             print ('\nFinding small connected components of the graph...')
             tg.find_small_connected_components(
-                threshold=remove_small_components, purge=True)
+                threshold=remove_small_components, purge=True, verbose=True)
             print ('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
         # Saving the scaled (and cleaned) graph and surface:
@@ -700,42 +705,52 @@ def __extract_curvatures_from_graph(tg, csv_file, exclude_borders,
     df.to_csv(csv_file, sep=';')
 
 
-def main(membrane):
+def main(membrane, rh):
     """
-    Main function for running the workflow function for real data.
+    Main function for running the workflow function for Javier's cER or PM.
 
     Args:
         membrane(string): what membrane segmentation to use 'cER' or 'PM'
+        rh(int): RadiusHit parameter (in nm)
 
     Returns:
         None
     """
     t_begin = time.time()
 
-    # Javier's cER or PM (given by membrane parameter)
-    # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/tcb_t3_ny01/new_workflow/"
-    # seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
-    # base_filename = "t3_ny01_cropped_{}".format(membrane)
-    # pixel_size = 1.044
-    # scale_x = 320
-    # scale_y = 520
-    # scale_z = 210
-    # radius_hit = 6  # ~ 12 voxels diameter at the base of NLR
-    # holes = -3  # a positive number means closing with a cube of that size,
-    # a negative number means removing surface borders of that size (in pixels)
-    # before curvature estimation (opening with a cube of that size removes
-    # everything)
+    base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
 
-    fold = ("/fs/pool/pool-ruben/Maria/curvature/Javier/scs_171108_l2_t4_ny01/"
-            "cropped_ends/")
-    seg_file = "scs_171108_l2_t4_ny01_lbl.labels_cropped.mrc"
-    base_filename = "scs_171108_l2_t4_ny01_{}".format(membrane)
-    pixel_size = 1.368  # same for whole new data set
-    scale_x = 927
-    scale_y = scale_x
-    scale_z = 189
-    radius_hit = 6
-    holes = 3  # surface was better than with 0 and 5
+    # The famous tcb (from old data set, done)
+    fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
+    seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
+    base_filename = "t3_ny01_cropped_{}".format(membrane)
+    pixel_size = 1.044
+    scale_x = 320
+    scale_y = 520
+    scale_z = 210
+    radius_hit = rh  # ~ 12 voxels diameter at the base of NLR (done with rh=6 and 10)
+    holes = 3
+
+    # The "sheety" scs (from new data set, done)
+    # tomo = "scs_171108_l2_t4_ny01"
+    # fold = "{}{}/cropped_ends/".format(base_fold, tomo)  # RH=5, 6
+    # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6, 10, 15, 20
+    # seg_file = "{}_lbl.labels_cropped.mrc".format(tomo)
+    # lbl = 1  # TODO comment out the following lbl setting (only for cutout!)
+    # base_filename = "{}_{}".format(tomo, membrane)
+
+    # tomo = "scs_171108_l1_t2_ny01"  # The good one scs (done)
+    # tomo = "tcb_170924_l1_t3_cleaned_pt_ny01"  # (running on winzererfaehndl)
+    # fold = "{}{}/".format(base_fold, tomo)
+    # seg_file = "{}_lbl.labels.mrc".format(tomo)
+    # base_filename = "{}_{}".format(tomo, membrane)
+    #
+    # pixel_size = 1.368  # same for whole new data set
+    # scale_x = 927  # scales do not matter (TODO remove from the functions?)
+    # scale_y = scale_x
+    # scale_z = 189
+    # radius_hit = rh
+    # holes = 3  # surface was better for the "sheety" one than with 0 and 5
 
     if holes != 0:
         base_filename = "{}_holes{}".format(base_filename, holes)
@@ -753,6 +768,47 @@ def main(membrane):
         radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
         seg_file=seg_file, label=lbl, holes=holes,
         remove_wrong_borders=True, remove_small_components=200)
+
+    for b in range(0, 3):
+        print("\nExtracting curvatures for {} without {} nm from border".format(
+            membrane, b))
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
+            radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+            exclude_borders=b)
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
+
+
+def main_smoothed(membrane):
+    """
+    Main function for running the workflow function for real data.
+
+    Args:
+        membrane(string): what membrane segmentation to use 'cER' or 'PM'
+
+    Returns:
+        None
+    """
+    t_begin = time.time()
+
+    fold = ("/fs/pool/pool-ruben/Maria/curvature/Javier/scs_171108_l2_t4_ny01/"
+            "small_cutout_smoothed/")
+    base_filename = "scs_171108_l2_t4_ny01_{}_holes3.smoothed300".format(
+        membrane)
+    pixel_size = 1  # because the smoothed surface is already scaled (& cleaned)
+    scale_x = 927
+    scale_y = scale_x
+    scale_z = 189
+    radius_hit = 6
+
+    print("\nCalculating curvatures for {}".format(membrane))
+    new_workflow(
+        fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
+        radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+        remove_wrong_borders=False, remove_small_components=0)
 
     for b in range(0, 3):
         print("\nExtracting curvatures for {} without {} nm from border".format(
@@ -844,14 +900,14 @@ def main3():
         divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
 if __name__ == "__main__":
-    main("cER")
-    # main("PM")
-    # segmentation = sys.argv[1]
-    # main(segmentation)
+    # main_smoothed("cER")
+    membrane = sys.argv[1]
+    rh = int(sys.argv[2])
+    main(membrane, rh)
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
     # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh6.stats'.format(
-    #     fold, segmentation)
-    # cProfile.run('main(segmentation)', stats_file)
+    #     fold, membrane)
+    # cProfile.run('main(membrane)', stats_file)
 
     # fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/'
     #         'vesicle3_t74/')
