@@ -9,11 +9,11 @@ import numpy as np
 from scipy import ndimage
 import cProfile
 
-from pysurf_compact import (
+from pysurf import (
     normals_directions_and_curvature_estimation, vector_voting, run_gen_surface,
     TriangleGraph, split_segmentation, normals_estimation,
     preparation_for_curvature_estimation, curvature_estimation, rescale_surface)
-from pysurf_compact import pysurf_io as io
+from pysurf import pysurf_io as io
 
 """
 A script with an example application of the PySurf package for estimation of
@@ -722,10 +722,10 @@ def main(membrane, rh):
 
     # The "famous" tcb (done cER RH=6 and 10 + PM RH=6, running cER RH=15)
     # (~ 12 voxels diameter at the base of high curvature regions):
-    # fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
-    # seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
-    # base_filename = "t3_ny01_cropped_{}".format(membrane)
-    # pixel_size = 1.044  # from old data set!
+    fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
+    seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
+    base_filename = "t3_ny01_cropped_{}".format(membrane)
+    pixel_size = 1.044  # from old data set!
 
     # The huge one tcb (done cER RH=6, but many holes, surface splits):
     # tomo = "tcb_170924_l1_t3_cleaned_pt_ny01"
@@ -735,11 +735,11 @@ def main(membrane, rh):
     # pixel_size = 1.368  # same for whole new data set
 
     # The good one tcb (running cER RH=15):
-    tomo = "tcb_170924_l2_t2_ny01"
-    fold = "{}{}/".format(base_fold, tomo)
-    seg_file = "{}_lbl.labels.mrc".format(tomo)
-    base_filename = "{}_{}".format(tomo, membrane)
-    pixel_size = 1.368
+    # tomo = "tcb_170924_l2_t2_ny01"
+    # fold = "{}{}/".format(base_fold, tomo)
+    # seg_file = "{}_lbl.labels.mrc".format(tomo)
+    # base_filename = "{}_{}".format(tomo, membrane)
+    # pixel_size = 1.368
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
     # tomo = "scs_171108_l2_t4_ny01"

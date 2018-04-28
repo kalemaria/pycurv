@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name='polyqIB',
     version='0.1',
-    packages=['pysurf_compact'],
+    packages=['pysurf'],
     url='',
     license='',
     author='Maria Kalemanov, Antonio Martinez-Sanchez',

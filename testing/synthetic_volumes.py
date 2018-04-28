@@ -3,8 +3,8 @@ import math
 import os
 from scipy import ndimage
 
-from pysurf_compact import pysurf_io as io
-from pysurf_compact import pexceptions, run_gen_surface
+from pysurf import pysurf_io as io
+from pysurf import pexceptions, run_gen_surface
 
 """A set of functions and classes for generating artificial segmentation volumes
 (masks) of geometrical objects."""

@@ -2,9 +2,9 @@ import time
 from datetime import datetime
 from graph_tool import load_graph
 
-from pysurf_compact import (read_in_mask, get_target_voxels_in_membrane_mask,
-                            VoxelGraph)
-from pysurf_compact import pysurf_io as io
+from pysurf import (read_in_mask, get_target_voxels_in_membrane_mask,
+                    VoxelGraph)
+from pysurf import pysurf_io as io
 
 """
 A script with an example application of the PySurf package for calculation of

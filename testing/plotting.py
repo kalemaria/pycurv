@@ -5,7 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 
-from pysurf_compact import pexceptions
+from pysurf import pexceptions
 
 
 def plot_hist(values, num_bins, title, xlabel="Value", ylabel="Counts",

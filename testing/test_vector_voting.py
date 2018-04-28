@@ -6,8 +6,8 @@ import math
 import pandas as pd
 import cProfile
 
-from pysurf_compact import pysurf_io as io
-from pysurf_compact import (
+from pysurf import pysurf_io as io
+from pysurf import (
     TriangleGraph, normals_directions_and_curvature_estimation,
     normals_estimation, preparation_for_curvature_estimation,
     curvature_estimation)

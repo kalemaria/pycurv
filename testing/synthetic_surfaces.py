@@ -3,8 +3,8 @@ import math
 import numpy as np
 # import os
 
-from pysurf_compact import pysurf_io as io
-from pysurf_compact import pexceptions, surface_graphs, run_gen_surface
+from pysurf import pysurf_io as io
+from pysurf import pexceptions, surface_graphs, run_gen_surface
 from synthetic_volumes import SphereMask, CylinderMask, ConeMask
 
 """A set of functions and classes for generating artificial surfaces of
