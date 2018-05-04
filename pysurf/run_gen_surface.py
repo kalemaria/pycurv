@@ -92,9 +92,9 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
         if isinstance(tomo, str):
             tomo = io.load_tomo(tomo)
         elif not isinstance(tomo, np.ndarray):
-            error_msg = 'Input must be either a file name or a ndarray.'
-            raise pexceptions.PySegInputError(expr='run_gen_surface',
-                                              msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='run_gen_surface',
+                msg='Input must be either a file name or a ndarray.')
 
         # Save the segmentation as VTI for opening it in ParaView:
         io.save_numpy(tomo, outfile_base + '.vti')
@@ -155,9 +155,9 @@ def __filter_null_triangles(surface, verbose=False):
             print '%s cells' % surface.GetNumberOfCells()
 
     else:
-        error_msg = 'The first input must be a vtkPolyData object.'
-        raise pexceptions.PySegInputError(expr='__filter_null_triangles',
-                                          msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='__filter_null_triangles',
+            msg='The first input must be a vtkPolyData object.')
 
     return surface
 

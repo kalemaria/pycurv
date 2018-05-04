@@ -26,9 +26,9 @@ def is_positive_number(arg, input_error=True):
         return True
     else:
         if input_error:
-            error_msg = "Argument must be a positive integer or float number."
-            raise pexceptions.PySegInputError(expr='is_positive_number',
-                                              msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='is_positive_number',
+                msg="Argument must be a positive integer or float number.")
         return False
 
 

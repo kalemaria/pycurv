@@ -35,8 +35,9 @@ def plot_hist(values, num_bins, title, xlabel="Value", ylabel="Counts",
     elif isinstance(value_range, tuple) and len(value_range) == 2:
         plt.hist(values, bins=num_bins, range=value_range)
     else:
-        error_msg = "Range has to be a tuple of two numbers (min, max)."
-        raise pexceptions.PySegInputError(expr='plot_hist', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='plot_hist',
+            msg="Range has to be a tuple of two numbers (min, max).")
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -80,8 +81,9 @@ def plot_line_hist(values, num_bins, title, xlabel="Value", ylabel="Counts",
         counts, bin_edges = np.histogram(values, bins=num_bins,
                                          range=value_range)
     else:
-        error_msg = "Range has to be a tuple of two numbers (min, max)."
-        raise pexceptions.PySegInputError(expr='plot_hist', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='plot_hist',
+            msg="Range has to be a tuple of two numbers (min, max).")
     bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
     plt.plot(bincenters, counts, ls='-', marker='^', c="b", label=label,
              linewidth=2)
@@ -129,8 +131,9 @@ def add_line_hist(values, num_bins, value_range=None, max_val=None,
         counts, bin_edges = np.histogram(values, bins=num_bins,
                                          range=value_range)
     else:
-        error_msg = "Range has to be a tuple of two numbers (min, max)."
-        raise pexceptions.PySegInputError(expr='plot_hist', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='plot_hist',
+            msg="Range has to be a tuple of two numbers (min, max).")
     bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
     if cumulative is True:
         # counts = np.array([np.sum(counts[0:i+1]) for i in range(len(counts))])

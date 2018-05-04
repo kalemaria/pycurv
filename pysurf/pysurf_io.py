@@ -49,9 +49,10 @@ def load_tomo(fname, mmap=False):
     # Input parsing
     stem, ext = os.path.splitext(fname)
     if mmap and (not (ext == '.mrc' or (ext == '.em'))):
-        error_msg = ('mmap option is only valid for MRC or EM formats, current '
-                     + ext)
-        raise pexceptions.PySegInputError(expr='load_tomo', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='load_tomo',
+            msg=('mmap option is only valid for MRC or EM formats, current ' +
+                 ext))
 
     # if ext == '.fits':
     #     im_data = pyfits.getdata(fname).transpose()
@@ -75,8 +76,8 @@ def load_tomo(fname, mmap=False):
         reader.Update()
         im_data = vti_to_numpy(reader.GetOutput())
     else:
-        error_msg = '%s is non valid format.' % ext
-        raise pexceptions.PySegInputError(expr='load_tomo', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='load_tomo', msg='%s is non valid format.' % ext)
 
     # For avoiding 2D arrays
     if len(im_data.shape) == 2:
@@ -161,8 +162,8 @@ def save_numpy(array, fname):
         img.setData(array)
         img.writeEM(fname)
     else:
-        error_msg = 'Format not valid %s.' % ext
-        raise pexceptions.PySegInputError(expr='save_numpy', msg=error_msg)
+        raise pexceptions.PySegInputError(expr='save_numpy',
+                                          msg='Format not valid %s.' % ext)
 
 
 def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):
@@ -213,8 +214,9 @@ def save_vti(image, fname, outputdir):
     writer.SetFileName(outputfile)
     writer.SetInputData(image)
     if writer.Write() != 1:
-        error_msg = 'Error writing the %s file on %s.' % (fname, outputdir)
-        raise pexceptions.PySegInputError(expr='save_vti', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='save_vti',
+            msg='Error writing the %s file on %s.' % (fname, outputdir))
 
 
 def save_vtp(poly, fname):
@@ -232,8 +234,8 @@ def save_vtp(poly, fname):
     writer.SetFileName(fname)
     writer.SetInputData(poly)
     if writer.Write() != 1:
-        error_msg = 'Error writing the file %s.' % fname
-        raise pexceptions.PySegInputError(expr='save_vtp', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='save_vtp', msg='Error writing the file %s.' % fname)
 
 
 def load_poly(fname):
@@ -298,11 +300,12 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
             reader.Update()
             tomo = vti_to_numpy(reader.GetOutput())
         else:
-            error_msg = 'Format %s not readable.' % fext
-            raise pexceptions.PySegInputError(expr='gen_surface', msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='gen_surface', msg='Format %s not readable.' % fext)
     elif not isinstance(tomo, np.ndarray):
-        error_msg = 'Input must be either a file name or a ndarray.'
-        raise pexceptions.PySegInputError(expr='gen_surface', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='gen_surface',
+            msg='Input must be either a file name or a ndarray.')
 
     # Load file with the cloud of points
     nx, ny, nz = tomo.shape
@@ -392,8 +395,8 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
             tomod = scipy.ndimage.morphology.distance_transform_edt(
                 np.invert(other_mask == lbl))
         else:
-            error_msg = 'Other mask must be a ndarray.'
-            raise pexceptions.PySegInputError(expr='gen_surface', msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='gen_surface', msg='Other mask must be a ndarray.')
 
         for i in range(tsurf.GetNumberOfCells()):
 
@@ -822,10 +825,9 @@ class TypesConverter(object):
 
         # Check that a type object is passed
         if not isinstance(din, vtk.vtkDataArray):
-            error_msg = 'vtkDataArray object required as input.'
             raise pexceptions.PySegInputError(
-                expr='vtk_to_numpy (TypesConverter)', msg=error_msg
-            )
+                expr='vtk_to_numpy (TypesConverter)',
+                msg='vtkDataArray object required as input.')
 
         if isinstance(din, vtk.vtkBitArray):
             return np.bool
@@ -853,10 +855,9 @@ class TypesConverter(object):
                 isinstance(din, vtk.vtkTypeFloat64Array)):
             return np.float64
         else:
-            error_msg = 'VTK type not identified.'
             raise pexceptions.PySegInputError(
-                expr='numpy_to_vtk_array (TypesConverter)', msg=error_msg
-            )
+                expr='numpy_to_vtk_array (TypesConverter)',
+                msg='VTK type not identified.')
 
     @staticmethod
     def gt_to_vtk(din):
@@ -873,9 +874,9 @@ class TypesConverter(object):
 
         # Check that a string object is passed
         if not isinstance(din, str):
-            error_msg = 'str object required as input.'
-            raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)',
-                                              msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='gt_to_vtk (TypesConverter)',
+                msg='str object required as input.')
 
         if (din == 'bool') or (din == 'vector<bool>'):
             return vtk.vtkIntArray()  # was vtk.vtkBitArray()
@@ -888,9 +889,9 @@ class TypesConverter(object):
         elif (din == 'double') or (din == 'vector<double>'):
             return vtk.vtkFloatArray()
         else:
-            error_msg = 'Graph-tool alias not identified.'
-            raise pexceptions.PySegInputError(expr='gt_to_vtk (TypesConverter)',
-                                              msg=error_msg)
+            raise pexceptions.PySegInputError(
+                expr='gt_to_vtk (TypesConverter)',
+                msg='Graph-tool alias not identified.')
 
     @staticmethod
     def gt_to_numpy(din):
@@ -907,10 +908,9 @@ class TypesConverter(object):
 
         # Check that a string object is passed
         if not isinstance(din, str):
-            error_msg = 'str object required as input.'
             raise pexceptions.PySegInputError(
-                expr='gt_to_numpy (TypesConverter)', msg=error_msg
-            )
+                expr='gt_to_numpy (TypesConverter)',
+                msg='str object required as input.')
 
         if (din == 'bool') or (din == 'vector<bool>'):
             return np.bool
@@ -923,7 +923,6 @@ class TypesConverter(object):
         elif (din == 'double') or (din == 'vector<double>'):
             return np.float
         else:
-            error_msg = 'Graph-tool alias not identified.'
             raise pexceptions.PySegInputError(
-                expr='gt_to_numpy (TypesConverter)', msg=error_msg
-            )
+                expr='gt_to_numpy (TypesConverter)',
+                msg='Graph-tool alias not identified.')

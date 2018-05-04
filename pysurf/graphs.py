@@ -61,11 +61,9 @@ class SegmentationGraph(object):
             """vtk.vtkPolyData: a signed surface (mesh of triangles) generated
             from the segmentation (in voxels)"""
         else:
-            error_msg = "A vtkPolyData object required as the first input."
             raise pexceptions.PySegInputError(
                 expr='SegmentationGraph constructor',
-                msg=error_msg
-            )
+                msg="A vtkPolyData object required as the first input.")
         self.scale_factor_to_nm = scale_factor_to_nm
         """float: pixel size in nanometers for scaling the surface and the graph
         """
@@ -115,12 +113,10 @@ class SegmentationGraph(object):
                 sum_of_squared_differences += (voxel1[i] - voxel2[i]) ** 2
             return math.sqrt(sum_of_squared_differences)
         else:
-            error_msg = ('Tuples of integers of length 3 required as first and '
-                         'second input.')
             raise pexceptions.PySegInputError(
                 expr='distance_between_voxels (SegmentationGraph)',
-                msg=error_msg
-            )
+                msg=('Tuples of integers of length 3 required as first and '
+                     'second input.'))
 
     def update_coordinates_to_vertex_index(self):
         """
@@ -178,11 +174,10 @@ class SegmentationGraph(object):
         # 'target_coordinates':
         if mask is not None:
             if mask.shape != (self.scale_x, self.scale_y, self.scale_z):
-                error_msg = ("Scales of the input 'mask' have to be equal to "
-                             "those set during the generation of the graph.")
                 raise pexceptions.PySegInputError(
-                    expr='calculate_density (SegmentationGraph)', msg=error_msg
-                )
+                    expr='calculate_density (SegmentationGraph)',
+                    msg=("Scales of the input 'mask' have to be equal to those "
+                         "set during the generation of the graph."))
             # output as a list of tuples [(x1,y1,z1), (x2,y2,z2), ...] in pixels
             target_voxels = rd.get_foreground_voxels_from_mask(mask)
             # for rescaling have to convert to an ndarray
@@ -204,11 +199,10 @@ class SegmentationGraph(object):
             )
         # Exit if the target_voxels list is empty:
         if len(target_coordinates) == 0:
-            error_msg = ("No target voxels were found! Check your input "
-                         "('mask' or 'target_coordinates').")
             raise pexceptions.PySegInputError(
-                expr='calculate_density (SegmentationGraph)', msg=error_msg
-            )
+                expr='calculate_density (SegmentationGraph)',
+                msg="No target voxels were found! Check your input ('mask' or "
+                    "'target_coordinates').")
         print '%s target voxels' % len(target_coordinates)
         if verbose:
             print target_coordinates
@@ -220,11 +214,10 @@ class SegmentationGraph(object):
             if target_xyz in self.coordinates_to_vertex_index:
                 target_coordinates_in_graph.append(target_xyz)
             else:
-                error_msg = ('Target (%s, %s, %s) not inside the membrane!'
-                             % (target_xyz[0], target_xyz[1], target_xyz[2]))
                 raise pexceptions.PySegInputWarning(
-                    expr='calculate_density (SegmentationGraph)', msg=error_msg
-                )
+                    expr='calculate_density (SegmentationGraph)',
+                    msg=('Target (%s, %s, %s) not inside the membrane!'
+                         % (target_xyz[0], target_xyz[1], target_xyz[2])))
 
         print '%s target coordinates in graph' % len(
             target_coordinates_in_graph)
@@ -626,9 +619,7 @@ class SegmentationGraph(object):
                 min(values), max(values), np.mean(values))
             return values
         else:
-            error_msg = ('The input "{}" is not a str object or is not found '
-                         'in vertex properties of the graph.'.format(
-                          property_name))
             raise pexceptions.PySegInputError(
                 expr='get_vertex_property_array (SegmentationGraph)',
-                msg=error_msg)
+                msg=('The input "{}" is not a str object or is not found in '
+                     'vertex properties of the graph.'.format(property_name)))

@@ -10,8 +10,8 @@ from scipy import ndimage
 import cProfile
 
 from pysurf import (
-    normals_directions_and_curvature_estimation, vector_voting, run_gen_surface,
-    TriangleGraph, split_segmentation, normals_estimation,
+    pexceptions, normals_directions_and_curvature_estimation, vector_voting,
+    run_gen_surface, TriangleGraph, split_segmentation, normals_estimation,
     preparation_for_curvature_estimation, curvature_estimation, rescale_surface)
 from pysurf import pysurf_io as io
 
@@ -180,7 +180,8 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
                        'written into the file %s' % cleaned_scaled_graph_file)
             # cleaned scaled graph can just be loaded from the found .gt file
             else:
-                tg = TriangleGraph(1, scale_x, scale_y, scale_z)
+                surf_clean = io.load_poly(cleaned_scaled_surf_file)
+                tg = TriangleGraph(surf_clean, 1, scale_x, scale_y, scale_z)
                 tg.graph = load_graph(cleaned_scaled_graph_file)
                 print ('Cleaned and scaled graph with outer borders was loaded '
                        'from the file %s' % cleaned_scaled_graph_file)
@@ -539,9 +540,10 @@ def new_workflow(
     surf_file = base_filename + ".surface.vtp"
     if not isfile(fold + surf_file):
         if seg_file is None or not isfile(fold + seg_file):
-            print ("Error: the segmentation file {} not given or not found"
-                   .format(fold + seg_file))  # TODO using pyseg error?
-            exit(1)
+            raise pexceptions.PySegInputError(
+                expr="new_workflow",
+                msg="The segmentation file {} not given or not found".format(
+                    fold + seg_file))
         # Load the segmentation numpy array from a file and get only the
         # requested labels as 1 and the background as 0:
         print ("\nMaking the segmentation binary...")
@@ -663,9 +665,7 @@ def extract_curvatures_after_new_workflow(
 
         # Create TriangleGraph object and load the graph file
         surf = io.load_poly(surf_infile)
-        tg = TriangleGraph(
-            surface=surf, scale_factor_to_nm=scale_factor_to_nm,
-            scale_x=scale_x, scale_y=scale_y, scale_z=scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
         tg.graph = load_graph(gt_infile)
 
         __extract_curvatures_from_graph(tg, csv_outfile, exclude_borders,
@@ -720,12 +720,12 @@ def main(membrane, rh):
 
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
 
-    # The "famous" tcb (done cER RH=6 and 10 + PM RH=6, running cER RH=15)
+    # The "famous" tcb (done cER RH=6, 10 and 15 + PM RH=6, running PM RH=15)
     # (~ 12 voxels diameter at the base of high curvature regions):
-    fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
-    seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
-    base_filename = "t3_ny01_cropped_{}".format(membrane)
-    pixel_size = 1.044  # from old data set!
+    # fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
+    # seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
+    # base_filename = "t3_ny01_cropped_{}".format(membrane)
+    # pixel_size = 1.044  # from old data set!
 
     # The huge one tcb (done cER RH=6, but many holes, surface splits):
     # tomo = "tcb_170924_l1_t3_cleaned_pt_ny01"
@@ -734,12 +734,12 @@ def main(membrane, rh):
     # base_filename = "{}_{}".format(tomo, membrane)
     # pixel_size = 1.368  # same for whole new data set
 
-    # The good one tcb (running cER RH=15):
-    # tomo = "tcb_170924_l2_t2_ny01"
-    # fold = "{}{}/".format(base_fold, tomo)
-    # seg_file = "{}_lbl.labels.mrc".format(tomo)
-    # base_filename = "{}_{}".format(tomo, membrane)
-    # pixel_size = 1.368
+    # The good one tcb (done cER RH=15, running cER 10):
+    tomo = "tcb_170924_l2_t2_ny01"
+    fold = "{}{}/".format(base_fold, tomo)
+    seg_file = "{}_lbl.labels.mrc".format(tomo)
+    base_filename = "{}_{}".format(tomo, membrane)
+    pixel_size = 1.368
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
     # tomo = "scs_171108_l2_t4_ny01"
@@ -750,7 +750,7 @@ def main(membrane, rh):
     # base_filename = "{}_{}".format(tomo, membrane)
     # pixel_size = 1.368
 
-    # The "good one" scs (done cER RH=6, running cER RH=15):
+    # The "good one" scs (done cER RH=6 and RH=15):
     # tomo = "scs_171108_l1_t2_ny01"
     # fold = "{}{}/".format(base_fold, tomo)
     # # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6,10,12,15,18

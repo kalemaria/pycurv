@@ -53,19 +53,19 @@ def add_curvature_to_vtk_surface(surface, curvature_type, invert=False):
         elif curvature_type == "Minimum":
             curvature_filter.SetCurvatureTypeToMinimum()
         else:
-            error_msg = ("One of the following strings required as the second "
-                         "input: 'Gaussian', 'Mean', 'Maximum' or 'Minimum'.")
             raise pexceptions.PySegInputError(
-                expr='add_curvature_to_vtk_surface', msg=error_msg)
+                expr='add_curvature_to_vtk_surface',
+                msg=("One of the following strings required as the second "
+                     "input: 'Gaussian', 'Mean', 'Maximum' or 'Minimum'."))
         if invert:
             curvature_filter.InvertMeanCurvatureOn()  # default Off
         curvature_filter.Update()
         surface_curvature = curvature_filter.GetOutput()
         return surface_curvature
     else:
-        error_msg = "A vtkPolyData object required as the first input."
-        raise pexceptions.PySegInputError(expr='add_curvature_to_vtk_surface',
-                                          msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='add_curvature_to_vtk_surface',
+            msg="A vtkPolyData object required as the first input.")
     # How to get the curvatures later, e.g. for point with ID 0:
     # point_data = surface_curvature.GetPointData()
     # curvatures = point_data.GetArray(n)
@@ -95,8 +95,9 @@ def rescale_surface(surface, scale):
         scaled_surface = tpd.GetOutput()
         return scaled_surface
     else:
-        error_msg = "A vtkPolyData object required as the first input."
-        raise pexceptions.PySegInputError(expr='rescale_surface', msg=error_msg)
+        raise pexceptions.PySegInputError(
+            expr='rescale_surface',
+            msg="A vtkPolyData object required as the first input.")
 
 
 def signum(number):
@@ -364,7 +365,8 @@ class TriangleGraph(SurfaceGraph):
         scale_z (int): z axis length in pixels of the segmentation
     """
 
-    def __init__(self, surface, scale_factor_to_nm, scale_x, scale_y, scale_z):
+    def __init__(self, surface, scale_factor_to_nm=1, scale_x=1, scale_y=1,
+                 scale_z=1):
         """
         Constructor.
 
@@ -989,11 +991,9 @@ class TriangleGraph(SurfaceGraph):
                    % (num_vertices_outside_mask, allowed_dist))
 
         else:
-            error_msg = ("A a 3D numpy ndarray object required as the first "
-                         "input.")
             raise pexceptions.PySegInputError(
-                expr='find_vertices_outside_mask (TriangleGraph)', msg=error_msg
-            )
+                expr='find_vertices_outside_mask (TriangleGraph)',
+                msg="A a 3D numpy ndarray object required as the first input.")
 
     def find_vertices_near_border_and_outside_mask(self, b, mask, label=1,
                                                    allowed_dist=0, purge=False):

@@ -30,9 +30,9 @@ class SphereMask(object):
             3D volume with the sphere mask (numpy.ndarray)
         """
         if 2 * r + 1 > box:
-            error_msg = "Sphere diameter has to fit into the box."
             raise pexceptions.PySegInputError(
-                expr='SphereMask.generate_sphere_mask', msg=error_msg)
+                expr='SphereMask.generate_sphere_mask',
+                msg="Sphere diameter has to fit into the box.")
         # Create a 3D grid with center (0, 0, 0) in the middle of the box
         low = - math.floor(box / 2.0)
         high = math.ceil(box / 2.0)
@@ -102,13 +102,13 @@ class CylinderMask(object):
             3D volume with the cylinder mask (numpy.ndarray)
         """
         if 2 * r + 1 > box:
-            error_msg = "Cylinder diameter has to fit into the box."
             raise pexceptions.PySegInputError(
-                expr='CylinderMask.generate_cylinder_mask', msg=error_msg)
+                expr='CylinderMask.generate_cylinder_mask',
+                msg="Cylinder diameter has to fit into the box.")
         if h + 1 > box:
-            error_msg = "Cylinder high has to fit into the box."
             raise pexceptions.PySegInputError(
-                expr='CylinderMask.generate_cylinder_mask', msg=error_msg)
+                expr='CylinderMask.generate_cylinder_mask',
+                msg="Cylinder high has to fit into the box.")
 
         # Create a 2D grid with center (0, 0) in the middle
         # (slice through the box in XY plane)
@@ -191,13 +191,13 @@ class ConeMask(object):
             3D volume with the cone mask (numpy.ndarray)
         """
         if 2 * r + 1 > box:
-            error_msg = "Cone diameter has to fit into the box."
             raise pexceptions.PySegInputError(
-                expr='ConeMask.generate_cylinder_mask', msg=error_msg)
+                expr='ConeMask.generate_cylinder_mask',
+                msg="Cone diameter has to fit into the box.")
         if h + 1 > box:
-            error_msg = "Cone high has to fit into the box."
             raise pexceptions.PySegInputError(
-                expr='ConeMask.generate_cylinder_mask', msg=error_msg)
+                expr='ConeMask.generate_cylinder_mask',
+                msg="Cone high has to fit into the box.")
 
         # Generate a cone consisting of N=h different sized circles stacked
         # in Z dimension

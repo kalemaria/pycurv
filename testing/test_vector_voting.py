@@ -1206,6 +1206,19 @@ class VectorVotingTestCase(unittest.TestCase):
                 base_filename, method, radius_hit)
             io.save_vtp(surf, surf_file)
 
+            # Getting the estimated principal curvatures:
+            kappa_1 = tg.get_vertex_property_array("kappa_1")
+            kappa_2 = tg.get_vertex_property_array("kappa_2")
+
+            # Writing all the VV curvature values and errors into a csv file:
+            df = pd.DataFrame()
+            df['kappa1'] = kappa_1
+            df['kappa2'] = kappa_2
+
+            csv_file = '{}.{}_rh{}.csv'.format(
+                base_filename, method, radius_hit)
+            df.to_csv(csv_file, sep=';')
+
     # *** The following tests will be run by unittest ***
 
     # def test_plane_normals(self):
@@ -1306,7 +1319,7 @@ class VectorVotingTestCase(unittest.TestCase):
         # p = 50
         n = 0  # 10
         res = 38  # 0
-        for rh in [1, 2, 3, 4, 6]:  # was 5
+        for rh in [1, 2, 3, 4, 5, 6]:
             self.parametric_test_cone(
                 6, 6, radius_hit=rh, res=res, noise=n,  # num_points=p,
                 methods=['VV', 'VCTV'],  # 'VVCF'
