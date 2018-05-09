@@ -832,9 +832,8 @@ class TriangleGraph(SurfaceGraph):
                 "int")
             # Sum up the "strong" edges coming out of each vertex and add them
             # to the new property:
-            num_strong_edges = incident_edges_op(self.graph, "out", "sum",
-                                                 self.graph.ep.is_strong,
-                                                 self.graph.vp.num_strong_edges)
+            incident_edges_op(self.graph, "out", "sum", self.graph.ep.is_strong,
+                              self.graph.vp.num_strong_edges)
             # print ('number of strong edges: min = %s, max = %s'
             #        % (min(num_strong_edges.a), max(num_strong_edges.a)))
 

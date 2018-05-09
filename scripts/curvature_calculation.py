@@ -577,7 +577,7 @@ def new_workflow(
     if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
         print ('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
-        tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
+        tg.build_graph_from_vtk_surface()
         print ('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
         # Remove the wrong borders (surface generation artefact)
