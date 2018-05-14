@@ -734,11 +734,11 @@ def main(membrane, rh):
     # base_filename = "{}_{}".format(tomo, membrane)
     # pixel_size = 1.368  # same for whole new data set
 
-    # The good one tcb (done cER RH=15, running cER 10):
+    # The good one tcb (done cER RH=10 and 15, running cropped PM & cER RH=15):
     tomo = "tcb_170924_l2_t2_ny01"
     fold = "{}{}/".format(base_fold, tomo)
-    seg_file = "{}_lbl.labels.mrc".format(tomo)
-    base_filename = "{}_{}".format(tomo, membrane)
+    seg_file = "{}_lbl.labels_cropped.mrc".format(tomo)
+    base_filename = "{}_cropped_{}".format(tomo, membrane)
     pixel_size = 1.368
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
