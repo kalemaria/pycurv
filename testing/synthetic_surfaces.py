@@ -455,9 +455,6 @@ class SaddleGenerator(object):
     A class for generating triangular-mesh surfaces containing a saddle surface
     (negative gaussian curvature).
     """
-    # @staticmethod
-    # def generate_one_sheeted_hyperboloid(a, c, h):
-    #     pass
 
     @staticmethod
     def generate_parametric_torus(rr, csr):
@@ -493,12 +490,32 @@ class SaddleGenerator(object):
 
 
 class ConeGenerator(object):
-    # TODO docstring
-
+    """
+    A class for generating triangular-mesh surface of a cone.
+    """
     @staticmethod
     def generate_cone(r, h, res, subdivisions=0, decimate=0.0,
                       smoothing_iterations=0, verbose=False):
-        # TODO docstring
+        """
+        Generates a cone surface with a given base radius and height using VTK.
+        The resulting surface can be smooth if subdivisions, decimate and
+        smoothing options are used.
+
+        Args:
+            r (int): cone base radius
+            h (int): cone height
+            subdivisions (int): if > 0 (default) vtkLinearSubdivisionsFilter
+                is applied with this number of subdivisions
+            decimate (float): if > 0 (default) vtkDecimatePro is applied
+                with this target reduction (< 1)
+            smoothing_iterations: if > 0 (default) vtkWindowedSincPolyDataFilter
+                is applied with this number of smoothing iterations
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
+
+        Returns:
+            a cylinder surface (vtk.vtkPolyData)
+        """
         if verbose:
             print "Generating a cone surface..."
         cone = vtk.vtkConeSource()
@@ -512,16 +529,6 @@ class ConeGenerator(object):
             print("{} triangles".format(cone_surface.GetNumberOfCells()))
 
         if subdivisions > 0:
-            # cone_loop = vtk.vtkLoopSubdivisionFilter()
-            # cone_loop.SetNumberOfSubdivisions(subdivisions)
-            # cone_loop.SetInputData(cone_surface)
-            # cone_loop.Update()
-
-            # cone_butterfly = vtk.vtkButterflySubdivisionFilter()
-            # cone_butterfly.SetNumberOfSubdivisions(subdivisions)
-            # cone_butterfly.SetInputData(cone_surface)
-            # cone_butterfly.Update()
-
             cone_linear = vtk.vtkLinearSubdivisionFilter()
             cone_linear.SetNumberOfSubdivisions(subdivisions)
             cone_linear.SetInputData(cone_surface)

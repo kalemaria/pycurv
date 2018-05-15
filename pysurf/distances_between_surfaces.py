@@ -14,7 +14,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
 
     Args:
         tg_PM (TriangleGraph): TriangleGraph object of PM surface with corrected
-            normals (away from cER surface direction?)
+            normals (now should be pointing away from cER surface direction)
         tg_cER (TriangleGraph): TriangleGraph object of cER surface
         maxdist (int): maximal distance (nm) from PM to first cER membrane
         maxth (int): maximal cER thickness (nm)
@@ -52,7 +52,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
     for v in tg_PM.graph.vertices():
         # get its center coordinate as p0 and corrected normal vector N_v
         p0 = np.array(tg_PM.graph.vp.xyz[v])
-        N_v = np.array(tg_PM.graph.vp.N_v[v]) * -1  # TODO check both directions
+        N_v = np.array(tg_PM.graph.vp.N_v[v]) * -1  # TODO check both directions?
 
         # find a point pmax at distance maxdist from p0 in the normal direction
         pmax = p0 + N_v * maxdist

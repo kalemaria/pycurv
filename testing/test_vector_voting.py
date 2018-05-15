@@ -896,7 +896,6 @@ class VectorVotingTestCase(unittest.TestCase):
 
         if not os.path.exists(fold):
             os.makedirs(fold)
-        # TODO add "_inner_part" for a small saddle part:
         surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)
         surf_file = '{}.surface.vtp'.format(surf_filebase)
         scale_factor_to_nm = 1.0  # assume it's already in nm
@@ -909,7 +908,6 @@ class VectorVotingTestCase(unittest.TestCase):
         files_fold = '{}files4plotting/'.format(fold)
         if not os.path.exists(files_fold):
             os.makedirs(files_fold)
-        # TODO add "_inner_part" for a small saddle part:
         base_filename = "{}torus_rr{}_csr{}".format(files_fold, rr, csr)
         VTK_eval_file = '{}.VTK.csv'.format(base_filename)
         print ("\n*** Generating a surface and a graph for a torus "
@@ -1122,7 +1120,47 @@ class VectorVotingTestCase(unittest.TestCase):
             self, r, h, radius_hit, res=0, noise=0, methods=['VV'],
             page_curvature_formula=False, num_points=None, full_dist_map=False,
             area2=False):
-        # TODO docstring
+        """
+        Runs all the steps needed to calculate curvatures for a test cone
+        with given radius and height using normal vector voting (VV), VV
+        combined with curve fitting (VVCF) or with curvature tensor voting
+        (VCTV). Writes out kappa_1 and kappa_2 values to a CSV file.
+
+        Args:
+            r (int): cone base radius in voxels
+            h (int): cone height in voxels
+            radius_hit (float): radius in length unit of the graph, here voxels;
+                it should be chosen to correspond to radius of smallest features
+                of interest on the surface
+            res (int, optional): if > 0 determines how many triangles around the
+                circular base the cone has, is subdivided and smoothed, the base
+                disappears; If 0 (default) a binary cone with the circular base
+                is generated
+            noise (int, optional): determines variance of the Gaussian noise in
+                percents of average triangle edge length (default 0), the noise
+                is added on triangle vertex coordinates in its normal direction
+                - only for a smoothed cone, res > 0!
+            methods (list, optional): tells which method(s) should be used: 'VV'
+                for normal vector voting (default), 'VVCF' for curve fitting in
+                the two principal directions estimated by VV to estimate the
+                principal curvatures or 'VCTV' for vector and curvature tensor
+                voting to estimate the principal directions and curvatures
+            page_curvature_formula (boolean, optional): if True (default False)
+                normal curvature formula from Page et al. is used for VV or VVCF
+                (see collecting_curvature_votes)
+            num_points (int): for VVCF, number of points to sample in each
+                estimated principal direction in order to fit parabola and
+                estimate curvature
+            full_dist_map (boolean, optional): if True, a full distance map is
+                calculated for the whole graph, otherwise a local distance map
+                is calculated for each vertex (default)
+            area2 (boolean, optional): if True (default False), votes are
+                weighted by triangle area also in the second step (principle
+                directions and curvatures estimation)
+
+        Returns:
+            None
+        """
         base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
         if res == 0:
             noise = 0
@@ -1184,7 +1222,7 @@ class VectorVotingTestCase(unittest.TestCase):
 
         # Running the modified Normal Vector Voting algorithm:
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=1,  # TODO think to exclude more
+            tg, radius_hit, exclude_borders=1,
             methods=methods, page_curvature_formula=page_curvature_formula,
             num_points=num_points, full_dist_map=full_dist_map, area2=area2)
 

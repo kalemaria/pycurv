@@ -241,8 +241,9 @@ def vector_voting_curve_fitting(
         page_curvature_formula=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
-    orientation, principle curvatures and directions for a surface using its
-    triangle graph.
+    orientation, principle directions and then principal curvatures using
+    curve fitting in the principle directions for a surface using its triangle
+    graph.
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
@@ -276,7 +277,6 @@ def vector_voting_curve_fitting(
         * If epsilon = 0 and eta = 0 (default), all triangles will be classified
           as "surface patch" (class 1).
     """
-    # TODO modify the docstring!
     # Preparation (calculations that are the same for the whole graph)
     t_begin = time.time()
     print '\nPreparing for running modified Vector Voting...'
@@ -467,8 +467,8 @@ def vector_curvature_tensor_voting(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
-    orientation, principle curvatures and directions for a surface using its
-    triangle graph.
+    orientation, and the GenCurvVote algorithm to estimate principle curvatures
+    and directions for a surface using its triangle graph.
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
@@ -496,7 +496,6 @@ def vector_curvature_tensor_voting(
         * If epsilon = 0 and eta = 0 (default), all triangles will be classified
           as "surface patch" (class 1).
     """
-    # TODO modify the docstring!
     # Preparation (calculations that are the same for the whole graph)
     t_begin = time.time()
     print '\nPreparing for running modified Vector Voting...'
@@ -675,9 +674,9 @@ def normals_directions_and_curvature_estimation(
         methods=['VV'], page_curvature_formula=False, num_points=None,
         full_dist_map=False, graph_file='temp.gt', area2=True):
     """
-    Runs the modified Normal Vector Voting algorithm to estimate surface
-    orientation, principle curvatures and directions for a surface using its
-    triangle graph.
+    Runs the modified Normal Vector Voting algorithm (with different options for
+    the second pass) to estimate surface orientation, principle curvatures and
+    directions for a surface using its triangle graph.
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
@@ -744,7 +743,39 @@ def normals_directions_and_curvature_estimation(
 
 
 def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
-    # TODO docstring if remains
+    """
+    Runs the modified Normal Vector Voting algorithm to estimate surface
+    orientation (classification in surface patch with normal, crease junction
+    with tangent or no preferred orientation) for a surface using its triangle
+    graph (first part used by normals_directions_and_curvature_estimation).
+
+    Args:
+        tg (TriangleGraph): triangle graph generated from a surface of interest
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2), default 0
+        eta (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2) and "no preferred orientation" (class 3, see Notes),
+            default 0
+        full_dist_map (boolean, optional): if True, a full distance map is
+            calculated for the whole graph, otherwise a local distance map is
+            calculated later for each vertex (default)
+
+    Returns:
+        tg (TriangleGraph): triangle graph with added properties
+        all_neighbor_idx_to_dist: list of dictionaries for each vertex listing
+            its neighbors ids (keys) with geodesic distances to them (values)
+
+    Notes:
+        * Maximal geodesic neighborhood distance g_max for normal vector voting
+          will be derived from radius_hit: g_max = pi * radius_hit / 2
+        * If epsilon = 0 and eta = 0 (default), all triangles will be classified
+          as "surface patch" (class 1).
+    """
     # Preparation (calculations that are the same for the whole graph)
     t_begin0 = time.time()
     print '\nPreparing for running modified Vector Voting...'
@@ -844,7 +875,24 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
 
 def preparation_for_curvature_estimation(
         tg, exclude_borders=0, graph_file='temp.gt'):
-    # TODO docstring if remains
+    """
+    Does preparation for principal directions and curvature estimation after the
+    surface orientation estimation (second part used by
+    normals_directions_and_curvature_estimation): adds vertex properties to be
+    filled by all curvature methods, excludes triangles at the borders from
+    curvatures calculation and saves the graph to a file.
+
+    Args:
+        tg (TriangleGraph): triangle graph generated from a surface of interest
+        exclude_borders (int, optional): if > 0, principle curvatures and
+            directions are not estimated for triangles within this distance to
+            surface borders (default 0)
+        graph_file (str): file path to save the graph
+
+    Returns:
+        resulting triangle graph instance attributes: surface (scaled to nm),
+        scale_factor_to_nm, scale_x, scale_y, scale_z
+    """
     # * Adding vertex properties to be filled by all curvature methods *
     # vertex properties for storing the estimated principal directions of the
     # maximal and minimal curvatures of the corresponding triangle (if the
@@ -870,7 +918,7 @@ def preparation_for_curvature_estimation(
     tg.graph.vp.curvedness_VV = tg.graph.new_vertex_property("float")
 
     if exclude_borders > 0:  # Exclude triangles at the borders from curvatures
-        # calculation and remove them in the end
+        # calculation to remove them in the end
 
         t_begin0 = time.time()
 
@@ -901,7 +949,44 @@ def curvature_estimation(
         radius_hit, all_neighbor_idx_to_dist, exclude_borders=0,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
         num_points=None, area2=True):
-    # TODO docstring if remains
+    """
+    Runs the second pass of the modified Normal Vector Voting algorithm with
+    the given method to estimate principle curvatures and directions for a
+    surface using its triangle graph (third and the last part used by
+    normals_directions_and_curvature_estimation).
+
+    Args:
+        scaled_surface (vtkPolyData): scaled surface
+        scale_factor_to_nm (float): scale factor to nanometers of the surface
+            with respect to the underlying segmentation
+        scale_x (int): x scale of the underlying segmentation
+        scale_y (int): y scale of the underlying segmentation
+        scale_z (int): z scale of the underlying segmentation
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        all_neighbor_idx_to_dist:
+        exclude_borders (int, optional): if > 0, principle curvatures and
+            directions are not estimated for triangles within this distance to
+            surface borders (default 0)
+        graph_file (string, optional): name for a temporary graph file
+            after the first run of the algorithm (default 'temp.gt')
+        method (str, optional): a method to run in the second pass ('VV', 'VVCF'
+            and 'VCTV' are possible, default is 'VV')
+        page_curvature_formula (boolean, optional): if True (default False),
+            normal curvature formula from Page et al. is used in VV and VVCF
+            (see collecting_curvature_votes)
+        num_points (int, optional): number of points to sample in each estimated
+            principal direction in order to fit parabola and estimate curvature
+            (necessary is 'VVCF' is in methods list)
+        area2 (boolean, optional): if True (default False), votes are
+            weighted by triangle area also in the
+
+    Returns:
+        a touple of TriangleGraph graph and vtkPolyData surface of triangles
+        with classified orientation and estimated normals or tangents, principle
+        curvatures and directions
+    """
     # t_begin0 = time.time()
     tg_curv = TriangleGraph(
         surface=scaled_surface, scale_factor_to_nm=scale_factor_to_nm,

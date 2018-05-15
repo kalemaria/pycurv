@@ -24,7 +24,20 @@ def calculate_g_max_from_radius_hit(radius_hit):
 
 def calculate_distances_from_triangle(
         surface, scale_factor_to_nm, triangle_index, verbose=False):
-    # TODO docstring
+    """
+    Calculates shortest geodesic distances from a source triangle center to all
+    other triangles on the surface.
+
+    Args:
+        surface (vtkPolyData): input surface
+        scale_factor_to_nm (float): scale factor from voxels to nanometers
+        triangle_index (int): index of the source triangle
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+        vtkPolyData with "dist_to_v" property
+    """
     # Build a triangle graph from the surface:
     tg = TriangleGraph(surface, scale_factor_to_nm)
     tg.build_graph_from_vtk_surface()

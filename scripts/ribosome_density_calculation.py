@@ -212,7 +212,7 @@ def main():
     Returns:
         None
     """
-    # TODO change those parameters for each tomogram:
+    # Change those parameters for each tomogram:
     tomo = 't85'
     tm_fold = ('/fs/pool/pool-ruben/Maria/Felix_ribosomes_and_Htt/'
                'bin3OPS1.263nm/02_template_matching/' + tomo +

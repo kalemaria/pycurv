@@ -119,11 +119,11 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
                    'with curvatures...')
             tg = TriangleGraph(
                 surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
-            scaled_surf = tg.build_graph_from_vtk_surface(verbose=False)
+            tg.build_graph_from_vtk_surface(verbose=False)
             print ('The graph has %s vertices and %s edges'
                    % (tg.graph.num_vertices(), tg.graph.num_edges()))
 
-            io.save_vtp(scaled_surf, surf_file[0:-4] + "_nm.vtp")
+            io.save_vtp(tg.surface, surf_file[0:-4] + "_nm.vtp")
             print ('The surface scaled to nm was written into the file %s_nm'
                    '.vtp' % surf_file[0:-4])
 
@@ -352,7 +352,7 @@ def __vtp_arrays_to_mrc_volumes(
     Returns:
         None
     """
-    array_name1 = "kappa_1"  # TODO use a loop for the 3 repetitive things!
+    array_name1 = "kappa_1"
     name1 = "max_curvature"
     array_name2 = "kappa_2"
     name2 = "min_curvature"
@@ -840,7 +840,7 @@ def main_smoothed(membrane):
 def main2():
     t_begin = time.time()
 
-    # TODO change those parameters for each tomogram & label:
+    # Change those parameters for each tomogram & label:
     # fold = \
     #     "/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/diffuseHtt97Q/"
     # tomo = "t112"
@@ -850,7 +850,7 @@ def main2():
     # scale_x = 620
     # scale_y = 620
     # scale_z = 80
-    # radius_hit = 3  # TODO change
+    # radius_hit = 3
     # workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
     #          radius_hit)
 
@@ -914,7 +914,6 @@ def main3():
         divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
 if __name__ == "__main__":
-    # main_smoothed("cER")
     membrane = sys.argv[1]
     rh = int(sys.argv[2])
     main(membrane, rh)

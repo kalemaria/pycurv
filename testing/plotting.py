@@ -1004,7 +1004,7 @@ def plot_torus_kappa_1_and_2_diff_rh():
                 xlabel="Estimated {} principal curvature".format(
                     principal_components[i]),
                 ylabel="Counts",
-                outfile=("{}{}.{}_rh5-9.kappa_{}.png".format(  # TODO rh range!
+                outfile=("{}{}.{}_rh5-9.kappa_{}.png".format(
                     plot_fold, basename, method, i)),
                 num_bins=5, value_range=None, max_val=None, freq=False
             )

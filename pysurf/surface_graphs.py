@@ -119,7 +119,16 @@ def signum(number):
 
 
 def fit_curve(pos_x_2d, pos_y_2d):
-    # TODO docstring
+    """
+    Fits a parabolic curve to a set ot points in 2D.
+    Args:
+        pos_x_2d: x coordinates
+        pos_y_2d: y coordinates
+
+    Returns:
+        optimal values of the parameter a of the canonical parabola (a * x * x)
+        variance of the parameter estimate
+    """
     # Initial guess of the parameter a is 0 (a straight line)
     x0 = np.array([0.0])
     try:
@@ -134,19 +143,37 @@ def fit_curve(pos_x_2d, pos_y_2d):
         print "RuntimeError happened:"
         print(e)  # has to be: "Optimal parameters not found: gtol=0.000000 is
         # too small, func(x) is orthogonal to the columns of
-        # the Jacobian to machine precision.""
+        # the Jacobian to machine precision."
         return 0.0, -1.0  # in tests it looked like a perfect straight line
 
 
 def canonical_parabola(x, a):
-    # TODO docstring?
+    """
+    Generates the canonical parabola function.
+    Args:
+        x: x coordinate
+        a: a parameter
+
+    Returns:
+        y = a * x * x
+    """
     return a * x * x
 
 
 def perpendicular_vector(iv, debug=False):
-    # TODO docstring
-    # implementation of algorithm of Ahmed Fasih https://math.stackexchange.com/
-    # questions/133177/finding-a-unit-vector-perpendicular-to-another-vector
+    """
+    Finds a unit vector perpendicular to a given vector.
+    Implementation of algorithm of Ahmed Fasih https://math.stackexchange.com/
+    questions/133177/finding-a-unit-vector-perpendicular-to-another-vector
+
+    Args:
+        iv (numpy.ndarray): input 3D vector
+        debug (boolean): if True (default False), an assertion is done to assure
+            that the vectors are perpendicular
+
+    Returns:
+        3D vector perpendicular to the input vector (np.ndarray)
+    """
     try:
         assert(isinstance(iv, np.ndarray) and iv.shape == (3,))
     except AssertionError:
@@ -183,16 +210,39 @@ def perpendicular_vector(iv, debug=False):
 
 
 def rotation_matrix(axis, theta):
-    # TODO docstring
-    # from B. M. https://stackoverflow.com/questions/6802577/
-    # python-rotation-of-3d-vector
+    """
+    Generates a rotation matrix for rotating a 3D vector around an axis by an
+    angle. From B. M. https://stackoverflow.com/questions/6802577/
+    python-rotation-of-3d-vector
+
+    Args:
+        axis (numpy.ndarray): rotational axis (3D vector)
+        theta (float): rotational angle (radians)
+
+    Returns:
+        3 x 3 rotation matrix
+    """
     a = axis / math.sqrt(np.dot(axis, axis))  # unit vector along axis
     A = np.cross(np.eye(3), a)  # skew-symmetric matrix associated to a
     return expm3(A * theta)
 
 
 def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
-    # TODO docstring, wrapper for rotation_matrix
+    """
+    Rotates a 3D vector around an axis by an angle (wrapper function for
+    rotation_matrix).
+
+    Args:
+        v (numpy.ndarray): input 3D vector
+        theta (float): rotational angle (radians)
+        axis (numpy.ndarray): rotational axis (3D vector)
+        matrix (numpy.ndarray): 3 x 3 rotation matrix
+        debug (boolean): if True (default False), an assertion is done to assure
+            that the angle is correct
+
+    Returns:
+        rotated 3D vector (numpy.ndarray)
+    """
     sqrt = math.sqrt
     dot = np.dot
     acos = math.acos
@@ -224,12 +274,6 @@ def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
                   "{}, but {}".format(theta, theta2))
             return None
     return u
-
-
-def transform_vector_to_local_system(pos, normal, vector):
-    # so that pos shifts to [0, 0, 0] and normal to the plane where the vector
-    # lies becomes the Z axis
-    pass  # TODO
 
 
 class SurfaceGraph(graphs.SegmentationGraph):
@@ -704,10 +748,6 @@ class TriangleGraph(SurfaceGraph):
         print ('Surface graph generation took: %s min %s s'
                % divmod(duration, 60))
 
-        # return surface  # rescaled surface to nm with VTK curvatures
-        # TODO check if still have to return the surface (can get it from the
-        # instance)
-
     def graph_to_triangle_poly(self, verbose=False):
         """
         Generates a VTK PolyData object from the TriangleGraph object with
@@ -737,8 +777,7 @@ class TriangleGraph(SurfaceGraph):
                         num_components = 1
                     else:  # vector
                         num_components = len(
-                            self.graph.vp[prop_key][self.graph.vertex(0)]
-                        )
+                            self.graph.vp[prop_key][self.graph.vertex(0)])
                     array = TypesConverter().gt_to_vtk(data_type)
                     array.SetName(prop_key)
                     if verbose:
@@ -767,8 +806,7 @@ class TriangleGraph(SurfaceGraph):
                         i += 1
                     else:  # reference the old point index only in the lut
                         lut[self.graph.vertex_index[vd], j] = points_dict[
-                            (x, y, z)
-                        ]
+                            (x, y, z)]
             if verbose:
                 print 'number of points: %s' % points.GetNumberOfPoints()
 
@@ -1852,13 +1890,32 @@ class TriangleGraph(SurfaceGraph):
 
     def find_points_in_tangent_direction_and_fit_curve(
             self, vertex_v, tangent, radius_hit, num_points,
-            poly_file=None, plot_file=None, verbose=False, debug=False):
-        # TODO docstring, remove debug when finished debugging
-        # tangent has to have length 1!
-        # num_points (int): maximal number of points to sample in the tangent
-        #     direction in order to fit parabola and estimate curvature (in
-        #     each of the two directions, without the central point)
+            poly_file=None, plot_file=None, verbose=False):
+        """
+        Finds points on the surface in the given direction from the given vertex
+        and fits a parabolic curve.
 
+        Args:
+            vertex_v (graph_tool.Vertex): the vertex v in the surface
+                triangle-graph for which the principal directions and curvatures
+                are estimated
+            tangent (numpy.ndarray): 3D unit tangent vector (of length 1)
+            radius_hit (float): radius in length unit of the graph, e.g.
+                nanometers, for sampling surface points in tangent directions
+            num_points (int): maximal number of points to sample in the tangent
+                direction in order to fit parabola and estimate curvature (in
+                each of the two directions, without the central point)
+            poly_file (str): if given vtkPolyData containing the found points
+                will be constructed and saved
+            plot_file (str): if given the found points will be plotted in 2D
+                together with the fitted parabola
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
+
+        Returns:
+            variance of the parabola a parameter estimate
+            curvature of the fitted curve (2 * a)
+        """
         # Get the coordinates of the central vertex and its estimated normal:
         v = np.array(self.graph.vp.xyz[vertex_v])
         normal = np.array(self.graph.vp.N_v[vertex_v])
@@ -1916,7 +1973,7 @@ class TriangleGraph(SurfaceGraph):
                 # If no intersection was found (pos stays like initialized),
                 # exclude and stop searching in that direction
                 if pos == [0.0, 0.0, 0.0]:
-                    if debug or verbose:
+                    if verbose:
                         print "No intersection point"
                     break
 
@@ -1925,7 +1982,7 @@ class TriangleGraph(SurfaceGraph):
                 # that direction
                 pos_p0 = sqrt(dot(p0 - pos, p0 - pos))
                 if pos_p0 > radius_hit:
-                    if debug or verbose:
+                    if verbose:
                         print "Point NOT within geodesic radius to the tangent"
                     break
 
@@ -1948,7 +2005,7 @@ class TriangleGraph(SurfaceGraph):
                     last_pos_dist = sqrt(dot(last_pos - before_last_pos,
                                              last_pos - before_last_pos))
                     if current_pos_dist > 1.5 * last_pos_dist:
-                        if debug or verbose:
+                        if verbose:
                             print "Point too far away from the previous one"
                             print "current distance = {}".format(
                                 current_pos_dist)
@@ -2013,7 +2070,29 @@ class TriangleGraph(SurfaceGraph):
         return var_a, curvature
 
     def gen_curv_vote(self, vertex_r, radius_hit, verbose=False):
-        # TODO docstring
+        """
+        Implements the third pass of the method of Tong & Tang et al., 2005,
+        "Algorithm 5. GenCurvVote". Estimates principal curvatures and
+        directions (after normals estimation) using curvature tensor. For the
+        given triangle center, eight neighboring points are sampled around it at
+        equal angles using tangents of length defined by the RadiusHit
+        parameter.
+
+        Args:
+            vertex_r (graph_tool.Vertex): the vertex r in the surface
+                triangle-graph for which the principal directions and curvatures
+                are estimated
+            radius_hit (float): radius in length unit of the graph, e.g.
+                nanometers, for sampling surface points in tangent directions
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
+
+        Returns:
+            kappa_1 (float): maximal principal curvature
+            kappa_2 (float): minimal principal curvature
+            T_1 (3D vector of floats): maximal principal direction
+            T_2 (3D vector of floats): minimal principal direction
+        """
         # Get the coordinates of vertex r and its estimated normal N_r (as numpy
         # array, input of the original method):
         r = np.array(self.graph.vp.xyz[vertex_r])
