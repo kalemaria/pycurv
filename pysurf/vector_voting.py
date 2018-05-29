@@ -672,7 +672,8 @@ def vector_curvature_tensor_voting(
 def normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=0,
         methods=['VV'], page_curvature_formula=False, num_points=None,
-        full_dist_map=False, graph_file='temp.gt', area2=True):
+        full_dist_map=False, graph_file='temp.gt', area2=True,
+        only_normals=False):
     """
     Runs the modified Normal Vector Voting algorithm (with different options for
     the second pass) to estimate surface orientation, principle curvatures and
@@ -709,11 +710,14 @@ def normals_directions_and_curvature_estimation(
         area2 (boolean, optional): if True (default False), votes are
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
+        only_normals (boolean, optional): if True (default False), only normals
+            are estimated, without principal directions and curvatures, only the
+            graph with the orientations class, normals or tangents is returned.
     Returns:
         a dictionary mapping the method name ('VV', 'VVCF' and 'VCTV') to the
         tuple of two elements: TriangleGraph graph and vtkPolyData surface of
         triangles with classified orientation and estimated normals or tangents,
-        principle curvatures and directions
+        principle curvatures and directions (if only_normals is False)
 
     Notes:
         * Maximal geodesic neighborhood distance g_max for normal vector voting
@@ -728,18 +732,19 @@ def normals_directions_and_curvature_estimation(
 
     preparation_for_curvature_estimation(tg, exclude_borders, graph_file)
 
-    results = {}
-    for method in methods:
-        tg_curv, surface_curv = curvature_estimation(
-            tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
-            tg.scale_z, radius_hit, all_neighbor_idx_to_dist, exclude_borders,
-            graph_file, method, page_curvature_formula, num_points, area2)
-        results[method] = (tg_curv, surface_curv)
+    if only_normals is False:
+        results = {}
+        for method in methods:
+            tg_curv, surface_curv = curvature_estimation(
+                tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
+                tg.scale_z, radius_hit, all_neighbor_idx_to_dist, exclude_borders,
+                graph_file, method, page_curvature_formula, num_points, area2)
+            results[method] = (tg_curv, surface_curv)
 
-    t_end = time.time()
-    duration = t_end - t_begin
-    print 'Whole method took: %s min %s s' % divmod(duration, 60)
-    return results
+        t_end = time.time()
+        duration = t_end - t_begin
+        print 'Whole method took: %s min %s s' % divmod(duration, 60)
+        return results
 
 
 def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):

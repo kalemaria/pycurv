@@ -76,7 +76,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
         # check if p1 is on first cER membrane:
         # is the angle between the normal from v1 and N_v from v > pi/2?
         # then it's on the second membrane - don't continue looking
-        N1 = tg_cER.graph.vp.normal[v1]
+        N1 = tg_cER.graph.vp.N_v[v1]
         cos_angle1 = np.dot(N_v, N1)
         if cos_angle1 < 0:  # angle1 > pi/2
             if verbose:
@@ -121,7 +121,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
                 # check if p2 is on second cER membrane:
                 # is the angle between the normals from v1 and from v2 < pi/2?
                 # then we are still on the first membrane - continue looking
-                N2 = tg_cER.graph.vp.normal[v2]
+                N2 = tg_cER.graph.vp.N_v[v2]
                 cos_angle2 = np.dot(N1, N2)
                 if cos_angle2 > 0:  # angle2 < pi/2
                     # if verbose:
@@ -162,11 +162,11 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
         # fill out the vertex property of cER graph "PMdistance":
         # d1 for the 1st intersected triangle and d1+d2 for the 2nd one
         tg_cER.graph.vp.PMdistance[v1] = d1
-        tg_cER.graph.vp.PMdistance[v2] = d1 + d2
+        # tg_cER.graph.vp.PMdistance[v2] = d1 + d2
 
         # fill out the vertex property of cER graph  "cERthickness":
         # d2 for both intersected triangles
-        tg_cER.graph.vp.cERthickness[v1] = d2
+        # tg_cER.graph.vp.cERthickness[v1] = d2
         tg_cER.graph.vp.cERthickness[v2] = d2
 
     return d1s, d2s
@@ -207,9 +207,13 @@ if __name__ == "__main__":
     # base_filename = "t3_ny01_cropped_"
     # rh = 6
     # The new tcb (done cropped cER and PM with RH=15):
-    tomo = "tcb_170924_l2_t2_ny01"
+    # tomo = "tcb_170924_l2_t2_ny01"
+    # fold = "{}{}/".format(base_fold, tomo)
+    # base_filename = "{}_cropped_".format(tomo)
+    # The good scs (done cER and PM with RH=15):
+    tomo = "scs_171108_l1_t2_ny01"
     fold = "{}{}/".format(base_fold, tomo)
-    base_filename = "{}_cropped_".format(tomo)
+    base_filename = "{}_".format(tomo)
     rh = 15
     pixel_size = 1.368
 
