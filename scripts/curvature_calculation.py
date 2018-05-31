@@ -540,10 +540,11 @@ def new_workflow(
     surf_file = base_filename + ".surface.vtp"
     if not isfile(fold + surf_file):
         if seg_file is None or not isfile(fold + seg_file):
+            text = "The segmentation file {} not given or not found".format(
+                    fold + seg_file)
             raise pexceptions.PySegInputError(
                 expr="new_workflow",
-                msg="The segmentation file {} not given or not found".format(
-                    fold + seg_file))
+                msg=eval(text))
         # Load the segmentation numpy array from a file and get only the
         # requested labels as 1 and the background as 0:
         print ("\nMaking the segmentation binary...")
@@ -620,7 +621,7 @@ def new_workflow(
             fold, base_filename, radius_hit, epsilon, eta)
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
-        methods=['VCTV', 'VV'], full_dist_map=False, graph_file=gt_file1,
+        methods=methods, full_dist_map=False, graph_file=gt_file1,
         area2=True, only_normals=only_normals)
     if only_normals is False:
         for method in method_tg_surf_dict.keys():
@@ -733,14 +734,12 @@ def main(membrane, rh):
     # fold = "{}{}/".format(base_fold, tomo)
     # seg_file = "{}_lbl.labels.mrc".format(tomo)
     # base_filename = "{}_{}".format(tomo, membrane)
-    # pixel_size = 1.368  # same for whole new data set
 
-    # The good one tcb (done cER RH=10 and 15, cropped PM & cER RH=15):
-    # tomo = "tcb_170924_l2_t2_ny01"
-    # fold = "{}{}/".format(base_fold, tomo)
-    # seg_file = "{}_lbl.labels_cropped.mrc".format(tomo)
-    # base_filename = "{}_cropped_{}".format(tomo, membrane)
-    # pixel_size = 1.368
+    # The good one tcb (running cER 10 on winzererfaehndl and 15 on braeurosl):
+    fold = "{}TCB/170924_TITAN_l2_t2/".format(base_fold)
+    tomo = "t2_ny01"
+    seg_file = "{}_lbl.labels.mrc".format(tomo)
+    base_filename = "{}_{}".format(tomo, membrane)
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
     # tomo = "scs_171108_l2_t4_ny01"
@@ -749,51 +748,49 @@ def main(membrane, rh):
     # # lbl = 1
     # seg_file = "{}_lbl.labels_cropped.mrc".format(tomo)
     # base_filename = "{}_{}".format(tomo, membrane)
-    # pixel_size = 1.368
 
     # The "good one" scs (done cER RH=6, RH=15 and RH=10;
     # normals estimation for PM RH=15):
-    tomo = "scs_171108_l1_t2_ny01"
-    fold = "{}{}/".format(base_fold, tomo)
-    # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6,10,12,15,18
-    # lbl = 1
-    seg_file = "{}_lbl.labels.mrc".format(tomo)
-    base_filename = "{}_{}".format(tomo, membrane)
-    pixel_size = 1.368
+    # tomo = "scs_171108_l1_t2_ny01"
+    # fold = "{}{}/".format(base_fold, tomo)
+    # # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6,10,12,15,18
+    # # lbl = 1
+    # seg_file = "{}_lbl.labels.mrc".format(tomo)
+    # base_filename = "{}_{}".format(tomo, membrane)
 
     # same for all:
+    pixel_size = 1.368  # same for whole new data set
     scale_x = 1  # scales do not matter (TODO remove from the functions)
     scale_y = 1
     scale_z = 1
     holes = 3  # surface was better for the "sheety" one with 3 than with 0 or 5
     radius_hit = rh
-    if holes != 0:
-        base_filename = "{}_holes{}".format(base_filename, holes)
-    # TODO comment out the following lbl setting for cutout!
+    min_component = 100
+
     if membrane == "PM":
         lbl = 1
         print("\nEstimating normals for {}".format(base_filename))
         new_workflow(
             fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-            radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+            radius_hit, epsilon=0, eta=0, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=holes,
-            remove_wrong_borders=True, remove_small_components=200,
+            remove_wrong_borders=True, remove_small_components=min_component,
             only_normals=True)
     elif membrane == "cER":
         lbl = 2
         print("\nCalculating curvatures for {}".format(base_filename))
         new_workflow(
             fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-            radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+            radius_hit, epsilon=0, eta=0, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=holes,
             remove_wrong_borders=True, remove_small_components=200)
 
-        for b in range(0, 3):
-            print("\nExtracting curvatures for {} without {} nm from border".format(
-                membrane, b))
+        for b in range(0, 2):
+            print("\nExtracting curvatures for {} without {} nm from border"
+                  .format(membrane, b))
             extract_curvatures_after_new_workflow(
                 fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-                radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+                radius_hit, epsilon=0, eta=0, methods=['VV'],
                 exclude_borders=b)
     else:
         print("Membrane not known.")
