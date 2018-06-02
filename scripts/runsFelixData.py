@@ -66,8 +66,8 @@ def main(tomo):
         seg_file = "{}_final_ER1_vesicles2_NE3.Labels.mrc".format(tomo)
 
     new_workflow(
-        fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-        radius_hit, epsilon=0, eta=0, methods=['VV'],
+        fold, base_filename, pixel_size, radius_hit, scale_x, scale_y, scale_z,
+        epsilon=0, eta=0, methods=['VV'],
         seg_file=seg_file, label=lbl, holes=cube_size,
         remove_wrong_borders=True, remove_small_components=min_component)
 
@@ -75,8 +75,8 @@ def main(tomo):
         print("\nExtracting curvatures for ER without {} nm from border".format(
             b))
         extract_curvatures_after_new_workflow(
-            fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-            radius_hit, epsilon=0, eta=0, methods=['VV'], exclude_borders=b)
+            fold, base_filename, pixel_size, radius_hit, scale_x, scale_y,
+            scale_z, epsilon=0, eta=0, methods=['VV'], exclude_borders=b)
 
     t_end = time.time()
     duration = t_end - t_begin

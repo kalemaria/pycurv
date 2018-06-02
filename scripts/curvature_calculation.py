@@ -523,15 +523,21 @@ def simple_workflow_part2(
 
 
 def new_workflow(
-        fold, base_filename, scale_factor_to_nm, scale_x, scale_y, scale_z,
-        radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'],
+        fold, base_filename, scale_factor_to_nm, radius_hit,
+        scale_x=1, scale_y=1, scale_z=1,
+        epsilon=0, eta=0, methods=['VCTV', 'VV'],
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
         remove_small_components=100, only_normals=False):
     # TODO docstring if remains
+    # TODO scales do not matter - remove them from all functions
     # holes (int): a positive number means closing with a cube of that size,
     # a negative number means removing surface borders of that size (in pixels)
     # before curvature estimation (opening with a cube of that size removes
     # everything)
+
+    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
+                fold, base_filename, methods[0], radius_hit, epsilon, eta)
+    sys.stdout = open(log_file, 'a')
 
     # Reading in the .vtp file with the triangle mesh and transforming
     # it into a triangle graph:
@@ -639,9 +645,14 @@ def new_workflow(
 
 
 def extract_curvatures_after_new_workflow(
-        fold, base_filename, scale_factor_to_nm, scale_x, scale_y, scale_z,
-        radius_hit, epsilon=0, eta=0, methods=['VCTV', 'VV'], exclude_borders=0):
+        fold, base_filename, scale_factor_to_nm, radius_hit,
+        scale_x=1, scale_y=1, scale_z=1,
+        epsilon=0, eta=0, methods=['VCTV', 'VV'], exclude_borders=0):
     # TODO docstring if remains
+    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
+                fold, base_filename, methods[0], radius_hit, epsilon, eta)
+    sys.stdout = open(log_file, 'a')
+
     for method in methods:
         if method == 'VV':
             method = 'VV_area2'
@@ -735,11 +746,10 @@ def main(membrane, rh):
     # seg_file = "{}_lbl.labels.mrc".format(tomo)
     # base_filename = "{}_{}".format(tomo, membrane)
 
-    # The good one tcb (running cER 10 on winzererfaehndl and 15 on braeurosl):
+    # The good one tcb (RadiusHit=10 done and 15 running on braeurosl):
     fold = "{}TCB/170924_TITAN_l2_t2/".format(base_fold)
-    tomo = "t2_ny01"
-    seg_file = "{}_lbl.labels.mrc".format(tomo)
-    base_filename = "{}_{}".format(tomo, membrane)
+    seg_file = "t2_ny01_lbl.labels.mrc"
+    base_filename = "TCBl2t2_{}".format(membrane)
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
     # tomo = "scs_171108_l2_t4_ny01"
@@ -760,9 +770,6 @@ def main(membrane, rh):
 
     # same for all:
     pixel_size = 1.368  # same for whole new data set
-    scale_x = 1  # scales do not matter (TODO remove from the functions)
-    scale_y = 1
-    scale_z = 1
     holes = 3  # surface was better for the "sheety" one with 3 than with 0 or 5
     radius_hit = rh
     min_component = 100
@@ -771,26 +778,22 @@ def main(membrane, rh):
         lbl = 1
         print("\nEstimating normals for {}".format(base_filename))
         new_workflow(
-            fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-            radius_hit, epsilon=0, eta=0, methods=['VV'],
+            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=holes,
-            remove_wrong_borders=True, remove_small_components=min_component,
-            only_normals=True)
+            remove_small_components=min_component, only_normals=True)
     elif membrane == "cER":
         lbl = 2
         print("\nCalculating curvatures for {}".format(base_filename))
         new_workflow(
-            fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-            radius_hit, epsilon=0, eta=0, methods=['VV'],
+            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=holes,
-            remove_wrong_borders=True, remove_small_components=200)
+            remove_small_components=min_component)
 
         for b in range(0, 2):
             print("\nExtracting curvatures for {} without {} nm from border"
                   .format(membrane, b))
             extract_curvatures_after_new_workflow(
-                fold, base_filename, pixel_size, scale_x, scale_y, scale_z,
-                radius_hit, epsilon=0, eta=0, methods=['VV'],
+                fold, base_filename, pixel_size, radius_hit, methods=['VV'],
                 exclude_borders=b)
     else:
         print("Membrane not known.")
