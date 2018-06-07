@@ -622,26 +622,34 @@ def new_workflow(
     print ('Surface and graph generation (and cleaning) took: {} min {} s'
            .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
-    # Running the modified Normal Vector Voting algorithms:
-    gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
-            fold, base_filename, radius_hit, epsilon, eta)
-    method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
-        methods=methods, full_dist_map=False, graph_file=gt_file1,
-        area2=True, only_normals=only_normals)
-    if only_normals is False:
-        for method in method_tg_surf_dict.keys():
-            # Saving the output (graph and surface object) for later filtering
-            # or inspection in ParaView:
-            (tg, surf) = method_tg_surf_dict[method]
-            if method == 'VV':
-                method = 'VV_area2'
-            gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
-                fold, base_filename, method, radius_hit, epsilon, eta)
-            tg.graph.save(gt_file)
-            surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
-                fold, base_filename, method, radius_hit, epsilon, eta)
-            io.save_vtp(surf, surf_file)
+    gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+        fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
+    surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+        fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
+    if not isfile(gt_file) or not isfile(surf_file):
+        # Running the modified Normal Vector Voting algorithms:
+        gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
+                fold, base_filename, radius_hit, epsilon, eta)
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
+            methods=methods, full_dist_map=False, graph_file=gt_file1,
+            area2=True, only_normals=only_normals)
+        if only_normals is False:
+            for method in method_tg_surf_dict.keys():
+                # Saving the output (graph and surface object) for later
+                # filtering or inspection in ParaView:
+                (tg, surf) = method_tg_surf_dict[method]
+                if method == 'VV':
+                    method = 'VV_area2'
+                gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+                    fold, base_filename, method, radius_hit, epsilon, eta)
+                tg.graph.save(gt_file)
+                surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+                    fold, base_filename, method, radius_hit, epsilon, eta)
+                io.save_vtp(surf, surf_file)
+    else:
+        print("\nOutput files {} and {} are already there.".format(
+            gt_file, surf_file))
 
 
 def extract_curvatures_after_new_workflow(

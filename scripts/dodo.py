@@ -47,7 +47,6 @@ def task_calculate_curvatures():
                                 'remove_small_components': min_component
                             })
                         ],
-                       # TODO redirect output to a .log file?
                        'file_dep': [seg_file],
                        'targets': [
                            "{}.gt".format(target_base),
@@ -65,7 +64,7 @@ def task_extract_curvatures():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
     pixel_size = 1.368
-    radius_hit = 10  # TODO can change as input parameter?
+    radius_hit = 10
     methods = ["VV"]
 
     for condition in ["TCB", "SCS", "WT", "IST2", "DTCB1", "DTCB2", "DTCB3"]:
