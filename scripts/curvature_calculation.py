@@ -630,10 +630,20 @@ def new_workflow(
         # Running the modified Normal Vector Voting algorithms:
         gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
                 fold, base_filename, radius_hit, epsilon, eta)
-        method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
-            methods=methods, full_dist_map=False, graph_file=gt_file1,
-            area2=True, only_normals=only_normals)
+        method_tg_surf_dict = {}
+        if not isfile(gt_file1):
+            method_tg_surf_dict = normals_directions_and_curvature_estimation(
+                tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
+                methods=methods, full_dist_map=False, graph_file=gt_file1,
+                area2=True, only_normals=only_normals)
+        elif only_normals is False:
+            for method in methods:
+                tg_curv, surface_curv = curvature_estimation(
+                    surf_clean, scale_factor_to_nm, scale_x, scale_y, scale_z,
+                    radius_hit, all_neighbor_idx_to_dist=None,
+                    exclude_borders=0, graph_file=gt_file1, method=method)
+                method_tg_surf_dict[method] = (tg_curv, surface_curv)
+
         if only_normals is False:
             for method in method_tg_surf_dict.keys():
                 # Saving the output (graph and surface object) for later

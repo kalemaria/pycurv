@@ -736,8 +736,9 @@ def normals_directions_and_curvature_estimation(
         results = {}
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
-                tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
-                tg.scale_z, radius_hit, all_neighbor_idx_to_dist, exclude_borders,
+                tg.surface, tg.scale_factor_to_nm,
+                tg.scale_x, tg.scale_y, tg.scale_z,
+                radius_hit, all_neighbor_idx_to_dist, exclude_borders,
                 graph_file, method, page_curvature_formula, num_points, area2)
             results[method] = (tg_curv, surface_curv)
 
@@ -951,7 +952,7 @@ def preparation_for_curvature_estimation(
 
 def curvature_estimation(
         scaled_surface, scale_factor_to_nm, scale_x, scale_y, scale_z,
-        radius_hit, all_neighbor_idx_to_dist, exclude_borders=0,
+        radius_hit, all_neighbor_idx_to_dist=None, exclude_borders=0,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
         num_points=None, area2=True):
     """
@@ -970,7 +971,9 @@ def curvature_estimation(
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
-        all_neighbor_idx_to_dist:
+        all_neighbor_idx_to_dist: list of dictionaries for each vertex listing
+            its neighbors ids (keys) with geodesic distances to them (values),
+            if None (default) it is calculated
         exclude_borders (int, optional): if > 0, principle curvatures and
             directions are not estimated for triangles within this distance to
             surface borders (default 0)
@@ -988,7 +991,7 @@ def curvature_estimation(
             weighted by triangle area also in the
 
     Returns:
-        a touple of TriangleGraph graph and vtkPolyData surface of triangles
+        a tuple of TriangleGraph graph and vtkPolyData surface of triangles
         with classified orientation and estimated normals or tangents, principle
         curvatures and directions
     """
