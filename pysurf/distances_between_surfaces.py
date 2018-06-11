@@ -9,7 +9,7 @@ from surface_graphs import TriangleGraph
 import pysurf_io as io
 
 
-def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
+def calculate_distances(tg_PM, tg_cER, maxdist, maxdist2, verbose=False):
     """
 
     Args:
@@ -17,8 +17,9 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
             normals (now should be pointing away from cER surface direction)
         tg_cER (TriangleGraph): TriangleGraph object of cER surface
         maxdist (int): maximal distance (nm) from PM to first cER membrane
-        maxth (int): maximal cER thickness (nm)
-        verbose:
+        maxdist2 (int): maximal distance (nm) from PM to second cER membrane
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
 
     Returns:
         two lists of distances:
@@ -26,7 +27,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
         d2: cER thicknesses (nm)
     """
     print("maxdist = {} nm".format(maxdist))
-    print("maxth = {} nm".format(maxth))
+    print("maxdist2 = {} nm".format(maxdist2))
 
     # initialize the vertex properties if cER graph and distances lists:
     tg_cER.graph.vp.cERmembrane = tg_cER.graph.new_vertex_property("int")
@@ -103,6 +104,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
         pcoords = [0.0, 0.0, 0.0]
         sub_id = vtk.mutable(0)
         cell2_id = vtk.mutable(0)  # the triangle id containing p2
+        maxth = maxdist2 - d1
         for minth in range(1, maxth):
             # find two new points: at distance minth and maxth from p1 in the
             # normal direction
@@ -174,7 +176,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose=False):
 
 def run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
                             cER_surf_outfile, cER_graph_outfile,
-                            distances_outfile, maxdist, maxth, verbose):
+                            distances_outfile, maxdist, maxdist2, verbose):
     # Load the input files:
     tg_PM = TriangleGraph(vtk.vtkPolyData())  # PM surface is not required
     tg_PM.graph = load_graph(PM_graph_file)
@@ -183,7 +185,7 @@ def run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
     tg_cER.graph = load_graph(cER_graph_file)
 
     # Calculate distances:
-    d1s, d2s = calculate_distances(tg_PM, tg_cER, maxdist, maxth, verbose)
+    d1s, d2s = calculate_distances(tg_PM, tg_cER, maxdist, maxdist2, verbose)
     print("{} d1s".format(len(d1s)))
     print("{} d2s".format(len(d2s)))
     # Save the distances into distances_outfile:
@@ -229,21 +231,21 @@ if __name__ == "__main__":
 
     # Input parameters:
     maxdist_voxels = 60
-    maxth_voxels = 60
+    maxdist2_voxels = 60
     maxdist_nm = int(maxdist_voxels * pixel_size)
-    maxth_nm = int(maxth_voxels * pixel_size)
+    maxdist2_nm = int(maxdist2_voxels * pixel_size)
 
     # Output files:
     cER_surf_outfile = "{}.PMdist_maxdist{}_maxth{}.vtp".format(
-        cER_surf_file[0:-4], maxdist_nm, maxth_nm)
+        cER_surf_file[0:-4], maxdist_nm, maxdist2_nm)
     cER_graph_outfile = "{}.PMdist_maxdist{}_maxth{}.gt".format(
-        cER_graph_file[0:-3], maxdist_nm, maxth_nm)
+        cER_graph_file[0:-3], maxdist_nm, maxdist2_nm)
     distances_outfile = "{}.PMdist_maxdist{}_maxth{}.csv".format(
-        cER_surf_file[0:-4], maxdist_nm, maxth_nm)
+        cER_surf_file[0:-4], maxdist_nm, maxdist2_nm)
 
     run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
                             cER_surf_outfile, cER_graph_outfile,
-                            distances_outfile, maxdist_nm, maxth_nm,
+                            distances_outfile, maxdist_nm, maxdist2_nm,
                             verbose=False)
 
     t_end = time.time()
