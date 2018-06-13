@@ -32,7 +32,7 @@ def task_correct_normals():
                 PM_graph_file = "{}{}.NVV_rh{}_epsilon0_eta0.gt".format(
                     subfold, base_filename, radius_hit)
                 yield {'name': tomo,
-                       'verbosity': 2,
+                       # 'verbosity': 2,
                        'actions': [
                            (new_workflow,
                             [subfold, base_filename, pixel_size, radius_hit], {
@@ -79,11 +79,11 @@ def task_calculate_distances():
                 subfold, tomo, radius_hit)
             cER_surf_file = "{}.vtp".format(cER_base)
             cER_graph_file = "{}.gt".format(cER_base)
-            cER_surf_outfile = "{}.PMdist_maxdist{}_maxth{}.vtp".format(
+            cER_surf_outfile = "{}.PMdist_maxdist{}_maxdist2{}.vtp".format(
                 cER_base, maxdist_nm, maxdist2_nm)
-            cER_graph_outfile = "{}.PMdist_maxdist{}_maxth{}.gt".format(
+            cER_graph_outfile = "{}.PMdist_maxdist{}_maxdist2{}.gt".format(
                 cER_base, maxdist_nm, maxdist2_nm)
-            distances_outfile = "{}.PMdist_maxdist{}_maxth{}.csv".format(
+            distances_outfile = "{}.PMdist_maxdist{}_maxdist2{}.csv".format(
                 cER_base, maxdist_nm, maxdist2_nm)
 
             yield {'name': tomo,

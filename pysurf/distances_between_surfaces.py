@@ -53,7 +53,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxdist2, verbose=False):
     for v in tg_PM.graph.vertices():
         # get its center coordinate as p0 and corrected normal vector N_v
         p0 = np.array(tg_PM.graph.vp.xyz[v])
-        N_v = np.array(tg_PM.graph.vp.N_v[v]) * -1  # TODO check both directions?
+        N_v = np.array(tg_PM.graph.vp.N_v[v]) * -1  # TODO check both directions!
 
         # find a point pmax at distance maxdist from p0 in the normal direction
         pmax = p0 + N_v * maxdist
@@ -104,7 +104,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxdist2, verbose=False):
         pcoords = [0.0, 0.0, 0.0]
         sub_id = vtk.mutable(0)
         cell2_id = vtk.mutable(0)  # the triangle id containing p2
-        maxth = maxdist2 - d1
+        maxth = maxdist2 - int(d1)
         for minth in range(1, maxth):
             # find two new points: at distance minth and maxth from p1 in the
             # normal direction
@@ -212,21 +212,23 @@ if __name__ == "__main__":
     # tomo = "tcb_170924_l2_t2_ny01"
     # fold = "{}{}/".format(base_fold, tomo)
     # base_filename = "{}_cropped_".format(tomo)
+    fold = "{}TCB/170924_TITAN_l1_t1/".format(base_fold)
+    base_filename = "TCBl1t1_"
     # The good scs (done cER and PM with RH=15):
-    tomo = "scs_171108_l1_t2_ny01"
-    fold = "{}{}/".format(base_fold, tomo)
-    base_filename = "{}_".format(tomo)
-    rh = 15
+    # tomo = "scs_171108_l1_t2_ny01"
+    # fold = "{}{}/".format(base_fold, tomo)
+    # base_filename = "{}_".format(tomo)
+    rh = 10
     pixel_size = 1.368
 
     # Input files:
     # File with scaled PM graph with corrected normals:
-    PM_graph_file = "{}{}PM_holes3.NVV_rh{}_epsilon0_eta0.gt".format(
+    PM_graph_file = "{}{}PM.NVV_rh{}_epsilon0_eta0.gt".format(
         fold, base_filename, rh)
     # Files with scaled cER surface and graph, after curvature calculation:
-    cER_surf_file = "{}{}cER_holes3.VV_area2_rh{}_epsilon0_eta0.vtp".format(
+    cER_surf_file = "{}{}cER.VV_area2_rh{}_epsilon0_eta0.vtp".format(
         fold, base_filename, rh)
-    cER_graph_file = "{}{}cER_holes3.VV_area2_rh{}_epsilon0_eta0.gt".format(
+    cER_graph_file = "{}{}cER.VV_area2_rh{}_epsilon0_eta0.gt".format(
         fold, base_filename, rh)
 
     # Input parameters:
@@ -236,11 +238,11 @@ if __name__ == "__main__":
     maxdist2_nm = int(maxdist2_voxels * pixel_size)
 
     # Output files:
-    cER_surf_outfile = "{}.PMdist_maxdist{}_maxth{}.vtp".format(
+    cER_surf_outfile = "{}.PMdist_maxdist{}_maxdist2{}.vtp".format(
         cER_surf_file[0:-4], maxdist_nm, maxdist2_nm)
-    cER_graph_outfile = "{}.PMdist_maxdist{}_maxth{}.gt".format(
+    cER_graph_outfile = "{}.PMdist_maxdist{}_maxdist2{}.gt".format(
         cER_graph_file[0:-3], maxdist_nm, maxdist2_nm)
-    distances_outfile = "{}.PMdist_maxdist{}_maxth{}.csv".format(
+    distances_outfile = "{}.PMdist_maxdist{}_maxdist2{}.csv".format(
         cER_surf_file[0:-4], maxdist_nm, maxdist2_nm)
 
     run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,

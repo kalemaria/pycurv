@@ -31,7 +31,7 @@ def task_calculate_curvatures():
                 target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                     subfold, base_filename, radius_hit)
                 yield {'name': tomo,
-                       'verbosity': 2,
+                       # 'verbosity': 2,
                        'actions': [
                            (new_workflow,
                             [subfold, base_filename, pixel_size, radius_hit], {
@@ -75,7 +75,7 @@ def task_extract_curvatures():
             target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                 subfold, base_filename, radius_hit)
             yield {'name': tomo,
-                   'verbosity': 2,
+                   # 'verbosity': 2,
                    'actions': [
                        (extract_curvatures_after_new_workflow,
                         [subfold, base_filename, pixel_size, radius_hit], {

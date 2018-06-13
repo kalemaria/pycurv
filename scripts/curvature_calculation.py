@@ -764,7 +764,7 @@ def main(membrane, rh):
     # seg_file = "{}_lbl.labels.mrc".format(tomo)
     # base_filename = "{}_{}".format(tomo, membrane)
 
-    # The good one tcb (RadiusHit=10 done and 15 running on braeurosl):
+    # The good one tcb (RadiusHit=10 and 15):
     fold = "{}TCB/170924_TITAN_l2_t2/".format(base_fold)
     seg_file = "t2_ny01_lbl.labels.mrc"
     base_filename = "TCBl2t2_{}".format(membrane)
