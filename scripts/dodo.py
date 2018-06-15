@@ -1,16 +1,15 @@
 from pathlib2 import Path, PurePath
 from curvature_calculation import (new_workflow,
                                    extract_curvatures_after_new_workflow)
-from pysurf import run_calculate_distances
 
 
-def task_correct_normals():
+def task_calculate_curvatures():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
     pixel_size = 1.368
-    radius_hit = 10
+    radius_hit = 15
     methods = ["VV"]
-    lbl = 1  # PM
+    lbl = 2  # cER
     holes = 3
     min_component = 100
 
@@ -27,9 +26,9 @@ def task_correct_normals():
                 seg_filename = str(PurePath(seg_file_p).name)
                 tomo = "{}{}{}".format(condition, subfold.split('_')[-2],
                                        subfold.split('_')[-1])
-                base_filename = "{}_PM".format(tomo)
+                base_filename = "{}_cER".format(tomo)
                 subfold += '/'
-                PM_graph_file = "{}{}.NVV_rh{}_epsilon0_eta0.gt".format(
+                target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                     subfold, base_filename, radius_hit)
                 yield {'name': tomo,
                        # 'verbosity': 2,
@@ -40,12 +39,14 @@ def task_correct_normals():
                                 'seg_file': seg_filename,
                                 'label': lbl,
                                 'holes': holes,
-                                'remove_small_components': min_component,
-                                'only_normals': True
+                                'remove_small_components': min_component
                             })
                         ],
                        'file_dep': [seg_file],
-                       'targets': [PM_graph_file],
+                       'targets': [
+                           "{}.gt".format(target_base),
+                           "{}.vtp".format(target_base)
+                       ],
                        # force doit to always mark the task as up-to-date
                        # (unless target removed)
                        'uptodate': [True]
@@ -54,15 +55,12 @@ def task_correct_normals():
                 print("No segmentation file was found.")
 
 
-def task_calculate_distances():
+def task_extract_curvatures():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
     pixel_size = 1.368
-    radius_hit = 10
-    maxdist_voxels = 60
-    maxdist2_voxels = 60
-    maxdist_nm = int(maxdist_voxels * pixel_size)
-    maxdist2_nm = int(maxdist2_voxels * pixel_size)
+    radius_hit = 15
+    methods = ["VV"]
 
     for condition in ["TCB", "SCS", "WT", "IST2", "DTCB1", "DTCB2", "DTCB3"]:
         fold = "{}{}/".format(base_fold, condition)
@@ -72,32 +70,32 @@ def task_calculate_distances():
             subfold = str(subfold_p)
             tomo = "{}{}{}".format(condition, subfold.split('_')[-2],
                                    subfold.split('_')[-1])
+            base_filename = "{}_cER".format(tomo)
             subfold += '/'
-            PM_graph_file = "{}{}_PM.NVV_rh{}_epsilon0_eta0.gt".format(
-                    subfold, tomo, radius_hit)
-            cER_base = "{}{}_cER.VV_area2_rh{}_epsilon0_eta0".format(
-                subfold, tomo, radius_hit)
-            cER_surf_file = "{}.vtp".format(cER_base)
-            cER_graph_file = "{}.gt".format(cER_base)
-            cER_surf_outfile = "{}.PMdist_maxdist{}_maxdist2{}.vtp".format(
-                cER_base, maxdist_nm, maxdist2_nm)
-            cER_graph_outfile = "{}.PMdist_maxdist{}_maxdist2{}.gt".format(
-                cER_base, maxdist_nm, maxdist2_nm)
-            distances_outfile = "{}.PMdist_maxdist{}_maxdist2{}.csv".format(
-                cER_base, maxdist_nm, maxdist2_nm)
-
+            target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
+                subfold, base_filename, radius_hit)
             yield {'name': tomo,
-                   'verbosity': 2,
+                   # 'verbosity': 2,
                    'actions': [
-                       (run_calculate_distances,
-                        [PM_graph_file, cER_surf_file, cER_graph_file,
-                            cER_surf_outfile, cER_graph_outfile,
-                            distances_outfile, maxdist_nm, maxdist2_nm],
-                        {'verbose': False})
+                       (extract_curvatures_after_new_workflow,
+                        [subfold, base_filename, pixel_size, radius_hit], {
+                            'methods': methods,
+                            'exclude_borders': 0
+                        }),
+                       (extract_curvatures_after_new_workflow,
+                        [subfold, base_filename, pixel_size, radius_hit], {
+                            'methods': methods,
+                            'exclude_borders': 1
+                        })
                     ],
-                   'file_dep': [PM_graph_file, cER_surf_file, cER_graph_file],
+                   'file_dep': [
+                       "{}.gt".format(target_base),
+                       "{}.vtp".format(target_base)
+                   ],
                    'targets': [
-                       cER_surf_outfile, cER_graph_outfile, distances_outfile],
+                       "{}.csv".format(target_base),
+                       "{}_excluding1borders.csv".format(target_base)
+                   ],
                    # force doit to always mark the task as up-to-date (unless
                    # target removed)
                    'uptodate': [True]
