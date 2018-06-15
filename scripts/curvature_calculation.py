@@ -665,7 +665,8 @@ def new_workflow(
 def extract_curvatures_after_new_workflow(
         fold, base_filename, scale_factor_to_nm, radius_hit,
         scale_x=1, scale_y=1, scale_z=1,
-        epsilon=0, eta=0, methods=['VCTV', 'VV'], exclude_borders=0):
+        epsilon=0, eta=0, methods=['VCTV', 'VV'], exclude_borders=0,
+        categorize_shape_index=False):
     # TODO docstring if remains
     log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
                 fold, base_filename, methods[0], radius_hit, epsilon, eta)
@@ -678,7 +679,7 @@ def extract_curvatures_after_new_workflow(
         # input graph and surface files
         gt_infile = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
             fold, base_filename, method, radius_hit, epsilon, eta)
-        surf_infile = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+        vtp_infile = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
             fold, base_filename, method, radius_hit, epsilon, eta)
         # output csv, gt and vtp files
         csv_outfile = '{}{}.{}_rh{}_epsilon{}_eta{}.csv'.format(
@@ -693,27 +694,45 @@ def extract_curvatures_after_new_workflow(
                 fold, base_filename, method, radius_hit, epsilon, eta, eb)
             vtp_outfile = '{}{}.{}_rh{}_epsilon{}_eta{}{}.vtp'.format(
                 fold, base_filename, method, radius_hit, epsilon, eta, eb)
+        elif categorize_shape_index:  # overwrite the input files
+            gt_outfile = gt_infile
+            vtp_outfile = vtp_infile
 
         # Create TriangleGraph object and load the graph file
-        surf = io.load_poly(surf_infile)
+        surf = io.load_poly(vtp_infile)
         tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
         tg.graph = load_graph(gt_infile)
 
-        __extract_curvatures_from_graph(tg, csv_outfile, exclude_borders,
-                                        gt_outfile, vtp_outfile)
+        __extract_curvatures_from_graph(
+            tg, csv_outfile, exclude_borders, gt_outfile, vtp_outfile,
+            categorize_shape_index=categorize_shape_index)
 
 
 def __extract_curvatures_from_graph(tg, csv_file, exclude_borders,
-                                    gt_file=None, vtp_file=None):
+                                    gt_file=None, vtp_file=None,
+                                    categorize_shape_index=False):
+    # List of shape class labels of all vertices for the csv file:
+    shape_index_class = []
+    if categorize_shape_index:
+        # Add a new property: categorical shape index (one value for class)
+        tg.graph.vp.shape_index_cat = tg.graph.new_vertex_property("float")
+        for v in tg.graph.vertices():
+            si_v = tg.graph.vp.shape_index_VV[v]
+            si_cat_v, si_class_v = __shape_index_classifier(si_v)
+            tg.graph.vp.shape_index_cat[v] = si_cat_v
+            shape_index_class.append(si_class_v)
+
     # If don't want to include curvatures near borders, filter out those
     if exclude_borders > 0:
         tg.find_vertices_near_border(exclude_borders, purge=True)
-        if gt_file is not None:
-            tg.graph.save(gt_file)
-        if vtp_file is not None:
-            # Transforming the resulting graph to a surface with triangles:
-            surf = tg.graph_to_triangle_poly()
-            io.save_vtp(surf, vtp_file)
+
+    # Saving the changes into graph and surface files, if specified:
+    if gt_file is not None:
+        tg.graph.save(gt_file)
+    if vtp_file is not None:
+        # Transforming the resulting graph to a surface with triangles:
+        surf = tg.graph_to_triangle_poly()
+        io.save_vtp(surf, vtp_file)
 
     # Getting estimated principal curvatures from the output graph:
     kappa_1 = tg.get_vertex_property_array("kappa_1")
@@ -731,9 +750,47 @@ def __extract_curvatures_from_graph(tg, csv_file, exclude_borders,
     df["gauss_curvature"] = gauss_curvature
     df["mean_curvature"] = mean_curvature
     df["shape_index"] = shape_index
+    if categorize_shape_index:  # want the shape class labels
+        df["shape_index_class"] = shape_index_class
     df["curvedness"] = curvedness
     df["triangleAreas"] = triangle_areas
     df.to_csv(csv_file, sep=';')
+
+
+def __shape_index_classifier(x):
+    """
+    Maps shape index value to the representative (middle) value of each shape
+    class and the class label.
+
+    Args:
+        x (float): shape index value, should be in range [-1, 1]
+
+    Returns:
+        A tuple of the representative (middle) value of each shape class and
+        the class label, e.g. 0, 'Saddle' fro values in range [-1/8, +1/8)
+    """
+    if x < -1:
+        return None, None
+    elif -1 <= x < -7/8.0:
+        return -1, 'Spherical cup'
+    elif -7/8.0 <= x < -5/8.0:
+        return -0.75, 'Trough'
+    elif -5/8.0 <= x < -3/8.0:
+        return -0.5, 'Rut'
+    elif -3/8.0 <= x < -1/8.0:
+        return -0.25, 'Saddle rut'
+    elif -1/8.0 <= x < 1/8.0:
+        return 0, 'Saddle'
+    elif 1/8.0 <= x < 3/8.0:
+        return 0.25, 'Saddle ridge'
+    elif 3/8.0 <= x < 5/8.0:
+        return 0.5, 'Ridge'
+    elif 5/8.0 <= x < 7/8.0:
+        return 0.75, 'Dome'
+    elif 7/8.0 <= x <= 1:
+        return 1, 'Spherical cap'
+    else:  # x > 1
+        return None, None
 
 
 def main(membrane, rh):
@@ -801,18 +858,18 @@ def main(membrane, rh):
             remove_small_components=min_component, only_normals=True)
     elif membrane == "cER":
         lbl = 2
-        print("\nCalculating curvatures for {}".format(base_filename))
-        new_workflow(
-            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-            seg_file=seg_file, label=lbl, holes=holes,
-            remove_small_components=min_component)
+        # print("\nCalculating curvatures for {}".format(base_filename))
+        # new_workflow(
+        #     fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+        #     seg_file=seg_file, label=lbl, holes=holes,
+        #     remove_small_components=min_component)
 
-        for b in range(0, 2):
+        for b in range(0, 1):  # (0, 2)
             print("\nExtracting curvatures for {} without {} nm from border"
                   .format(membrane, b))
             extract_curvatures_after_new_workflow(
                 fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-                exclude_borders=b)
+                exclude_borders=b, categorize_shape_index=True)
     else:
         print("Membrane not known.")
         exit(0)
