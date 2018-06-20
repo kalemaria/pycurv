@@ -9,7 +9,7 @@ def main(tomo):
     t_begin = time.time()
 
     # parameters for all tomograms:
-    fold = "/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/"
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/"
     base_filename = "{}_ER".format(tomo)
     pixel_size = 2.526  # nm
     scale_x = 1
@@ -64,6 +64,13 @@ def main(tomo):
         scale_y = 590
         scale_z = 266
         seg_file = "{}_final_ER1_vesicles2_NE3.Labels.mrc".format(tomo)
+    elif tomo == "t138":
+        fold = "{}Htt97Q_IB_t138/".format(fold)
+        scale_x = 928
+        scale_y = 928
+        scale_z = 300
+        pixel_size = 2.84  # nm
+        seg_file = "{}_final_ER1_notInHttContact2.Labels.mrc".format(tomo)
 
     new_workflow(
         fold, base_filename, pixel_size, radius_hit, scale_x, scale_y, scale_z,

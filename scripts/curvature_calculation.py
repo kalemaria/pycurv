@@ -822,9 +822,13 @@ def main(membrane, rh):
     # base_filename = "{}_{}".format(tomo, membrane)
 
     # The good one tcb (RadiusHit=10 and 15):
-    fold = "{}TCB/170924_TITAN_l2_t2/".format(base_fold)
-    seg_file = "t2_ny01_lbl.labels.mrc"
-    base_filename = "TCBl2t2_{}".format(membrane)
+    # fold = "{}TCB/170924_TITAN_l2_t2/".format(base_fold)
+    # seg_file = "t2_ny01_lbl.labels.mrc"
+    # base_filename = "TCBl2t2_{}".format(membrane)
+    # Another tcb with surface generation problems:
+    fold = "{}TCB/170924_TITAN_l1_t1/".format(base_fold)
+    seg_file = "t1_cleaned_pt_lbl.labels.mrc"
+    base_filename = "TCBl1t1_{}".format(membrane)
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
     # tomo = "scs_171108_l2_t4_ny01"
@@ -858,13 +862,13 @@ def main(membrane, rh):
             remove_small_components=min_component, only_normals=True)
     elif membrane == "cER":
         lbl = 2
-        # print("\nCalculating curvatures for {}".format(base_filename))
-        # new_workflow(
-        #     fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-        #     seg_file=seg_file, label=lbl, holes=holes,
-        #     remove_small_components=min_component)
+        print("\nCalculating curvatures for {}".format(base_filename))
+        new_workflow(
+            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+            seg_file=seg_file, label=lbl, holes=holes,
+            remove_small_components=min_component)
 
-        for b in range(0, 1):  # (0, 2)
+        for b in range(0, 2):
             print("\nExtracting curvatures for {} without {} nm from border"
                   .format(membrane, b))
             extract_curvatures_after_new_workflow(
