@@ -40,7 +40,8 @@ def close_holes(infile, cube_size, iterations, outfile):
 
 
 def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
-                    purge_ratio=1, save_input_as_vti=False, verbose=False):
+                    purge_ratio=1, save_input_as_vti=False, verbose=False,
+                    isosurface=False):
     """
     Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle
     surface for objects in a segmented volume with a given label.
@@ -66,6 +67,8 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
             input is saved as a '.vti' file ('<outfile_base>.vti')
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
+        isosurface (boolean, optional): if True (default False), generate
+            isosurface (good for filled segmentations)
 
     Returns:
         the triangle surface (vtk.PolyData)
@@ -73,8 +76,11 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
     t_begin = time.time()
 
     # Generating the surface (vtkPolyData object)
-    surface = io.gen_surface(tomo, lbl=lbl, mask=mask, other_mask=other_mask,
-                             purge_ratio=purge_ratio, verbose=verbose)
+    if isosurface:
+        surface = io.gen_isosurface(tomo, lbl, threshold=1.0, mask=other_mask)
+    else:
+        surface = io.gen_surface(tomo, lbl, mask, other_mask, purge_ratio,
+                                 verbose=verbose)
 
     # Filter out triangles with area=0, if any are present
     surface = __filter_null_triangles(surface, verbose=verbose)
@@ -198,17 +204,25 @@ def tomo_smooth_surf(seg, sg, th):
 
 
 if __name__ == "__main__":
-    in_seg = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
-              "cylinder_r10_h20.mrc")
-    tomo_seg = io.load_tomo(in_seg)
-    for seg_sg in [2]:  # in voxels (Johannes: 2)
-        print "sigma = {}".format(seg_sg)
-        for seg_th in [0.49]:  # (Johannes: 0.45)
-            print "threshold = {}".format(seg_th)
-            out_surf = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
-                        "cylinder_r10_h20.smooth_surface_sg{}_th{}.vtp".format(
-                         seg_sg, seg_th))
-            surf = tomo_smooth_surf(tomo_seg, seg_sg, seg_th)
-            print "The surface has %s cells" % surf.GetNumberOfCells()
-            print "%s points" % surf.GetNumberOfPoints()
-            io.save_vtp(surf, out_surf)
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/TCB/170924_TITAN_l1_t1/"
+    seg_file = "{}t1_cleaned_pt_lbl.labels_FILLED.mrc".format(fold)
+    tomo = io.load_tomo(seg_file)
+    outfile_base = "{}TCBl1t1_cER_filled_masked3reversed".format(fold)
+
+    run_gen_surface(tomo, outfile_base, lbl=3, other_mask=2, isosurface=True)
+
+
+    # in_seg = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
+    #           "cylinder_r10_h20.mrc")
+    # tomo_seg = io.load_tomo(in_seg)
+    # for seg_sg in [2]:  # in voxels (Johannes: 2)
+    #     print "sigma = {}".format(seg_sg)
+    #     for seg_th in [0.49]:  # (Johannes: 0.45)
+    #         print "threshold = {}".format(seg_th)
+    #         out_surf = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
+    #                     "cylinder_r10_h20.smooth_surface_sg{}_th{}.vtp".format(
+    #                      seg_sg, seg_th))
+    #         surf = tomo_smooth_surf(tomo_seg, seg_sg, seg_th)
+    #         print "The surface has %s cells" % surf.GetNumberOfCells()
+    #         print "%s points" % surf.GetNumberOfPoints()
+    #         io.save_vtp(surf, out_surf)

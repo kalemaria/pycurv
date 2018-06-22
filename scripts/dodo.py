@@ -1,13 +1,14 @@
 from pathlib2 import Path, PurePath
 from curvature_calculation import (new_workflow,
                                    extract_curvatures_after_new_workflow)
+RADIUS_HIT = 10
 
 
 def task_calculate_curvatures():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
     pixel_size = 1.368
-    radius_hit = 15
+    radius_hit = RADIUS_HIT
     methods = ["VV"]
     lbl = 2  # cER
     holes = 3
@@ -59,7 +60,7 @@ def task_extract_curvatures():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
     pixel_size = 1.368
-    radius_hit = 15
+    radius_hit = RADIUS_HIT
     methods = ["VV"]
 
     for condition in ["TCB", "SCS", "WT", "IST2", "DTCB1", "DTCB2", "DTCB3"]:

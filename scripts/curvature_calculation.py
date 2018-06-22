@@ -528,7 +528,7 @@ def new_workflow(
         epsilon=0, eta=0, methods=['VCTV', 'VV'],
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
         remove_small_components=100, only_normals=False):
-    # TODO docstring if remains
+    # TODO docstring - works for Javier data!
     # TODO scales do not matter - remove them from all functions
     # holes (int): a positive number means closing with a cube of that size,
     # a negative number means removing surface borders of that size (in pixels)
@@ -539,8 +539,6 @@ def new_workflow(
                 fold, base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
 
-    # Reading in the .vtp file with the triangle mesh and transforming
-    # it into a triangle graph:
     t_begin = time.time()
 
     surf_file = base_filename + ".surface.vtp"
@@ -551,30 +549,40 @@ def new_workflow(
             raise pexceptions.PySegInputError(
                 expr="new_workflow",
                 msg=eval(text))
-        # Load the segmentation numpy array from a file and get only the
-        # requested labels as 1 and the background as 0:
-        print ("\nMaking the segmentation binary...")
+
         seg = io.load_tomo(fold + seg_file)
         assert(isinstance(seg, np.ndarray))
         data_type = seg.dtype
-        binary_seg = (seg == label).astype(data_type)
-        if holes != 0:  # reduce / increase holes in the segmentation
-            cube_size = abs(holes)
-            cube = np.ones((cube_size, cube_size, cube_size))
-            if holes > 0:  # close (reduce) holes
-                print ("\nReducing holes in the segmentation...")
-                binary_seg = ndimage.binary_closing(
-                    binary_seg, structure=cube, iterations=1).astype(data_type)
-                # Write the resulting binary segmentation into a file:
-                binary_seg_file = "{}{}.binary_seg.mrc".format(
-                    fold, base_filename)
-                io.save_numpy(binary_seg, binary_seg_file)
-            # else:  # open (increase) holes - removed everything
-            #     print ("\nIncreasing holes in the segmentation...")
-            #     binary_seg = ndimage.binary_opening(
-            #         binary_seg, structure=cube, iterations=1).astype(data_type)
-        print ("\nGenerating a surface from the binary segmentation...")
-        surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
+
+        if label == 2 and np.max(seg) == 3:  # if cER and filled cER seg. exists
+            # Surface generation with filled segmentation using vtkMarchingCubes
+            # and applying the mask of unfilled segmentation
+            print ("\nGenerating a surface...")
+            surf = run_gen_surface(
+                seg, fold + base_filename, lbl=3, other_mask=2, isosurface=True)
+
+        else:  # Surface generation with vtkSurfaceReconstructionFilter method
+            # Load the segmentation numpy array from a file and get only the
+            # requested labels as 1 and the background as 0:
+            print ("\nMaking the segmentation binary...")
+            binary_seg = (seg == label).astype(data_type)
+            if holes != 0:  # reduce / increase holes in the segmentation
+                cube_size = abs(holes)
+                cube = np.ones((cube_size, cube_size, cube_size))
+                if holes > 0:  # close (reduce) holes
+                    print ("\nReducing holes in the segmentation...")
+                    binary_seg = ndimage.binary_closing(
+                        binary_seg, structure=cube, iterations=1).astype(data_type)
+                    # Write the resulting binary segmentation into a file:
+                    binary_seg_file = "{}{}.binary_seg.mrc".format(
+                        fold, base_filename)
+                    io.save_numpy(binary_seg, binary_seg_file)
+                # else:  # open (increase) holes - removed everything
+                #     print ("\nIncreasing holes in the segmentation...")
+                #     binary_seg = ndimage.binary_opening(
+                #         binary_seg, structure=cube, iterations=1).astype(data_type)
+            print ("\nGenerating a surface from the binary segmentation...")
+            surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
     else:
         print ('\nReading in the surface from file...')
         surf = io.load_poly(fold + surf_file)

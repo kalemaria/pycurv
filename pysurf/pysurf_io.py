@@ -255,6 +255,103 @@ def load_poly(fname):
     return reader.GetOutput()
 
 
+def gen_isosurface(tomo, lbl, threshold=1.0, mask=None):
+    """
+    Generates a isosurface using the Marching Cubes method.
+
+    Args:
+        tomo (str or numpy.ndarray): segmentation input file in one of the
+            formats: '.mrc', '.em' or '.vti', or 3D array containing the
+            segmentation
+        lbl (int): the label to be considered (> 0)
+        threshold (optional, float): threshold for isosurface (default 1.0)
+        mask (int or numpy.ndarray, optional): if given (default None), the
+            surface will be masked with it: if integer, this label is extracted
+            from the input segmentation to generate the binary mask, otherwise
+            it has to be given as a numpy.ndarray with same dimensions as the
+            input segmentation
+
+    Returns:
+        a surface (vtk.vtkPolyData)
+    """
+    # Read in the segmentation
+    if isinstance(tomo, str):
+        fname, fext = os.path.splitext(tomo)
+        # if fext == '.fits':
+        #     tomo = pyfits.getdata(tomo)
+        if fext == '.mrc':
+            hold = ImageIO()
+            hold.readMRC(file=tomo)
+            tomo = hold.data
+        elif fext == '.em':
+            hold = ImageIO()
+            hold.readEM(file=tomo)
+            tomo = hold.data
+        elif fext == '.vti':
+            reader = vtk.vtkXMLImageDataReader()
+            reader.SetFileName(tomo)
+            reader.Update()
+            tomo = vti_to_numpy(reader.GetOutput())
+        else:
+            raise pexceptions.PySegInputError(
+                expr='gen_isosurface', msg='Format %s not readable.' % fext)
+    elif not isinstance(tomo, np.ndarray):
+        raise pexceptions.PySegInputError(
+            expr='gen_isosurface',
+            msg='Input must be either a file name or a ndarray.')
+
+    # Binarize the segmentation
+    data_type = tomo.dtype
+    binary_seg = (tomo == lbl).astype(data_type)
+
+    # Generate isosurface
+    binary_seg_vti = numpy_to_vti(binary_seg)
+    surfaces = vtk.vtkMarchingCubes()
+    surfaces.SetInputData(binary_seg_vti)
+    surfaces.ComputeNormalsOn()
+    surfaces.ComputeGradientsOn()
+    surfaces.SetValue(0, threshold)
+    surfaces.Update()
+
+    # Sometimes the contouring algorithm can create a volume whose gradient
+    # vector and ordering of polygon (using the right hand rule) are
+    # inconsistent. vtkReverseSense cures this problem.
+    reverse = vtk.vtkReverseSense()
+    reverse.SetInputConnection(surfaces.GetOutputPort())
+    reverse.ReverseCellsOn()
+    reverse.ReverseNormalsOn()
+    reverse.Update()
+    surf = reverse.GetOutput()
+
+    # Apply the mask
+    if mask is not None:
+        if isinstance(mask, int):  # mask is a label inside the segmentation
+            mask = (tomo == mask).astype(data_type)
+        elif not isinstance(mask, np.ndarray):
+            raise pexceptions.PySegInputError(
+                expr='gen_isosurface',
+                msg='Input mask must be either an integer or a ndarray.')
+        dist_from_mask = scipy.ndimage.morphology.distance_transform_edt(
+                np.invert(mask == 1))
+        for i in range(surf.GetNumberOfCells()):
+            # Check if all points which made up the polygon are in the mask
+            points_cell = surf.GetCell(i).GetPoints()
+            count = 0
+            for j in range(0, points_cell.GetNumberOfPoints()):
+                x, y, z = points_cell.GetPoint(j)
+                if (dist_from_mask[
+                        int(round(x)), int(round(y)), int(round(z))] >
+                        MAX_DIST_SURF):
+                    count += 1
+            # Mark cells that are not completely in the mask for deletion
+            if count > 0:
+                surf.DeleteCell(i)
+        # Delete
+        surf.RemoveDeletedCells()
+
+    return surf
+
+
 def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
                 field=False, mode_2d=False, verbose=False):
     """
@@ -340,12 +437,10 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
     surf.SetSampleSpacing(purge_ratio)
     # surf.SetNeighborhoodSize(10)
     surf.SetInputData(cloud)
+
     contf = vtk.vtkContourFilter()
     contf.SetInputConnection(surf.GetOutputPort())
-    # if thick is None:
     contf.SetValue(0, 0)
-    # else:
-        # contf.SetValue(0, thick)
 
     # Sometimes the contouring algorithm can create a volume whose gradient
     # vector and ordering of polygon (using the right hand rule) are
