@@ -559,7 +559,8 @@ def new_workflow(
             # and applying the mask of unfilled segmentation
             print ("\nGenerating a surface...")
             surf = run_gen_surface(
-                seg, fold + base_filename, lbl=3, other_mask=2, isosurface=True)
+                seg, fold + base_filename, lbl=3, other_mask=2, isosurface=True,
+                grow=1)
 
         else:  # Surface generation with vtkSurfaceReconstructionFilter method
             # Load the segmentation numpy array from a file and get only the
@@ -598,7 +599,7 @@ def new_workflow(
         # Remove the wrong borders (surface generation artefact)
         b = 0
         if remove_wrong_borders:
-            b += 3  # 3 pixels artefact borders of signed surface generation
+            b += 2  # because of MAX_DIST_SURF parameter in surface generation
         if holes < 0:
             b += abs(holes)
         if b > 0:

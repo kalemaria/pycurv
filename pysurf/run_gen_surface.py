@@ -40,8 +40,8 @@ def close_holes(infile, cube_size, iterations, outfile):
 
 
 def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
-                    purge_ratio=1, save_input_as_vti=False, verbose=False,
-                    isosurface=False):
+                    save_input_as_vti=False, verbose=False, isosurface=False,
+                    grow=1, sg=0, thr=1.0):
     """
     Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle
     surface for objects in a segmented volume with a given label.
@@ -59,16 +59,20 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
             default 1
         mask (boolean, optional): if True (default), a mask of the binary
             objects is applied on the resulting surface to reduce artifacts
+            (in case isosurface=False)
         other_mask (numpy.ndarray, optional): if given (default None), this
             segmentation is used as mask for the surface
-        purge_ratio (int, optional): if greater than 1 (default 1), then 1 every
-            purge_ratio points of the segmentation are randomly deleted
         save_input_as_vti (boolean, optional): if True (default False), the
             input is saved as a '.vti' file ('<outfile_base>.vti')
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
         isosurface (boolean, optional): if True (default False), generate
-            isosurface (good for filled segmentations)
+            isosurface (good for filled segmentations) - last three parameters
+            are used in this case
+        grow (int, optional): if > 0 the surface is grown by so many voxels
+        sg (int, optional): sigma for gaussian smoothing (in voxels), if 0 no
+            smoothing is performed
+        thr (optional, float): thr for isosurface (default 1.0)
 
     Returns:
         the triangle surface (vtk.PolyData)
@@ -77,10 +81,9 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
 
     # Generating the surface (vtkPolyData object)
     if isosurface:
-        surface = io.gen_isosurface(tomo, lbl, threshold=1.0, mask=other_mask)
+        surface = io.gen_isosurface(tomo, lbl, grow, sg, thr, mask=other_mask)
     else:
-        surface = io.gen_surface(tomo, lbl, mask, other_mask, purge_ratio,
-                                 verbose=verbose)
+        surface = io.gen_surface(tomo, lbl, mask, other_mask, verbose=verbose)
 
     # Filter out triangles with area=0, if any are present
     surface = __filter_null_triangles(surface, verbose=verbose)
@@ -207,9 +210,11 @@ if __name__ == "__main__":
     fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/TCB/170924_TITAN_l1_t1/"
     seg_file = "{}t1_cleaned_pt_lbl.labels_FILLED.mrc".format(fold)
     tomo = io.load_tomo(seg_file)
-    outfile_base = "{}TCBl1t1_cER_filled_masked3reversed".format(fold)
 
-    run_gen_surface(tomo, outfile_base, lbl=3, other_mask=2, isosurface=True)
+    outfile_base = "{}test_gen_isosurface/" \
+                   "TCBl1t1_cER_filled_grow1_sg1_thr0.0".format(fold)
+    run_gen_surface(tomo, outfile_base, lbl=3, other_mask=2, isosurface=True,
+                    grow=1, sg=0, thr=1.0)
 
 
     # in_seg = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"

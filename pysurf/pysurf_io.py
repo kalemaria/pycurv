@@ -6,6 +6,7 @@ import os
 import vtk
 import math
 from pyto.io.image_io import ImageIO
+from scipy import ndimage
 
 import pexceptions
 
@@ -255,7 +256,7 @@ def load_poly(fname):
     return reader.GetOutput()
 
 
-def gen_isosurface(tomo, lbl, threshold=1.0, mask=None):
+def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
     """
     Generates a isosurface using the Marching Cubes method.
 
@@ -264,7 +265,10 @@ def gen_isosurface(tomo, lbl, threshold=1.0, mask=None):
             formats: '.mrc', '.em' or '.vti', or 3D array containing the
             segmentation
         lbl (int): the label to be considered (> 0)
-        threshold (optional, float): threshold for isosurface (default 1.0)
+        grow (int, optional): if > 0 the surface is grown by so many voxels
+        sg (int, optional): sigma for gaussian smoothing (in voxels), if 0 no
+            smoothing is performed
+        thr (optional, float): thr for isosurface (default 1.0)
         mask (int or numpy.ndarray, optional): if given (default None), the
             surface will be masked with it: if integer, this label is extracted
             from the input segmentation to generate the binary mask, otherwise
@@ -302,7 +306,21 @@ def gen_isosurface(tomo, lbl, threshold=1.0, mask=None):
 
     # Binarize the segmentation
     data_type = tomo.dtype
-    binary_seg = (tomo == lbl).astype(data_type)
+    binary_seg = tomo == lbl
+
+    # Growing
+    if grow > 0:
+        binary_seg = ndimage.binary_dilation(binary_seg, iterations=grow)
+        # 3x3 structuring element with connectivity 1 is used by default
+
+    # Smoothing
+    if sg > 0:
+        binary_seg = ndimage.filters.gaussian_filter(
+            binary_seg.astype(np.float), sg)
+        print("min={}".format(np.min(binary_seg)))
+        print("max={}".format(np.max(binary_seg)))
+
+    binary_seg = binary_seg.astype(data_type)
 
     # Generate isosurface
     binary_seg_vti = numpy_to_vti(binary_seg)
@@ -310,7 +328,7 @@ def gen_isosurface(tomo, lbl, threshold=1.0, mask=None):
     surfaces.SetInputData(binary_seg_vti)
     surfaces.ComputeNormalsOn()
     surfaces.ComputeGradientsOn()
-    surfaces.SetValue(0, threshold)
+    surfaces.SetValue(0, thr)
     surfaces.Update()
 
     # Sometimes the contouring algorithm can create a volume whose gradient
@@ -332,7 +350,7 @@ def gen_isosurface(tomo, lbl, threshold=1.0, mask=None):
                 expr='gen_isosurface',
                 msg='Input mask must be either an integer or a ndarray.')
         dist_from_mask = scipy.ndimage.morphology.distance_transform_edt(
-                np.invert(mask == 1))
+                mask == 0)
         for i in range(surf.GetNumberOfCells()):
             # Check if all points which made up the polygon are in the mask
             points_cell = surf.GetCell(i).GetPoints()
