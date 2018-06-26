@@ -258,15 +258,15 @@ def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
 
     u = dot(R, v)
     if debug:
-        cos_tetha = dot(v, u) / sqrt(dot(v, v)) / sqrt(dot(u, u))
+        cos_theta = dot(v, u) / sqrt(dot(v, v)) / sqrt(dot(u, u))
         try:
-            theta2 = acos(cos_tetha)
+            theta2 = acos(cos_theta)
         except ValueError:
-            if cos_tetha > 1:
-                cos_tetha = 1.0
-            elif cos_tetha < 0:
-                cos_tetha = 0.0
-            theta2 = acos(cos_tetha)
+            if cos_theta > 1:
+                cos_theta = 1.0
+            elif cos_theta < 0:
+                cos_theta = 0.0
+            theta2 = acos(cos_theta)
         try:
             assert theta - (0.05 * pi) <= theta2 <= theta + (0.05 * pi)
         except AssertionError:
@@ -298,9 +298,40 @@ class PointGraph(SurfaceGraph):
     """
     Class defining the PointGraph object, its attributes and methods.
 
-    Please use constructor parameters inherited from graphs.SegmentationGraph.
+    The constructor requires the following parameters of the underlying
+    segmentation that will be used to build the graph.
+
+    Args:
+        surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+            generated from the segmentation in voxels
+        scale_factor_to_nm (float): pixel size in nanometers for scaling the
+            surface and the graph
     """
-    # Builds the graph from a vtkPolyData surface.
+
+    def __init__(self, surface, scale_factor_to_nm):
+        """
+        Constructor.
+
+        Args:
+            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+                generated from the segmentation in voxels
+            scale_factor_to_nm (float): pixel size in nanometers for scaling the
+                surface and the graph
+
+        Returns:
+            None
+        """
+        graphs.SegmentationGraph.__init__(self, scale_factor_to_nm)
+
+        if isinstance(surface, vtk.vtkPolyData):
+            self.surface = surface
+            """vtk.vtkPolyData: a signed surface (mesh of triangles) generated
+            from the segmentation (in voxels)"""
+        else:
+            raise pexceptions.PySegInputError(
+                expr='SegmentationGraph constructor',
+                msg="A vtkPolyData object required as the first input.")
+
     def build_graph_from_vtk_surface(self, verbose=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
@@ -402,32 +433,33 @@ class TriangleGraph(SurfaceGraph):
     Args:
         surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
             generated from the segmentation in voxels
-        scale_factor_to_nm (float): pixel size in nanometers for scaling the
-            surface and the graph
-        scale_x (int): x axis length in pixels of the segmentation
-        scale_y (int): y axis length in pixels of the segmentation
-        scale_z (int): z axis length in pixels of the segmentation
+        scale_factor_to_nm (float, optional): pixel size in nanometers for
+            scaling the surface and the graph (default 1)
     """
 
-    def __init__(self, surface, scale_factor_to_nm=1, scale_x=1, scale_y=1,
-                 scale_z=1):
+    def __init__(self, surface, scale_factor_to_nm=1):
         """
         Constructor.
 
         Args:
             surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
                 generated from the segmentation in voxels
-            scale_factor_to_nm (float): pixel size in nanometers for scaling the
-                surface and the graph
-            scale_x (int): x axis length in pixels of the segmentation
-            scale_y (int): y axis length in pixels of the segmentation
-            scale_z (int): z axis length in pixels of the segmentation
+            scale_factor_to_nm (float, optional): pixel size in nanometers for
+                scaling the surface and the graph (default 1)
 
         Returns:
             None
         """
-        graphs.SegmentationGraph.__init__(self, surface, scale_factor_to_nm,
-                                          scale_x, scale_y, scale_z)
+        graphs.SegmentationGraph.__init__(self, scale_factor_to_nm)
+
+        if isinstance(surface, vtk.vtkPolyData):
+            self.surface = surface
+            """vtk.vtkPolyData: a signed surface (mesh of triangles) generated
+            from the segmentation (in voxels)"""
+        else:
+            raise pexceptions.PySegInputError(
+                expr='SegmentationGraph constructor',
+                msg="A vtkPolyData object required as the first input.")
 
         # Add more "internal property maps" to the graph.
         # vertex property for storing the area in nanometers squared of the
@@ -459,8 +491,6 @@ class TriangleGraph(SurfaceGraph):
         """dict: a dictionary mapping a point coordinates (x, y, z) in
         nanometers to a list of triangle-cell indices sharing this point.
         """
-
-        # self.cell_id_to_vertex_id = {}
 
     def build_graph_from_vtk_surface(
             self, verbose=False, reverse_normals=False):
@@ -1236,9 +1266,10 @@ class TriangleGraph(SurfaceGraph):
 
         More precisely, a normal vote N_i of each triangle i (whose centroid c_i
         is lying within the geodesic neighborhood of vertex v) is calculated
-        using the normal N assigned to the triangle i. Then, covariance matrix
-        V_i is calculated from N_i and a weight depending on the area of
-        triangle i and the geodesic distance of its centroid c_i from v.
+        using the normal N assigned to the triangle i. Then, each vote is
+        represented by a covariance matrix V_i and votes are collected as a
+        weighted matrix sum V_v, where each vote is weighted depending on the
+        area of triangle i and the geodesic distance of its centroid c_i from v.
 
         Here, c_i and v are both centroids of triangles (v is a triangle vertex
         in Page's approach), which are vertices of TriangleGraph generated from
@@ -1261,7 +1292,7 @@ class TriangleGraph(SurfaceGraph):
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
-        Returns:
+        Returns:mou
             - a dictionary of neighbors of vertex v, mapping index of each
               vertex c_i to its geodesic distance from the vertex v
             - the 3x3 symmetric matrix V_v (numpy.ndarray)
@@ -1315,10 +1346,10 @@ class TriangleGraph(SurfaceGraph):
             vc_i_len = sqrt(dot(vc_i, vc_i))
             vc_i_norm = vc_i / vc_i_len
 
-            # tetha_i is the angle between the vectors N and vc_i
-            cos_tetha_i = - (dot(N, vc_i)) / vc_i_len
+            # theta_i is the angle between the vectors N and vc_i
+            cos_theta_i = - (dot(N, vc_i)) / vc_i_len
 
-            N_i = N + 2 * cos_tetha_i * vc_i_norm
+            N_i = N + 2 * cos_theta_i * vc_i_norm
 
             # Covariance matrix containing one vote of c_i on v:
             V_i = outer(N_i, N_i)
@@ -1335,7 +1366,7 @@ class TriangleGraph(SurfaceGraph):
                 print "N = %s" % N
                 print "vc_i = %s" % vc_i
                 print "||vc_i|| = %s" % vc_i_len
-                print "cos(tetha_i) = %s" % cos_tetha_i
+                print "cos(theta_i) = %s" % cos_theta_i
                 print "N_i = %s" % N_i
                 print "V_i = %s" % V_i
                 print "A_i = %s" % A_i
@@ -1480,8 +1511,8 @@ class TriangleGraph(SurfaceGraph):
             (using the estimated normal N_v at v).
 
         3. Normal curvature kappa_i from Tong and Tang et al. defined as:
-            kappa_i = abs(2 * cos((pi - tetha) / 2) / vector_length(vv_i)),
-            where tetha is the turning angle between N_v and the projection n_i
+            kappa_i = abs(2 * cos((pi - theta) / 2) / vector_length(vv_i)),
+            where theta is the turning angle between N_v and the projection n_i
             of the estimated normal of v_i (N_v_i) onto the arc plane (formed by
             v, N_v and v_i); sign of kappa_i is opposite to the one of
             dot(T_i, n_i)
@@ -1501,7 +1532,7 @@ class TriangleGraph(SurfaceGraph):
                 information will be printed out
             page_curvature_formula (boolean, optional): if True (default False)
                 normal curvature definition from Page et al. is used:
-                the turning angle tetha between N_v and the projection n_i of
+                the turning angle theta between N_v and the projection n_i of
                 the estimated normal of v_i (N_v_i) onto the arc plane (formed
                 by v, N_v and v_i) divided by the arc length (geodesic distance
                 between v and v_i).
@@ -1606,16 +1637,16 @@ class TriangleGraph(SurfaceGraph):
             # and v_i
             n_i = N_v_i - dot(P_i, N_v_i) * P_i
             n_i_len = sqrt(dot(n_i, n_i))
-            # tetha is the turning angle between n_i and N_v
-            cos_tetha = dot(N_v, n_i) / n_i_len
+            # theta is the turning angle between n_i and N_v
+            cos_theta = dot(N_v, n_i) / n_i_len
             try:
-                tetha = acos(cos_tetha)
+                theta = acos(cos_theta)
             except ValueError:
-                if cos_tetha > 1:
-                    cos_tetha = 1.0
-                elif cos_tetha < 0:
-                    cos_tetha = 0.0
-                tetha = acos(cos_tetha)
+                if cos_theta > 1:
+                    cos_theta = 1.0
+                elif cos_theta < 0:
+                    cos_theta = 0.0
+                theta = acos(cos_theta)
             # curvature sign has to be like this according to Page's paper:
             # kappa_i_sign = signum(dot(T_i, n_i))
             # but negated according to Tang & Medioni's definition (suitable
@@ -1623,15 +1654,15 @@ class TriangleGraph(SurfaceGraph):
             kappa_i_sign = -1 * signum(dot(T_i, n_i))
             if page_curvature_formula:  # formula from Page et al. paper:
                 s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
-                kappa_i = tetha / s  # old version
+                kappa_i = theta / s  # old version
                 # decomposition does not work if multiply kappa_i with its sign
                 # new ideas:
                 # if kappa_i_sign < 0:
-                #     # tetha = 2 * pi - tetha
-                #     tetha = tetha + pi
-                # kappa_i = kappa_i_sign * tetha / s
+                #     # theta = 2 * pi - theta
+                #     theta = theta + pi
+                # kappa_i = kappa_i_sign * theta / s
             else:  # formula from Tong and Tang paper:
-                kappa_i = abs(2 * cos((pi - tetha) / 2) / sqrt(dot(vv_i, vv_i)))
+                kappa_i = abs(2 * cos((pi - theta) / 2) / sqrt(dot(vv_i, vv_i)))
                 kappa_i *= kappa_i_sign
 
             # Recover the corresponding weight, which was calculated and
@@ -1648,7 +1679,7 @@ class TriangleGraph(SurfaceGraph):
                 print "N_v_i = %s" % N_v_i
                 print "n_i = %s" % n_i
                 print "||n_i|| = %s" % n_i_len
-                print "tetha = %s" % tetha
+                print "theta = %s" % theta
                 print "kappa_i = %s" % kappa_i
                 print "w_i = %s" % w_i
 

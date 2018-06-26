@@ -737,7 +737,6 @@ def normals_directions_and_curvature_estimation(
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
                 tg.surface, tg.scale_factor_to_nm,
-                tg.scale_x, tg.scale_y, tg.scale_z,
                 radius_hit, all_neighbor_idx_to_dist, exclude_borders,
                 graph_file, method, page_curvature_formula, num_points, area2)
             results[method] = (tg_curv, surface_curv)
@@ -897,7 +896,7 @@ def preparation_for_curvature_estimation(
 
     Returns:
         resulting triangle graph instance attributes: surface (scaled to nm),
-        scale_factor_to_nm, scale_x, scale_y, scale_z
+        scale_factor_to_nm
     """
     # * Adding vertex properties to be filled by all curvature methods *
     # vertex properties for storing the estimated principal directions of the
@@ -947,11 +946,11 @@ def preparation_for_curvature_estimation(
     # print '\nSaving the graph took: %s min %s s' % divmod(duration0, 60)
     # print tg.graph
 
-    return tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z
+    return tg.surface, tg.scale_factor_to_nm
 
 
 def curvature_estimation(
-        scaled_surface, scale_factor_to_nm, scale_x, scale_y, scale_z,
+        scaled_surface, scale_factor_to_nm,
         radius_hit, all_neighbor_idx_to_dist=None, exclude_borders=0,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
         num_points=None, area2=True):
@@ -965,9 +964,6 @@ def curvature_estimation(
         scaled_surface (vtkPolyData): scaled surface
         scale_factor_to_nm (float): scale factor to nanometers of the surface
             with respect to the underlying segmentation
-        scale_x (int): x scale of the underlying segmentation
-        scale_y (int): y scale of the underlying segmentation
-        scale_z (int): z scale of the underlying segmentation
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
@@ -996,9 +992,7 @@ def curvature_estimation(
         curvatures and directions
     """
     # t_begin0 = time.time()
-    tg_curv = TriangleGraph(
-        surface=scaled_surface, scale_factor_to_nm=scale_factor_to_nm,
-        scale_x=scale_x, scale_y=scale_y, scale_z=scale_z)
+    tg_curv = TriangleGraph(scaled_surface, scale_factor_to_nm)
     tg_curv.graph = load_graph(graph_file)
     # t_end0 = time.time()
     # duration0 = t_end0 - t_begin0

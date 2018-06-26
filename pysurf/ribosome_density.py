@@ -295,15 +295,7 @@ class VoxelGraph(graphs.SegmentationGraph):
     """
     Class defining the VoxelGraph object and its methods.
 
-    The constructor requires the following parameters of the underlying
-    segmentation that will be used to build the graph.
-
-    Args:
-        scale_factor_to_nm (float): pixel size in nanometers for scaling the
-            graph
-        scale_x (int): x axis length in pixels of the segmentation
-        scale_y (int): y axis length in pixels of the segmentation
-        scale_z (int): z axis length in pixels of the segmentation
+    Please use constructor parameters inherited from graphs.SegmentationGraph.
     """
 
     def build_graph_from_np_ndarray(self, mask, verbose=False):
@@ -324,12 +316,6 @@ class VoxelGraph(graphs.SegmentationGraph):
             None
         """
         if isinstance(mask, np.ndarray) and (len(mask.shape) == 3):
-            if mask.shape != (self.scale_x, self.scale_y, self.scale_z):
-                raise pexceptions.PySegInputError(
-                    expr='build_graph_from_np_ndarray (VoxelGraph)',
-                    msg=('Scales of the input mask have to be equal to '
-                         'those set during the generation of the VoxelGraph'
-                         'object.'))
             # Find the set of the membrane voxels, which become the vertices of
             # the graph:
             membrane_voxels = get_foreground_voxels_from_mask(mask)

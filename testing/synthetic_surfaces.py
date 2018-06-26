@@ -75,8 +75,7 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
         noisy surface (vtk.vtkPolyData)
     """
     # Find the average triangle edge length (l_ave)
-    pg = surface_graphs.PointGraph(surface, scale_factor_to_nm=1,
-                                   scale_x=1, scale_y=1, scale_z=1)
+    pg = surface_graphs.PointGraph(surface, scale_factor_to_nm=1)
     pg.build_graph_from_vtk_surface()
     l_ave = pg.calculate_average_edge_length(verbose=verbose)
 

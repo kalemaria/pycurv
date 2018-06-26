@@ -41,8 +41,7 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1,
     now = datetime.now()
     print ('\nStarting building the membrane graph on: %s-%s-%s %s:%s:%s'
            % (now.year, now.month, now.day, now.hour, now.minute, now.second))
-    vg = VoxelGraph(pixel_size_nm,
-                    mem_mask.shape[0], mem_mask.shape[1], mem_mask.shape[2])
+    vg = VoxelGraph(pixel_size_nm)
     vg.build_graph_from_np_ndarray(mem_mask, verbose)
     now = datetime.now()
     print ('\nFinished building the graph on: %s-%s-%s %s:%s:%s'
@@ -87,8 +86,7 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
 
     # Read in the graph from the file:
     print '\nReading in the graph from the file %s' % mem_graph_file
-    vg = VoxelGraph(pixel_size_nm,
-                    ribo_mask.shape[0], ribo_mask.shape[1], ribo_mask.shape[2])
+    vg = VoxelGraph(pixel_size_nm)
     vg.graph = load_graph(mem_graph_file)
     print vg.graph
     vg.graph.list_properties()
@@ -106,7 +104,9 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
            'ribosome center and ribosome density for each membrane voxel on: '
            '%s-%s-%s %s:%s:%s'
            % (now.year, now.month, now.day, now.hour, now.minute, now.second))
-    densities = vg.calculate_density(mask=ribo_mask, verbose=verbose)
+    densities = vg.calculate_density(
+        ribo_mask.shape[0], ribo_mask.shape[1], ribo_mask.shape[2],
+        mask=ribo_mask, verbose=verbose)
     now = datetime.now()
     print ('\nFinished calculating the shortest distances and density on: '
            '%s-%s-%s %s:%s:%s'
@@ -163,8 +163,7 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
     now = datetime.now()
     print ('\nStarting building the VoxelGraph on: %s-%s-%s %s:%s:%s'
            % (now.year, now.month, now.day, now.hour, now.minute, now.second))
-    vg = VoxelGraph(pixel_size_nm,
-                    mem_mask.shape[0], mem_mask.shape[1], mem_mask.shape[2])
+    vg = VoxelGraph(pixel_size_nm)
     vg.build_graph_from_np_ndarray(mem_mask, verbose)
     now = datetime.now()
     print ('\nFinished building the graph on: %s-%s-%s %s:%s:%s'
@@ -180,7 +179,9 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
            'ribosome center and ribosome density for each membrane voxel on: '
            '%s-%s-%s %s:%s:%s'
            % (now.year, now.month, now.day, now.hour, now.minute, now.second))
-    densities = vg.calculate_density(mask=ribo_mask, verbose=verbose)
+    densities = vg.calculate_density(
+        mem_mask.shape[0], mem_mask.shape[1], mem_mask.shape[2],
+        mask=ribo_mask, verbose=verbose)
     now = datetime.now()
     print ('\nFinished calculating the shortest distances and density on: '
            '%s-%s-%s %s:%s:%s'

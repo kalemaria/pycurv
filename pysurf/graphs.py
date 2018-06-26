@@ -27,27 +27,17 @@ class SegmentationGraph(object):
     segmentation that will be used to build the graph.
 
     Args:
-        surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
-            generated from the segmentation (in voxels)
         scale_factor_to_nm (float): pixel size in nanometers for scaling the
             surface and the graph
-        scale_x (int): x axis length in pixels of the segmentation
-        scale_y (int): y axis length in pixels of the segmentation
-        scale_z (int): z axis length in pixels of the segmentation
     """
 
-    def __init__(self, surface, scale_factor_to_nm, scale_x, scale_y, scale_z):
+    def __init__(self, scale_factor_to_nm):
         """
         Constructor.
 
         Args:
-            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
-                generated from the segmentation in voxels
             scale_factor_to_nm (float): pixel size in nanometers for scaling the
                 surface and the graph
-            scale_x (int): x axis length in pixels of the segmentation
-            scale_y (int): y axis length in pixels of the segmentation
-            scale_z (int): z axis length in pixels of the segmentation
 
         Returns:
             None
@@ -56,23 +46,9 @@ class SegmentationGraph(object):
         """graph_tool.Graph: a graph object storing the segmentation graph
         topology, geometry and properties (initially empty).
         """
-        if isinstance(surface, vtk.vtkPolyData):
-            self.surface = surface
-            """vtk.vtkPolyData: a signed surface (mesh of triangles) generated
-            from the segmentation (in voxels)"""
-        else:
-            raise pexceptions.PySegInputError(
-                expr='SegmentationGraph constructor',
-                msg="A vtkPolyData object required as the first input.")
         self.scale_factor_to_nm = scale_factor_to_nm
         """float: pixel size in nanometers for scaling the surface and the graph
         """
-        self.scale_x = scale_x
-        """int: x axis length in pixels of the segmentation"""
-        self.scale_y = scale_y
-        """int: y axis length in pixels of the segmentation"""
-        self.scale_z = scale_z
-        """int: z axis length in pixels of the segmentation"""
 
         # Add "internal property maps" to the graph.
         # vertex property for storing the xyz coordinates in nanometers of the
@@ -136,8 +112,8 @@ class SegmentationGraph(object):
             self.coordinates_to_vertex_index[
                 (x, y, z)] = self.graph.vertex_index[vd]
 
-    def calculate_density(self, mask=None, target_coordinates=None,
-                          verbose=False):
+    def calculate_density(self, scale_x, scale_y, scale_z, mask=None,
+                          target_coordinates=None, verbose=False):
         """
         Calculates ribosome density for each membrane graph vertex.
 
@@ -152,6 +128,9 @@ class SegmentationGraph(object):
         background.
 
         Args:
+            scale_x (int): scale X in voxels of the original segmentation
+            scale_y (int): scale Y in voxels of the original segmentation
+            scale_z (int): scale Z in voxels of the original segmentation
             mask (numpy.ndarray, optional): a binary mask of the ribosome
                 centers as 3D array where indices are coordinates in pixels
                 (default None)
@@ -173,7 +152,7 @@ class SegmentationGraph(object):
         # on the membrane, 'target_voxels', and rescale them to nm,
         # 'target_coordinates':
         if mask is not None:
-            if mask.shape != (self.scale_x, self.scale_y, self.scale_z):
+            if mask.shape != (scale_x, scale_y, scale_z):
                 raise pexceptions.PySegInputError(
                     expr='calculate_density (SegmentationGraph)',
                     msg=("Scales of the input 'mask' have to be equal to those "
@@ -301,8 +280,7 @@ class SegmentationGraph(object):
         # hold in each membrane voxel the maximal density among the
         # corresponding vertex coordinates in the graph plus 1 and 0 in each
         # background (non-membrane) voxel:
-        densities = np.zeros((self.scale_x, self.scale_y, self.scale_z),
-                             dtype=np.float16)
+        densities = np.zeros((scale_x, scale_y, scale_z), dtype=np.float16)
         # The densities array membrane voxels are initialized with 1 in order to
         # distinguish membrane voxels from the background.
         for voxel in voxel_to_densities:

@@ -211,9 +211,6 @@ class VectorVotingTestCase(unittest.TestCase):
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
-        scale_x = 2 * half_size
-        scale_y = scale_x
-        scale_z = scale_y
         files_fold = '{}files4plotting/'.format(fold)
         if not os.path.exists(files_fold):
             os.makedirs(files_fold)
@@ -244,7 +241,7 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm)
         tg.build_graph_from_vtk_surface(verbose=False, reverse_normals=False)
         print tg.graph
 
@@ -378,9 +375,6 @@ class VectorVotingTestCase(unittest.TestCase):
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
-        scale_x = 2 * r
-        scale_y = scale_x
-        scale_z = h
         files_fold = '{}files4plotting/'.format(fold)
         if not os.path.exists(files_fold):
             os.makedirs(files_fold)
@@ -420,7 +414,7 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm)
         # VTK has opposite surface normals convention than we use
         # a graph with normals pointing outwards is generated (normal case
         # for this method; negative curvatures)
@@ -446,14 +440,14 @@ class VectorVotingTestCase(unittest.TestCase):
             num_points=num_points, full_dist_map=full_dist_map, area2=area2)
         # tg, all_neighbor_idx_to_dist = normals_estimation(
         #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
-        # tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
+        # tg.surface, tg.scale_factor_to_nm =\
         #     preparation_for_curvature_estimation(tg, exclude_borders=eb,
         #                                          graph_file="temp.gt")
         # method_tg_surf_dict = {}
         # for method in methods:
         #     tg_curv, surface_curv = curvature_estimation(
-        #         tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
-        #         tg.scale_z, radius_hit, all_neighbor_idx_to_dist,
+        #         tg.surface, tg.scale_factor_to_nm,
+        #         radius_hit, all_neighbor_idx_to_dist,
         #         exclude_borders=eb, graph_file='temp.gt', method=method,
         #         page_curvature_formula=page_curvature_formula,
         #         num_points=num_points)
@@ -675,9 +669,6 @@ class VectorVotingTestCase(unittest.TestCase):
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
-        scale_x = 2 * radius
-        scale_y = 2 * radius
-        scale_z = 2 * radius
         files_fold = '{}files4plotting/'.format(fold)
         if not os.path.exists(files_fold):
             os.makedirs(files_fold)
@@ -734,7 +725,7 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm)
         # VTK has opposite surface normals convention than we use
         # a graph with normals pointing outwards is generated (normal case
         # for VTK; negative curvatures)
@@ -902,9 +893,6 @@ class VectorVotingTestCase(unittest.TestCase):
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
-        scale_x = 2 * (rr + csr)
-        scale_y = scale_x
-        scale_z = 2 * csr
         files_fold = '{}files4plotting/'.format(fold)
         if not os.path.exists(files_fold):
             os.makedirs(files_fold)
@@ -927,7 +915,7 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm)
         # VTK has opposite surface normals convention than we use,
         # a graph with normals pointing inwards is generated (VTK normals have
         # to be flipped)
@@ -975,14 +963,14 @@ class VectorVotingTestCase(unittest.TestCase):
             num_points=num_points, full_dist_map=full_dist_map, area2=area2)
         # tg, all_neighbor_idx_to_dist = normals_estimation(
         #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
-        # tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y, tg.scale_z =\
+        # tg.surface, tg.scale_factor_to_nm =\
         #     preparation_for_curvature_estimation(tg, exclude_borders=0,
         #                                          graph_file="temp.gt")
         # method_tg_surf_dict = {}
         # for method in methods:
         #     tg_curv, surface_curv = curvature_estimation(
-        #         tg.surface, tg.scale_factor_to_nm, tg.scale_x, tg.scale_y,
-        #         tg.scale_z, radius_hit, all_neighbor_idx_to_dist,
+        #         tg.surface, tg.scale_factor_to_nm,
+        #         radius_hit, all_neighbor_idx_to_dist,
         #         exclude_borders=0, graph_file='temp.gt', method=method,
         #         page_curvature_formula=page_curvature_formula,
         #         num_points=num_points)
@@ -1177,9 +1165,6 @@ class VectorVotingTestCase(unittest.TestCase):
         # Actually can just give in any number for the scales, because they are
         # only used for ribosome density calculation or volumes / .mrc files
         # creation.
-        scale_x = 2 * r
-        scale_y = scale_x
-        scale_z = h
         files_fold = '{}files4plotting/'.format(fold)
         if not os.path.exists(files_fold):
             os.makedirs(files_fold)
@@ -1208,7 +1193,7 @@ class VectorVotingTestCase(unittest.TestCase):
         surf = io.load_poly(surf_file)
         print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
                'curvatures...')
-        tg = TriangleGraph(surf, scale_factor_to_nm, scale_x, scale_y, scale_z)
+        tg = TriangleGraph(surf, scale_factor_to_nm)
         # VTK has opposite surface normals convention than we use
         # a graph with normals pointing inwards is generated (positive
         # curvatures)
@@ -1266,9 +1251,9 @@ class VectorVotingTestCase(unittest.TestCase):
     #     resolution and noise level.
     #     """
     #     for n in [10]:
-    #         for rh in [4, 8]:
+    #         for rh in [8]:  # 4
     #             self.parametric_test_plane_normals(
-    #                 10, rh, res=10, noise=n)
+    #                 10, rh, res=10, noise=n)l
 
     # def test_cylinder_directions_curvatures(self):
     #     """
@@ -1278,11 +1263,10 @@ class VectorVotingTestCase(unittest.TestCase):
     #     the Z axis), certain radius and noise level.
     #     """
     #     # p = 50
-    #     for n in [0]:
-    #         for rh in [6, 7, 8, 9]:
-    #             self.parametric_test_cylinder_directions_curvatures(
-    #                 10, rh, eb=5, noise=n, methods=['VV'],  # 'VCTV', 'VVCF',
-    #                 page_curvature_formula=False, area2=True)  # num_points=p
+    #     for rh in [8]:  # 6, 7, 8, 9
+    #         self.parametric_test_cylinder_directions_curvatures(
+    #             10, rh, eb=5, noise=0, methods=['VV'],  # 'VCTV', 'VVCF',
+    #             page_curvature_formula=False, area2=True)  # num_points=p
 
     # def test_inverse_cylinder_directions_curvatures(self):
     #     """
@@ -1291,11 +1275,12 @@ class VectorVotingTestCase(unittest.TestCase):
     #     circular planes) with known orientation (height, i.e. T_1, parallel to
     #     the Z axis), certain radius and noise level.
     #     """
-    #     p = 50
+    #     # p = 50
     #     for rh in [8]:
     #         self.parametric_test_cylinder_directions_curvatures(
-    #             10, rh, noise=0, inverse=True, methods=['VV', 'VCTV', 'VVCF'],
-    #             page_curvature_formula=False, num_points=p)
+    #             10, rh, eb=5, noise=0, methods=['VV'],  # 'VCTV', 'VVCF'
+    #             page_curvature_formula=False, area2=True, inverse=True)
+    #             # num_points=p
 
     # def test_sphere_curvatures(self):
     #     """
@@ -1305,18 +1290,17 @@ class VectorVotingTestCase(unittest.TestCase):
     #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
     #     """
     #     # Icosahedron sphere with 1280 faces:
-    #     # for n in [0]:
-    #     #     for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-    #     #         for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-    #     #             self.parametric_test_sphere_curvatures(
-    #     #                 10, rh, ico=1280, noise=n, methods=['VVCF'],
-    #     #                 page_curvature_formula=False, num_points=p)
+    #     # for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+    #     #     for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
     #     #         self.parametric_test_sphere_curvatures(
-    #     #             10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
-    #     #             page_curvature_formula=False)
+    #     #             10, rh, ico=1280, noise=n, methods=['VVCF'],
+    #     #             page_curvature_formula=False, num_points=p)
+    #     #     self.parametric_test_sphere_curvatures(
+    #     #         10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
+    #     #         page_curvature_formula=False)
     #     # Binary sphere with different radii:
-    #     for r in [30]:  # 10; 20; 30
-    #         for rh in [28]:  # 5, 6, 7, 8, 9, 10; 18; 28
+    #     for r in [10]:  # 10; 20; 30
+    #         for rh in [8]:  # 5, 6, 7, 8, 9, 10; 18; 28
     #             self.parametric_test_sphere_curvatures(
     #                 r, rh, binary=True, methods=['VV'],  # , 'VCTV'
     #                 full_dist_map=False, area2=True)
@@ -1327,41 +1311,42 @@ class VectorVotingTestCase(unittest.TestCase):
     #     #             r, rh, methods=['VV'], full_dist_map=True, area2=True,
     #     #             page_curvature_formula=True)
 
-    # def test_inverse_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated for an inverse sphere
-    #     with a certain radius and noise level:
-    #
-    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-    #     """
-    #     # p = 50
-    #     for rh in [9]:
-    #         self.parametric_test_sphere_curvatures(
-    #             10, rh, ico=0, noise=0, inverse=True,
-    #             methods=['VV'],  # 'VCTV', 'VVCF'
-    #             page_curvature_formula=True, area2=True)  # num_points=p
+    def test_inverse_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated for an inverse sphere
+        with a certain radius and noise level:
 
-    # def test_torus_curvatures(self):
-    #     """
-    #     Runs parametric_test_torus_directions_curvatures with certain
-    #     parameters.
-    #     """
-    #     # p = 50
-    #     for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
-    #         self.parametric_test_torus_directions_curvatures(
-    #             25, 10, rh, methods=['VV'],  # 'VCTV', 'VVCF'
-    #             page_curvature_formula=True, full_dist_map=True,
-    #             area2=False)  # num_points=p,
-
-    def test_cone(self):
+        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+        """
+        # Gaussian sphere
         # p = 50
-        n = 0  # 10
-        res = 38  # 0
-        for rh in [1, 2, 3, 4, 5, 6]:
-            self.parametric_test_cone(
-                6, 6, radius_hit=rh, res=res, noise=n,  # num_points=p,
-                methods=['VV', 'VCTV'],  # 'VVCF'
-                page_curvature_formula=False, area2=True)
+        for rh in [8]:  # 9
+            self.parametric_test_sphere_curvatures(
+                10, rh, ico=0, noise=0, inverse=True,
+                methods=['VV'],  # 'VCTV', 'VVCF'
+                page_curvature_formula=False, area2=True)  # num_points=p
+
+    def test_torus_curvatures(self):
+        """
+        Runs parametric_test_torus_directions_curvatures with certain
+        parameters.
+        """
+        # p = 50
+        for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
+            self.parametric_test_torus_directions_curvatures(
+                25, 10, rh, methods=['VV'],  # 'VCTV', 'VVCF'
+                page_curvature_formula=False, full_dist_map=True,
+                area2=True)  # num_points=p,
+
+    # def test_cone(self):
+    #     # p = 50
+    #     n = 0  # 10
+    #     res = 38  # 0
+    #     for rh in [1, 2, 3, 4, 5, 6]:
+    #         self.parametric_test_cone(
+    #             6, 6, radius_hit=rh, res=res, noise=n,  # num_points=p,
+    #             methods=['VV', 'VCTV'],  # 'VVCF'
+    #             page_curvature_formula=False, area2=True)
 
 
 if __name__ == '__main__':
