@@ -539,8 +539,7 @@ def new_workflow(
             text = "The segmentation file {} not given or not found".format(
                     fold + seg_file)
             raise pexceptions.PySegInputError(
-                expr="new_workflow",
-                msg=eval(text))
+                expr="new_workflow", msg=eval(text))
 
         seg = io.load_tomo(fold + seg_file)
         assert(isinstance(seg, np.ndarray))
@@ -549,10 +548,21 @@ def new_workflow(
         if label == 2 and np.max(seg) == 3:  # if cER and filled cER seg. exists
             # Surface generation with filled segmentation using vtkMarchingCubes
             # and applying the mask of unfilled segmentation
+            print ("\nMaking filled and unfilled binary segmentations...")
+            # have to combine the outer and inner seg. for the filled one:
+            filled_binary_seg = np.logical_or(seg == 2, seg == 3).astype(
+                data_type)
+            binary_seg = (seg == 2).astype(data_type)
             print ("\nGenerating a surface...")
             surf = run_gen_surface(
-                seg, fold + base_filename, lbl=3, other_mask=2, isosurface=True,
-                grow=1)
+                filled_binary_seg, fold + base_filename, lbl=1,
+                other_mask=binary_seg, isosurface=True)
+            # Write the resulting binary segmentations into a file:
+            filled_binary_seg_file = "{}{}.filled_binary_seg.mrc".format(
+                fold, base_filename)
+            io.save_numpy(filled_binary_seg, filled_binary_seg_file)
+            binary_seg_file = "{}{}.binary_seg.mrc".format(fold, base_filename)
+            io.save_numpy(binary_seg, binary_seg_file)
 
         else:  # Surface generation with vtkSurfaceReconstructionFilter method
             # Load the segmentation numpy array from a file and get only the
@@ -828,7 +838,7 @@ def main(membrane, rh):
     # base_filename = "TCBl2t2_{}".format(membrane)
     # Another tcb with surface generation problems:
     fold = "{}TCB/170924_TITAN_l1_t1/".format(base_fold)
-    seg_file = "t1_cleaned_pt_lbl.labels.mrc"
+    seg_file = "t1_cleaned_pt_lbl.labels_FILLED.mrc"
     base_filename = "TCBl1t1_{}".format(membrane)
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
@@ -989,9 +999,10 @@ def main3():
         divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
 if __name__ == "__main__":
-    membrane = sys.argv[1]
-    rh = int(sys.argv[2])
-    main(membrane, rh)
+    main("cER", 10)
+    # membrane = sys.argv[1]
+    # rh = int(sys.argv[2])
+    # main(membrane, rh)
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
     # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh6.stats'.format(
     #     fold, membrane)

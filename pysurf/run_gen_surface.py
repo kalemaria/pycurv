@@ -41,7 +41,7 @@ def close_holes(infile, cube_size, iterations, outfile):
 
 def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
                     save_input_as_vti=False, verbose=False, isosurface=False,
-                    grow=1, sg=0, thr=1.0):
+                    grow=0, sg=0, thr=1.0):
     """
     Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle
     surface for objects in a segmented volume with a given label.
@@ -70,8 +70,9 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
             isosurface (good for filled segmentations) - last three parameters
             are used in this case
         grow (int, optional): if > 0 the surface is grown by so many voxels
-        sg (int, optional): sigma for gaussian smoothing (in voxels), if 0 no
-            smoothing is performed
+            (default 0 - no growing)
+        sg (int, optional): sigma for gaussian smoothing in voxels (default 0 -
+            no smoothing)
         thr (optional, float): thr for isosurface (default 1.0)
 
     Returns:

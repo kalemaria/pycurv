@@ -266,8 +266,9 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
             segmentation
         lbl (int): the label to be considered (> 0)
         grow (int, optional): if > 0 the surface is grown by so many voxels
-        sg (int, optional): sigma for gaussian smoothing (in voxels), if 0 no
-            smoothing is performed
+            (default 0 - no growing)
+        sg (int, optional): sigma for gaussian smoothing in voxels (default 0 -
+            no smoothing)
         thr (optional, float): thr for isosurface (default 1.0)
         mask (int or numpy.ndarray, optional): if given (default None), the
             surface will be masked with it: if integer, this label is extracted
