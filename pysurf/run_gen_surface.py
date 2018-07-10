@@ -208,14 +208,24 @@ def tomo_smooth_surf(seg, sg, th):
 
 
 if __name__ == "__main__":
-    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/TCB/170924_TITAN_l1_t1/"
-    seg_file = "{}t1_cleaned_pt_lbl.labels_FILLED.mrc".format(fold)
-    tomo = io.load_tomo(seg_file)
-
+    fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/SCS/171108_TITAN_l2_t4/"
+    seg_file = "{}t4_ny01_lbl.labels_FILLED.mrc".format(fold)
+    seg = io.load_tomo(seg_file)
+    data_type = seg.dtype
+    sg = 1
+    thr = 0.6
     outfile_base = "{}test_gen_isosurface/" \
-                   "TCBl1t1_cER_filled_grow1_sg1_thr0.0".format(fold)
-    run_gen_surface(tomo, outfile_base, lbl=3, other_mask=2, isosurface=True,
-                    grow=1, sg=0, thr=1.0)
+                   "SCSl2t4_cER_sg{}_thr{}".format(fold, sg, thr)
+    # Surface generation with filled segmentation using vtkMarchingCubes
+    # and applying the mask of unfilled segmentation
+    print ("\nMaking filled and unfilled binary segmentations...")
+    # have to combine the outer and inner seg. for the filled one:
+    filled_binary_seg = np.logical_or(seg == 2, seg == 3).astype(data_type)
+    binary_seg = (seg == 2).astype(data_type)
+    print ("\nGenerating a surface...")
+    surf = run_gen_surface(
+        filled_binary_seg, outfile_base, lbl=1, other_mask=binary_seg,
+        isosurface=True, sg=sg, thr=thr)
 
 
     # in_seg = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"

@@ -314,14 +314,16 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
         binary_seg = ndimage.binary_dilation(binary_seg, iterations=grow)
         # 3x3 structuring element with connectivity 1 is used by default
 
+    binary_seg = binary_seg.astype(data_type)
+
     # Smoothing
     if sg > 0:
         binary_seg = ndimage.filters.gaussian_filter(
             binary_seg.astype(np.float), sg)
         print("min={}".format(np.min(binary_seg)))
         print("max={}".format(np.max(binary_seg)))
-
-    binary_seg = binary_seg.astype(data_type)
+        # save_numpy(binary_seg, "/fs/pool/pool-ruben/Maria/curvature/Javier/SCS/171108_TITAN_l2_t4/test_gen_isosurface/SCSl2t4_cER_sg{}.mrc".format(sg))
+        # exit(0)  # find the threshold first!
 
     # Generate isosurface
     binary_seg_vti = numpy_to_vti(binary_seg)
