@@ -516,6 +516,7 @@ class TriangleGraph(SurfaceGraph):
 
         t_begin = time.time()
 
+        # 1. Preparation
         if self.scale_factor_to_nm != 1:
             # rescale the surface to nm and update the attribute
             self.surface = rescale_surface(
@@ -534,7 +535,7 @@ class TriangleGraph(SurfaceGraph):
             self.surface, "Maximum", invert)
 
         if verbose:
-            # 0. Check numbers of cells and all points.
+            # Check numbers of cells and all points.
             print '%s cells' % self.surface.GetNumberOfCells()
             print '%s points' % self.surface.GetNumberOfPoints()
 
@@ -555,23 +556,19 @@ class TriangleGraph(SurfaceGraph):
                 mean_curvatures = point_data.GetArray(i)
 
         # 2. Add each triangle cell as a vertex to the graph. Ignore the
-        # non-triangle cells.
-        # Get a list of all triangle cell indices first:
+        # non-triangle cells and cell with area equal to zero.
+        # Make a list of all added triangle cell indices:
         triangle_cell_ids = []
         for cell_id in xrange(self.surface.GetNumberOfCells()):
             # Get the cell i and check if it's a triangle:
             cell = self.surface.GetCell(cell_id)
-            if isinstance(cell, vtk.vtkTriangle):
-                triangle_cell_ids.append(cell_id)
-            else:
+            if not isinstance(cell, vtk.vtkTriangle):
                 print ('Oops, the cell number %s is not a vtkTriangle but '
                        'a %s! It will be ignored.'
                        % (cell_id, cell.__class__.__name__))
-
-        for cell_id in triangle_cell_ids:
-            cell = self.surface.GetCell(cell_id)
+                continue
             if verbose:
-                print '(Triangle) cell number %s' % cell_id
+                print 'Triangle cell number %s' % cell_id
 
             # Initialize a list for storing the points coordinates making
             # out the cell
@@ -579,6 +576,18 @@ class TriangleGraph(SurfaceGraph):
 
             # Get the 3 points which made up the triangular cell:
             points_cell = cell.GetPoints()
+
+            # Calculate the area of the triangle i;
+            area = cell.TriangleArea(points_cell.GetPoint(0),
+                                     points_cell.GetPoint(1),
+                                     points_cell.GetPoint(2))
+            try:
+                assert(area > 0)
+            except AssertionError:
+                print ('\tThe cell %s cannot be added to the graph as a vertex,'
+                       ' because the triangle area is not positive, but is %s. '
+                       % (cell_id, area))
+                continue
 
             # Calculate the centroid of the triangle:
             x_center = 0
@@ -603,20 +612,6 @@ class TriangleGraph(SurfaceGraph):
             x_center /= 3
             y_center /= 3
             z_center /= 3
-
-            # Calculate the area of the triangle i;
-            area = cell.TriangleArea(points_cell.GetPoint(0),
-                                     points_cell.GetPoint(1),
-                                     points_cell.GetPoint(2))
-            try:
-                assert(area > 0)
-            except AssertionError:
-                print ('\tThe triangle centroid (%s, %s, %s) cannot be '
-                       'added to the graph as a vertex, because the '
-                       'triangle area is not positive, but is %s. '
-                       'Points = %s.'
-                       % (x_center, y_center, z_center, area, points_xyz))
-                continue
 
             # Calculate the normal of the triangle i;
             normal = np.zeros(shape=3)
@@ -658,9 +653,6 @@ class TriangleGraph(SurfaceGraph):
             # Add the centroid as vertex to the graph, setting its
             # properties:
             vd = self.graph.add_vertex()  # vertex descriptor
-            # Note: vertex index is numbered from 0 and does not necessarily
-            # correspond to the (triangle) cell index!
-            # self.cell_id_to_vertex_id[cell_id] = self.graph.vertex_index[vd]
             self.graph.vp.xyz[vd] = [x_center, y_center, z_center]
             self.coordinates_to_vertex_index[(
                 x_center, y_center, z_center)] = self.graph.vertex_index[vd]
@@ -682,6 +674,8 @@ class TriangleGraph(SurfaceGraph):
                           self.graph.vp.min_curvature[vd],
                           self.graph.vp.max_curvature[vd],
                           self.graph.vp.points[vd]))
+
+            triangle_cell_ids.append(cell_id)
 
         # 3. Add edges for each cell / vertex.
         for i, cell_id in enumerate(triangle_cell_ids):
@@ -765,8 +759,7 @@ class TriangleGraph(SurfaceGraph):
                                   p_x[0], p_x[1], p_x[2], strength,
                                   self.graph.ep.distance[ed]))
 
-        # 4. Check if the numbers of vertices and edges are as they should
-        # be:
+        # 4. Check if the numbers of vertices and edges are as they should be:
         assert self.graph.num_vertices() == len(triangle_cell_ids)
         assert self.graph.num_edges() == len(self.coordinates_pair_connected)
         if verbose:

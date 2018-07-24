@@ -17,6 +17,11 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 __author__ = 'kalemanov'
 
 
+# when convoluting a binary mask with a gaussian kernel with sigma 1, values 1
+# at the boundary with 0's become this value:
+THRESH_SIGMA1 = 0.699471735
+
+
 def close_holes(infile, cube_size, iterations, outfile):
     """
     Closes small holes in a binary volume by using a binary closing operation.
@@ -86,8 +91,8 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
     else:
         surface = io.gen_surface(tomo, lbl, mask, other_mask, verbose=verbose)
 
-    # Filter out triangles with area=0, if any are present
-    surface = __filter_null_triangles(surface, verbose=verbose)
+    # # Filter out triangles with area=0, if any are present - now in graph gen.
+    # surface = __filter_null_triangles(surface, verbose=verbose)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -113,63 +118,63 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
     return surface
 
 
-def __filter_null_triangles(surface, verbose=False):
-    """
-    For a given VTK PolyData surface, filters out triangles with zero area, if
-    any are present.
-
-    Is used by the function run_gen_surface.
-
-    Args:
-        surface (vtk.PolyData): surface of triangles
-        verbose (boolean, optional): if True (default False), some extra
-        information will be printed out
-
-    Returns:
-        the filtered triangle surface (vtk.PolyData)
-    """
-    if isinstance(surface, vtk.vtkPolyData):
-
-        # Check numbers of cells (polygons or triangles) (and all points).
-        print 'The surface has %s cells' % surface.GetNumberOfCells()
-        if verbose:
-            print '%s points' % surface.GetNumberOfPoints()
-
-        null_area_triangles = 0
-        for i in range(surface.GetNumberOfCells()):
-            # Get the cell i and check if it's a triangle:
-            cell = surface.GetCell(i)
-            if isinstance(cell, vtk.vtkTriangle):
-                # Get the 3 points which made up the triangular cell i:
-                points_cell = cell.GetPoints()
-
-                # Calculate the area of the triangle i;
-                area = cell.TriangleArea(points_cell.GetPoint(0),
-                                         points_cell.GetPoint(1),
-                                         points_cell.GetPoint(2))
-                if area <= 0:
-                    if verbose:
-                        print ('Triangle %s is marked for deletion, because its'
-                               'area is not > 0' % i)
-                    surface.DeleteCell(i)
-                    null_area_triangles += 1
-
-            else:
-                print 'Oops, the cell number %s is not a triangle!' % i
-
-        if null_area_triangles:
-            surface.RemoveDeletedCells()
-            print ('%s triangles with area = 0 were removed, resulting in:'
-                   % null_area_triangles)
-            # Recheck numbers of cells (polygons or triangles):
-            print '%s cells' % surface.GetNumberOfCells()
-
-    else:
-        raise pexceptions.PySegInputError(
-            expr='__filter_null_triangles',
-            msg='The first input must be a vtkPolyData object.')
-
-    return surface
+# def __filter_null_triangles(surface, verbose=False):
+#     """
+#     For a given VTK PolyData surface, filters out triangles with zero area, if
+#     any are present.
+#
+#     Is used by the function run_gen_surface.
+#
+#     Args:
+#         surface (vtk.PolyData): surface of triangles
+#         verbose (boolean, optional): if True (default False), some extra
+#             information will be printed out
+#
+#     Returns:
+#         the filtered triangle surface (vtk.PolyData)
+#     """
+#     if isinstance(surface, vtk.vtkPolyData):
+#
+#         # Check numbers of cells (polygons or triangles) (and all points).
+#         print 'The surface has %s cells' % surface.GetNumberOfCells()
+#         if verbose:
+#             print '%s points' % surface.GetNumberOfPoints()
+#
+#         null_area_triangles = 0
+#         for i in range(surface.GetNumberOfCells()):
+#             # Get the cell i and check if it's a triangle:
+#             cell = surface.GetCell(i)
+#             if isinstance(cell, vtk.vtkTriangle):
+#                 # Get the 3 points which made up the triangular cell i:
+#                 points_cell = cell.GetPoints()
+#
+#                 # Calculate the area of the triangle i;
+#                 area = cell.TriangleArea(points_cell.GetPoint(0),
+#                                          points_cell.GetPoint(1),
+#                                          points_cell.GetPoint(2))
+#                 if area <= 0:
+#                     if verbose:
+#                         print ('Triangle %s is marked for deletion, because its'
+#                                'area is not > 0' % i)
+#                     surface.DeleteCell(i)
+#                     null_area_triangles += 1
+#
+#             else:
+#                 print 'Oops, the cell number %s is not a triangle!' % i
+#
+#         if null_area_triangles > 0:
+#             surface.RemoveDeletedCells()
+#             print ('%s triangles with area = 0 were removed, resulting in:'
+#                    % null_area_triangles)
+#             # Recheck number of cells (polygons or triangles):
+#             print '%s cells' % surface.GetNumberOfCells()
+#
+#     else:
+#         raise pexceptions.PySegInputError(
+#             expr='__filter_null_triangles',
+#             msg='The first input must be a vtkPolyData object.')
+#
+#     return surface
 
 
 def tomo_smooth_surf(seg, sg, th):
@@ -213,7 +218,7 @@ if __name__ == "__main__":
     seg = io.load_tomo(seg_file)
     data_type = seg.dtype
     sg = 1
-    thr = 0.6
+    thr = THRESH_SIGMA1
     outfile_base = "{}test_gen_isosurface/" \
                    "SCSl2t4_cER_sg{}_thr{}".format(fold, sg, thr)
     # Surface generation with filled segmentation using vtkMarchingCubes

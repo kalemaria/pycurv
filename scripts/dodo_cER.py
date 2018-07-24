@@ -1,6 +1,4 @@
 from pathlib2 import Path, PurePath
-from shutil import copyfile
-import os
 from curvature_calculation import (new_workflow,
                                    extract_curvatures_after_new_workflow)
 RADIUS_HIT = 10
@@ -22,7 +20,7 @@ def task_calculate_curvatures():
         # iterate over all subfolders
         for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
             subfold = str(subfold_p)
-            seg_files = list(subfold_p.glob('**/*labels_FILLED.mrc'))
+            seg_files = list(subfold_p.glob('**/*labels*.mrc'))
             if len(seg_files) > 0:
                 seg_file_p = seg_files[0]
                 seg_file = str(seg_file_p)
@@ -30,13 +28,7 @@ def task_calculate_curvatures():
                 tomo = "{}{}{}".format(condition, subfold.split('_')[-2],
                                        subfold.split('_')[-1])
                 base_filename = "{}_cER".format(tomo)
-                subfold += '/smooth/'
-                # old_subfold = subfold + '/'
-                # subfold = old_subfold + "smooth/"
-                # if not os.path.exists(subfold):
-                #     os.makedirs(subfold)
-                # if not os.path.exists(subfold+seg_filename):
-                #     copyfile(old_subfold+seg_filename, subfold)
+                subfold += '/'
                 target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                     subfold, base_filename, radius_hit)
                 yield {'name': tomo,
@@ -80,7 +72,7 @@ def task_extract_curvatures():
             tomo = "{}{}{}".format(condition, subfold.split('_')[-2],
                                    subfold.split('_')[-1])
             base_filename = "{}_cER".format(tomo)
-            subfold += '/smooth/'
+            subfold += '/'
             target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                 subfold, base_filename, radius_hit)
             yield {'name': tomo,

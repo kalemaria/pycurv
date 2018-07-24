@@ -25,6 +25,11 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 __author__ = 'kalemanov'
 
 
+# when convoluting a binary mask with a gaussian kernel with sigma 1, values 1
+# at the boundary with 0's become this value:
+THRESH_SIGMA1 = 0.699471735
+
+
 def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
              radius_hit):
     """
@@ -556,7 +561,7 @@ def new_workflow(
             print ("\nGenerating a surface...")
             surf = run_gen_surface(
                 filled_binary_seg, fold + base_filename, lbl=1,
-                other_mask=binary_seg, isosurface=True)
+                other_mask=binary_seg, isosurface=True, sg=1, thr=THRESH_SIGMA1)
             # Write the resulting binary segmentations into a file:
             filled_binary_seg_file = "{}{}.filled_binary_seg.mrc".format(
                 fold, base_filename)
@@ -837,7 +842,7 @@ def main(membrane, rh):
     # seg_file = "t2_ny01_lbl.labels.mrc"
     # base_filename = "TCBl2t2_{}".format(membrane)
     # Another tcb with surface generation problems:
-    fold = "{}TCB/170924_TITAN_l1_t1/".format(base_fold)
+    fold = "{}TCB/170924_TITAN_l1_t1/smooth/".format(base_fold)
     seg_file = "t1_cleaned_pt_lbl.labels_FILLED.mrc"
     base_filename = "TCBl1t1_{}".format(membrane)
 
@@ -846,8 +851,9 @@ def main(membrane, rh):
     # fold = "{}{}/cropped_ends/".format(base_fold, tomo)
     # # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6, 10, 15, 20
     # # lbl = 1
-    # seg_file = "{}_lbl.labels_cropped.mrc".format(tomo)
-    # base_filename = "{}_{}".format(tomo, membrane)
+    # fold = "{}SCS/171108_TITAN_l2_t4/smooth/".format(base_fold)
+    # seg_file = "t4_ny01_lbl.labels_FILLED.mrc"
+    # base_filename = "SCSl2t4_{}".format(membrane)
 
     # The "good one" scs (done cER RH=6, RH=15 and RH=10;
     # normals estimation for PM RH=15):

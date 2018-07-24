@@ -320,10 +320,6 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
     if sg > 0:
         binary_seg = ndimage.filters.gaussian_filter(
             binary_seg.astype(np.float), sg)
-        print("min={}".format(np.min(binary_seg)))
-        print("max={}".format(np.max(binary_seg)))
-        # save_numpy(binary_seg, "/fs/pool/pool-ruben/Maria/curvature/Javier/SCS/171108_TITAN_l2_t4/test_gen_isosurface/SCSl2t4_cER_sg{}.mrc".format(sg))
-        # exit(0)  # find the threshold first!
 
     # Generate isosurface
     binary_seg_vti = numpy_to_vti(binary_seg)
