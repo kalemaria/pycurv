@@ -727,6 +727,10 @@ def extract_curvatures_after_new_workflow(
 def __extract_curvatures_from_graph(
         tg, csv_file, exclude_borders, gt_file=None, vtp_file=None,
         categorize_shape_index=False):
+    # If don't want to include curvatures near borders, filter out those
+    if exclude_borders > 0:
+        tg.find_vertices_near_border(exclude_borders, purge=True)
+
     # List of shape class labels of all vertices for the csv file:
     shape_index_class = []
     if categorize_shape_index:
@@ -737,10 +741,6 @@ def __extract_curvatures_from_graph(
             si_cat_v, si_class_v = __shape_index_classifier(si_v)
             tg.graph.vp.shape_index_cat[v] = si_cat_v
             shape_index_class.append(si_class_v)
-
-    # If don't want to include curvatures near borders, filter out those
-    if exclude_borders > 0:
-        tg.find_vertices_near_border(exclude_borders, purge=True)
 
     # Saving the changes into graph and surface files, if specified:
     if gt_file is not None:
@@ -879,11 +879,11 @@ def main(membrane, rh):
             remove_small_components=min_component, only_normals=True)
     elif membrane == "cER":
         lbl = 2
-        print("\nCalculating curvatures for {}".format(base_filename))
-        new_workflow(
-            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-            seg_file=seg_file, label=lbl, holes=holes,
-            remove_small_components=min_component)
+        # print("\nCalculating curvatures for {}".format(base_filename))
+        # new_workflow(
+        #     fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+        #     seg_file=seg_file, label=lbl, holes=holes,
+        #     remove_small_components=min_component)
 
         for b in range(0, 2):
             print("\nExtracting curvatures for {} without {} nm from border"
