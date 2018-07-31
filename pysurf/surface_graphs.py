@@ -1647,13 +1647,8 @@ class TriangleGraph(SurfaceGraph):
             kappa_i_sign = -1 * signum(dot(T_i, n_i))
             if page_curvature_formula:  # formula from Page et al. paper:
                 s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
-                kappa_i = theta / s  # old version
+                kappa_i = theta / s
                 # decomposition does not work if multiply kappa_i with its sign
-                # new ideas:
-                # if kappa_i_sign < 0:
-                #     # theta = 2 * pi - theta
-                #     theta = theta + pi
-                # kappa_i = kappa_i_sign * theta / s
             else:  # formula from Tong and Tang paper:
                 kappa_i = abs(2 * cos((pi - theta) / 2) / sqrt(dot(vv_i, vv_i)))
                 kappa_i *= kappa_i_sign

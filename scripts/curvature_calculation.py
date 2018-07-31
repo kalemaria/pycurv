@@ -8,12 +8,14 @@ import pandas as pd
 import numpy as np
 from scipy import ndimage
 # import cProfile
+from guppy import hpy
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, vector_voting,
     run_gen_surface, TriangleGraph, split_segmentation, normals_estimation,
     preparation_for_curvature_estimation, curvature_estimation, rescale_surface)
 from pysurf import pysurf_io as io
+from testing import dump_heap
 
 """
 A script with an example application of the PySurf package for estimation of
@@ -532,7 +534,7 @@ def new_workflow(
     # before curvature estimation (opening with a cube of that size removes
     # everything)
 
-    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
+    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}_initial.log'.format(
                 fold, base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
 
@@ -593,6 +595,9 @@ def new_workflow(
                 #         data_type)
             print ("\nGenerating a surface from the binary segmentation...")
             surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
+        # hp = hpy()
+        # h = hp.heap()
+        dump_heap("generated surface")
     else:
         print ('\nReading in the surface from file...')
         surf = io.load_poly(fold + surf_file)
@@ -605,6 +610,10 @@ def new_workflow(
         tg.build_graph_from_vtk_surface()
         print ('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
+        # hp = hpy()
+        # h = hp.heap()
+        dump_heap("generated graph")
+
         # Remove the wrong borders (surface generation artefact)
         b = 0
         if remove_wrong_borders:
@@ -617,6 +626,10 @@ def new_workflow(
             tg.find_vertices_near_border(b * scale_factor_to_nm, purge=True)
             print ('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
+            # hp = hpy()
+            # h = hp.heap()
+            dump_heap("removed wrong graph borders")
+
         # Filter out possibly occurring small disconnected fragments
         if remove_small_components > 0:
             print ('\nFinding small connected components of the graph...')
@@ -624,6 +637,10 @@ def new_workflow(
                 threshold=remove_small_components, purge=True, verbose=True)
             print ('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
+            # hp = hpy()
+            # h = hp.heap()
+            dump_heap("removed small graph components")
+
         # Saving the scaled (and cleaned) graph and surface:
         tg.graph.save(fold + clean_graph_file)
         surf_clean = tg.graph_to_triangle_poly()
@@ -653,6 +670,10 @@ def new_workflow(
                 tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
                 methods=methods, full_dist_map=False, graph_file=gt_file1,
                 area2=True, only_normals=only_normals)
+            if only_normals:
+                i = "estimated normals"
+            else:
+                i = "estimated normals and curvature"
         elif only_normals is False:
             for method in methods:
                 tg_curv, surface_curv = curvature_estimation(
@@ -660,6 +681,10 @@ def new_workflow(
                     radius_hit, all_neighbor_idx_to_dist=None,
                     exclude_borders=0, graph_file=gt_file1, method=method)
                 method_tg_surf_dict[method] = (tg_curv, surface_curv)
+            i = "estimated curvature"
+        # hp = hpy()
+        # h = hp.heap()
+        dump_heap(i)
 
         if only_normals is False:
             for method in method_tg_surf_dict.keys():
@@ -879,11 +904,11 @@ def main(membrane, rh):
             remove_small_components=min_component, only_normals=True)
     elif membrane == "cER":
         lbl = 2
-        # print("\nCalculating curvatures for {}".format(base_filename))
-        # new_workflow(
-        #     fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-        #     seg_file=seg_file, label=lbl, holes=holes,
-        #     remove_small_components=min_component)
+        print("\nCalculating curvatures for {}".format(base_filename))
+        new_workflow(
+            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+            seg_file=seg_file, label=lbl, holes=holes,
+            remove_small_components=min_component)
 
         for b in range(0, 2):
             print("\nExtracting curvatures for {} without {} nm from border"
@@ -955,17 +980,22 @@ def main2():
     #          radius_hit)
 
     # Felix's vesicle:
-    fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/'
-            'vesicle3_t74/')
-    # tomo = "t74"
-    # seg_file = "%s%s_vesicle3_bin6.Labels.mrc" % (fold, tomo)
-    # label = 1
-    surf_file = "t74_vesicle3.surface.vtp"
     base_filename = "t74_vesicle3"
     pixel_size = 2.526
-    radius_hit = 6  # nm
-    simple_workflow(fold, surf_file, base_filename, pixel_size, radius_hit,
-                    epsilon=0, eta=0, exclude_borders=0, methods=['VCTV', 'VV'])
+    radius_hit = 10  # nm
+    fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/'
+            'vesicle3_t74/')
+    tomo = "t74"
+    seg_file = "%s%s_vesicle3_bin6.Labels.mrc" % (fold, tomo)
+    lbl = 1
+    min_component = 100
+    # surf_file = "t74_vesicle3.surface.vtp"
+    # simple_workflow(fold, surf_file, base_filename, pixel_size, radius_hit,
+    #                 epsilon=0, eta=0, exclude_borders=0, methods=['VCTV', 'VV'])
+    new_workflow(
+            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+            seg_file=seg_file, label=lbl, holes=0,
+            remove_small_components=min_component, only_normals=False)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -1005,7 +1035,7 @@ def main3():
         divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
 if __name__ == "__main__":
-    main("cER", 10)
+    # main("cER", 10)
     # membrane = sys.argv[1]
     # rh = int(sys.argv[2])
     # main(membrane, rh)
@@ -1014,9 +1044,9 @@ if __name__ == "__main__":
     #     fold, membrane)
     # cProfile.run('main(membrane)', stats_file)
 
-    # fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_methods/'
+    # fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/'
     #         'vesicle3_t74/')
-    # stats_file = '{}t74_vesicle3.VCTV_VV_rh6_eb0.stats'.format(fold)
+    # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
     # cProfile.run('main2()', stats_file)
 
-    # main3()
+    main2()

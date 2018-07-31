@@ -1311,20 +1311,20 @@ class VectorVotingTestCase(unittest.TestCase):
     #     #             r, rh, methods=['VV'], full_dist_map=True, area2=True,
     #     #             page_curvature_formula=True)
 
-    def test_inverse_sphere_curvatures(self):
-        """
-        Tests whether curvatures are correctly estimated for an inverse sphere
-        with a certain radius and noise level:
-
-        kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
-        """
-        # Gaussian sphere
-        # p = 50
-        for rh in [8]:  # 9
-            self.parametric_test_sphere_curvatures(
-                10, rh, ico=0, noise=0, inverse=True,
-                methods=['VV'],  # 'VCTV', 'VVCF'
-                page_curvature_formula=False, area2=True)  # num_points=p
+    # def test_inverse_sphere_curvatures(self):
+    #     """
+    #     Tests whether curvatures are correctly estimated for an inverse sphere
+    #     with a certain radius and noise level:
+    #
+    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+    #     """
+    #     # Gaussian sphere
+    #     # p = 50
+    #     for rh in [8]:  # 9
+    #         self.parametric_test_sphere_curvatures(
+    #             10, rh, ico=0, noise=0, inverse=True,
+    #             methods=['VV'],  # 'VCTV', 'VVCF'
+    #             page_curvature_formula=False, area2=True)  # num_points=p
 
     def test_torus_curvatures(self):
         """
@@ -1335,7 +1335,7 @@ class VectorVotingTestCase(unittest.TestCase):
         for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
             self.parametric_test_torus_directions_curvatures(
                 25, 10, rh, methods=['VV'],  # 'VCTV', 'VVCF'
-                page_curvature_formula=False, full_dist_map=True,
+                page_curvature_formula=False, full_dist_map=False,
                 area2=True)  # num_points=p,
 
     # def test_cone(self):
