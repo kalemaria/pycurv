@@ -3,7 +3,6 @@ import numpy as np
 import math
 from graph_tool import load_graph
 from graph_tool.topology import shortest_distance
-from sys import getsizeof
 
 from surface_graphs import TriangleGraph
 
@@ -728,8 +727,8 @@ def normals_directions_and_curvature_estimation(
     """
     t_begin = time.time()
 
-    tg, all_neighbor_idx_to_dist = normals_estimation(
-        tg, radius_hit, epsilon, eta, full_dist_map)
+    tg = normals_estimation(tg, radius_hit, epsilon, eta, full_dist_map)
+    #was tg, all_neighbor_idx_to_dist = ...
 
     preparation_for_curvature_estimation(tg, exclude_borders, graph_file)
 
@@ -738,8 +737,9 @@ def normals_directions_and_curvature_estimation(
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
                 tg.surface, tg.scale_factor_to_nm,
-                radius_hit, all_neighbor_idx_to_dist, exclude_borders,
+                radius_hit, None, exclude_borders,
                 graph_file, method, page_curvature_formula, num_points, area2)
+            # was all_neighbor_idx_to_dist instead of None
             results[method] = (tg_curv, surface_curv)
 
         t_end = time.time()
@@ -846,25 +846,20 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
 
     collecting_normal_votes = tg.collecting_normal_votes
     all_num_neighbors = []
-    all_neighbor_idx_to_dist = []
+    # all_neighbor_idx_to_dist = []
     classifying_orientation = tg.classifying_orientation
     classes_counts = {}
-    size_file = "all_neighbor_idx_to_dist_bytes.txt"
-    with open(size_file, 'a') as f:
-        for v in tg.graph.vertices():
-            neighbor_idx_to_dist, V_v = collecting_normal_votes(
-                v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
-            all_num_neighbors.append(len(neighbor_idx_to_dist))
-            all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
-            # check size of the list and write it to a file:
-            all_neighbor_idx_to_dist_bytes = getsizeof(all_neighbor_idx_to_dist)
-            f.write('{}\n'.format(all_neighbor_idx_to_dist_bytes))
-            class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
-                                              verbose=False)
-            try:
-                classes_counts[class_v] += 1
-            except KeyError:
-                classes_counts[class_v] = 1
+    for v in tg.graph.vertices():
+        neighbor_idx_to_dist, V_v = collecting_normal_votes(
+            v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
+        all_num_neighbors.append(len(neighbor_idx_to_dist))
+        # all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
+        class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
+                                          verbose=False)
+        try:
+            classes_counts[class_v] += 1
+        except KeyError:
+            classes_counts[class_v] = 1
 
     # Printing out some numbers concerning the first run:
     avg_num_geodesic_neighbors = (sum(x for x in all_num_neighbors) /
@@ -881,7 +876,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     duration1 = t_end1 - t_begin1
     print 'First run took: %s min %s s' % divmod(duration1, 60)
 
-    return tg, all_neighbor_idx_to_dist
+    return tg  #, all_neighbor_idx_to_dist
 
 
 def preparation_for_curvature_estimation(

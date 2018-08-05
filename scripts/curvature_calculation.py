@@ -534,7 +534,7 @@ def new_workflow(
     # before curvature estimation (opening with a cube of that size removes
     # everything)
 
-    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}_initial.log'.format(
+    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}_no_neighborhood_list.log'.format(
                 fold, base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
 
