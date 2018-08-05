@@ -3,6 +3,7 @@ import numpy as np
 import math
 from graph_tool import load_graph
 from graph_tool.topology import shortest_distance
+from sys import getsizeof
 
 from surface_graphs import TriangleGraph
 
@@ -848,17 +849,22 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     all_neighbor_idx_to_dist = []
     classifying_orientation = tg.classifying_orientation
     classes_counts = {}
-    for v in tg.graph.vertices():
-        neighbor_idx_to_dist, V_v = collecting_normal_votes(
-            v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
-        all_num_neighbors.append(len(neighbor_idx_to_dist))
-        all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
-        class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
-                                          verbose=False)
-        try:
-            classes_counts[class_v] += 1
-        except KeyError:
-            classes_counts[class_v] = 1
+    size_file = "all_neighbor_idx_to_dist_bytes.txt"
+    with open(size_file, 'a') as f:
+        for v in tg.graph.vertices():
+            neighbor_idx_to_dist, V_v = collecting_normal_votes(
+                v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
+            all_num_neighbors.append(len(neighbor_idx_to_dist))
+            all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
+            # check size of the list and write it to a file:
+            all_neighbor_idx_to_dist_bytes = getsizeof(all_neighbor_idx_to_dist)
+            f.write('{}\n'.format(all_neighbor_idx_to_dist_bytes))
+            class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
+                                              verbose=False)
+            try:
+                classes_counts[class_v] += 1
+            except KeyError:
+                classes_counts[class_v] = 1
 
     # Printing out some numbers concerning the first run:
     avg_num_geodesic_neighbors = (sum(x for x in all_num_neighbors) /
