@@ -845,14 +845,16 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     t_begin1 = time.time()
 
     collecting_normal_votes = tg.collecting_normal_votes
-    all_num_neighbors = []
+    # all_num_neighbors = []
+    sum_num_neighbors = 0
     # all_neighbor_idx_to_dist = []
     classifying_orientation = tg.classifying_orientation
     classes_counts = {}
     for v in tg.graph.vertices():
         neighbor_idx_to_dist, V_v = collecting_normal_votes(
             v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
-        all_num_neighbors.append(len(neighbor_idx_to_dist))
+        # all_num_neighbors.append(len(neighbor_idx_to_dist))
+        sum_num_neighbors += len(neighbor_idx_to_dist)
         # all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
         class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
                                           verbose=False)
@@ -862,8 +864,8 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
             classes_counts[class_v] = 1
 
     # Printing out some numbers concerning the first run:
-    avg_num_geodesic_neighbors = (sum(x for x in all_num_neighbors) /
-                                  len(all_num_neighbors))
+    avg_num_geodesic_neighbors = sum_num_neighbors / tg.graph.num_vertices()
+    # = (sum(x for x in all_num_neighbors) / len(all_num_neighbors))
     print ("Average number of geodesic neighbors for all vertices: %s"
            % avg_num_geodesic_neighbors)
     print "%s surface patches" % classes_counts[1]
