@@ -8,14 +8,12 @@ import pandas as pd
 import numpy as np
 from scipy import ndimage
 # import cProfile
-from guppy import hpy
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, vector_voting,
     run_gen_surface, TriangleGraph, split_segmentation, normals_estimation,
     preparation_for_curvature_estimation, curvature_estimation, rescale_surface)
 from pysurf import pysurf_io as io
-from testing import dump_heap
 
 """
 A script with an example application of the PySurf package for estimation of
@@ -534,7 +532,7 @@ def new_workflow(
     # before curvature estimation (opening with a cube of that size removes
     # everything)
 
-    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}_no_neighborhood_lists.log'.format(
+    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
                 fold, base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
 
@@ -595,9 +593,6 @@ def new_workflow(
                 #         data_type)
             print ("\nGenerating a surface from the binary segmentation...")
             surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
-        # hp = hpy()
-        # h = hp.heap()
-        dump_heap("generated surface")
     else:
         print ('\nReading in the surface from file...')
         surf = io.load_poly(fold + surf_file)
@@ -610,9 +605,6 @@ def new_workflow(
         tg.build_graph_from_vtk_surface()
         print ('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
-        # hp = hpy()
-        # h = hp.heap()
-        dump_heap("generated graph")
 
         # Remove the wrong borders (surface generation artefact)
         b = 0
@@ -626,9 +618,6 @@ def new_workflow(
             tg.find_vertices_near_border(b * scale_factor_to_nm, purge=True)
             print ('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
-            # hp = hpy()
-            # h = hp.heap()
-            dump_heap("removed wrong graph borders")
 
         # Filter out possibly occurring small disconnected fragments
         if remove_small_components > 0:
@@ -637,9 +626,6 @@ def new_workflow(
                 threshold=remove_small_components, purge=True, verbose=True)
             print ('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
-            # hp = hpy()
-            # h = hp.heap()
-            dump_heap("removed small graph components")
 
         # Saving the scaled (and cleaned) graph and surface:
         tg.graph.save(fold + clean_graph_file)
@@ -670,21 +656,12 @@ def new_workflow(
                 tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
                 methods=methods, full_dist_map=False, graph_file=gt_file1,
                 area2=True, only_normals=only_normals)
-            if only_normals:
-                i = "estimated normals"
-            else:
-                i = "estimated normals and curvature"
         elif only_normals is False:
             for method in methods:
                 tg_curv, surface_curv = curvature_estimation(
-                    surf_clean, scale_factor_to_nm,
-                    radius_hit, all_neighbor_idx_to_dist=None,
+                    surf_clean, scale_factor_to_nm, radius_hit,
                     exclude_borders=0, graph_file=gt_file1, method=method)
                 method_tg_surf_dict[method] = (tg_curv, surface_curv)
-            i = "estimated curvature"
-        # hp = hpy()
-        # h = hp.heap()
-        dump_heap(i)
 
         if only_normals is False:
             for method in method_tg_surf_dict.keys():
@@ -1040,9 +1017,9 @@ if __name__ == "__main__":
     # rh = int(sys.argv[2])
     # main(membrane, rh)
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
-    # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh6.stats'.format(
-    #     fold, membrane)
-    # cProfile.run('main(membrane)', stats_file)
+    # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh{}.stats'.format(
+    #     fold, membrane, rh)
+    # cProfile.run('main(membrane, rh)', stats_file)
 
     # fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/'
     #         'vesicle3_t74/')

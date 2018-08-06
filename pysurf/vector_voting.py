@@ -728,7 +728,6 @@ def normals_directions_and_curvature_estimation(
     t_begin = time.time()
 
     tg = normals_estimation(tg, radius_hit, epsilon, eta, full_dist_map)
-    #was tg, all_neighbor_idx_to_dist = ...
 
     preparation_for_curvature_estimation(tg, exclude_borders, graph_file)
 
@@ -739,7 +738,6 @@ def normals_directions_and_curvature_estimation(
                 tg.surface, tg.scale_factor_to_nm,
                 radius_hit, None, exclude_borders,
                 graph_file, method, page_curvature_formula, num_points, area2)
-            # was all_neighbor_idx_to_dist instead of None
             results[method] = (tg_curv, surface_curv)
 
         t_end = time.time()
@@ -773,8 +771,6 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
 
     Returns:
         tg (TriangleGraph): triangle graph with added properties
-        all_neighbor_idx_to_dist: list of dictionaries for each vertex listing
-            its neighbors ids (keys) with geodesic distances to them (values)
 
     Notes:
         * Maximal geodesic neighborhood distance g_max for normal vector voting
@@ -845,17 +841,13 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     t_begin1 = time.time()
 
     collecting_normal_votes = tg.collecting_normal_votes
-    # all_num_neighbors = []
     sum_num_neighbors = 0
-    # all_neighbor_idx_to_dist = []
     classifying_orientation = tg.classifying_orientation
     classes_counts = {}
     for v in tg.graph.vertices():
         neighbor_idx_to_dist, V_v = collecting_normal_votes(
             v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
-        # all_num_neighbors.append(len(neighbor_idx_to_dist))
         sum_num_neighbors += len(neighbor_idx_to_dist)
-        # all_neighbor_idx_to_dist.append(neighbor_idx_to_dist)
         class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
                                           verbose=False)
         try:
@@ -865,7 +857,6 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
 
     # Printing out some numbers concerning the first run:
     avg_num_geodesic_neighbors = sum_num_neighbors / tg.graph.num_vertices()
-    # = (sum(x for x in all_num_neighbors) / len(all_num_neighbors))
     print ("Average number of geodesic neighbors for all vertices: %s"
            % avg_num_geodesic_neighbors)
     print "%s surface patches" % classes_counts[1]
@@ -878,7 +869,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     duration1 = t_end1 - t_begin1
     print 'First run took: %s min %s s' % divmod(duration1, 60)
 
-    return tg  #, all_neighbor_idx_to_dist
+    return tg
 
 
 def preparation_for_curvature_estimation(
@@ -942,19 +933,14 @@ def preparation_for_curvature_estimation(
         print 'Finding borders took: %s min %s s' % divmod(duration0, 60)
 
     # Save the graph to a file for use by different methods in the second run:
-    # t_begin0 = time.time()
     tg.graph.save(graph_file)
-    # t_end0 = time.time()
-    # duration0 = t_end0 - t_begin0
-    # print '\nSaving the graph took: %s min %s s' % divmod(duration0, 60)
-    # print tg.graph
 
     return tg.surface, tg.scale_factor_to_nm
 
 
 def curvature_estimation(
         scaled_surface, scale_factor_to_nm,
-        radius_hit, all_neighbor_idx_to_dist=None, exclude_borders=0,
+        radius_hit, exclude_borders=0,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
         num_points=None, area2=True):
     """
@@ -970,9 +956,6 @@ def curvature_estimation(
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
-        all_neighbor_idx_to_dist: list of dictionaries for each vertex listing
-            its neighbors ids (keys) with geodesic distances to them (values),
-            if None (default) it is calculated
         exclude_borders (int, optional): if > 0, principle curvatures and
             directions are not estimated for triangles within this distance to
             surface borders (default 0)
@@ -994,13 +977,8 @@ def curvature_estimation(
         with classified orientation and estimated normals or tangents, principle
         curvatures and directions
     """
-    # t_begin0 = time.time()
     tg_curv = TriangleGraph(scaled_surface, scale_factor_to_nm)
     tg_curv.graph = load_graph(graph_file)
-    # t_end0 = time.time()
-    # duration0 = t_end0 - t_begin0
-    # print '\nLoading the graph took: %s min %s s' % divmod(duration0, 60)
-    # print tg_curv.graph
 
     print ("\nSecond run: estimating principle curvatures and directions "
            "for surface patches using {}...".format(method))
@@ -1047,12 +1025,9 @@ def curvature_estimation(
                 # None is returned if curvature at v cannot be estimated
                 result = gen_curv_vote(v, radius_hit, verbose=False)
             else:  # VV or VVCF
-                if all_neighbor_idx_to_dist is None:
-                    # Find the neighboring vertices of vertex v to be returned:
-                    neighbor_idx_to_dist = tg_curv.find_geodesic_neighbors(
-                        v, g_max)
-                else:
-                    neighbor_idx_to_dist = all_neighbor_idx_to_dist[i]
+                # Find the neighboring vertices of vertex v to be returned:
+                neighbor_idx_to_dist = tg_curv.find_geodesic_neighbors(
+                    v, g_max)
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
                 result = collecting_curvature_votes(

@@ -6,6 +6,7 @@ from curvature_calculation import (new_workflow,
 RADIUS_HIT = 10
 
 
+# For smoothed cER
 def task_calculate_curvatures():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
