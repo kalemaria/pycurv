@@ -735,8 +735,7 @@ def normals_directions_and_curvature_estimation(
         results = {}
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
-                tg.surface, tg.scale_factor_to_nm,
-                radius_hit, None, exclude_borders,
+                tg.surface, tg.scale_factor_to_nm, radius_hit, exclude_borders,
                 graph_file, method, page_curvature_formula, num_points, area2)
             results[method] = (tg_curv, surface_curv)
 
@@ -939,8 +938,7 @@ def preparation_for_curvature_estimation(
 
 
 def curvature_estimation(
-        scaled_surface, scale_factor_to_nm,
-        radius_hit, exclude_borders=0,
+        scaled_surface, scale_factor_to_nm, radius_hit, exclude_borders=0,
         graph_file='temp.gt', method="VV", page_curvature_formula=False,
         num_points=None, area2=True):
     """
