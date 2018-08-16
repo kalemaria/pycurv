@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from scipy import ndimage
 # import cProfile
+from multiprocessing import freeze_support
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, vector_voting,
@@ -532,9 +533,9 @@ def new_workflow(
     # before curvature estimation (opening with a cube of that size removes
     # everything)
 
-    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
-                fold, base_filename, methods[0], radius_hit, epsilon, eta)
-    sys.stdout = open(log_file, 'a')
+    # log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
+    #             fold, base_filename, methods[0], radius_hit, epsilon, eta)
+    # sys.stdout = open(log_file, 'a')
 
     t_begin = time.time()
 
@@ -1026,4 +1027,5 @@ if __name__ == "__main__":
     # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
     # cProfile.run('main2()', stats_file)
 
+    # freeze_support()
     main2()

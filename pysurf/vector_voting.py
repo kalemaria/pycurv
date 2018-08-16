@@ -3,8 +3,11 @@ import numpy as np
 import math
 from graph_tool import load_graph
 from graph_tool.topology import shortest_distance
+from multiprocessing import Pool
+from functools import partial
+# import itertools
 
-from surface_graphs import TriangleGraph
+from surface_graphs import TriangleGraph  # , collecting_normal_votes_not_oo
 
 """
 Contains a function implementing the normal vector voting algorithm (Page et
@@ -840,15 +843,41 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     t_begin1 = time.time()
 
     collecting_normal_votes = tg.collecting_normal_votes
+    # collecting_normal_votes_star = tg.collecting_normal_votes_star
+    # for v in tg.graph.vertices():
+        # neighbor_idx_to_dist, V_v = collecting_normal_votes(
+        #     v, g_max, A_max, sigma, full_dist_map)
+    pool = Pool(processes=4)
+    print ('Opened a pool with 4 processes')
+    results = pool.map(partial(collecting_normal_votes, tg=tg,
+                               g_max=g_max, A_max=A_max, sigma=sigma,
+                               full_dist_map=full_dist_map),
+                       tg.graph.vertices())
+    # v_args = tg.graph.vertices()
+    # other_args = g_max, A_max, sigma, full_dist_map
+    # results = pool.map(collecting_normal_votes_star, itertools.izip(
+    #     v_args, itertools.repeat(other_args)))
+
+    # results dictionary mapping vertex v to (neighbor_idx_to_dist, V_v)
+    # results = dict(pool.map(partial(collecting_normal_votes, g_max=g_max,
+    #                                 A_max=A_max, sigma=sigma,
+    #                                 full_dist_map=full_dist_map),
+    #                         tg.graph.vertices()))
+    pool.close()
+    print ('Closed the pool')
+    print(results[0])
+
     sum_num_neighbors = 0
     classifying_orientation = tg.classifying_orientation
     classes_counts = {}
-    for v in tg.graph.vertices():
-        neighbor_idx_to_dist, V_v = collecting_normal_votes(
-            v, g_max, A_max, sigma, verbose=False, full_dist_map=full_dist_map)
+    for i, v in enumerate(tg.graph.vertices()):
+    # for v in results.keys():
+        neighbor_idx_to_dist = results[i][0]
+        # neighbor_idx_to_dist = results[v][0]
         sum_num_neighbors += len(neighbor_idx_to_dist)
-        class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta,
-                                          verbose=False)
+        V_v = results[i][1]
+        # V_v = results[v][1]
+        class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta)
         try:
             classes_counts[class_v] += 1
         except KeyError:

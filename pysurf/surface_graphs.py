@@ -276,6 +276,132 @@ def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
     return u
 
 
+def collecting_normal_votes_not_oo(vertex_v, tg, g_max, A_max, sigma,
+                                   full_dist_map=None, verbose=False):
+    """
+    For a vertex v, collects the normal votes of all triangles within its
+    geodesic neighborhood and calculates the weighted covariance matrix sum
+    V_v.
+
+    Implements equations (6), illustrated in figure 6(b), (7) and (8) from
+    the paper of Page et al., 2002.
+
+    More precisely, a normal vote N_i of each triangle i (whose centroid c_i
+    is lying within the geodesic neighborhood of vertex v) is calculated
+    using the normal N assigned to the triangle i. Then, each vote is
+    represented by a covariance matrix V_i and votes are collected as a
+    weighted matrix sum V_v, where each vote is weighted depending on the
+    area of triangle i and the geodesic distance of its centroid c_i from v.
+
+    Here, c_i and v are both centroids of triangles (v is a triangle vertex
+    in Page's approach), which are vertices of TriangleGraph generated from
+    the triangle surface.
+
+    Args:
+        vertex_v (graph_tool.Vertex): the vertex v in the surface
+            triangle-graph for which the votes are collected
+        tg (TriangleGraph): TriangleGraph object to apply the function on
+        g_max (float): the maximal geodesic distance in nanometers
+        A_max (float): the area of the largest triangle in the surface
+            triangle-graph
+        sigma (float): sigma, defined as 3*sigma = g_max, so that votes
+            beyond the neighborhood can be ignored
+        full_dist_map (graph_tool.PropertyMap, optional): the full distance
+            map for the whole graph; if None, a local distance map is
+            calculated for this vertex (default)
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:mou
+        - a dictionary of neighbors of vertex v, mapping index of each
+          vertex c_i to its geodesic distance from the vertex v
+        - the 3x3 symmetric matrix V_v (numpy.ndarray)
+    """
+    # To spare function referencing every time in the following for loop:
+    vertex = tg.graph.vertex
+    normal = tg.graph.vp.normal
+    array = np.array
+    xyz = tg.graph.vp.xyz
+    sqrt = math.sqrt
+    dot = np.dot
+    outer = np.multiply.outer
+    area = tg.graph.vp.area
+    exp = math.exp
+
+    # Get the coordinates of vertex v (as numpy array):
+    v = xyz[vertex_v]
+    v = array(v)
+
+    # Find the neighboring vertices of vertex v to be returned:
+    neighbor_idx_to_dist = tg.find_geodesic_neighbors(
+        vertex_v, g_max, full_dist_map=full_dist_map)
+    try:
+        assert len(neighbor_idx_to_dist) > 0
+    except AssertionError:
+        print ("\nWarning: the vertex v = %s has 0 neighbors. "
+               "It will be ignored later." % v)
+        # return a placeholder instead of V_v
+        return neighbor_idx_to_dist, np.zeros(shape=(3, 3))
+
+    if verbose:
+        print "\nv = %s" % v
+        print "%s neighbors" % len(neighbor_idx_to_dist)
+
+    # Initialize the weighted matrix sum of all votes for vertex v to be
+    # calculated and returned:
+    V_v = np.zeros(shape=(3, 3))
+
+    # Let each of the neighboring vertices to cast a vote on vertex v:
+    for idx_c_i in neighbor_idx_to_dist.keys():
+        # Get neighboring vertex c_i and its coordinates (as numpy array):
+        vertex_c_i = vertex(idx_c_i)
+        c_i = xyz[vertex_c_i]
+        c_i = array(c_i)
+
+        # Calculate the normal vote N_i of c_i on v:
+        N = normal[vertex_c_i]
+        N = array(N)
+
+        vc_i = c_i - v
+        vc_i_len = sqrt(dot(vc_i, vc_i))
+        vc_i_norm = vc_i / vc_i_len
+
+        # theta_i is the angle between the vectors N and vc_i
+        cos_theta_i = - (dot(N, vc_i)) / vc_i_len
+
+        N_i = N + 2 * cos_theta_i * vc_i_norm
+
+        # Covariance matrix containing one vote of c_i on v:
+        V_i = outer(N_i, N_i)
+
+        # Calculate the weight depending on the area of the neighboring
+        # triangle i, A_i, and the geodesic distance to the neighboring
+        # vertex c_i from vertex v, g_i:
+        A_i = area[vertex_c_i]
+        g_i = neighbor_idx_to_dist[idx_c_i]
+        w_i = A_i / A_max * exp(- g_i / sigma)
+
+        if verbose:
+            print "\nc_i = %s" % c_i
+            print "N = %s" % N
+            print "vc_i = %s" % vc_i
+            print "||vc_i|| = %s" % vc_i_len
+            print "cos(theta_i) = %s" % cos_theta_i
+            print "N_i = %s" % N_i
+            print "V_i = %s" % V_i
+            print "A_i = %s" % A_i
+            print "g_i = %s" % g_i
+            print "w_i = %s" % w_i
+
+        # Weigh V_i and add it to the weighted matrix sum:
+        V_v += w_i * V_i
+
+    if verbose:
+        print "\nV_v: %s" % V_v
+    return neighbor_idx_to_dist, V_v
+    # return vertex_v, neighbor_idx_to_dist, V_v
+
+
 class SurfaceGraph(graphs.SegmentationGraph):
     """Class defining the abstract SurfaceGraph object."""
 
@@ -1228,7 +1354,7 @@ class TriangleGraph(SurfaceGraph):
 
         Args:
             verbose (boolean, optional): if True (default False), prints out the
-                minimal and the maximal triangle area values as well the the
+                minimal and the maximal triangle area values as well as the the
                 total surface area
 
         Returns:
@@ -1276,12 +1402,9 @@ class TriangleGraph(SurfaceGraph):
                 triangle-graph
             sigma (float): sigma, defined as 3*sigma = g_max, so that votes
                 beyond the neighborhood can be ignored
-            full_dist_map (boolean, optional): if True, a full distance map is
-            calculated for the whole graph, otherwise a local distance map is
-            calculated later for each vertex (default)
             full_dist_map (graph_tool.PropertyMap, optional): the full distance
                 map for the whole graph; if None, a local distance map is
-                calculated later for each vertex (default)
+                calculated for this vertex (default)
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -1372,6 +1495,11 @@ class TriangleGraph(SurfaceGraph):
         if verbose:
             print "\nV_v: %s" % V_v
         return neighbor_idx_to_dist, V_v
+        # return vertex_v, neighbor_idx_to_dist, V_v
+
+    # def collecting_normal_votes_star(self, params):
+    #     """Convert `f([1,2])` to `f(1,2)` call."""
+    #     return self.collecting_normal_votes(*params)
 
     def classifying_orientation(self, vertex_v, V_v, epsilon=2, eta=2,
                                 verbose=False):
