@@ -8,7 +8,6 @@ import pandas as pd
 import numpy as np
 from scipy import ndimage
 # import cProfile
-from multiprocessing import freeze_support
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, vector_voting,
@@ -1027,5 +1026,4 @@ if __name__ == "__main__":
     # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
     # cProfile.run('main2()', stats_file)
 
-    # freeze_support()
     main2()
