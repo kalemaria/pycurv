@@ -3,8 +3,8 @@ import numpy as np
 import math
 from graph_tool import load_graph
 from graph_tool.topology import shortest_distance
-import multiprocessing
-import os
+import pathos.pools as pp
+from functools import partial
 
 from surface_graphs import TriangleGraph
 
@@ -747,68 +747,6 @@ def normals_directions_and_curvature_estimation(
         return results
 
 
-def call_it(instance, name, args=(), kwargs=None):
-    """indirect caller for instance methods and multiprocessing"""
-    if kwargs is None:
-        kwargs = {}
-    return getattr(instance, name)(*args, **kwargs)
-
-
-class ParallelizerOfNormalsEstimation(object):
-    def __init__(self, tg, g_max, A_max, sigma, full_dist_map,
-                 epsilon, eta,
-                 workers=multiprocessing.cpu_count()):
-        print "Constructor (in pid=%d)..." % os.getpid()
-        self.count = 1
-
-        pool = multiprocessing.Pool(processes=workers)
-        nobj = tg.graph.num_vertices()
-        print ("number of vertices: {}".format(nobj))
-        async_results1 = [pool.apply_async(call_it,
-            args=(tg, 'collecting_normal_votes', (
-                i, g_max, A_max, sigma, full_dist_map))) for i in range(nobj)]
-        pool.close()
-        map(multiprocessing.pool.ApplyResult.wait, async_results1)
-        results1 = [r.get() for r in async_results1]
-        assert nobj == len(results1)
-
-        sum_num_neighbors = 0
-        V_v_list = []
-        for (neighbor_idx_to_dist, V_v) in results1:
-            sum_num_neighbors += len(neighbor_idx_to_dist)
-            V_v_list.append(V_v)
-
-        pool = multiprocessing.Pool(processes=workers)
-        async_results2 = [pool.apply_async(call_it,
-            args=(tg, 'classifying_orientation', (
-                i, V_v_list[i], epsilon, eta))) for i in range(nobj)]
-        pool.close()
-        map(multiprocessing.pool.ApplyResult.wait, async_results2)
-        results2 = [r.get() for r in async_results2]
-        assert nobj == len(results2)
-
-        classes_counts = {}
-        for class_v in results2:
-            try:
-                classes_counts[class_v] += 1
-            except KeyError:
-                classes_counts[class_v] = 1
-
-        # Printing out some numbers concerning the first run:
-        avg_num_geodesic_neighbors = sum_num_neighbors / nobj
-        print ("Average number of geodesic neighbors for all vertices: %s"
-               % avg_num_geodesic_neighbors)
-        print "%s surface patches" % classes_counts[1]
-        if 2 in classes_counts:
-            print "%s crease junctions" % classes_counts[2]
-        if 3 in classes_counts:
-            print "%s no preferred orientation" % classes_counts[3]
-
-    def __del__(self):
-        self.count -= 1
-        print "... Destructor (in pid=%d) count=%d" % (os.getpid(), self.count)
-
-
 def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
@@ -903,8 +841,46 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
            "surface patches and tangents for creases...")
     t_begin1 = time.time()
 
-    ParallelizerOfNormalsEstimation(tg, g_max, A_max, sigma, epsilon, eta,
-                                    full_dist_map, workers=7)
+    collecting_normal_votes = tg.collecting_normal_votes
+    # for v in tg.graph.vertices():
+        # neighbor_idx_to_dist, V_v = collecting_normal_votes(
+        #     v, g_max, A_max, sigma, full_dist_map)
+
+    nobj = tg.graph.num_vertices()
+    print ("number of vertices: {}".format(nobj))
+
+    p = pp.ProcessPool(4)
+    print ('Opened a pool with 4 processes')
+
+    results = p.map(partial(collecting_normal_votes, tg=tg, g_max=g_max,
+                            A_max=A_max, sigma=sigma,
+                            full_dist_map=full_dist_map), range(nobj))
+    p.close()
+    print ('Closed the pool')
+    print(results[0])
+
+    sum_num_neighbors = 0
+    classifying_orientation = tg.classifying_orientation
+    classes_counts = {}
+    for i, v in enumerate(tg.graph.vertices()):
+        neighbor_idx_to_dist = results[i][0]
+        sum_num_neighbors += len(neighbor_idx_to_dist)
+        V_v = results[i][1]
+        class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta)
+        try:
+            classes_counts[class_v] += 1
+        except KeyError:
+            classes_counts[class_v] = 1
+
+    # Printing out some numbers concerning the first run:
+    avg_num_geodesic_neighbors = sum_num_neighbors / tg.graph.num_vertices()
+    print ("Average number of geodesic neighbors for all vertices: %s"
+           % avg_num_geodesic_neighbors)
+    print "%s surface patches" % classes_counts[1]
+    if 2 in classes_counts:
+        print "%s crease junctions" % classes_counts[2]
+    if 3 in classes_counts:
+        print "%s no preferred orientation" % classes_counts[3]
 
     t_end1 = time.time()
     duration1 = t_end1 - t_begin1
