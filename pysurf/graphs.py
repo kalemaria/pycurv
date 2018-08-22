@@ -25,19 +25,11 @@ class SegmentationGraph(object):
 
     The constructor requires the following parameters of the underlying
     segmentation that will be used to build the graph.
-
-    Args:
-        scale_factor_to_nm (float): pixel size in nanometers for scaling the
-            surface and the graph
     """
 
-    def __init__(self, scale_factor_to_nm):
+    def __init__(self):
         """
-        Constructor.
-
-        Args:
-            scale_factor_to_nm (float): pixel size in nanometers for scaling the
-                surface and the graph
+        Constructor of the abstract SegmentationGraph object.
 
         Returns:
             None
@@ -45,9 +37,6 @@ class SegmentationGraph(object):
         self.graph = Graph(directed=False)
         """graph_tool.Graph: a graph object storing the segmentation graph
         topology, geometry and properties (initially empty).
-        """
-        self.scale_factor_to_nm = scale_factor_to_nm
-        """float: pixel size in nanometers for scaling the surface and the graph
         """
 
         # Add "internal property maps" to the graph.

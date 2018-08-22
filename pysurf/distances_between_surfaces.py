@@ -14,11 +14,12 @@ __author__ = 'Maria Kalemanov'
 SAMPLE_DST = 1
 
 
-def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, verbose=False):
+def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
+                     verbose=False):
     # Define a cellLocator to be able to compute intersections between lines
     # and the cER surface:
     locator = vtk.vtkCellLocator()
-    locator.SetDataSet(tg_cER.surface)
+    locator.SetDataSet(poly_cER)
     locator.BuildLocator()
     tolerance = 0.001
 
@@ -130,7 +131,8 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, verbose=False):
     return d1, d2, v1, v2
 
 
-def calculate_distances(tg_PM, tg_cER, maxdist, maxdist2, verbose=False):
+def calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, maxdist2,
+                        verbose=False):
     """
     Function to compute shortest distances between a cellular membrane and ER
     membranes using their surfaces.
@@ -139,6 +141,7 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxdist2, verbose=False):
         tg_PM (TriangleGraph): TriangleGraph object of PM surface with corrected
             normals (now should be pointing away from cER surface direction)
         tg_cER (TriangleGraph): TriangleGraph object of cER surface
+        poly_cER (vtkPolyData): vtkPolyData object of cER surface
         maxdist (int): maximal distance (nm) from PM to first cER membrane
         maxdist2 (int): maximal distance (nm) from PM to second cER membrane
         verbose (boolean, optional): if True (default False), some extra
@@ -172,9 +175,10 @@ def calculate_distances(tg_PM, tg_cER, maxdist, maxdist2, verbose=False):
 
         # Look for distances in both directions of the PM normal
         d1_s, d2_s, v1_s, v2_s = find_2_distances(
-            p0, N_v, maxdist, maxdist2, tg_cER, verbose)  # "sense"
+            p0, N_v, maxdist, maxdist2, tg_cER, poly_cER, verbose)  # "sense"
         d1_si, d2_si, v1_si, v2_si = find_2_distances(
-            p0, N_v * -1, maxdist, maxdist2, tg_cER, verbose)  # "sense inverse"
+            p0, N_v * -1, maxdist, maxdist2, tg_cER, poly_cER, verbose)
+        # "sense inverse"
 
         # Find orientation
         d1, d2 = None, None
@@ -227,14 +231,15 @@ def run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
                             cER_surf_outfile, cER_graph_outfile,
                             distances_outfile, maxdist, maxdist2, verbose):
     # Load the input files:
-    tg_PM = TriangleGraph(vtk.vtkPolyData())  # PM surface is not required
+    tg_PM = TriangleGraph()
     tg_PM.graph = load_graph(PM_graph_file)
-    cER_surf = io.load_poly(cER_surf_file)
-    tg_cER = TriangleGraph(cER_surf)
+    poly_cER = io.load_poly(cER_surf_file)
+    tg_cER = TriangleGraph()
     tg_cER.graph = load_graph(cER_graph_file)
 
     # Calculate distances:
-    d1s, d2s = calculate_distances(tg_PM, tg_cER, maxdist, maxdist2, verbose)
+    d1s, d2s = calculate_distances(
+        tg_PM, tg_cER, poly_cER, maxdist, maxdist2, verbose)
     print("{} d1s".format(len(d1s)))
     print("{} d2s".format(len(d2s)))
     # Save the distances into distances_outfile:

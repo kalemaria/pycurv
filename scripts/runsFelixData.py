@@ -58,7 +58,7 @@ def main(tomo):
         print("\nExtracting curvatures for ER without {} nm from border".format(
             b))
         extract_curvatures_after_new_workflow(
-            fold, base_filename, pixel_size, radius_hit,
+            fold, base_filename, radius_hit,
             epsilon=0, eta=0, methods=['VV'], exclude_borders=b)
 
     t_end = time.time()

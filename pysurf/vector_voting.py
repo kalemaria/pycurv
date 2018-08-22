@@ -466,7 +466,7 @@ def vector_voting_curve_fitting(
 
 
 def vector_curvature_tensor_voting(
-        tg, radius_hit, epsilon=0, eta=0, exclude_borders=True):
+        tg, poly_surf, radius_hit, epsilon=0, eta=0, exclude_borders=True):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation, and the GenCurvVote algorithm to estimate principle curvatures
@@ -474,6 +474,8 @@ def vector_curvature_tensor_voting(
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
+        poly_surf (vtkPolyData): surface from which the graph was generated,
+            scaled to nm
         radius_hit (float): radius in length unit of the graph, e.g. nanometers,
             parameter of gen_curv_vote algorithm; it should be chosen to
             correspond to radius of smallest features of interest on the surface
@@ -641,7 +643,7 @@ def vector_curvature_tensor_voting(
         result = None  # initialization
         if eval(condition1):
             # None is returned if curvature at v cannot be estimated
-            result = gen_curv_vote(v, radius_hit, verbose=False)
+            result = gen_curv_vote(poly_surf, v, radius_hit, verbose=False)
         # For crease, no preferably oriented vertices or if curvature could
         # not be estimated, add placeholders to the corresponding vertex
         # properties
@@ -675,7 +677,7 @@ def normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=0,
         methods=['VV'], page_curvature_formula=False, num_points=None,
         full_dist_map=False, graph_file='temp.gt', area2=True,
-        only_normals=False):
+        only_normals=False, poly_surf=None):
     """
     Runs the modified Normal Vector Voting algorithm (with different options for
     the second pass) to estimate surface orientation, principle curvatures and
@@ -715,6 +717,8 @@ def normals_directions_and_curvature_estimation(
         only_normals (boolean, optional): if True (default False), only normals
             are estimated, without principal directions and curvatures, only the
             graph with the orientations class, normals or tangents is returned.
+        poly_surf (vtkPolyData): surface from which the graph was generated,
+            scaled to nm (required only if method="VCTV", default None)
     Returns:
         a dictionary mapping the method name ('VV', 'VVCF' and 'VCTV') to the
         tuple of two elements: TriangleGraph graph and vtkPolyData surface of
@@ -737,8 +741,8 @@ def normals_directions_and_curvature_estimation(
         results = {}
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
-                tg.surface, tg.scale_factor_to_nm, radius_hit, exclude_borders,
-                graph_file, method, page_curvature_formula, num_points, area2)
+                radius_hit, exclude_borders, graph_file, method,
+                page_curvature_formula, num_points, area2, poly_surf=poly_surf)
             results[method] = (tg_curv, surface_curv)
 
         t_end = time.time()
@@ -841,32 +845,26 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
            "surface patches and tangents for creases...")
     t_begin1 = time.time()
 
-    collecting_normal_votes = tg.collecting_normal_votes
-    # for v in tg.graph.vertices():
-        # neighbor_idx_to_dist, V_v = collecting_normal_votes(
-        #     v, g_max, A_max, sigma, full_dist_map)
-
-    nobj = tg.graph.num_vertices()
-    print ("number of vertices: {}".format(nobj))
+    num_v = tg.graph.num_vertices()
+    print ("number of vertices: {}".format(num_v))
 
     p = pp.ProcessPool(4)
     print ('Opened a pool with 4 processes')
 
-    results = p.map(partial(collecting_normal_votes, tg=tg, g_max=g_max,
+    results = p.map(partial(tg.collecting_normal_votes, g_max=g_max,
                             A_max=A_max, sigma=sigma,
-                            full_dist_map=full_dist_map), range(nobj))
-    p.close()
-    print ('Closed the pool')
-    print(results[0])
+                            full_dist_map=full_dist_map), range(num_v))
+    # p.close()  # it lead to a multiprocess AssertionError from second run on
+    # print ('Closed the pool')
 
     sum_num_neighbors = 0
     classifying_orientation = tg.classifying_orientation
     classes_counts = {}
-    for i, v in enumerate(tg.graph.vertices()):
-        neighbor_idx_to_dist = results[i][0]
+    for v_i in range(num_v):
+        neighbor_idx_to_dist = results[v_i][0]
         sum_num_neighbors += len(neighbor_idx_to_dist)
-        V_v = results[i][1]
-        class_v = classifying_orientation(v, V_v, epsilon=epsilon, eta=eta)
+        V_v = results[v_i][1]
+        class_v = classifying_orientation(v_i, V_v, epsilon=epsilon, eta=eta)
         try:
             classes_counts[class_v] += 1
         except KeyError:
@@ -952,13 +950,11 @@ def preparation_for_curvature_estimation(
     # Save the graph to a file for use by different methods in the second run:
     tg.graph.save(graph_file)
 
-    return tg.surface, tg.scale_factor_to_nm
-
 
 def curvature_estimation(
-        scaled_surface, scale_factor_to_nm, radius_hit, exclude_borders=0,
-        graph_file='temp.gt', method="VV", page_curvature_formula=False,
-        num_points=None, area2=True):
+        radius_hit, exclude_borders=0, graph_file='temp.gt', method="VV",
+        page_curvature_formula=False, num_points=None, area2=True,
+        poly_surf=None):
     """
     Runs the second pass of the modified Normal Vector Voting algorithm with
     the given method to estimate principle curvatures and directions for a
@@ -966,9 +962,6 @@ def curvature_estimation(
     normals_directions_and_curvature_estimation).
 
     Args:
-        scaled_surface (vtkPolyData): scaled surface
-        scale_factor_to_nm (float): scale factor to nanometers of the surface
-            with respect to the underlying segmentation
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
@@ -986,14 +979,16 @@ def curvature_estimation(
             principal direction in order to fit parabola and estimate curvature
             (necessary is 'VVCF' is in methods list)
         area2 (boolean, optional): if True (default False), votes are
-            weighted by triangle area also in the
+            weighted by triangle area also in the second pass
+        poly_surf (vtkPolyData): surface from which the graph was generated,
+            scaled to nm (required only if method="VCTV", default None)
 
     Returns:
         a tuple of TriangleGraph graph and vtkPolyData surface of triangles
         with classified orientation and estimated normals or tangents, principle
         curvatures and directions
     """
-    tg_curv = TriangleGraph(scaled_surface, scale_factor_to_nm)
+    tg_curv = TriangleGraph()
     tg_curv.graph = load_graph(graph_file)
 
     print ("\nSecond run: estimating principle curvatures and directions "
@@ -1039,7 +1034,7 @@ def curvature_estimation(
         if eval(condition1):
             if method == "VCTV":
                 # None is returned if curvature at v cannot be estimated
-                result = gen_curv_vote(v, radius_hit, verbose=False)
+                result = gen_curv_vote(poly_surf, v, radius_hit, verbose=False)
             else:  # VV or VVCF
                 # Find the neighboring vertices of vertex v to be returned:
                 neighbor_idx_to_dist = tg_curv.find_geodesic_neighbors(

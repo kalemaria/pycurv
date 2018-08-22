@@ -88,12 +88,12 @@ def task_extract_curvatures():
                    # 'verbosity': 2,
                    'actions': [
                        (extract_curvatures_after_new_workflow,
-                        [subfold, base_filename, pixel_size, radius_hit], {
+                        [subfold, base_filename, radius_hit], {
                             'methods': methods,
                             'exclude_borders': 0
                         }),
                        (extract_curvatures_after_new_workflow,
-                        [subfold, base_filename, pixel_size, radius_hit], {
+                        [subfold, base_filename, radius_hit], {
                             'methods': methods,
                             'exclude_borders': 1
                         })

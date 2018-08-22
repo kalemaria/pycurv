@@ -39,8 +39,8 @@ def calculate_distances_from_triangle(
         vtkPolyData with "dist_to_v" property
     """
     # Build a triangle graph from the surface:
-    tg = TriangleGraph(surface, scale_factor_to_nm)
-    tg.build_graph_from_vtk_surface()
+    tg = TriangleGraph()
+    tg.build_graph_from_vtk_surface(surface, scale_factor_to_nm)
     if verbose:
         print ('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))

@@ -279,12 +279,17 @@ def rotate_vector(v, theta, axis=None, matrix=None, debug=False):
 class SurfaceGraph(graphs.SegmentationGraph):
     """Class defining the abstract SurfaceGraph object."""
 
-    def build_graph_from_vtk_surface(self, verbose=False):
+    def build_graph_from_vtk_surface(self, surface, scale_factor_to_nm,
+                                     verbose=False):
         """
         Base method for building a graph from a vtkPolyData surface, to be
         implemented by SurfaceGraph subclasses.
 
         Args:
+            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+                generated from the segmentation in voxels
+            scale_factor_to_nm (float): pixel size in nanometers for scaling the
+                surface and the graph
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -300,39 +305,19 @@ class PointGraph(SurfaceGraph):
 
     The constructor requires the following parameters of the underlying
     segmentation that will be used to build the graph.
-
-    Args:
-        surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
-            generated from the segmentation in voxels
-        scale_factor_to_nm (float): pixel size in nanometers for scaling the
-            surface and the graph
     """
 
-    def __init__(self, surface, scale_factor_to_nm):
+    def __init__(self):
         """
-        Constructor.
-
-        Args:
-            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
-                generated from the segmentation in voxels
-            scale_factor_to_nm (float): pixel size in nanometers for scaling the
-                surface and the graph
+        Constructor of the PointGraph object.
 
         Returns:
             None
         """
-        graphs.SegmentationGraph.__init__(self, scale_factor_to_nm)
+        graphs.SegmentationGraph.__init__(self)
 
-        if isinstance(surface, vtk.vtkPolyData):
-            self.surface = surface
-            """vtk.vtkPolyData: a signed surface (mesh of triangles) generated
-            from the segmentation (in voxels)"""
-        else:
-            raise pexceptions.PySegInputError(
-                expr='SegmentationGraph constructor',
-                msg="A vtkPolyData object required as the first input.")
-
-    def build_graph_from_vtk_surface(self, verbose=False):
+    def build_graph_from_vtk_surface(self, surface, scale_factor_to_nm=1,
+                                     verbose=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
         nanometers according to the scale factor also specified when creating
@@ -343,6 +328,10 @@ class PointGraph(SurfaceGraph):
         triangle edge.
 
         Args:
+            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+                generated from the segmentation in voxels
+            scale_factor_to_nm (float, optional): pixel size in nanometers for
+                scaling the surface and the graph (default 1)
             verbose(boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -350,8 +339,7 @@ class PointGraph(SurfaceGraph):
             None
         """
         # rescale the surface to nm and update the attribute
-        surface = rescale_surface(self.surface, self.scale_factor_to_nm)
-        self.surface = surface
+        surface = rescale_surface(surface, scale_factor_to_nm)
 
         if verbose:
             # 0. Check numbers of cells and all points.
@@ -429,37 +417,16 @@ class TriangleGraph(SurfaceGraph):
 
     The constructor requires the following parameters of the underlying
     segmentation that will be used to build the graph.
-
-    Args:
-        surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
-            generated from the segmentation in voxels
-        scale_factor_to_nm (float, optional): pixel size in nanometers for
-            scaling the surface and the graph (default 1)
     """
 
-    def __init__(self, surface, scale_factor_to_nm=1):
+    def __init__(self):
         """
-        Constructor.
-
-        Args:
-            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
-                generated from the segmentation in voxels
-            scale_factor_to_nm (float, optional): pixel size in nanometers for
-                scaling the surface and the graph (default 1)
+        Constructor of the TriangleGraph object.
 
         Returns:
             None
         """
-        graphs.SegmentationGraph.__init__(self, scale_factor_to_nm)
-
-        if isinstance(surface, vtk.vtkPolyData):
-            self.surface = surface
-            """vtk.vtkPolyData: a signed surface (mesh of triangles) generated
-            from the segmentation (in voxels)"""
-        else:
-            raise pexceptions.PySegInputError(
-                expr='SegmentationGraph constructor',
-                msg="A vtkPolyData object required as the first input.")
+        graphs.SegmentationGraph.__init__(self)
 
         # Add more "internal property maps" to the graph.
         # vertex property for storing the area in nanometers squared of the
@@ -492,8 +459,8 @@ class TriangleGraph(SurfaceGraph):
         nanometers to a list of triangle-cell indices sharing this point.
         """
 
-    def build_graph_from_vtk_surface(
-            self, verbose=False, reverse_normals=False):
+    def build_graph_from_vtk_surface(self, surface, scale_factor_to_nm=1,
+                                     verbose=False, reverse_normals=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
         nanometers according to the scale factor also specified when creating
@@ -505,6 +472,10 @@ class TriangleGraph(SurfaceGraph):
         triangle edges and a "weak" edge if they share only one edge.
 
         Args:
+            surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
+                generated from the segmentation in voxels
+            scale_factor_to_nm (float, optional): pixel size in nanometers for
+                scaling the surface and the graph (default 1)
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
             reverse_normals (boolean, optional): if True (default False), the
@@ -517,10 +488,9 @@ class TriangleGraph(SurfaceGraph):
         t_begin = time.time()
 
         # 1. Preparation
-        if self.scale_factor_to_nm != 1:
-            # rescale the surface to nm and update the attribute
-            self.surface = rescale_surface(
-                self.surface, self.scale_factor_to_nm)
+        if scale_factor_to_nm != 1:
+            # rescale the surface to nm
+            surface = rescale_surface(surface, scale_factor_to_nm)
 
         print 'Adding curvatures to the vtkPolyData surface...'
         # because VTK and we (gen_surface) have the opposite normal
@@ -529,17 +499,15 @@ class TriangleGraph(SurfaceGraph):
             invert = False
         else:
             invert = True
-        self.surface = add_curvature_to_vtk_surface(
-            self.surface, "Minimum", invert)
-        self.surface = add_curvature_to_vtk_surface(
-            self.surface, "Maximum", invert)
+        surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
+        surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
 
         if verbose:
             # Check numbers of cells and all points.
-            print '%s cells' % self.surface.GetNumberOfCells()
-            print '%s points' % self.surface.GetNumberOfPoints()
+            print '%s cells' % surface.GetNumberOfCells()
+            print '%s points' % surface.GetNumberOfPoints()
 
-        point_data = self.surface.GetPointData()
+        point_data = surface.GetPointData()
         n = point_data.GetNumberOfArrays()
         min_curvatures = None
         max_curvatures = None
@@ -559,9 +527,9 @@ class TriangleGraph(SurfaceGraph):
         # non-triangle cells and cell with area equal to zero.
         # Make a list of all added triangle cell indices:
         triangle_cell_ids = []
-        for cell_id in xrange(self.surface.GetNumberOfCells()):
+        for cell_id in xrange(surface.GetNumberOfCells()):
             # Get the cell i and check if it's a triangle:
-            cell = self.surface.GetCell(cell_id)
+            cell = surface.GetCell(cell_id)
             if not isinstance(cell, vtk.vtkTriangle):
                 print ('Oops, the cell number %s is not a vtkTriangle but '
                        'a %s! It will be ignored.'
@@ -681,7 +649,7 @@ class TriangleGraph(SurfaceGraph):
         for i, cell_id in enumerate(triangle_cell_ids):
             # Note: i corresponds to the vertex number of each cell, because
             # they were added in this order
-            cell = self.surface.GetCell(cell_id)
+            cell = surface.GetCell(cell_id)
             if verbose:
                 print '(Triangle) cell number %s:' % cell_id
 
@@ -770,6 +738,8 @@ class TriangleGraph(SurfaceGraph):
         duration = t_end - t_begin
         print ('Surface graph generation took: %s min %s s'
                % divmod(duration, 60))
+
+        return surface
 
     def graph_to_triangle_poly(self, verbose=False):
         """
@@ -1269,7 +1239,7 @@ class TriangleGraph(SurfaceGraph):
         the triangle surface.
 
         Args:
-            vertex_v (graph_tool.Vertex): the vertex v in the surface
+            vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph for which the votes are collected
             g_max (float): the maximal geodesic distance in nanometers
             A_max (float): the area of the largest triangle in the surface
@@ -1391,7 +1361,7 @@ class TriangleGraph(SurfaceGraph):
         into the graph.
 
         Args:
-            vertex_v (graph_tool.Vertex): the vertex v in the surface
+            vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph whose orientation is classified
             V_v (numpy.ndarray): the 3x3 symmetric matrix V_v
             epsilon (int, optional): parameter of Normal Vector Voting algorithm
@@ -2087,7 +2057,7 @@ class TriangleGraph(SurfaceGraph):
 
         return var_a, curvature
 
-    def gen_curv_vote(self, vertex_r, radius_hit, verbose=False):
+    def gen_curv_vote(self, poly_surf, vertex_r, radius_hit, verbose=False):
         """
         Implements the third pass of the method of Tong & Tang et al., 2005,
         "Algorithm 5. GenCurvVote". Estimates principal curvatures and
@@ -2097,6 +2067,8 @@ class TriangleGraph(SurfaceGraph):
         parameter.
 
         Args:
+            poly_surf (vtkPolyData): surface from which the graph was generated,
+                scaled to nm
             vertex_r (graph_tool.Vertex): the vertex r in the surface
                 triangle-graph for which the principal directions and curvatures
                 are estimated
@@ -2122,7 +2094,7 @@ class TriangleGraph(SurfaceGraph):
         # Define a cellLocator to be able to compute intersections between lines
         # and the surface:
         locator = vtk.vtkCellLocator()
-        locator.SetDataSet(self.surface)
+        locator.SetDataSet(poly_surf)
         locator.BuildLocator()
         tolerance = 0.001
 
