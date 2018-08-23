@@ -758,6 +758,10 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     with tangent or no preferred orientation) for a surface using its triangle
     graph (first part used by normals_directions_and_curvature_estimation).
 
+    Adds the "orientation_class" (1-3), the estimated normal "N_v" (if class is
+    1) and the estimated_tangent "T_v" (if class is 2) as vertex properties
+    into the graph.
+
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;

@@ -1356,10 +1356,6 @@ class TriangleGraph(SurfaceGraph):
         from the paper of Page et al., 2002. Equations (11) and (12) may help to
         choose epsilon and eta.
 
-        Adds the "orientation_class", the estimated normal "N_v" (if class is 1)
-        and the estimated_tangent "T_v" (if class is 2) as vertex properties
-        into the graph.
-
         Args:
             vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph whose orientation is classified
@@ -1375,9 +1371,12 @@ class TriangleGraph(SurfaceGraph):
                 information will be printed out
 
         Returns:
-            orientation of vertex v (int) - 1 if it belongs to a surface patch,
-            2 if it belongs to a crease junction or 3 if it doesn't have a
-            preferred orientation
+            - orientation of vertex v (int): 1 if it belongs to a surface patch,
+              2 if it belongs to a crease junction or 3 if it doesn't have a
+              preferred orientation
+            - estimated normal "N_v" (3x1 array) if class is 1, otherwise zeros
+            - the estimated_tangent "T_v" (3x1 array) if class is 2, otherwise
+              zeros
 
         Notes:
             If epsilon = 0 and eta = 0, all triangles will be classified as
