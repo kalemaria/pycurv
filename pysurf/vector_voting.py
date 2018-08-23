@@ -851,29 +851,48 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     p = pp.ProcessPool(4)
     print ('Opened a pool with 4 processes')
 
-    results = p.map(partial(tg.collecting_normal_votes, g_max=g_max,
-                            A_max=A_max, sigma=sigma,
-                            full_dist_map=full_dist_map), range(num_v))
-    # p.close()  # it lead to a multiprocess AssertionError from second run on
-    # print ('Closed the pool')
-
-    sum_num_neighbors = 0
-    classifying_orientation = tg.classifying_orientation
-    classes_counts = {}
-    for v_i in range(num_v):
-        neighbor_idx_to_dist = results[v_i][0]
-        sum_num_neighbors += len(neighbor_idx_to_dist)
-        V_v = results[v_i][1]
-        class_v = classifying_orientation(v_i, V_v, epsilon=epsilon, eta=eta)
-        try:
-            classes_counts[class_v] += 1
-        except KeyError:
-            classes_counts[class_v] = 1
-
-    # Printing out some numbers concerning the first run:
-    avg_num_geodesic_neighbors = sum_num_neighbors / tg.graph.num_vertices()
+    # output is a list with 2 columns:
+    # column 0 = neighbor_idx_to_dist (dict)
+    # column 1 = V_v (3x3 float array)
+    # each row i is of vertex v, its index == i
+    results1_list = p.map(partial(tg.collecting_normal_votes,
+                                  g_max=g_max, A_max=A_max, sigma=sigma,
+                                  full_dist_map=full_dist_map),
+                          range(num_v))  # a list of vertex v indices
+    results1_array = np.array(results1_list)
+    # Calculating average neighbors number:
+    neighbor_idx_to_dist_array = results1_array[:, 0]
+    num_neighbor_list = [len(x) for x in neighbor_idx_to_dist_array]
+    sum_num_neighbors = np.sum(np.array(num_neighbor_list))
+    avg_num_geodesic_neighbors = sum_num_neighbors / num_v
     print ("Average number of geodesic neighbors for all vertices: %s"
            % avg_num_geodesic_neighbors)
+    # Input of the next parallel calculation:
+    V_v_array = results1_array[:, 1]
+
+    # output is a list with 3 columns:
+    # column 0 = orientation class of the vertex (int)
+    # column 1 = N_v (3x1 float array, zeros if class=2 or 3)
+    # column 2 = T_v (3x1 float array, zeros if class=1 or 3)
+    # each row i is of vertex v, its index == i
+    results2_list = p.map(partial(tg.classifying_orientation,
+                                  epsilon=epsilon, eta=eta),
+                          range(num_v), V_v_array)
+    results2_array = np.array(results2_list, dtype=object)
+    # Adding the properties to the graph tg and counting classes:
+    class_v_array = results2_array[:, 0]
+    N_v_array = results2_array[:, 1]
+    T_v_array = results2_array[:, 2]
+    classes_counts = {}
+    for i in range(num_v):
+        v = tg.graph.vertex(i)
+        tg.graph.vp.orientation_class[v] = class_v_array[i]
+        tg.graph.vp.N_v[v] = N_v_array[i]
+        tg.graph.vp.T_v[v] = T_v_array[i]
+        try:
+            classes_counts[class_v_array[i]] += 1
+        except KeyError:
+            classes_counts[class_v_array[i]] = 1
     print "%s surface patches" % classes_counts[1]
     if 2 in classes_counts:
         print "%s crease junctions" % classes_counts[2]

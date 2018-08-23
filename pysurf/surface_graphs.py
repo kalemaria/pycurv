@@ -1434,24 +1434,15 @@ class TriangleGraph(SurfaceGraph):
                 N_v = normal2
             if verbose is True:
                 print "surface patch with normal N_v = %s" % N_v
-            self.graph.vp.orientation_class[vertex_v] = 1
-            self.graph.vp.N_v[vertex_v] = N_v
-            self.graph.vp.T_v[vertex_v] = np.zeros(shape=3)
-            return 1
+            return 1, N_v, np.zeros(shape=3)
         elif max_saliency == (epsilon * S_c):
             if verbose is True:
                 print "crease junction with tangent T_v = %s" % E_3
-            self.graph.vp.orientation_class[vertex_v] = 2
-            self.graph.vp.T_v[vertex_v] = E_3
-            self.graph.vp.N_v[vertex_v] = np.zeros(shape=3)
-            return 2
+            return 2, np.zeros(shape=3), E_3
         else:
             if verbose is True:
                 print "no preferred orientation"
-            self.graph.vp.orientation_class[vertex_v] = 3
-            self.graph.vp.N_v[vertex_v] = np.zeros(shape=3)
-            self.graph.vp.T_v[vertex_v] = np.zeros(shape=3)
-            return 3
+            return 3, np.zeros(shape=3), np.zeros(shape=3)
 
     def collecting_curvature_votes(
             self, vertex_v, neighbor_idx_to_dist, sigma, verbose=False,
