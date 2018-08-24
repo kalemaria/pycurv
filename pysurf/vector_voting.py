@@ -1037,11 +1037,9 @@ def curvature_estimation(
         condition1 += " and is_on_border[v] == 0"
         condition2 += " or is_on_border[v] == 1"
     gen_curv_vote = tg.gen_curv_vote
-    find_geodesic_neighbors = tg.find_geodesic_neighbors
     collecting_curvature_votes = tg.collecting_curvature_votes
     estimate_curvature = tg.estimate_curvature
-    estimate_directions_and_fit_curves =\
-            tg.estimate_directions_and_fit_curves
+    estimate_directions_and_fit_curves = tg.estimate_directions_and_fit_curves
     if method == "VVCF":
         # * Adding vertex properties to be filled in estimate_directions_and_fit
         # curves *
@@ -1071,8 +1069,6 @@ def curvature_estimation(
                 # None is returned if curvature at v cannot be estimated
                 result = gen_curv_vote(poly_surf, v, radius_hit, verbose=False)
             else:  # VV or VVCF
-                # Find the neighboring vertices of vertex v to be returned:
-                neighbor_idx_to_dist = find_geodesic_neighbors(v, g_max)
                 # None is returned if v does not have any neighbor belonging to
                 # a surface patch
                 result = collecting_curvature_votes(
