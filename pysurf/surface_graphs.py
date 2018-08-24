@@ -1281,7 +1281,9 @@ class TriangleGraph(SurfaceGraph):
             print ("\nWarning: the vertex v = %s has 0 neighbors. "
                    "It will be ignored later." % v)
             # return a placeholder instead of V_v
-            return neighbor_idx_to_dist, np.zeros(shape=(3, 3))
+            return 0, np.zeros(shape=(3, 3))
+            # if don't want to calculate average number of neighbors:
+            # return np.zeros(shape=(3, 3))
 
         if verbose:
             print "\nv = %s" % v
