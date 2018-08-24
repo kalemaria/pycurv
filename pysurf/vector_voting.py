@@ -856,21 +856,20 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     print ('Opened a pool with 4 processes')
 
     # output is a list with 2 columns:
-    # column 0 = neighbor_idx_to_dist (dict)
+    # column 0 = num_neighbors (int)
     # column 1 = V_v (3x3 float array)
     # each row i is of vertex v, its index == i
+    # V_v_list = p.map(partial(tg.collecting_normal_votes,  # if only V_v output
     results1_list = p.map(partial(tg.collecting_normal_votes,
                                   g_max=g_max, A_max=A_max, sigma=sigma,
                                   full_dist_map=full_dist_map),
                           range(num_v))  # a list of vertex v indices
-    results1_array = np.array(results1_list)
+    results1_array = np.array(results1_list, dtype=object)
     # Calculating average neighbors number:
-    neighbor_idx_to_dist_array = results1_array[:, 0]
-    num_neighbor_list = [len(x) for x in neighbor_idx_to_dist_array]
-    sum_num_neighbors = np.sum(np.array(num_neighbor_list))
-    avg_num_geodesic_neighbors = sum_num_neighbors / num_v
+    num_neighbors_array = results1_array[:, 0]
+    avg_num_neighbors = np.mean(num_neighbors_array)
     print ("Average number of geodesic neighbors for all vertices: %s"
-           % avg_num_geodesic_neighbors)
+           % avg_num_neighbors)
     # Input of the next parallel calculation:
     V_v_array = results1_array[:, 1]
 
@@ -882,6 +881,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     results2_list = p.map(partial(tg.classifying_orientation,
                                   epsilon=epsilon, eta=eta),
                           range(num_v), V_v_array)
+    #                      range(num_v), V_v_list)  # if only V_v output
     results2_array = np.array(results2_list, dtype=object)
     # Adding the properties to the graph tg and counting classes:
     class_v_array = results2_array[:, 0]

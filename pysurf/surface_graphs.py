@@ -1252,9 +1252,8 @@ class TriangleGraph(SurfaceGraph):
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
-        Returns:mou
-            - a dictionary of neighbors of vertex v, mapping index of each
-              vertex c_i to its geodesic distance from the vertex v
+        Returns:
+            - number of geodesic neighbors of vertex v
             - the 3x3 symmetric matrix V_v (numpy.ndarray)
         """
         # To spare function referencing every time in the following for loop:
@@ -1339,7 +1338,8 @@ class TriangleGraph(SurfaceGraph):
 
         if verbose:
             print "\nV_v: %s" % V_v
-        return neighbor_idx_to_dist, V_v
+        return len(neighbor_idx_to_dist), V_v
+        # return V_v  # if don't want to calculate average number of neighbors
 
     def classifying_orientation(self, vertex_v_ind, V_v, epsilon=2, eta=2,
                                 verbose=False):
