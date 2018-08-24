@@ -852,7 +852,7 @@ def main2():
     new_workflow(
             fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=0,
-            remove_small_components=min_component, only_normals=True)
+            remove_small_components=min_component, only_normals=False)
 
     t_end = time.time()
     duration = t_end - t_begin

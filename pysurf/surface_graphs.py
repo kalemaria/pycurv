@@ -1446,7 +1446,7 @@ class TriangleGraph(SurfaceGraph):
             return 3, np.zeros(shape=3), np.zeros(shape=3)
 
     def collecting_curvature_votes(
-            self, vertex_v, neighbor_idx_to_dist, sigma, verbose=False,
+            self, vertex_v, g_max, sigma, full_dist_map=None, verbose=False,
             page_curvature_formula=False, A_max=None):
         """
         For a vertex v, collects the curvature and tangent votes of all
@@ -1477,11 +1477,12 @@ class TriangleGraph(SurfaceGraph):
         Args:
             vertex_v (graph_tool.Vertex): the vertex v in the surface
                 triangle-graph for which the votes are collected
-            neighbor_idx_to_dist (dict): a dictionary of neighbors of vertex v,
-                mapping index of each vertex v_i to its geodesic distance from
-                the vertex v (output of collecting_votes)
+            g_max (float): the maximal geodesic distance in nanometers
             sigma (float): sigma, defined as 3*sigma = g_max, so that votes
                 beyond the neighborhood can be ignored
+            full_dist_map (graph_tool.PropertyMap, optional): the full distance
+                map for the whole graph; if None, a local distance map is
+                calculated for this vertex (default)
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
             page_curvature_formula (boolean, optional): if True (default False)
@@ -1511,6 +1512,10 @@ class TriangleGraph(SurfaceGraph):
         outer = np.multiply.outer
         cos = math.cos
         area = self.graph.vp.area
+
+        # Find the neighboring vertices of vertex v to be returned:
+        neighbor_idx_to_dist = self.find_geodesic_neighbors(
+            vertex_v, g_max, full_dist_map=full_dist_map)
 
         # Get the coordinates of vertex v and its estimated normal N_v (as numpy
         # array):
