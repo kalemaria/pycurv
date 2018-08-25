@@ -1762,8 +1762,9 @@ class TriangleGraph(SurfaceGraph):
         return (T_1, T_2, kappa_1, kappa_2,
                 gauss_curvature, mean_curvature, shape_index, curvedness)
 
-    def estimate_directions_and_fit_curves(self, vertex_v_ind, B_v, radius_hit,
-                                           num_points, verbose=False):
+    def estimate_directions_and_fit_curves(
+            self, poly_surf, vertex_v_ind, B_v, radius_hit, num_points,
+            verbose=False):
         """
         For a vertex v and its calculated matrix B_v, calculates the principal
         directions (T_1 and T_2) and curvatures (kappa_1 and kappa_2) at this
@@ -1775,6 +1776,8 @@ class TriangleGraph(SurfaceGraph):
         fitted to the surface points in the principal directions.
 
         Args:
+            poly_surf (vtkPolyData): surface from which the graph was generated,
+                scaled to nm
             vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph for which the principal directions and curvatures
                 are estimated
@@ -1854,9 +1857,9 @@ class TriangleGraph(SurfaceGraph):
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
         var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_1, radius_hit, num_points, verbose=verbose)
+            poly_surf, vertex_v, T_1, radius_hit, num_points, verbose=verbose)
         var_a_2, kappa_2 = self.find_points_in_tangent_direction_and_fit_curve(
-            vertex_v, T_2, radius_hit, num_points, verbose=verbose)
+            poly_surf, vertex_v, T_2, radius_hit, num_points, verbose=verbose)
         # Curvatures and directions might be interchanged:
         if kappa_1 < kappa_2:
             T_1, T_2 = T_2, T_1
@@ -1889,13 +1892,15 @@ class TriangleGraph(SurfaceGraph):
                 fit_error_1, fit_error_2)
 
     def find_points_in_tangent_direction_and_fit_curve(
-            self, vertex_v, tangent, radius_hit, num_points,
+            self, poly_surf, vertex_v, tangent, radius_hit, num_points,
             poly_file=None, plot_file=None, verbose=False):
         """
         Finds points on the surface in the given direction from the given vertex
         and fits a parabolic curve.
 
         Args:
+            poly_surf (vtkPolyData): surface from which the graph was generated,
+                scaled to nm
             vertex_v (graph_tool.Vertex): the vertex v in the surface
                 triangle-graph for which the principal directions and curvatures
                 are estimated
@@ -1928,7 +1933,7 @@ class TriangleGraph(SurfaceGraph):
         # Define a cellLocator to be able to compute intersections between lines
         # and the surface:
         locator = vtk.vtkCellLocator()
-        locator.SetDataSet(self.surface)
+        locator.SetDataSet(poly_surf)
         locator.BuildLocator()
         tolerance = 0.001
 
