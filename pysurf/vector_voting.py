@@ -797,6 +797,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
 
     # * Maximal triangle area *
     A, _ = tg.get_areas()
+    A = np.array(A)
     A_max = np.max(A)
     print "Maximal triangle area = %s" % A_max
 
@@ -847,8 +848,8 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
     num_v = tg.graph.num_vertices()
     print ("number of vertices: {}".format(num_v))
 
-    p = pp.ProcessPool(4)
-    print ('Opened a pool with 4 processes')
+    p = pp.ProcessPool(8)
+    print ('Opened a pool with 8 processes')
 
     # output is a list with 2 columns:
     # column 0 = num_neighbors (int)
@@ -1031,60 +1032,107 @@ def curvature_estimation(
 
     orientation_class = tg.graph.vp.orientation_class
     condition1 = "orientation_class[v] == 1"
-    condition2 = "orientation_class[v] != 1 or result is None"
+    condition2 = "orientation_class[v] != 1 or B_v_list[v_ind] is None"
     if exclude_borders > 0:
         is_on_border = tg.graph.vp.is_on_border
         condition1 += " and is_on_border[v] == 0"
         condition2 += " or is_on_border[v] == 1"
     gen_curv_vote = tg.gen_curv_vote
-    collecting_curvature_votes = tg.collecting_curvature_votes
-    estimate_curvature = tg.estimate_curvature
-    estimate_directions_and_fit_curves = tg.estimate_directions_and_fit_curves
     if method == "VVCF":
         # * Adding vertex properties to be filled in estimate_directions_and_fit
         # curves *
         # vertex properties for storing curve fitting errors (variances) in
         # maximal and minimal principal directions at the vertex (belonging to
         # class 1):
-        tg.graph.vp.fit_error_1 = tg.graph.new_vertex_property(
-            "float")
-        tg.graph.vp.fit_error_2 = tg.graph.new_vertex_property(
-            "float")
+        tg.graph.vp.fit_error_1 = tg.graph.new_vertex_property("float")
+        tg.graph.vp.fit_error_2 = tg.graph.new_vertex_property("float")
 
     g_max = math.pi * radius_hit / 2.0
     sigma = g_max / 3.0
     if (method == "VV" or method == "VVCF") and area2:
         A, _ = tg.get_areas()
+        A = np.array(A)
         A_max = np.max(A)
         print "Maximal triangle area = %s" % A_max
     else:
-        A_max = None
-    for i, v in enumerate(tg.graph.vertices()):
-        # Estimate principal directions and curvatures (and calculate the
-        # Gaussian and mean curvatures, shape index and curvedness) for
-        # vertices belonging to a surface patch and not on border
-        result = None  # initialization
+        A_max = 0.0
+
+    # Estimate principal directions and curvatures (and calculate the
+    # Gaussian and mean curvatures, shape index and curvedness) for
+    # vertices belonging to a surface patch and not on border
+    # - with partial parallelization! :-)
+
+    good_vertices_ind = []
+    B_v_list = []
+    for v in tg.graph.vertices():
         if eval(condition1):
+            good_vertices_ind.append(tg.graph.vertex_index[v])  # int(v)
             if method == "VCTV":
                 # None is returned if curvature at v cannot be estimated
-                result = gen_curv_vote(poly_surf, v, radius_hit, verbose=False)
-            else:  # VV or VVCF
-                # None is returned if v does not have any neighbor belonging to
-                # a surface patch
-                result = collecting_curvature_votes(
-                        v, g_max, sigma, verbose=False,
-                        page_curvature_formula=page_curvature_formula,
-                        A_max=A_max, full_dist_map=full_dist_map)
-                if result is not None:
-                    if method == "VV":
-                        estimate_curvature(v, result, verbose=False)
-                    elif method == "VVCF":
-                        estimate_directions_and_fit_curves(
-                            v, result, radius_hit, num_points, verbose=False)
+                B_v = gen_curv_vote(poly_surf, v, radius_hit, verbose=False)
+                B_v_list.append(B_v)
+    print("{} vertices to estimate curvature".format(len(good_vertices_ind)))
 
-        # For crease, no preferably oriented vertices, vertices on border or
-        # vertices lacking neighbors, add placeholders to the corresponding
-        # vertex properties
+    if method == "VV" or method == "VVCF":
+        p = pp.ProcessPool(8)
+        print ('Opened a pool with 8 processes')
+
+        # None is returned if v does not have any neighbor belonging to
+        # a surface patch, then estimate_curvature will return Nones as well
+        B_v_list = p.map(partial(tg.collecting_curvature_votes,
+                                 g_max=g_max, sigma=sigma, verbose=False,
+                                 page_curvature_formula=page_curvature_formula,
+                                 A_max=A_max, full_dist_map=full_dist_map),
+                         good_vertices_ind)
+
+        results_list = []
+        if method == "VV":
+            # columns: T_1, T_2, kappa_1, kappa_2, gauss_curvature,
+            # mean_curvature, shape_index, curvedness
+            results_list = p.map(partial(tg.estimate_curvature,
+                                         verbose=False),
+                                 good_vertices_ind, B_v_list)
+        elif method == "VVCF":
+            # columns as in estimate_curvature plus: fit_error_1, fit_error_2
+            results_list = p.map(partial(tg.estimate_directions_and_fit_curves,
+                                         radius_hit=radius_hit,
+                                         num_points=num_points, verbose=False),
+                                 good_vertices_ind, B_v_list)
+        results_array = np.array(results_list, dtype=object)
+        T_1_array = results_array[:, 0]
+        T_2_array = results_array[:, 1]
+        kappa_1_array = results_array[:, 2]
+        kappa_2_array = results_array[:, 3]
+        gauss_curvature_array = results_array[:, 4]
+        mean_curvature_array = results_array[:, 5]
+        shape_index_array = results_array[:, 6]
+        curvedness_array = results_array[:, 7]
+        if method == "VVCF":
+            fit_error_1_array = results_array[:, 8]
+            fit_error_2_array = results_array[:, 9]
+
+        # Add T_1, T_2, kappa_1, kappa_2, derived Gaussian and mean curvatures
+        # as well as shape index and curvedness as properties to the graph:
+        for v_ind in good_vertices_ind:
+            v = tg.graph.vertex(v_ind)
+            if T_1_array[v_ind] is not None:
+                tg.graph.vp.T_1[v] = T_1_array[v_ind]
+                tg.graph.vp.T_2[v] = T_2_array[v_ind]
+                tg.graph.vp.kappa_1[v] = kappa_1_array[v_ind]
+                tg.graph.vp.kappa_2[v] = kappa_2_array[v_ind]
+                tg.graph.vp.gauss_curvature_VV[v] = gauss_curvature_array[v_ind]
+                tg.graph.vp.mean_curvature_VV[v] = mean_curvature_array[v_ind]
+                tg.graph.vp.shape_index_VV[v] = shape_index_array[v_ind]
+                tg.graph.vp.curvedness_VV[v] = curvedness_array[v_ind]
+                if method == "VVCF":
+                    tg.graph.vp.fit_error_1[v] = fit_error_1_array[v_ind]
+                    tg.graph.vp.fit_error_2[v] = fit_error_2_array[v_ind]
+
+    # For crease, no preferably oriented vertices, vertices on border or
+    # vertices lacking neighbors, add placeholders to the corresponding
+    # vertex properties
+    # TODO should be added by default?
+    for v in tg.graph.vertices():
         if eval(condition2):
             tg.graph.vp.T_1[v] = np.zeros(shape=3)
             tg.graph.vp.T_2[v] = np.zeros(shape=3)

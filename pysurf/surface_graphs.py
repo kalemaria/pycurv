@@ -1446,8 +1446,8 @@ class TriangleGraph(SurfaceGraph):
             return 3, np.zeros(shape=3), np.zeros(shape=3)
 
     def collecting_curvature_votes(
-            self, vertex_v, g_max, sigma, full_dist_map=None, verbose=False,
-            page_curvature_formula=False, A_max=None):
+            self, vertex_v_ind, g_max, sigma, full_dist_map=None, verbose=False,
+            page_curvature_formula=False, A_max=0.0):
         """
         For a vertex v, collects the curvature and tangent votes of all
         triangles within its geodesic neighborhood belonging to a surface patch
@@ -1475,7 +1475,7 @@ class TriangleGraph(SurfaceGraph):
         (Eq. 5), which is returned.
 
         Args:
-            vertex_v (graph_tool.Vertex): the vertex v in the surface
+            vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph for which the votes are collected
             g_max (float): the maximal geodesic distance in nanometers
             sigma (float): sigma, defined as 3*sigma = g_max, so that votes
@@ -1491,12 +1491,14 @@ class TriangleGraph(SurfaceGraph):
                 the estimated normal of v_i (N_v_i) onto the arc plane (formed
                 by v, N_v and v_i) divided by the arc length (geodesic distance
                 between v and v_i).
-            A_max (boolean, optional): if given (default None), votes are
+            A_max (float, optional): if given (default 0.0), votes are
                 weighted by triangle area like in the first step (normals
                 estimation)
         Returns:
             the 3x3 symmetric matrix B_v (numpy.ndarray)
         """
+        vertex_v = self.graph.vertex(vertex_v_ind)
+
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         vp_N_v = self.graph.vp.N_v
@@ -1538,7 +1540,7 @@ class TriangleGraph(SurfaceGraph):
                 # Weight depending on the geodesic distance to the neighboring
                 # vertex v_i from the vertex v, g_i:
                 g_i = neighbor_idx_to_dist[idx_v_i]
-                if A_max is None:
+                if A_max == 0.0:
                     w_i = exp(- g_i / sigma)
                 else:
                     A_i = area[vertex_v_i]
@@ -1552,7 +1554,7 @@ class TriangleGraph(SurfaceGraph):
             assert(sum_w_i > 0)
         except AssertionError:  # can be 0 if no surface patch neighbors exist
             print ("\nWarning: sum of the weights is not positive, but %s, for "
-                   "the vertex v = %s" % (sum_w_i, v))
+                   "the vertex v = %s, index = %s" % (sum_w_i, v, int(v)))
             print ("%s neighbors in a surface patch with weights w_i:"
                    % len(surface_neighbors_idx))
             print all_w_i
@@ -1647,7 +1649,7 @@ class TriangleGraph(SurfaceGraph):
 
         return B_v
 
-    def estimate_curvature(self, vertex_v, B_v, verbose=False):
+    def estimate_curvature(self, vertex_v_ind, B_v, verbose=False):
         """
         For a vertex v and its calculated matrix B_v (output of
         collecting_votes2), calculates the principal directions (T_1 and T_2)
@@ -1659,7 +1661,7 @@ class TriangleGraph(SurfaceGraph):
         transformations of those eigenvalues (Eq. 4).
 
         Args:
-            vertex_v (graph_tool.Vertex): the vertex v in the surface
+            vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph for which the principal directions and curvatures
                 are estimated
             B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
@@ -1668,8 +1670,16 @@ class TriangleGraph(SurfaceGraph):
                 information will be printed out
 
         Returns:
-            None
+            T_1, T_2, kappa_1, kappa_2, gauss_curvature, mean_curvature,
+            shape_index, curvedness
+            if B_v is None or the decomposition does not work, a list of None
         """
+        if B_v is None:
+            if verbose:
+                print("B_v is None, nothing to decompose - done")
+            return None, None, None, None, None, None, None, None
+        vertex_v = self.graph.vertex(vertex_v_ind)
+
         # Decompose the symmetric matrix B_v:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix
@@ -1721,7 +1731,7 @@ class TriangleGraph(SurfaceGraph):
                 print("lambda_1 = {}".format(b_1))
                 print("lambda_2 = {}".format(b_2))
                 print("lambda_3 = {}".format(b_3))
-                return None
+                return None, None, None, None, None, None, None, None
         # Estimated principal curvatures:
         kappa_1 = 3 * b_1 - b_2
         kappa_2 = 3 * b_2 - b_1
@@ -1738,23 +1748,21 @@ class TriangleGraph(SurfaceGraph):
             print "kappa_1 = %s" % kappa_1
             print "kappa_2 = %s" % kappa_2
 
-        # Add T_1, T_2, kappa_1, kappa_2, derived Gaussian and mean curvatures
-        # as well as shape index and curvedness as properties to the graph:
-        self.graph.vp.T_1[vertex_v] = T_1
-        self.graph.vp.T_2[vertex_v] = T_2
-        self.graph.vp.kappa_1[vertex_v] = kappa_1
-        self.graph.vp.kappa_2[vertex_v] = kappa_2
-        self.graph.vp.gauss_curvature_VV[vertex_v] = kappa_1 * kappa_2
-        self.graph.vp.mean_curvature_VV[vertex_v] = (kappa_1 + kappa_2) / 2
+        # return T_1, T_2, kappa_1, kappa_2, Gaussian, mean curvature,
+        # shape index and curvedness of vertex v:
+        gauss_curvature = kappa_1 * kappa_2
+        mean_curvature = (kappa_1 + kappa_2) / 2
         if kappa_1 == 0 and kappa_2 == 0:
-            self.graph.vp.shape_index_VV[vertex_v] = 0
+            shape_index = 0
         else:
-            self.graph.vp.shape_index_VV[vertex_v] = 2 / math.pi * math.atan(
+            shape_index = 2 / math.pi * math.atan(
                 (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
-        self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
-            (kappa_1 ** 2 + kappa_2 ** 2) / 2)
+        curvedness = math.sqrt((kappa_1 ** 2 + kappa_2 ** 2) / 2)
 
-    def estimate_directions_and_fit_curves(self, vertex_v, B_v, radius_hit,
+        return (T_1, T_2, kappa_1, kappa_2,
+                gauss_curvature, mean_curvature, shape_index, curvedness)
+
+    def estimate_directions_and_fit_curves(self, vertex_v_ind, B_v, radius_hit,
                                            num_points, verbose=False):
         """
         For a vertex v and its calculated matrix B_v, calculates the principal
@@ -1767,7 +1775,7 @@ class TriangleGraph(SurfaceGraph):
         fitted to the surface points in the principal directions.
 
         Args:
-            vertex_v (graph_tool.Vertex): the vertex v in the surface
+            vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph for which the principal directions and curvatures
                 are estimated
             B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
@@ -1780,8 +1788,16 @@ class TriangleGraph(SurfaceGraph):
                 information will be printed out
 
         Returns:
-            None
+            T_1, T_2, kappa_1, kappa_2, gauss_curvature, mean_curvature,
+            shape_index, curvedness, fit_error_1, fit_error_2
+            if B_v is None or the decomposition does not work, a list of None
         """
+        if B_v is None:
+            if verbose:
+                print("B_v is None, nothing to decompose - done")
+            return None, None, None, None, None, None, None, None, None, None
+        vertex_v = self.graph.vertex(vertex_v_ind)
+
         # Decompose the symmetric matrix B_v:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix
@@ -1833,7 +1849,8 @@ class TriangleGraph(SurfaceGraph):
                 print("lambda_1 = {}".format(b_1))
                 print("lambda_2 = {}".format(b_2))
                 print("lambda_3 = {}".format(b_3))
-                return None
+                return (None, None, None, None, None, None, None, None,
+                        None, None)
         # Estimate principal curvatures using curve fitting in the principal
         # directions:
         var_a_1, kappa_1 = self.find_points_in_tangent_direction_and_fit_curve(
@@ -1854,24 +1871,22 @@ class TriangleGraph(SurfaceGraph):
             print "kappa_1 = {}".format(kappa_1)
             print "kappa_2 = {}".format(kappa_2)
 
-        # Add T_1, T_2, curve fitting errors (variances), kappa_1, kappa_2,
-        # derived Gaussian and mean curvatures as well as shape index and
-        # curvedness as properties to the graph:
-        self.graph.vp.T_1[vertex_v] = T_1
-        self.graph.vp.T_2[vertex_v] = T_2
-        self.graph.vp.fit_error_1[vertex_v] = var_a_1
-        self.graph.vp.fit_error_2[vertex_v] = var_a_2
-        self.graph.vp.kappa_1[vertex_v] = kappa_1
-        self.graph.vp.kappa_2[vertex_v] = kappa_2
-        self.graph.vp.gauss_curvature_VV[vertex_v] = kappa_1 * kappa_2
-        self.graph.vp.mean_curvature_VV[vertex_v] = (kappa_1 + kappa_2) / 2
+        # return T_1, T_2, curve fitting errors (variances), kappa_1, kappa_2,
+        # Gaussian, mean curvature, shape index and curvedness of vertex v:
+        fit_error_1 = var_a_1
+        fit_error_2 = var_a_2
+        gauss_curvature = kappa_1 * kappa_2
+        mean_curvature = (kappa_1 + kappa_2) / 2
         if kappa_1 == 0 and kappa_2 == 0:
-            self.graph.vp.shape_index_VV[vertex_v] = 0
+            shape_index = 0
         else:
-            self.graph.vp.shape_index_VV[vertex_v] = 2 / math.pi * math.atan(
+            shape_index = 2 / math.pi * math.atan(
                 (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
-        self.graph.vp.curvedness_VV[vertex_v] = math.sqrt(
-            (kappa_1 ** 2 + kappa_2 ** 2) / 2)
+        curvedness = math.sqrt((kappa_1 ** 2 + kappa_2 ** 2) / 2)
+
+        return (T_1, T_2, kappa_1, kappa_2,
+                gauss_curvature, mean_curvature, shape_index, curvedness,
+                fit_error_1, fit_error_2)
 
     def find_points_in_tangent_direction_and_fit_curve(
             self, vertex_v, tangent, radius_hit, num_points,
