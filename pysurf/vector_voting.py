@@ -671,7 +671,7 @@ def normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=0,
         methods=['VV'], page_curvature_formula=False, num_points=None,
         full_dist_map=False, graph_file='temp.gt', area2=True,
-        only_normals=False, poly_surf=None):
+        only_normals=False, poly_surf=None, cores=8):
     """
     Runs the modified Normal Vector Voting algorithm (with different options for
     the second pass) to estimate surface orientation, principle curvatures and
@@ -713,6 +713,7 @@ def normals_directions_and_curvature_estimation(
             graph with the orientations class, normals or tangents is returned.
         poly_surf (vtkPolyData): surface from which the graph was generated,
             scaled to nm (required only if method="VCTV", default None)
+        cores (int): number of cores to run VV in parallel (default 8)
     Returns:
         a dictionary mapping the method name ('VV', 'VVCF' and 'VCTV') to the
         tuple of two elements: TriangleGraph graph and vtkPolyData surface of
@@ -727,7 +728,8 @@ def normals_directions_and_curvature_estimation(
     """
     t_begin = time.time()
 
-    tg = normals_estimation(tg, radius_hit, epsilon, eta, full_dist_map)
+    tg = normals_estimation(tg, radius_hit, epsilon, eta, full_dist_map,
+                            cores=cores)
 
     preparation_for_curvature_estimation(tg, exclude_borders, graph_file)
 
@@ -737,7 +739,7 @@ def normals_directions_and_curvature_estimation(
             tg_curv, surface_curv = curvature_estimation(
                 radius_hit, exclude_borders, graph_file, method,
                 page_curvature_formula, num_points, area2, poly_surf=poly_surf,
-                full_dist_map=full_dist_map)
+                full_dist_map=full_dist_map, cores=cores)
             results[method] = (tg_curv, surface_curv)
 
         t_end = time.time()
@@ -746,7 +748,8 @@ def normals_directions_and_curvature_estimation(
         return results
 
 
-def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
+def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
+                       cores=8):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation (classification in surface patch with normal, crease junction
@@ -772,6 +775,8 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map is
             calculated later for each vertex (default)
+        cores (int): number of cores to run VV (collecting_normal_votes and
+            classifying_orientation) in parallel (default 8)
 
     Returns:
         tg (TriangleGraph): triangle graph with added properties
@@ -845,54 +850,79 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False):
            "surface patches and tangents for creases...")
     t_begin1 = time.time()
 
+    collecting_normal_votes = tg.collecting_normal_votes
+    classifying_orientation = tg.classifying_orientation
     num_v = tg.graph.num_vertices()
     print ("number of vertices: {}".format(num_v))
+    classes_counts = {}
 
-    p = pp.ProcessPool(8)
-    print ('Opened a pool with 8 processes')
+    if cores > 1:  # parallel processing
+        p = pp.ProcessPool(cores)
+        print ('Opened a pool with {} processes'.format(cores))
 
-    # output is a list with 2 columns:
-    # column 0 = num_neighbors (int)
-    # column 1 = V_v (3x3 float array)
-    # each row i is of vertex v, its index == i
-    # V_v_list = p.map(partial(tg.collecting_normal_votes,  # if only V_v output
-    results1_list = p.map(partial(tg.collecting_normal_votes,
-                                  g_max=g_max, A_max=A_max, sigma=sigma,
-                                  full_dist_map=full_dist_map),
-                          range(num_v))  # a list of vertex v indices
-    results1_array = np.array(results1_list, dtype=object)
-    # Calculating average neighbors number:
-    num_neighbors_array = results1_array[:, 0]
-    avg_num_neighbors = np.mean(num_neighbors_array)
+        # output is a list with 2 columns:
+        # column 0 = num_neighbors (int)
+        # column 1 = V_v (3x3 float array)
+        # each row i is of vertex v, its index == i
+        # V_v_list = p.map(partial(collecting_normal_votes,  # if only V_v output
+        results1_list = p.map(partial(collecting_normal_votes,
+                                      g_max=g_max, A_max=A_max, sigma=sigma,
+                                      full_dist_map=full_dist_map),
+                              range(num_v))  # a list of vertex v indices
+        results1_array = np.array(results1_list, dtype=object)
+        # Calculating average neighbors number:
+        num_neighbors_array = results1_array[:, 0]
+        avg_num_neighbors = np.mean(num_neighbors_array)
+        # Input of the next parallel calculation:
+        V_v_array = results1_array[:, 1]
+
+        # output is a list with 3 columns:
+        # column 0 = orientation class of the vertex (int)
+        # column 1 = N_v (3x1 float array, zeros if class=2 or 3)
+        # column 2 = T_v (3x1 float array, zeros if class=1 or 3)
+        # each row i is of vertex v, its index == i
+        results2_list = p.map(partial(classifying_orientation,
+                                      epsilon=epsilon, eta=eta),
+                              range(num_v), V_v_array)
+        #                      range(num_v), V_v_list)  # if only V_v output
+        results2_array = np.array(results2_list, dtype=object)
+        class_v_array = results2_array[:, 0]
+        N_v_array = results2_array[:, 1]
+        T_v_array = results2_array[:, 2]
+        # Adding the properties to the graph tg and counting classes:
+        for i in range(num_v):
+            v = tg.graph.vertex(i)
+            tg.graph.vp.orientation_class[v] = class_v_array[i]
+            tg.graph.vp.N_v[v] = N_v_array[i]
+            tg.graph.vp.T_v[v] = T_v_array[i]
+            try:
+                classes_counts[class_v_array[i]] += 1
+            except KeyError:
+                classes_counts[class_v_array[i]] = 1
+
+    else:  # cores == 1, sequential processing
+        sum_num_neighbors = 0
+        for i in range(num_v):
+            num_neighbors, V_v = collecting_normal_votes(
+                i, g_max, A_max, sigma, verbose=False,
+                full_dist_map=full_dist_map)
+            sum_num_neighbors += num_neighbors
+            class_v, N_v, T_v = classifying_orientation(
+                i, V_v, epsilon=epsilon, eta=eta, verbose=False)
+            # Adding the properties to the graph tg and counting classes:
+            v = tg.graph.vertex(i)
+            tg.graph.vp.orientation_class[v] = class_v
+            tg.graph.vp.N_v[v] = N_v
+            tg.graph.vp.T_v[v] = T_v
+            try:
+                classes_counts[class_v] += 1
+            except KeyError:
+                classes_counts[class_v] = 1
+        avg_num_neighbors = sum_num_neighbors / num_v
+
+    # Printing out some numbers concerning the first run:
     print ("Average number of geodesic neighbors for all vertices: %s"
            % avg_num_neighbors)
-    # Input of the next parallel calculation:
-    V_v_array = results1_array[:, 1]
-
-    # output is a list with 3 columns:
-    # column 0 = orientation class of the vertex (int)
-    # column 1 = N_v (3x1 float array, zeros if class=2 or 3)
-    # column 2 = T_v (3x1 float array, zeros if class=1 or 3)
-    # each row i is of vertex v, its index == i
-    results2_list = p.map(partial(tg.classifying_orientation,
-                                  epsilon=epsilon, eta=eta),
-                          range(num_v), V_v_array)
-    #                      range(num_v), V_v_list)  # if only V_v output
-    results2_array = np.array(results2_list, dtype=object)
-    # Adding the properties to the graph tg and counting classes:
-    class_v_array = results2_array[:, 0]
-    N_v_array = results2_array[:, 1]
-    T_v_array = results2_array[:, 2]
-    classes_counts = {}
-    for i in range(num_v):
-        v = tg.graph.vertex(i)
-        tg.graph.vp.orientation_class[v] = class_v_array[i]
-        tg.graph.vp.N_v[v] = N_v_array[i]
-        tg.graph.vp.T_v[v] = T_v_array[i]
-        try:
-            classes_counts[class_v_array[i]] += 1
-        except KeyError:
-            classes_counts[class_v_array[i]] = 1
     print "%s surface patches" % classes_counts[1]
     if 2 in classes_counts:
         print "%s crease junctions" % classes_counts[2]
@@ -973,7 +1003,7 @@ def preparation_for_curvature_estimation(
 def curvature_estimation(
         radius_hit, exclude_borders=0, graph_file='temp.gt', method="VV",
         page_curvature_formula=False, num_points=None, area2=True,
-        poly_surf=None, full_dist_map=False):
+        poly_surf=None, full_dist_map=False, cores=8):
     """
     Runs the second pass of the modified Normal Vector Voting algorithm with
     the given method to estimate principle curvatures and directions for a
@@ -1004,6 +1034,8 @@ def curvature_estimation(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map is
             calculated later for each vertex (default)
+        cores (int): number of cores to run VV (collecting_curvature_votes and
+            estimate_curvature) in parallel (default 8)
 
     Returns:
         a tuple of TriangleGraph graph and vtkPolyData surface of triangles
@@ -1030,6 +1062,10 @@ def curvature_estimation(
            "for surface patches using {}...".format(method))
     t_begin2 = time.time()
 
+    collecting_curvature_votes = tg.collecting_curvature_votes
+    gen_curv_vote = tg.gen_curv_vote
+    estimate_curvature = tg.estimate_curvature
+    estimate_directions_and_fit_curves = tg.estimate_directions_and_fit_curves
     orientation_class = tg.graph.vp.orientation_class
     condition1 = "orientation_class[v] == 1"
     condition2 = "orientation_class[v] != 1 or B_v_list[i] is None"
@@ -1037,8 +1073,6 @@ def curvature_estimation(
         is_near_border = tg.graph.vp.is_near_border
         condition1 += " and is_near_border[v] == 0"
         condition2 += " or is_near_border[v] == 1"
-    gen_curv_vote = tg.gen_curv_vote
-
     g_max = math.pi * radius_hit / 2.0
     sigma = g_max / 3.0
     if (method == "VV" or method == "VVCF") and area2:
@@ -1052,65 +1086,98 @@ def curvature_estimation(
     # Estimate principal directions and curvatures (and calculate the
     # Gaussian and mean curvatures, shape index and curvedness) for
     # vertices belonging to a surface patch and not on border
-    # - with partial parallelization! :-)
-
     good_vertices_ind = []
     B_v_list = []  # has same length as good_vertices_ind
     for v in tg.graph.vertices():
         if eval(condition1):
             good_vertices_ind.append(int(v))  # tg.graph.vertex_index[v]
-            if method == "VCTV":
+            # Voting and curvature estimation for VCTV:
+            if method == "VCTV":  # sequential processing, edits the graph
                 # None is returned if curvature at v cannot be estimated
                 B_v = gen_curv_vote(poly_surf, v, radius_hit, verbose=False)
                 B_v_list.append(B_v)
     print("{} vertices to estimate curvature".format(len(good_vertices_ind)))
 
     if method == "VV" or method == "VVCF":
-        p = pp.ProcessPool(8)
-        print ('Opened a pool with 8 processes')
+        if cores > 1:  # parallel processing
+            p = pp.ProcessPool(cores)
+            print ('Opened a pool with {} processes'.format(cores))
 
-        # None is returned if v does not have any neighbor belonging to
-        # a surface patch, then estimate_curvature will return Nones as well
-        B_v_list = p.map(partial(tg.collecting_curvature_votes,
-                                 g_max=g_max, sigma=sigma, verbose=False,
-                                 page_curvature_formula=page_curvature_formula,
-                                 A_max=A_max, full_dist_map=full_dist_map),
-                         good_vertices_ind)
+            # Curvature votes collection is common for VV and VVCF:
+            # None is returned if v does not have any neighbor belonging to
+            # a surface patch, then estimate_curvature will return Nones as well
+            B_v_list = p.map(partial(collecting_curvature_votes,
+                                     g_max=g_max, sigma=sigma, verbose=False,
+                                     page_curvature_formula=page_curvature_formula,
+                                     A_max=A_max, full_dist_map=full_dist_map),
+                             good_vertices_ind)
+            # Curvature estimation for VV:
+            if method == "VV":
+                # results_list has same length as good_vertices_ind
+                # columns: T_1, T_2, kappa_1, kappa_2, gauss_curvature,
+                # mean_curvature, shape_index, curvedness
+                results_list = p.map(partial(estimate_curvature,
+                                             verbose=False),
+                                     good_vertices_ind, B_v_list)
+                results_array = np.array(results_list, dtype=object)
+                T_1_array = results_array[:, 0]
+                T_2_array = results_array[:, 1]
+                kappa_1_array = results_array[:, 2]
+                kappa_2_array = results_array[:, 3]
+                gauss_curvature_array = results_array[:, 4]
+                mean_curvature_array = results_array[:, 5]
+                shape_index_array = results_array[:, 6]
+                curvedness_array = results_array[:, 7]
+                # Add T_1, T_2, kappa_1, kappa_2, Gaussian and mean curvatures,
+                # shape index and curvedness as properties to the graph:
+                # (v_ind is vertex v index, i is v_ind index in results arrays)
+                for i, v_ind in enumerate(good_vertices_ind):
+                    v = tg.graph.vertex(v_ind)
+                    if T_1_array[i] is not None:
+                        tg.graph.vp.T_1[v] = T_1_array[i]
+                        tg.graph.vp.T_2[v] = T_2_array[i]
+                        tg.graph.vp.kappa_1[v] = kappa_1_array[i]
+                        tg.graph.vp.kappa_2[v] = kappa_2_array[i]
+                        tg.graph.vp.gauss_curvature_VV[v] = gauss_curvature_array[i]
+                        tg.graph.vp.mean_curvature_VV[v] = mean_curvature_array[i]
+                        tg.graph.vp.shape_index_VV[v] = shape_index_array[i]
+                        tg.graph.vp.curvedness_VV[v] = curvedness_array[i]
 
-    if method == "VV":
-        # results_list has same length as good_vertices_ind
-        # columns: T_1, T_2, kappa_1, kappa_2, gauss_curvature,
-        # mean_curvature, shape_index, curvedness
-        results_list = p.map(partial(tg.estimate_curvature,
-                                     verbose=False),
-                             good_vertices_ind, B_v_list)
+        else:  # cores == 1, sequential processing
+            # Curvature votes collection is common for VV and VVCF:
+            for v_ind in good_vertices_ind:
+                B_v = collecting_curvature_votes(
+                    v_ind, g_max, sigma, verbose=False,
+                    page_curvature_formula=page_curvature_formula,
+                    A_max=A_max, full_dist_map=full_dist_map)
+                B_v_list.append(B_v)
+            # Curvature estimation for VV:
+            if method == "VV":
+                for i, v_ind in enumerate(good_vertices_ind):
+                    B_v = B_v_list[i]
+                    results = estimate_curvature(v_ind, B_v, verbose=False)
+                    T_1 = results[0]
+                    T_2 = results[1]
+                    kappa_1 = results[2]
+                    kappa_2 = results[3]
+                    gauss_curvature = results[4]
+                    mean_curvature = results[5]
+                    shape_index = results[6]
+                    curvedness = results[7]
+                    # Add the properties to the graph:
+                    v = tg.graph.vertex(v_ind)
+                    if T_1 is not None:
+                        tg.graph.vp.T_1[v] = T_1
+                        tg.graph.vp.T_2[v] = T_2
+                        tg.graph.vp.kappa_1[v] = kappa_1
+                        tg.graph.vp.kappa_2[v] = kappa_2
+                        tg.graph.vp.gauss_curvature_VV[v] = gauss_curvature
+                        tg.graph.vp.mean_curvature_VV[v] = mean_curvature
+                        tg.graph.vp.shape_index_VV[v] = shape_index
+                        tg.graph.vp.curvedness_VV[v] = curvedness
 
-        results_array = np.array(results_list, dtype=object)
-        T_1_array = results_array[:, 0]
-        T_2_array = results_array[:, 1]
-        kappa_1_array = results_array[:, 2]
-        kappa_2_array = results_array[:, 3]
-        gauss_curvature_array = results_array[:, 4]
-        mean_curvature_array = results_array[:, 5]
-        shape_index_array = results_array[:, 6]
-        curvedness_array = results_array[:, 7]
-
-        # Add T_1, T_2, kappa_1, kappa_2, derived Gaussian and mean curvatures
-        # as well as shape index and curvedness as properties to the graph:
-        # (v_ind is vertex v index, i is index of v_ind in the results arrays)
-        for i, v_ind in enumerate(good_vertices_ind):
-            v = tg.graph.vertex(v_ind)
-            if T_1_array[i] is not None:
-                tg.graph.vp.T_1[v] = T_1_array[i]
-                tg.graph.vp.T_2[v] = T_2_array[i]
-                tg.graph.vp.kappa_1[v] = kappa_1_array[i]
-                tg.graph.vp.kappa_2[v] = kappa_2_array[i]
-                tg.graph.vp.gauss_curvature_VV[v] = gauss_curvature_array[i]
-                tg.graph.vp.mean_curvature_VV[v] = mean_curvature_array[i]
-                tg.graph.vp.shape_index_VV[v] = shape_index_array[i]
-                tg.graph.vp.curvedness_VV[v] = curvedness_array[i]
-
-    elif method == "VVCF":
+    # Curvature estimation for VVCF:
+    if method == "VVCF":  # sequential processing
         # * Adding vertex properties to be filled in estimate_directions_and_fit
         # curves *
         # vertex properties for storing curve fitting errors (variances) in
@@ -1119,8 +1186,6 @@ def curvature_estimation(
         tg.graph.vp.fit_error_1 = tg.graph.new_vertex_property("float")
         tg.graph.vp.fit_error_2 = tg.graph.new_vertex_property("float")
 
-        estimate_directions_and_fit_curves = \
-            tg.estimate_directions_and_fit_curves
         for i, v_ind in enumerate(good_vertices_ind):
             B_v = B_v_list[i]
             results = estimate_directions_and_fit_curves(

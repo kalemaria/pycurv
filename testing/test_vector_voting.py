@@ -850,7 +850,7 @@ class VectorVotingTestCase(unittest.TestCase):
     def parametric_test_torus_directions_curvatures(
             self, rr, csr, radius_hit, methods=['VV'],
             page_curvature_formula=False, num_points=None, full_dist_map=False,
-            area2=False):
+            area2=False, cores=8):
         """
         Runs all the steps needed to calculate curvatures for a test torus
         with given radii using normal vector voting (VV), VV combined with curve
@@ -879,6 +879,7 @@ class VectorVotingTestCase(unittest.TestCase):
             area2 (boolean, optional): if True (default False), votes are
                 weighted by triangle area also in the second step (principle
                 directions and curvatures estimation)
+            cores (int): number of cores to run VV in parallel (default 8)
 
         Notes:
             * csr should be much smaller than rr (csr < rr - csr).
@@ -965,7 +966,7 @@ class VectorVotingTestCase(unittest.TestCase):
             tg, radius_hit, exclude_borders=0, methods=methods,
             page_curvature_formula=page_curvature_formula,
             num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-            poly_surf=surf)
+            poly_surf=surf, cores=cores)
         # tg, all_neighbor_idx_to_dist = normals_estimation(
         #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
         # tg.surface, tg.scale_factor_to_nm =\
@@ -1309,13 +1310,14 @@ class VectorVotingTestCase(unittest.TestCase):
     #     for r in [10]:  # 10; 20; 30
     #         for rh in [8]:  # 5, 6, 7, 8, 9, 10; 18; 28
     #             self.parametric_test_sphere_curvatures(
-    #                 r, rh, binary=True, methods=['VV', 'VCTV'],
+    #                 r, rh, binary=True, methods=['VV'],  # , 'VCTV'
     #                 full_dist_map=False, area2=True)
     #     # Gaussian sphere with different radii:
     #     for r in [10]:  # 20, 30
     #         for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
     #             self.parametric_test_sphere_curvatures(
-    #                 r, rh, methods=['VV', 'VCTV'], full_dist_map=True, area2=True,
+    #                 r, rh, methods=['VV'],  # 'VCTV'
+    #                 full_dist_map=True,  area2=True,
     #                 page_curvature_formula=True)
     #
     # def test_inverse_sphere_curvatures(self):
@@ -1330,7 +1332,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     for rh in [8]:  # 9
     #         self.parametric_test_sphere_curvatures(
     #             10, rh, ico=0, noise=0, inverse=True,
-    #             methods=['VV', 'VCTV'],  # , 'VVCF'
+    #             methods=['VV'],  # , 'VCTV', 'VVCF'
     #             page_curvature_formula=False, area2=True)  # num_points=p
 
     def test_torus_curvatures(self):
@@ -1340,10 +1342,11 @@ class VectorVotingTestCase(unittest.TestCase):
         """
         p = 50
         for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
-            self.parametric_test_torus_directions_curvatures(
-                25, 10, rh, methods=['VV', 'VCTV', 'VVCF'],
-                page_curvature_formula=False, full_dist_map=False,
-                area2=True, num_points=p)
+            for cores in [8, 1]:
+                self.parametric_test_torus_directions_curvatures(
+                    25, 10, rh, methods=['VV', 'VCTV', 'VVCF'],
+                    page_curvature_formula=False, full_dist_map=False,
+                    area2=True, num_points=p, cores=cores)
 
     # def test_cone(self):
     #     p = 50
@@ -1352,7 +1355,7 @@ class VectorVotingTestCase(unittest.TestCase):
     #     for rh in [5]:  # 1, 2, 3, 4, 5, 6
     #         self.parametric_test_cone(
     #             6, 6, radius_hit=rh, res=res, noise=n, num_points=p,
-    #             methods=['VV', 'VCTV','VVCF'],  #
+    #             methods=['VV', 'VCTV', 'VVCF'],
     #             page_curvature_formula=False, area2=True)
 
 

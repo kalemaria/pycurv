@@ -11,8 +11,7 @@ from scipy import ndimage
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, vector_voting,
-    run_gen_surface, TriangleGraph, split_segmentation, normals_estimation,
-    preparation_for_curvature_estimation, curvature_estimation, rescale_surface)
+    run_gen_surface, TriangleGraph, split_segmentation, curvature_estimation)
 from pysurf import pysurf_io as io
 
 """
@@ -410,7 +409,7 @@ def new_workflow(
         fold, base_filename, scale_factor_to_nm, radius_hit,
         epsilon=0, eta=0, methods=['VV'],
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
-        remove_small_components=100, only_normals=False):
+        remove_small_components=100, only_normals=False, cores=8):
     # TODO docstring - works for Javier data!
     # holes (int): a positive number means closing with a cube of that size,
     # a negative number means removing surface borders of that size (in pixels)
@@ -540,12 +539,13 @@ def new_workflow(
             method_tg_surf_dict = normals_directions_and_curvature_estimation(
                 tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
                 methods=methods, full_dist_map=False, graph_file=gt_file1,
-                area2=True, only_normals=only_normals, poly_surf=surf_clean)
+                area2=True, only_normals=only_normals, poly_surf=surf_clean,
+                cores=cores)
         elif only_normals is False:
             for method in methods:
                 tg_curv, surface_curv = curvature_estimation(
                     radius_hit, exclude_borders=0, graph_file=gt_file1,
-                    method=method, poly_surf=surf_clean)
+                    method=method, poly_surf=surf_clean, cores=cores)
                 method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
         if only_normals is False:
