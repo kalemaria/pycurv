@@ -850,7 +850,7 @@ class VectorVotingTestCase(unittest.TestCase):
     def parametric_test_torus_directions_curvatures(
             self, rr, csr, radius_hit, methods=['VV'],
             page_curvature_formula=False, num_points=None, full_dist_map=False,
-            area2=False, cores=8):
+            area2=False, cores=8, runtimes=None):
         """
         Runs all the steps needed to calculate curvatures for a test torus
         with given radii using normal vector voting (VV), VV combined with curve
@@ -880,6 +880,8 @@ class VectorVotingTestCase(unittest.TestCase):
                 weighted by triangle area also in the second step (principle
                 directions and curvatures estimation)
             cores (int): number of cores to run VV in parallel (default 8)
+            runtimes (str): if given, runtimes and some parameters are added to
+                this file (default None)
 
         Notes:
             * csr should be much smaller than rr (csr < rr - csr).
@@ -966,7 +968,7 @@ class VectorVotingTestCase(unittest.TestCase):
             tg, radius_hit, exclude_borders=0, methods=methods,
             page_curvature_formula=page_curvature_formula,
             num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-            poly_surf=surf, cores=cores)
+            poly_surf=surf, cores=cores, runtimes=runtimes)
         # tg, all_neighbor_idx_to_dist = normals_estimation(
         #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
         # tg.surface, tg.scale_factor_to_nm =\
@@ -1340,13 +1342,19 @@ class VectorVotingTestCase(unittest.TestCase):
         Runs parametric_test_torus_directions_curvatures with certain
         parameters.
         """
-        p = 50
-        for rh in [8]:  # 2, 3, 4, 5, 6, 7, 8, 9
-            for cores in [8, 1]:
+        runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+                       "torus/files4plotting/torus_rr25_csr10_runtimes.csv"
+        with open(runtimes_csv, 'w') as f:
+            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+                    "duration1;method;duration2\n")
+        # p = 50
+        for rh in [8, 10, 12]:
+            for cores in range(1, 9):
                 self.parametric_test_torus_directions_curvatures(
-                    25, 10, rh, methods=['VV', 'VCTV', 'VVCF'],
+                    25, 10, rh, methods=['VV'],  # 'VCTV', 'VVCF'
                     page_curvature_formula=False, full_dist_map=False,
-                    area2=True, num_points=p, cores=cores)
+                    area2=True, cores=cores, runtimes=runtimes_csv)
+                    # num_points=p
 
     # def test_cone(self):
     #     p = 50

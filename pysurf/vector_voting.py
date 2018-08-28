@@ -671,7 +671,7 @@ def normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=0,
         methods=['VV'], page_curvature_formula=False, num_points=None,
         full_dist_map=False, graph_file='temp.gt', area2=True,
-        only_normals=False, poly_surf=None, cores=8):
+        only_normals=False, poly_surf=None, cores=8, runtimes=None):
     """
     Runs the modified Normal Vector Voting algorithm (with different options for
     the second pass) to estimate surface orientation, principle curvatures and
@@ -714,6 +714,8 @@ def normals_directions_and_curvature_estimation(
         poly_surf (vtkPolyData): surface from which the graph was generated,
             scaled to nm (required only if method="VCTV", default None)
         cores (int): number of cores to run VV in parallel (default 8)
+        runtimes (str): if given, runtimes and some parameters are added to
+            this file (default None)
     Returns:
         a dictionary mapping the method name ('VV', 'VVCF' and 'VCTV') to the
         tuple of two elements: TriangleGraph graph and vtkPolyData surface of
@@ -729,7 +731,7 @@ def normals_directions_and_curvature_estimation(
     t_begin = time.time()
 
     tg = normals_estimation(tg, radius_hit, epsilon, eta, full_dist_map,
-                            cores=cores)
+                            cores=cores, runtimes=runtimes)
 
     preparation_for_curvature_estimation(tg, exclude_borders, graph_file)
 
@@ -739,7 +741,7 @@ def normals_directions_and_curvature_estimation(
             tg_curv, surface_curv = curvature_estimation(
                 radius_hit, exclude_borders, graph_file, method,
                 page_curvature_formula, num_points, area2, poly_surf=poly_surf,
-                full_dist_map=full_dist_map, cores=cores)
+                full_dist_map=full_dist_map, cores=cores, runtimes=runtimes)
             results[method] = (tg_curv, surface_curv)
 
         t_end = time.time()
@@ -749,7 +751,7 @@ def normals_directions_and_curvature_estimation(
 
 
 def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
-                       cores=8):
+                       cores=8, runtimes=None):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation (classification in surface patch with normal, crease junction
@@ -777,6 +779,8 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
             calculated later for each vertex (default)
         cores (int): number of cores to run VV (collecting_normal_votes and
             classifying_orientation) in parallel (default 8)
+        runtimes (str): if given, runtimes and some parameters are added to
+            this file (default None)
 
     Returns:
         tg (TriangleGraph): triangle graph with added properties
@@ -864,7 +868,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         # column 0 = num_neighbors (int)
         # column 1 = V_v (3x3 float array)
         # each row i is of vertex v, its index == i
-        # V_v_list = p.map(partial(collecting_normal_votes,  # if only V_v output
+        # V_v_list = p.map(partial(collecting_normal_votes, # if only V_v output
         results1_list = p.map(partial(collecting_normal_votes,
                                       g_max=g_max, A_max=A_max, sigma=sigma,
                                       full_dist_map=full_dist_map),
@@ -932,6 +936,18 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     t_end1 = time.time()
     duration1 = t_end1 - t_begin1
     print 'First run took: %s min %s s' % divmod(duration1, 60)
+
+    # add to the runtimes CSV file:
+    # - number of vertices: num_v
+    # - radius_hit
+    # - g_max
+    # - average number of neighbors: avg_num_neighbors
+    # - number of cores: cores
+    # - duration1
+    if runtimes is not None:
+        with open(runtimes, 'a') as f:
+            f.write("{};{};{};{};{};{};".format(
+                num_v, radius_hit, g_max, avg_num_neighbors, cores, duration1))
 
     return tg
 
@@ -1003,7 +1019,7 @@ def preparation_for_curvature_estimation(
 def curvature_estimation(
         radius_hit, exclude_borders=0, graph_file='temp.gt', method="VV",
         page_curvature_formula=False, num_points=None, area2=True,
-        poly_surf=None, full_dist_map=False, cores=8):
+        poly_surf=None, full_dist_map=False, cores=8, runtimes=None):
     """
     Runs the second pass of the modified Normal Vector Voting algorithm with
     the given method to estimate principle curvatures and directions for a
@@ -1036,6 +1052,8 @@ def curvature_estimation(
             calculated later for each vertex (default)
         cores (int): number of cores to run VV (collecting_curvature_votes and
             estimate_curvature) in parallel (default 8)
+        runtimes (str): if given, runtimes and some parameters are added to
+            this file (default None)
 
     Returns:
         a tuple of TriangleGraph graph and vtkPolyData surface of triangles
@@ -1242,5 +1260,12 @@ def curvature_estimation(
     duration2 = t_end2 - t_begin2
     minutes, seconds = divmod(duration2, 60)
     print 'Second run of %s took: %s min %s s' % (method, minutes, seconds)
+
+    # adding to the runtimes CSV file:
+    # - method
+    # - duration2
+    if runtimes is not None:
+        with open(runtimes, 'a') as f:
+            f.write("{};{}\n".format(method, duration2))
 
     return tg, surface_curv
