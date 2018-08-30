@@ -7,6 +7,7 @@ from os import remove
 import pandas as pd
 import numpy as np
 from scipy import ndimage
+import vtk  # for Anna's workflow
 # import cProfile
 
 from pysurf import (
@@ -409,7 +410,7 @@ def new_workflow(
         fold, base_filename, scale_factor_to_nm, radius_hit,
         epsilon=0, eta=0, methods=['VV'],
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
-        remove_small_components=100, only_normals=False, cores=8):
+        remove_small_components=100, only_normals=False, cores=4):
     # TODO docstring - works for Javier data!
     # holes (int): a positive number means closing with a cube of that size,
     # a negative number means removing surface borders of that size (in pixels)
@@ -694,6 +695,108 @@ def __shape_index_classifier(x):
         return None, None
 
 
+def annas_workflow(
+        fold, base_filename, radius_hit, seg_file=None, scale_factor_to_nm=1.368,
+        epsilon=0, eta=0, methods=['VV'], thr=0.4, cores=4):
+    # TODO docstring - works for Anna's filtered data!
+
+    t_begin = time.time()
+
+    surf_file = base_filename + ".surface.vtp"
+    if not isfile(fold + surf_file):
+        if seg_file is None or not isfile(fold + seg_file):
+            text = "The segmentation file {} not given or not found".format(
+                    fold + seg_file)
+            raise pexceptions.PySegInputError(
+                expr="new_workflow", msg=eval(text))
+
+        seg = io.load_tomo(fold + seg_file)
+        assert(isinstance(seg, np.ndarray))
+
+        print ("\nGenerating a surface...")
+        # Generate isosurface from the smoothed segmentation
+        seg_vti = io.numpy_to_vti(seg)
+        surfaces = vtk.vtkMarchingCubes()
+        surfaces.SetInputData(seg_vti)
+        surfaces.ComputeNormalsOn()
+        surfaces.ComputeGradientsOn()
+        surfaces.SetValue(0, thr)
+        surfaces.Update()
+
+        # Sometimes the contouring algorithm can create a volume whose gradient
+        # vector and ordering of polygon (using the right hand rule) are
+        # inconsistent. vtkReverseSense cures this problem.
+        reverse = vtk.vtkReverseSense()
+        reverse.SetInputConnection(surfaces.GetOutputPort())
+        reverse.ReverseCellsOn()
+        reverse.ReverseNormalsOn()
+        reverse.Update()
+        surf = reverse.GetOutput()
+
+        # Writing the vtkPolyData surface into a VTP file
+        io.save_vtp(surf, fold + surf_file)
+        print ('Surface was written to the file {}'.format(surf_file))
+
+    else:
+        print ('\nReading in the surface from file...')
+        surf = io.load_poly(fold + surf_file)
+
+    clean_graph_file = '{}.scaled_cleaned.gt'.format(base_filename)
+    clean_surf_file = '{}.scaled_cleaned.vtp'.format(base_filename)
+    if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
+        print ('\nBuilding a triangle graph from the surface...')
+        tg = TriangleGraph()
+        tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
+        print ('The graph has {} vertices and {} edges'.format(
+            tg.graph.num_vertices(), tg.graph.num_edges()))
+
+        # Saving the scaled (and cleaned) graph and surface:
+        tg.graph.save(fold + clean_graph_file)
+        surf_clean = tg.graph_to_triangle_poly()
+        io.save_vtp(surf_clean, fold + clean_surf_file)
+    else:
+        print ('\nReading in the cleaned graph and surface from files...')
+        surf_clean = io.load_poly(fold + clean_surf_file)
+        tg = TriangleGraph()
+        tg.graph = load_graph(fold + clean_graph_file)
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    print ('Surface and graph generation (and cleaning) took: {} min {} s'
+           .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
+
+    gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+        fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
+    surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+        fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
+    if not isfile(gt_file) or not isfile(surf_file):
+        # Running the modified Normal Vector Voting algorithms:
+        gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
+                fold, base_filename, radius_hit, epsilon, eta)
+        method_tg_surf_dict = {}
+        if not isfile(gt_file1):
+            method_tg_surf_dict = normals_directions_and_curvature_estimation(
+                tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
+                methods=methods, full_dist_map=False, graph_file=gt_file1,
+                area2=True, poly_surf=surf_clean, cores=cores)
+
+        for method in method_tg_surf_dict.keys():
+            # Saving the output (graph and surface object) for later
+            # filtering or inspection in ParaView:
+            (tg, surf) = method_tg_surf_dict[method]
+            if method == 'VV':
+                method = 'VV_area2'
+            gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+                fold, base_filename, method, radius_hit, epsilon, eta)
+            tg.graph.save(gt_file)
+            surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+                fold, base_filename, method, radius_hit, epsilon, eta)
+            io.save_vtp(surf, surf_file)
+    else:
+        print("\nOutput files {} and {} are already there.".format(
+            gt_file, surf_file))
+
+
 def main(membrane, rh):
     """
     Main function for running the workflow function for Javier's cER or PM.
@@ -891,6 +994,14 @@ def main3():
     print('\nTotal elapsed time: {} min {} s'.format(
         divmod(duration, 60)[0], divmod(duration, 60)[1]))
 
+
+def main_anna():
+    fold = "/fs/pool/pool-EMpub/4Maria/fromAnna/"
+    seg_file = "membrane_filter.mrc"
+    base_filename = "membrane_filter"
+    radius_hit = 15
+    annas_workflow(fold, base_filename, radius_hit, seg_file)
+
 if __name__ == "__main__":
     # main("cER", 10)
     # membrane = sys.argv[1]
@@ -906,4 +1017,6 @@ if __name__ == "__main__":
     # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
     # cProfile.run('main2()', stats_file)
 
-    main2()
+    # main2()
+
+    main_anna()

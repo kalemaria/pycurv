@@ -671,7 +671,7 @@ def normals_directions_and_curvature_estimation(
         tg, radius_hit, epsilon=0, eta=0, exclude_borders=0,
         methods=['VV'], page_curvature_formula=False, num_points=None,
         full_dist_map=False, graph_file='temp.gt', area2=True,
-        only_normals=False, poly_surf=None, cores=8, runtimes=None):
+        only_normals=False, poly_surf=None, cores=4, runtimes=None):
     """
     Runs the modified Normal Vector Voting algorithm (with different options for
     the second pass) to estimate surface orientation, principle curvatures and
@@ -751,7 +751,7 @@ def normals_directions_and_curvature_estimation(
 
 
 def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
-                       cores=8, runtimes=None):
+                       cores=4, runtimes=None):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation (classification in surface patch with normal, crease junction
@@ -1019,7 +1019,7 @@ def preparation_for_curvature_estimation(
 def curvature_estimation(
         radius_hit, exclude_borders=0, graph_file='temp.gt', method="VV",
         page_curvature_formula=False, num_points=None, area2=True,
-        poly_surf=None, full_dist_map=False, cores=8, runtimes=None):
+        poly_surf=None, full_dist_map=False, cores=4, runtimes=None):
     """
     Runs the second pass of the modified Normal Vector Voting algorithm with
     the given method to estimate principle curvatures and directions for a

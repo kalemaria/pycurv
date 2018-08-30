@@ -318,13 +318,13 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
 
     # Smoothing
     if sg > 0:
-        binary_seg = ndimage.filters.gaussian_filter(
+        smoothed_seg = ndimage.filters.gaussian_filter(
             binary_seg.astype(np.float), sg)
 
     # Generate isosurface
-    binary_seg_vti = numpy_to_vti(binary_seg)
+    smoothed_seg_vti = numpy_to_vti(smoothed_seg)
     surfaces = vtk.vtkMarchingCubes()
-    surfaces.SetInputData(binary_seg_vti)
+    surfaces.SetInputData(smoothed_seg_vti)
     surfaces.ComputeNormalsOn()
     surfaces.ComputeGradientsOn()
     surfaces.SetValue(0, thr)
