@@ -8,9 +8,7 @@ import cProfile
 
 from pysurf import pysurf_io as io
 from pysurf import (
-    TriangleGraph, normals_directions_and_curvature_estimation,
-    normals_estimation, preparation_for_curvature_estimation,
-    curvature_estimation)
+    TriangleGraph, normals_directions_and_curvature_estimation)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     ConeGenerator, add_gaussian_noise_to_surface)
@@ -440,20 +438,6 @@ class VectorVotingTestCase(unittest.TestCase):
             page_curvature_formula=page_curvature_formula,
             num_points=num_points, full_dist_map=full_dist_map, area2=area2,
             poly_surf=surf)
-        # tg, all_neighbor_idx_to_dist = normals_estimation(
-        #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
-        # tg.surface, tg.scale_factor_to_nm =\
-        #     preparation_for_curvature_estimation(tg, exclude_borders=eb,
-        #                                          graph_file="temp.gt")
-        # method_tg_surf_dict = {}
-        # for method in methods:
-        #     tg_curv, surface_curv = curvature_estimation(
-        #         tg.surface, tg.scale_factor_to_nm,
-        #         radius_hit, all_neighbor_idx_to_dist,
-        #         exclude_borders=eb, graph_file='temp.gt', method=method,
-        #         page_curvature_formula=page_curvature_formula,
-        #         num_points=num_points)
-        #     method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
         # Ground-truth T_h vector is parallel to Z axis
         true_T_h = np.array([0, 0, 1])
@@ -596,7 +580,7 @@ class VectorVotingTestCase(unittest.TestCase):
             self, radius, radius_hit, inverse=False, binary=False, res=0,
             ico=0, noise=0, save_areas=False, methods=['VV'],
             page_curvature_formula=False, num_points=None,
-            full_dist_map=False, area2=False):
+            full_dist_map=False, area2=False, cores=8, runtimes=None):
         """
         Runs all the steps needed to calculate curvatures for a test sphere
         with a given radius. Tests whether the curvatures are correctly
@@ -645,6 +629,9 @@ class VectorVotingTestCase(unittest.TestCase):
             area2 (boolean, optional): if True (default False), votes are
                 weighted by triangle area also in the second step (principle
                 directions and curvatures estimation)
+            cores (int): number of cores to run VV in parallel (default 8)
+            runtimes (str): if given, runtimes and some parameters are added to
+                this file (default None)
 
         Returns:
             None
@@ -751,7 +738,7 @@ class VectorVotingTestCase(unittest.TestCase):
             tg, radius_hit, exclude_borders=0, methods=methods,
             page_curvature_formula=page_curvature_formula,
             num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-            poly_surf=surf)
+            poly_surf=surf, cores=cores, runtimes=runtimes)
 
         # Ground truth principal curvatures
         true_curvature = 1.0 / radius
@@ -969,20 +956,6 @@ class VectorVotingTestCase(unittest.TestCase):
             page_curvature_formula=page_curvature_formula,
             num_points=num_points, full_dist_map=full_dist_map, area2=area2,
             poly_surf=surf, cores=cores, runtimes=runtimes)
-        # tg, all_neighbor_idx_to_dist = normals_estimation(
-        #     tg, radius_hit, epsilon=0, eta=0, full_dist_map=full_dist_map)
-        # tg.surface, tg.scale_factor_to_nm =\
-        #     preparation_for_curvature_estimation(tg, exclude_borders=0,
-        #                                          graph_file="temp.gt")
-        # method_tg_surf_dict = {}
-        # for method in methods:
-        #     tg_curv, surface_curv = curvature_estimation(
-        #         tg.surface, tg.scale_factor_to_nm,
-        #         radius_hit, all_neighbor_idx_to_dist,
-        #         exclude_borders=0, graph_file='temp.gt', method=method,
-        #         page_curvature_formula=page_curvature_formula,
-        #         num_points=num_points)
-        #     method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
         for method in method_tg_surf_dict.keys():
             # Saving the output (TriangleGraph object) for later inspection in
@@ -1292,42 +1265,49 @@ class VectorVotingTestCase(unittest.TestCase):
     #             page_curvature_formula=False, area2=True, inverse=True)
     #             # num_points=p
     #
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated for a sphere with a
-    #     certain radius and noise level:
-    #
-    #     kappa1 = kappa2 = 1/5 = 0.2; 30% of difference is allowed
-    #     """
-    #     # Icosahedron sphere with 1280 faces:
-    #     # for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-    #     #     for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-    #     #         self.parametric_test_sphere_curvatures(
-    #     #             10, rh, ico=1280, noise=n, methods=['VVCF'],
-    #     #             page_curvature_formula=False, num_points=p)
-    #     #     self.parametric_test_sphere_curvatures(
-    #     #         10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
-    #     #         page_curvature_formula=False)
-    #     # Binary sphere with different radii:
-    #     for r in [10]:  # 10; 20; 30
-    #         for rh in [8]:  # 5, 6, 7, 8, 9, 10; 18; 28
-    #             self.parametric_test_sphere_curvatures(
-    #                 r, rh, binary=True, methods=['VV'],  # , 'VCTV'
-    #                 full_dist_map=False, area2=True)
-    #     # Gaussian sphere with different radii:
-    #     for r in [10]:  # 20, 30
-    #         for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
-    #             self.parametric_test_sphere_curvatures(
-    #                 r, rh, methods=['VV'],  # 'VCTV'
-    #                 full_dist_map=True,  area2=True,
-    #                 page_curvature_formula=True)
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated for a sphere with a
+        certain radius and noise level:
+
+        kappa1 = kappa2 = 1/r; 30% of difference is allowed
+        """
+        # Icosahedron sphere with 1280 faces:
+        # for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+        #     for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
+        #         self.parametric_test_sphere_curvatures(
+        #             10, rh, ico=1280, noise=n, methods=['VVCF'],
+        #             page_curvature_formula=False, num_points=p)
+        #     self.parametric_test_sphere_curvatures(
+        #         10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
+        #         page_curvature_formula=False)
+        # Binary sphere with different radii:
+        runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+                       "sphere/binary/files4plotting/bin_spheres_runtimes.csv"
+        with open(runtimes_csv, 'w') as f:
+            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+                    "duration1;method;duration2\n")
+        for r in [10, 20, 30]:
+            for rh in [8]:  # 5, 6, 7, 8, 9, 10; 18; 28
+                for cores in range(1, 9):
+                    self.parametric_test_sphere_curvatures(
+                        r, rh, binary=True, methods=['VV'],  # , 'VCTV'
+                        full_dist_map=False, area2=True,
+                        cores=cores, runtimes=runtimes_csv)
+        # # Gaussian sphere with different radii:
+        # for r in [10]:  # 20, 30
+        #     for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
+        #         self.parametric_test_sphere_curvatures(
+        #             r, rh, methods=['VV'],  # 'VCTV'
+        #             full_dist_map=True,  area2=True,
+        #             page_curvature_formula=True)
     #
     # def test_inverse_sphere_curvatures(self):
     #     """
     #     Tests whether curvatures are correctly estimated for an inverse sphere
     #     with a certain radius and noise level:
     #
-    #     kappa1 = kappa2 = -1/5 = -0.2; 30% of difference is allowed
+    #     kappa1 = kappa2 = -1/r; 30% of difference is allowed
     #     """
     #     # Gaussian sphere
     #     # p = 50
@@ -1357,6 +1337,9 @@ class VectorVotingTestCase(unittest.TestCase):
                     # num_points=p
 
     # def test_cone(self):
+    #     """
+    #     Runs test_cone with certain parameters.
+    #     """
     #     p = 50
     #     n = 0  # 10
     #     res = 38  # 0

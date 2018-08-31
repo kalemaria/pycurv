@@ -33,11 +33,14 @@ THRESH_SIGMA1 = 0.699471735
 def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
              radius_hit):
     """
-    Function for running all processing steps to estimate membrane curvature.
+    A script for running all processing steps to estimate membrane curvature.
 
     The three steps are: 1. signed surface generation, 2. surface cleaning using
     a graph, 3. curvature calculation using a graph generated from the clean
     surface.
+
+    It was written for Felix data. Segmentation is split in regions in order
+    to parallelize a bit, in the end all .txt and .vtp files are merged.
 
     Args:
         fold (str): path where the input membrane segmentation is and where the
@@ -411,15 +414,56 @@ def new_workflow(
         epsilon=0, eta=0, methods=['VV'],
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
         remove_small_components=100, only_normals=False, cores=4):
-    # TODO docstring - works for Javier data!
-    # holes (int): a positive number means closing with a cube of that size,
-    # a negative number means removing surface borders of that size (in pixels)
-    # before curvature estimation (opening with a cube of that size removes
-    # everything)
+    """
+    A script for running all processing steps to estimate membrane curvature.
 
-    # log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
-    #             fold, base_filename, methods[0], radius_hit, epsilon, eta)
-    # sys.stdout = open(log_file, 'a')
+    The three steps are: 1. signed surface generation, 2. surface cleaning using
+    a graph, 3. curvature calculation using a graph generated from the clean
+    surface.
+
+    It was written for Javier's data. Segmentation is not split into regions.
+    Step 3. of VV, consisting of normals and curvature calculations, can run in
+    parallel on multiple cores.
+
+    Args:
+        fold (str): path where the input membrane segmentation is and where the
+            output will be written
+        base_filename (str): base file name for saving the output files
+        scale_factor_to_nm (float): pixel size in nanometer of the membrane mask
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2), default 0
+        eta (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2) and "no preferred orientation" (class 3), default 0
+        methods (list, optional): all methods to run in the second pass ('VV',
+            'VVCF' and 'VCTV' are possible, default is 'VV')
+        seg_file (str, optional): membrane segmentation mask
+        label (int, optional): label to be considered in the membrane mask
+            (default 1)
+        holes (int, optional): if > 0, small holes in the segmentation are
+            closed with a cube of that size in pixels before curvature
+            estimation (default 0)
+        remove_wrong_borders (boolean, optional): if True (default), wrong
+            artefact surface borders will be removed
+        remove_small_components (int, optional): if > 0 (default 100), small
+            disconnected surface components having triangles within this number
+            will be removed
+        only_normals (boolean, optional): if True (default False), only normals
+            are estimated, without principal directions and curvatures, only the
+            graph with the orientations class, normals or tangents is returned.
+        cores (int, optional): number of cores to run VV in parallel (default 4)
+
+    Returns:
+        None
+    """
+
+    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
+                fold, base_filename, methods[0], radius_hit, epsilon, eta)
+    sys.stdout = open(log_file, 'a')
 
     t_begin = time.time()
 
@@ -471,11 +515,6 @@ def new_workflow(
                     binary_seg_file = "{}{}.binary_seg.mrc".format(
                         fold, base_filename)
                     io.save_numpy(binary_seg, binary_seg_file)
-                # else:  # open (increase) holes - removed everything
-                #     print ("\nIncreasing holes in the segmentation...")
-                #     binary_seg = ndimage.binary_opening(
-                #         binary_seg, structure=cube, iterations=1).astype(
-                #         data_type)
             print ("\nGenerating a surface from the binary segmentation...")
             surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
     else:
@@ -570,7 +609,36 @@ def new_workflow(
 def extract_curvatures_after_new_workflow(
         fold, base_filename, radius_hit, epsilon=0, eta=0, methods=['VV'],
         exclude_borders=0, categorize_shape_index=False):
-    # TODO docstring if remains
+    """
+    Extracts curvature information from a .vtp file generated by new_workflow
+    into a .csv file. Options to exclude values or triangles near borders and to
+    categorize shape index.
+
+    Args:
+        fold (str): path where the input membrane segmentation is and where the
+            output will be written
+        base_filename (str): base file name for saving the output files
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2), default 0
+        eta (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2) and "no preferred orientation" (class 3), default 0
+        methods (list, optional): all methods to run in the second pass ('VV',
+            'VVCF' and 'VCTV' are possible, default is 'VV')
+        exclude_borders (int, optional): if > 0, triangles within this distance
+            from borders in nm and corresponding values will be excluded from
+            the output files (graph .gt, surface.vtp file and .csv)
+        categorize_shape_index (boolean, optional): if True (default False),
+            shape index categories will be added to the input graph .gt and
+            surface .vtp files as well as the output .csv file
+
+    Returns:
+
+    """
     log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
                 fold, base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
@@ -698,7 +766,41 @@ def __shape_index_classifier(x):
 def annas_workflow(
         fold, base_filename, radius_hit, seg_file=None, scale_factor_to_nm=1.368,
         epsilon=0, eta=0, methods=['VV'], thr=0.4, cores=4):
-    # TODO docstring - works for Anna's filtered data!
+    """
+    A script for running all processing steps to estimate membrane curvature.
+
+    The three steps are: 1. isosurface generation from a filled and smoothed
+    segmentation, 2. graph generation, 3. curvature calculation using the graph.
+
+    It was written for Dr. Anna Rast's data: filled and smoothed with a Gaussian
+    filter segmentation (with Matlab). Step 3. of VV, consisting of normals and
+    curvature calculations, can run in parallel on multiple cores.
+
+    Args:
+        fold (str): path where the input membrane segmentation is and where the
+            output will be written
+        base_filename (str): base file name for saving the output files
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        seg_file (str, optional): membrane segmentation mask
+        scale_factor_to_nm (float, optional): pixel size in nanometer of the
+            membrane mask (default 1.368)
+        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2), default 0
+        eta (int, optional): parameter of Normal Vector Voting algorithm
+            influencing the number of triangles classified as "crease junction"
+            (class 2) and "no preferred orientation" (class 3), default 0
+        methods (list, optional): all methods to run in the second pass ('VV',
+            'VVCF' and 'VCTV' are possible, default is 'VV')
+        thr (float, optional): value threshold in the input segmentation where
+            to generate the isosurface (default 0.4)
+        cores (int, optional): number of cores to run VV in parallel (default 4)
+
+    Returns:
+        None
+    """
 
     t_begin = time.time()
 
@@ -799,11 +901,11 @@ def annas_workflow(
 
 def main(membrane, rh):
     """
-    Main function for running the workflow function for Javier's cER or PM.
+    Main function for running the new_workflow function for Javier's cER or PM.
 
     Args:
-        membrane(string): what membrane segmentation to use 'cER' or 'PM'
-        rh(int): RadiusHit parameter (in nm)
+        membrane (string): what membrane segmentation to use 'cER' or 'PM'
+        rh (int): RadiusHit parameter (in nm)
 
     Returns:
         None
@@ -888,44 +990,13 @@ def main(membrane, rh):
     print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
 
 
-def main_smoothed(membrane):
+def main2():
     """
-    Main function for running the workflow function for real data.
-
-    Args:
-        membrane(string): what membrane segmentation to use 'cER' or 'PM'
+    Main function for running the new_workflow function for Felix' data.
 
     Returns:
         None
     """
-    t_begin = time.time()
-
-    fold = ("/fs/pool/pool-ruben/Maria/curvature/Javier/scs_171108_l2_t4_ny01/"
-            "small_cutout_smoothed/")
-    base_filename = "scs_171108_l2_t4_ny01_{}_holes3.smoothed300".format(
-        membrane)
-    pixel_size = 1  # because the smoothed surface is already scaled (& cleaned)
-    radius_hit = 6
-
-    print("\nCalculating curvatures for {}".format(membrane))
-    new_workflow(
-        fold, base_filename, pixel_size, radius_hit, epsilon=0, eta=0,
-        methods=['VCTV', 'VV'], remove_wrong_borders=False,
-        remove_small_components=0)
-
-    for b in range(0, 3):
-        print("\nExtracting curvatures for {} without {} nm from border".format(
-            membrane, b))
-        extract_curvatures_after_new_workflow(
-            fold, base_filename, radius_hit, epsilon=0, eta=0,
-            methods=['VCTV', 'VV'], exclude_borders=b)
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
-
-
-def main2():
     t_begin = time.time()
 
     # Change those parameters for each tomogram & label:
@@ -955,7 +1026,7 @@ def main2():
     new_workflow(
             fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=0,
-            remove_small_components=min_component, only_normals=False)
+            remove_small_components=min_component, only_normals=False, cores=1)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -963,6 +1034,13 @@ def main2():
 
 
 def main3():
+    """
+    Main function for running the new_workflow function for normal vs. missing
+    wedge containing sphere surface.
+
+    Returns:
+        None
+    """
     t_begin = time.time()
 
     fold = '/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/'
@@ -996,6 +1074,12 @@ def main3():
 
 
 def main_anna():
+    """
+    Main function for running the annas_workflow function for Anna's data.
+
+    Returns:
+        None
+    """
     fold = "/fs/pool/pool-EMpub/4Maria/fromAnna/"
     seg_file = "membrane_filter.mrc"
     base_filename = "membrane_filter"
@@ -1004,9 +1088,11 @@ def main_anna():
 
 if __name__ == "__main__":
     # main("cER", 10)
+
     # membrane = sys.argv[1]
     # rh = int(sys.argv[2])
     # main(membrane, rh)
+
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
     # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh{}.stats'.format(
     #     fold, membrane, rh)
@@ -1017,6 +1103,6 @@ if __name__ == "__main__":
     # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
     # cProfile.run('main2()', stats_file)
 
-    # main2()
+    main2()
 
-    main_anna()
+    # main_anna()

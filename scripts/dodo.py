@@ -3,7 +3,7 @@ from shutil import copyfile
 import os
 from curvature_calculation import (new_workflow,
                                    extract_curvatures_after_new_workflow)
-RADIUS_HIT = 10
+RADIUS_HIT = 15
 
 
 # For smoothed cER

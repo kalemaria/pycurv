@@ -705,17 +705,17 @@ def normals_directions_and_curvature_estimation(
             calculated later for each vertex (default)
         graph_file (string, optional): name for a temporary graph file
             after the first run of the algorithm (default 'temp.gt')
-        area2 (boolean, optional): if True (default False), votes are
-            weighted by triangle area also in the second step (principle
-            directions and curvatures estimation)
+        area2 (boolean, optional): if True (default), votes are weighted by
+            triangle area also in the second step (principle directions and
+            curvatures estimation)
         only_normals (boolean, optional): if True (default False), only normals
             are estimated, without principal directions and curvatures, only the
             graph with the orientations class, normals or tangents is returned.
-        poly_surf (vtkPolyData): surface from which the graph was generated,
-            scaled to nm (required only if method="VCTV", default None)
-        cores (int): number of cores to run VV in parallel (default 8)
-        runtimes (str): if given, runtimes and some parameters are added to
-            this file (default None)
+        poly_surf (vtkPolyData, optional): surface from which the graph was
+            generated, scaled to nm (required only for VCTV, default None)
+        cores (int, optional): number of cores to run VV in parallel (default 4)
+        runtimes (str, optional): if given, runtimes and some parameters are
+            added to this file (default None)
     Returns:
         a dictionary mapping the method name ('VV', 'VVCF' and 'VCTV') to the
         tuple of two elements: TriangleGraph graph and vtkPolyData surface of
