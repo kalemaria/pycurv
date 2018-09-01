@@ -6,8 +6,14 @@ from scipy import ndimage
 from pysurf import pysurf_io as io
 from pysurf import pexceptions, run_gen_surface
 
-"""A set of functions and classes for generating artificial segmentation volumes
-(masks) of geometrical objects."""
+"""
+A set of functions and classes for generating artificial segmentation volumes
+(masks) of geometrical objects.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
 
 
 class SphereMask(object):

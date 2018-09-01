@@ -9,13 +9,32 @@ from surface_graphs import TriangleGraph
 import pysurf_io as io
 
 
-__author__ = 'Maria Kalemanov'
+__author__ = 'kalemanov'
 
 SAMPLE_DST = 1
 
 
 def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
                      verbose=False):
+    """
+    Given a point and a normal vector, finds two intersection points with a
+    double membrane surface in the direction of the normal vector and measures
+    the two distances (to the first surface and between the two surfaces).
+
+    Args:
+        p0 (numpy.ndarray): 3D point coordinates
+        N_v (numpy.ndarray): 3D normal vector
+        maxdist (int): maximal distance (nm) from p0 to first membrane
+        maxdist2 (int): maximal distance (nm) from p0 to second membrane
+        tg_cER (TriangleGraph): graph of the target membrane surface
+        poly_cER (vtkPolyData): the target double membrane surface
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+        the two distances and the vertices at the intersections: d1, d2, v1, v2
+        or None, None, None, None in case less than two intersections were found
+    """
     # Define a cellLocator to be able to compute intersections between lines
     # and the cER surface:
     locator = vtk.vtkCellLocator()
@@ -134,14 +153,17 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
 def calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, maxdist2,
                         verbose=False):
     """
-    Function to compute shortest distances between a cellular membrane and ER
-    membranes using their surfaces.
+    Function to compute shortest distances between two membranes, here a plasma
+    membrane (PM) and cortical ER (cER) using their surfaces.
+    Adds vertex properties to cER graph:
+    "cERmembrane": 1 for the 1st intersected triangle and 2 for the 2nd one
+    "PMdistance": d1 for the 1st intersected triangle
+    "cERthickness": d2 for the 2nd intersected triangle
 
     Args:
-        tg_PM (TriangleGraph): TriangleGraph object of PM surface with corrected
-            normals (now should be pointing away from cER surface direction)
-        tg_cER (TriangleGraph): TriangleGraph object of cER surface
-        poly_cER (vtkPolyData): vtkPolyData object of cER surface
+        tg_PM (TriangleGraph): graph of PM surface with corrected normals
+        tg_cER (TriangleGraph): graph of cER surface
+        poly_cER (vtkPolyData): cER surface
         maxdist (int): maximal distance (nm) from PM to first cER membrane
         maxdist2 (int): maximal distance (nm) from PM to second cER membrane
         verbose (boolean, optional): if True (default False), some extra
@@ -149,7 +171,7 @@ def calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, maxdist2,
 
     Returns:
         two lists of distances:
-        d1: distances (nm) from PM to first cER membrane)
+        d1: distances (nm) from PM to first cER membrane
         d2: cER thicknesses (nm)
     """
     print("maxdist = {} nm".format(maxdist))
@@ -230,6 +252,26 @@ def calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, maxdist2,
 def run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
                             cER_surf_outfile, cER_graph_outfile,
                             distances_outfile, maxdist, maxdist2, verbose):
+    """
+    A script running calculate_distances with graphs and surface loaded from
+    files, transforming the resulting graph to a surface with triangles and
+    saving the resulting graph and surface into files.
+
+    Args:
+        PM_graph_file (str): .gt input file with the PM TriangleGraph
+        cER_surf_file (str): .vtp input file with the cER vtkPolyData surface
+        cER_graph_file (str): .gt input file with the cER TriangleGraph
+        cER_surf_outfile (str): .vtp output file for the cER vtkPolyData surface
+        cER_graph_outfile (str): .gt output file for the cER TriangleGraph
+        distances_outfile (str): .csv output file for the two distances lists
+        maxdist (int): maximal distance (nm) from PM to first cER membrane
+        maxdist2 (int): maximal distance (nm) from PM to second cER membrane
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+
+    """
     # Load the input files:
     tg_PM = TriangleGraph()
     tg_PM.graph = load_graph(PM_graph_file)

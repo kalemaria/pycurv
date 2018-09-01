@@ -7,6 +7,15 @@ import pandas as pd
 
 from pysurf import pexceptions
 
+"""
+Functions for plotting estimation errors of curvature estimation methods using
+"synthetic" benchmark surfaces.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 
 def plot_hist(values, num_bins, title, xlabel="Value", ylabel="Counts",
               value_range=None, outfile=None):

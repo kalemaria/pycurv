@@ -13,6 +13,15 @@ from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     ConeGenerator, add_gaussian_noise_to_surface)
 
+"""
+Scripts for testing of validity of curvature estimation methods using
+"synthetic" benchmark surfaces.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 
 def absolute_error_scalar(true_value, estimated_value):
     """

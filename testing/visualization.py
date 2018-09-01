@@ -4,6 +4,14 @@ from graph_tool.topology import shortest_distance
 from pysurf import TriangleGraph
 from pysurf import pysurf_io as io
 
+"""
+Functions that can be used for visualizing geodesic neighborhood.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 
 def calculate_g_max_from_radius_hit(radius_hit):
     """

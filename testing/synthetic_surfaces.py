@@ -7,8 +7,14 @@ from pysurf import pysurf_io as io
 from pysurf import pexceptions, surface_graphs, run_gen_surface
 from synthetic_volumes import SphereMask, CylinderMask, ConeMask
 
-"""A set of functions and classes for generating artificial surfaces of
-geometrical objects."""
+"""
+A set of functions and classes for generating artificial surfaces of
+geometrical objects.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
 
 
 def is_positive_number(arg, input_error=True):
