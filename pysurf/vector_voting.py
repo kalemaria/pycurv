@@ -5,6 +5,7 @@ from graph_tool import load_graph
 from graph_tool.topology import shortest_distance
 import pathos.pools as pp
 from functools import partial
+from os import remove
 
 from surface_graphs import TriangleGraph
 
@@ -1033,8 +1034,8 @@ def curvature_estimation(
         exclude_borders (int, optional): if > 0, principle curvatures and
             directions are not estimated for triangles within this distance to
             surface borders (default 0)
-        graph_file (string, optional): name for a temporary graph file
-            after the first run of the algorithm (default 'temp.gt')
+        graph_file (string, optional): name for a graph file after the first run
+            of the algorithm (default 'temp.gt' will be removed after loading)
         method (str, optional): a method to run in the second pass ('VV', 'VVCF'
             and 'VCTV' are possible, default is 'VV')
         page_curvature_formula (boolean, optional): if True (default False),
@@ -1062,6 +1063,8 @@ def curvature_estimation(
     """
     tg = TriangleGraph()
     tg.graph = load_graph(graph_file)
+    if graph_file == 'temp.gt':
+        remove(graph_file)
 
     if full_dist_map is True:
         # * Distance map between all pairs of vertices *

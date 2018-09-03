@@ -1338,7 +1338,7 @@ class VectorVotingTestCase(unittest.TestCase):
         #             "duration1;method;duration2\n")
         # p = 50
         for rh in [8, 10, 12]:
-            for cores in [1, 4]:  # range((1, 9)
+            for cores in [4]:  # range((1, 9)
                 self.parametric_test_torus_directions_curvatures(
                     25, 10, rh, methods=['VV'],  # 'VCTV', 'VVCF'
                     page_curvature_formula=False, full_dist_map=False,
