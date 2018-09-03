@@ -1291,18 +1291,18 @@ class VectorVotingTestCase(unittest.TestCase):
         #         10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
         #         page_curvature_formula=False)
         # Binary sphere with different radii:
-        runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-                       "sphere/binary/files4plotting/bin_spheres_runtimes.csv"
-        with open(runtimes_csv, 'w') as f:
-            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-                    "duration1;method;duration2\n")
-        for r in [10, 20, 30]:
-            for rh in [8]:  # 5, 6, 7, 8, 9, 10; 18; 28
-                for cores in range(1, 9):
-                    self.parametric_test_sphere_curvatures(
-                        r, rh, binary=True, methods=['VV'],  # , 'VCTV'
-                        full_dist_map=False, area2=True,
-                        cores=cores, runtimes=runtimes_csv)
+        # runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+        #                "sphere/binary/files4plotting/bin_spheres_runtimes.csv"
+        # with open(runtimes_csv, 'w') as f:
+        #     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+        #             "duration1;method;duration2\n")
+        # for r in [10, 20, 30]:
+        #     for rh in [8]:  # 5, 6, 7, 8, 9, 10; 18; 28
+        #         for cores in range(1, 9):
+        #             self.parametric_test_sphere_curvatures(
+        #                 r, rh, binary=True, methods=['VV'],  # , 'VCTV'
+        #                 full_dist_map=False, area2=True,
+        #                 cores=cores, runtimes=runtimes_csv)
         # # Gaussian sphere with different radii:
         # for r in [10]:  # 20, 30
         #     for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
@@ -1331,18 +1331,18 @@ class VectorVotingTestCase(unittest.TestCase):
         Runs parametric_test_torus_directions_curvatures with certain
         parameters.
         """
-        runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-                       "torus/files4plotting/torus_rr25_csr10_runtimes.csv"
-        with open(runtimes_csv, 'w') as f:
-            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-                    "duration1;method;duration2\n")
+        # runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+        #                "torus/files4plotting/torus_rr25_csr10_runtimes.csv"
+        # with open(runtimes_csv, 'w') as f:
+        #     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+        #             "duration1;method;duration2\n")
         # p = 50
         for rh in [8, 10, 12]:
-            for cores in range(1, 9):
+            for cores in [1, 4]:  # range((1, 9)
                 self.parametric_test_torus_directions_curvatures(
                     25, 10, rh, methods=['VV'],  # 'VCTV', 'VVCF'
                     page_curvature_formula=False, full_dist_map=False,
-                    area2=True, cores=cores, runtimes=runtimes_csv)
+                    area2=True, cores=cores)  # , runtimes=runtimes_csv)
                     # num_points=p
 
     # def test_cone(self):

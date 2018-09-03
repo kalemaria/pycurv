@@ -922,7 +922,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
                 classes_counts[class_v] += 1
             except KeyError:
                 classes_counts[class_v] = 1
-        avg_num_neighbors = sum_num_neighbors / num_v
+        avg_num_neighbors = float(sum_num_neighbors) / float(num_v)
 
     # Printing out some numbers concerning the first run:
     print ("Average number of geodesic neighbors for all vertices: %s"
