@@ -1,9 +1,9 @@
 :orphan:
 
-pysurf_compact
-==============
+pysurf
+======
 
 .. toctree::
    :maxdepth: 4
 
-   pysurf_compact
+   pysurf
