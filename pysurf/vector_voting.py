@@ -890,6 +890,8 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
                                       epsilon=epsilon, eta=eta),
                               range(num_v), V_v_array)
         #                      range(num_v), V_v_list)  # if only V_v output
+        p.close()
+        p.clear()
         results2_array = np.array(results2_list, dtype=object)
         class_v_array = results2_array[:, 0]
         N_v_array = results2_array[:, 1]
@@ -1140,6 +1142,8 @@ def curvature_estimation(
                 results_list = p.map(partial(estimate_curvature,
                                              verbose=False),
                                      good_vertices_ind, B_v_list)
+                p.close()
+                p.clear()
                 results_array = np.array(results_list, dtype=object)
                 T_1_array = results_array[:, 0]
                 T_2_array = results_array[:, 1]

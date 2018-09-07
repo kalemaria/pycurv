@@ -413,7 +413,8 @@ def new_workflow(
         fold, base_filename, scale_factor_to_nm, radius_hit,
         epsilon=0, eta=0, methods=['VV'],
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
-        remove_small_components=100, only_normals=False, cores=4):
+        remove_small_components=100, only_normals=False, cores=4,
+        runtimes=None):
     """
     A script for running all processing steps to estimate membrane curvature.
 
@@ -456,6 +457,8 @@ def new_workflow(
             are estimated, without principal directions and curvatures, only the
             graph with the orientations class, normals or tangents is returned.
         cores (int, optional): number of cores to run VV in parallel (default 4)
+        runtimes (str, optional): if given, runtimes and some parameters are
+            added to this file (default None)
 
     Returns:
         None
@@ -576,16 +579,24 @@ def new_workflow(
                 fold, base_filename, radius_hit, epsilon, eta)
         method_tg_surf_dict = {}
         if not isfile(gt_file1):
+            if runtimes is not None:
+                with open(runtimes, 'w') as f:
+                    f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+                            "duration1;method;duration2\n")
             method_tg_surf_dict = normals_directions_and_curvature_estimation(
                 tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
                 methods=methods, full_dist_map=False, graph_file=gt_file1,
                 area2=True, only_normals=only_normals, poly_surf=surf_clean,
-                cores=cores)
+                cores=cores, runtimes=runtimes)
         elif only_normals is False:
+            if runtimes is not None:
+                with open(runtimes, 'w') as f:
+                    f.write("method;duration2\n")
             for method in methods:
                 tg_curv, surface_curv = curvature_estimation(
                     radius_hit, exclude_borders=0, graph_file=gt_file1,
-                    method=method, poly_surf=surf_clean, cores=cores)
+                    method=method, poly_surf=surf_clean, cores=cores,
+                    runtimes=runtimes)
                 method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
         if only_normals is False:
@@ -1020,13 +1031,16 @@ def main2():
     fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/'
             'vesicle3_t74/')
     tomo = "t74"
-    seg_file = "%s%s_vesicle3_bin6.Labels.mrc" % (fold, tomo)
+    seg_file = "{}{}_vesicle3_bin6.Labels.mrc".format(fold, tomo)
     lbl = 1
     min_component = 100
+    num_cores = 4
+    runtimes_file = "{}{}_runtimes.csv".format(fold, base_filename)
     new_workflow(
             fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=0,
-            remove_small_components=min_component, only_normals=False, cores=1)
+            remove_small_components=min_component, only_normals=False,
+            cores=num_cores, runtimes=runtimes_file)
 
     t_end = time.time()
     duration = t_end - t_begin
