@@ -69,12 +69,13 @@ def calculate_distances_from_triangle(
 
 if __name__ == "__main__":
     rh = 4
-    v_id = 89
+    v_id = 379  # 89
+    res = 20  # 10
     fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/plane/"
-            "res10_noise10/files4plotting/with_borders/")
-    in_surface_vtp = "{}plane_half_size10.VCTV_rh{}.vtp".format(fold, rh)
-    out_surface_vtp = "{}plane_half_size10.VCTV_rh{}_dist_to_v{}.vtp".format(
-        fold, rh, v_id)
+            "res{}_noise10/files4plotting/with_borders/".format(res))
+    in_surface_vtp = "{}plane_half_size{}.VCTV_rh{}.vtp".format(fold, res, rh)
+    out_surface_vtp = "{}plane_half_size{}.VCTV_rh{}_dist_to_v{}.vtp".format(
+        fold, res, rh, v_id)
 
     in_surface = io.load_poly(in_surface_vtp)
     out_surface = calculate_distances_from_triangle(

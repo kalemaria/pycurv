@@ -155,7 +155,7 @@ def add_line_hist(values, num_bins, value_range=None, max_val=None,
 
 def plot_composite_line_hist(
         labels, line_styles, markers, colors,
-        title, xlabel, ylabel,
+        xlabel, ylabel, title=None,
         data_arrays=None, data_files=None,
         num_bins=20, value_range=None, y_range=None, max_val=None, freq=False,
         cumulative=False, outfile=None):
@@ -166,11 +166,11 @@ def plot_composite_line_hist(
         line_styles: list of line styles (str)
         markers: list of plotting characters (str)
         colors: list of colors (str)
-        title (str): title of the plot
         xlabel (str): X axis label
         ylabel (str): Y axis label
-        data_arrays: list of data arrays
-        data_files: list of data file names (str)
+        title (str, optional): title of the plot
+        data_arrays (list, optional): list of data arrays
+        data_files (list, optional): list of data file names (str)
         num_bins (int, optional): number of bins for the histogram (default 20)
         value_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
@@ -211,8 +211,8 @@ def plot_composite_line_hist(
                 data_array, num_bins, value_range=value_range, max_val=max_val,
                 label=labels[i], ls=line_styles[i], marker=markers[i],
                 c=colors[i], freq=freq, cumulative=cumulative)
-
-    plt.title(title)
+    if title is not None:
+        plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     if y_range is not None:
@@ -227,7 +227,7 @@ def plot_composite_line_hist(
         print ("The plot was saved as {}".format(outfile))
 
 
-def plot_plane_normals(n=10, y_range=None):
+def plot_plane_normals(n=10, y_range=None, res=20):
     """ Plots estimated normals errors by VV versus original face normals
     (calculated by VTK) on a noisy plane surface.
 
@@ -235,12 +235,16 @@ def plot_plane_normals(n=10, y_range=None):
         n (int, optional): noise in % (default 10)
         y_range (tuple, optional): a tuple of two values to limit the range
             at Y axis (default None)
+        res (int, optional): defines the size of the square plane in pixels and
+            triangle division: 2*res
     """
     fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-            "plane/res10_noise{}/files4plotting/with_borders/".format(n))
+            "plane/res{}_noise{}/files4plotting/with_borders/".format(res, n))
     plot_fold = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-                 "plane/res10_noise{}/plots/with_borders/".format(n))
-    basename = "plane_half_size10"
+                 "plane/res{}_noise{}/plots/with_borders/".format(res, n))
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+    basename = "plane_half_size{}".format(res)
     VCTV_rh8_normal_errors = pd.read_csv("{}{}.VCTV_rh8.csv".format(
         fold, basename), sep=';')["normalErrors"].tolist()
     VCTV_rh4_normal_errors = pd.read_csv("{}{}.VCTV_rh4.csv".format(
@@ -255,8 +259,8 @@ def plot_plane_normals(n=10, y_range=None):
         colors=['b', 'c', 'r'],
         title="Plane ({}% noise)".format(n),
         xlabel="Normal orientation error", ylabel="Cumulative frequency",
-        outfile="{}plane_res10_noise{}.VV_vs_VTK.normal_errors_bin20_cum_freq"
-                "_slides.png".format(plot_fold, n),
+        outfile="{}plane_res{}_noise{}.VV_vs_VTK.normal_errors_bin20_cum_freq"
+                ".png".format(plot_fold, res, n),
         num_bins=20, freq=True, cumulative=True,
         value_range=(0, max([max(d) for d in data])), y_range=y_range
     )
@@ -332,8 +336,14 @@ def plot_cylinder_T_2_and_kappa_1_errors_VV_VCTV(
 
     if area2:
         a = "_area2"
+        line_styles = ['-', '-.']
+        markers = ['^', 'o']
+        colors = ['b', 'orange']
     else:
         a = ""
+        line_styles = ['-', '--']
+        markers = ['^', 'v']
+        colors = ['b', 'c']
     df = pd.read_csv("{}{}.VV{}_rh5.csv".format(fold, basename, a), sep=';')
     VV_T_2_errors = df["T2Errors"].tolist()
     VV_kappa_1_errors = df["kappa1RelErrors"].tolist()
@@ -348,8 +358,7 @@ def plot_cylinder_T_2_and_kappa_1_errors_VV_VCTV(
     plot_composite_line_hist(
         data_arrays=data,
         labels=["VCTV RadiusHit=7", "VV{} RadiusHit=5".format(a)],
-        line_styles=['-', '--'], markers=['^', 'v'],
-        colors=['b', 'c'],
+        line_styles=line_styles, markers=markers, colors=colors,
         title="Cylinder ({}% noise)".format(n),
         xlabel="Minimal principal direction error",
         ylabel="Cumulative frequency",
@@ -361,13 +370,15 @@ def plot_cylinder_T_2_and_kappa_1_errors_VV_VCTV(
     )
     data = [VCTV_kappa_1_errors,
             VV_kappa_1_errors, VTK_kappa_1_errors]
+    line_styles.append(':')
+    markers.append('s')
+    colors.append('r')
     if value_range_kappa is None:
         value_range_kappa = (0, max([max(d) for d in data]))
     plot_composite_line_hist(
         data_arrays=data,
         labels=["VCTV RadiusHit=7", "VV{} RadiusHit=5".format(a), "VTK"],
-        line_styles=['-', '--', ':'], markers=['^', 'v', 's'],  # '-.', 'o',
-        colors=['b', 'c', 'r'],  # 'g',
+        line_styles=line_styles, markers=markers, colors=colors,
         title="Cylinder ({}% noise)".format(n),
         xlabel="Maximal principal curvature relative error",
         ylabel="Cumulative frequency",
@@ -747,24 +758,31 @@ def plot_sphere_kappa_1_and_2_errors_noVVCF(
     VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
     VV_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
 
+    df_VV2 = pd.read_csv("{}{}.VV_area2_rh{}.csv".format(fold, basename, rhVV),
+                         sep=';')
+    VV_area2_kappa_1_errors = df_VV2["kappa1RelErrors"].tolist()
+    VV_area2_kappa_2_errors = df_VV2["kappa2RelErrors"].tolist()
+
     df_VTK = pd.read_csv("{}{}.VTK.csv".format(fold, basename), sep=';')
     VTK_kappa_1_errors = df_VTK["kappa1RelErrors"].tolist()
     VTK_kappa_2_errors = df_VTK["kappa2RelErrors"].tolist()
 
     data = [VCTV_kappa_1_errors + VCTV_kappa_2_errors,
             VV_kappa_1_errors + VV_kappa_2_errors,
+            VV_area2_kappa_1_errors + VV_area2_kappa_2_errors,
             VTK_kappa_1_errors + VTK_kappa_2_errors]
     plot_composite_line_hist(  # kappa_1 + kappa_2
         data_arrays=data,
         labels=["VCTV RadiusHit={}".format(rhVCTV),
-                "VV RadiusHit={}".format(rhVV), "VTK"],
-        line_styles=['-', '--', ':'],
-        markers=['^', 'v', 's'],
-        colors=['b', 'c', 'r'],
+                "VV RadiusHit={}".format(rhVV),
+                "VV2 RadiusHit={}".format(rhVV), "VTK"],
+        line_styles=['-', '--', '-.', ':'],
+        markers=['^', 'v', 'o', 's'],
+        colors=['b', 'c', 'orange', 'r'],
         title="Sphere ({})".format(type),
         xlabel="Principal curvatures relative error",
         ylabel="Cumulative frequency",
-        outfile=("{}{}.VVrh{}_VCTVrh{}_vs_VTK."
+        outfile=("{}{}.VV_VVarea2rh{}_VCTVrh{}_vs_VTK."
                  "kappa_1_and_2_errors_20bins_cum_freq_slides.png".format(
                   plot_fold, basename, rhVV, rhVCTV)),
         num_bins=20, freq=True, cumulative=True,  # max_val=1
@@ -820,8 +838,14 @@ def plot_sphere_kappa_1_and_2_errors_VV_VCTV(
 
     if area2:
         a = "_area2"
+        line_styles = ['-', '-.']
+        markers = ['^', 'o']
+        colors = ['b', 'orange']
     else:
         a = ""
+        line_styles = ['-', '--']
+        markers = ['^', 'v']
+        colors = ['b', 'c']
     df_VV = pd.read_csv("{}{}.VV{}_rh{}.csv".format(fold, basename, a, rhVV),
                         sep=';')
     VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
@@ -837,9 +861,7 @@ def plot_sphere_kappa_1_and_2_errors_VV_VCTV(
         data_arrays=data,
         labels=["VCTV RadiusHit={}".format(rhVCTV),
                 "VV{} RadiusHit={}".format(a, rhVV)],
-        line_styles=['-', '--'],
-        markers=['^', 'v'],
-        colors=['b', 'c'],
+        line_styles=line_styles, markers=markers, colors=colors,
         title="Sphere ({})".format(type),
         xlabel="Principal curvatures relative error",
         ylabel="Cumulative frequency",
@@ -899,10 +921,10 @@ def plot_sphere_kappa_1_and_2_errors_VV_VVarea2_VCTV(
     VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
     VV_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
 
-    df_VV = pd.read_csv("{}{}.VV_area2_rh{}.csv".format(fold, basename, rhVV),
+    df_VV2 = pd.read_csv("{}{}.VV_area2_rh{}.csv".format(fold, basename, rhVV),
                         sep=';')
-    VV_area2_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
-    VV_area2_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
+    VV_area2_kappa_1_errors = df_VV2["kappa1RelErrors"].tolist()
+    VV_area2_kappa_2_errors = df_VV2["kappa2RelErrors"].tolist()
 
     data = [VCTV_kappa_1_errors + VCTV_kappa_2_errors,
             VV_kappa_1_errors + VV_kappa_2_errors,
@@ -1204,12 +1226,12 @@ if __name__ == "__main__":
     # plot_sphere_kappa_1_and_2_diff_rh(ico=0)
     # plot_sphere_kappa_1_and_2_errors()
     # plot_inverse_sphere_kappa_1_and_2_errors()
-    plot_cylinder_kappa_1_diff_rh()
-    # plot_cylinder_T_2_and_kappa_1_errors_VV_VVarea2_VCTV(y_range=(-0.05, 1.05),
-    #                                                      exclude_borders=0)
-    # plot_cylinder_T_2_and_kappa_1_errors_VV_VCTV(
-    #     y_range=(-0.05, 1.05), value_range_T=(0, 0.006),
-    #     value_range_kappa=(0, 1.0), exclude_borders=5, area2=True)
+    # plot_cylinder_kappa_1_diff_rh()
+    # plot_cylinder_T_2_and_kappa_1_errors_VV_VVarea2_VCTV(
+    #     y_range=(-0.05, 1.05), exclude_borders=0)
+    plot_cylinder_T_2_and_kappa_1_errors_VV_VCTV(
+        y_range=(-0.05, 1.05), value_range_T=(0, 0.006),
+        value_range_kappa=(0, 1.0), exclude_borders=0, area2=True)
     # plot_inverse_cylinder_T_1_and_kappa_2_errors()
     # plot_torus_kappa_1_and_2_diff_rh()
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_noVVCF(y_range=(-0.05, 1.05),
@@ -1217,16 +1239,16 @@ if __name__ == "__main__":
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_VTK_VV_VVarea2_VCTV(
     #     y_range=(-0.05, 1.05))
 
-    # # gaussian sphere
+    # gaussian sphere
     # for r in [10, 20, 30]:
-    #     # plot_sphere_kappa_1_and_2_errors_noVVCF(
-    #     #     r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, y_range=(-0.05, 1.05))
-    #     plot_sphere_kappa_1_and_2_errors_VV_VVarea2_VCTV(
-    #         r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, value_range=(0, 0.178),
-    #         y_range=(-0.05, 1.05))
-    #     # plot_sphere_kappa_1_and_2_errors_VV_VCTV(
-    #     #     r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, value_range=(0, 0.05),
-    #     #     y_range=(-0.05, 1.05), area2=True)
+    #     plot_sphere_kappa_1_and_2_errors_noVVCF(
+    #         r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, y_range=(-0.05, 1.05))
+        # plot_sphere_kappa_1_and_2_errors_VV_VVarea2_VCTV(
+        #     r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, value_range=(0, 0.178),
+        #     y_range=(-0.05, 1.05))
+        # plot_sphere_kappa_1_and_2_errors_VV_VCTV(
+        #     r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, value_range=(0, 0.05),
+        #     y_range=(-0.05, 1.05), area2=True)
 
     # # binary sphere
     # # plot_sphere_kappa_1_and_2_diff_rh(
