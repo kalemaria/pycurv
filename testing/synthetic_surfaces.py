@@ -92,11 +92,11 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
         print ("variance = {}".format(var))
 
     # Get the point normals of the surface
-    point_normals = __get_point_normals(surface)
+    point_normals = _get_point_normals(surface)
     if point_normals is None:
         print "No point normals were found. Computing normals..."
-        surface = __compute_point_normals(surface)
-        point_normals = __get_point_normals(surface)
+        surface = _compute_point_normals(surface)
+        point_normals = _get_point_normals(surface)
         if point_normals is None:
             print "Failed to compute point normals! Exiting..."
             exit(0)
@@ -124,14 +124,14 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     return new_surface
 
 
-def __get_point_normals(surface):
+def _get_point_normals(surface):
     normals = surface.GetPointData().GetNormals()
     if normals is None:
         normals = surface.GetPointData().GetArray("Normals")
     return normals
 
 
-def __compute_point_normals(surface):
+def _compute_point_normals(surface):
     normal_generator = vtk.vtkPolyDataNormals()
     normal_generator.SetInputData(surface)
     normal_generator.ComputePointNormalsOn()
@@ -140,7 +140,7 @@ def __compute_point_normals(surface):
     return surface
 
 
-def __copy_and_name_array(da, name):
+def _copy_and_name_array(da, name):
     """
     Copies data array and gives it a new name.
 

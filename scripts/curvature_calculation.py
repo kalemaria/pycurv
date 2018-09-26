@@ -317,11 +317,11 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
     # max voxel value & .log files:
     outfile_base = "{}.VV2_rh{}_epsilon{}_eta{}".format(
         all_file_base, radius_hit, epsilon, eta)
-    __vtp_arrays_to_mrc_volumes(
+    _vtp_arrays_to_mrc_volumes(
         all_surf_VV_vtp_file, outfile_base, pixel_size, scale_x, scale_y,
         scale_z, log_files=True)
     # mean voxel value:
-    __vtp_arrays_to_mrc_volumes(
+    _vtp_arrays_to_mrc_volumes(
         all_surf_VV_vtp_file, outfile_base, pixel_size, scale_x, scale_y,
         scale_z, mean=True)
 
@@ -355,16 +355,16 @@ def convert_vtp_to_stl_surface_and_mrc_curvatures(
     # Converting vtkPolyData selected cell arrays from the '.vtp' file as 3-D
     # volumes in '.mrc' files (and saving them as '.mrc.gz' files).
     # max voxel value & .log files:
-    __vtp_arrays_to_mrc_volumes(
+    _vtp_arrays_to_mrc_volumes(
         surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
         log_files=True)
     # mean voxel value & no .log files:
-    __vtp_arrays_to_mrc_volumes(
+    _vtp_arrays_to_mrc_volumes(
         surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
         mean=True)
 
 
-def __vtp_arrays_to_mrc_volumes(
+def _vtp_arrays_to_mrc_volumes(
         surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
         mean=False, log_files=False, compress=False):
     """
@@ -704,12 +704,12 @@ def extract_curvatures_after_new_workflow(
         tg = TriangleGraph()
         tg.graph = load_graph(gt_infile)
 
-        __extract_curvatures_from_graph(
+        _extract_curvatures_from_graph(
             tg, csv_outfile, exclude_borders, gt_outfile, vtp_outfile,
             categorize_shape_index=categorize_shape_index)
 
 
-def __extract_curvatures_from_graph(
+def _extract_curvatures_from_graph(
         tg, csv_file, exclude_borders, gt_file=None, vtp_file=None,
         categorize_shape_index=False):
     # If don't want to include curvatures near borders, filter out those
@@ -723,7 +723,7 @@ def __extract_curvatures_from_graph(
         tg.graph.vp.shape_index_cat = tg.graph.new_vertex_property("float")
         for v in tg.graph.vertices():
             si_v = tg.graph.vp.shape_index_VV[v]
-            si_cat_v, si_class_v = __shape_index_classifier(si_v)
+            si_cat_v, si_class_v = _shape_index_classifier(si_v)
             tg.graph.vp.shape_index_cat[v] = si_cat_v
             shape_index_class.append(si_class_v)
 
@@ -758,7 +758,7 @@ def __extract_curvatures_from_graph(
     df.to_csv(csv_file, sep=';')
 
 
-def __shape_index_classifier(x):
+def _shape_index_classifier(x):
     """
     Maps shape index value to the representative (middle) value of each shape
     class and the class label.

@@ -322,13 +322,13 @@ class VoxelGraph(graphs.SegmentationGraph):
             print '%s membrane voxels' % len(membrane_voxels)
             if verbose:
                 print membrane_voxels
-            self.__expand_voxels(mask, membrane_voxels, verbose)
+            self._expand_voxels(mask, membrane_voxels, verbose)
         else:
             raise pexceptions.PySegInputError(
                 expr='build_graph_from_np_ndarray (VoxelGraph)',
                 msg='A 3D numpy ndarray object required as first input.')
 
-    def __expand_voxels(self, mask, remaining_mem_voxels, verbose=False):
+    def _expand_voxels(self, mask, remaining_mem_voxels, verbose=False):
         """
         An iterative function used for building the membrane graph of a
         VoxelGraph object.
