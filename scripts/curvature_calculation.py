@@ -315,98 +315,118 @@ def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
     # Converting vtkPolyData selected cell arrays from the '.vtp' file to 3-D
     # volumes and saving them as '.mrc.gz' files.
     # max voxel value & .log files:
+    outfile_base = "{}.VV2_rh{}_epsilon{}_eta{}".format(
+        all_file_base, radius_hit, epsilon, eta)
     __vtp_arrays_to_mrc_volumes(
-        all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y,
-        scale_z, radius_hit, epsilon, eta, log_files=True)
+        all_surf_VV_vtp_file, outfile_base, pixel_size, scale_x, scale_y,
+        scale_z, log_files=True)
+    # mean voxel value:
+    __vtp_arrays_to_mrc_volumes(
+        all_surf_VV_vtp_file, outfile_base, pixel_size, scale_x, scale_y,
+        scale_z, mean=True)
+
+
+def convert_vtp_to_stl_surface_and_mrc_curvatures(
+        surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z):
+    """
+    Converts the '.vtp' surface file to '.stl' file and converts selected
+    vtkPolyData cell arrays from the '.vtp' file as 3-D volumes in '.mrc' files.
+    The selected arrays are: "kappa_1", "kappa_2", "curvedness_VV".
+
+    Args:
+        surf_vtp_file (str): surface .vtp file, should contain the final surface
+            with curvatures
+        outfile_base (str): base name for the output .mrc and .log files
+        pixel_size (float): pixel size in nanometer of the membrane mask
+        scale_x (int): size of the membrane mask in X dimension
+        scale_y (int): size of the membrane mask in Y dimension
+        scale_z (int): size of the membrane mask in Z dimension
+
+    Returns:
+        None
+    """
+    # Converting the '.vtp' surface file to '.stl' file:
+    surf_stl_file = (surf_vtp_file[0:-4] + '.stl')
+    if not isfile(surf_stl_file):
+        io.vtp_file_to_stl_file(surf_vtp_file, surf_stl_file)
+        print ("The '.vtp' file {} was converted to .stl format".format(
+            surf_vtp_file))
+
+    # Converting vtkPolyData selected cell arrays from the '.vtp' file as 3-D
+    # volumes in '.mrc' files (and saving them as '.mrc.gz' files).
+    # max voxel value & .log files:
+    __vtp_arrays_to_mrc_volumes(
+        surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
+        log_files=True)
     # mean voxel value & no .log files:
     __vtp_arrays_to_mrc_volumes(
-        all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y,
-        scale_z, radius_hit, epsilon, eta, mean=True)
+        surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
+        mean=True)
 
 
 def __vtp_arrays_to_mrc_volumes(
-        all_file_base, all_surf_VV_vtp_file, pixel_size, scale_x, scale_y,
-        scale_z, radius_hit, epsilon, eta, mean=False, log_files=False):
+        surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
+        mean=False, log_files=False, compress=False):
     """
-    This subfunction converts vtkPolyData cell arrays from a '.vtp' file to 3-D
-    volumes and saves them as '.mrc.gz' files.
-
-    Most of the parameters are passed from the "parent" function, "workflow".
+    This function converts selected vtkPolyData cell arrays from the '.vtp' file
+    as 3-D volumes in '.mrc' files. The selected arrays are: "kappa_1",
+    "kappa_2", "curvedness_VV".
 
     Args:
-        all_file_base (str): as defined in workflow
-        all_surf_VV_vtp_file (str): as defined in workflow
-        pixel_size (float): pixel size in nanometer of the membrane mask (as
-            passed to workflow)
-        scale_x (int): size of the membrane mask in X dimension (as passed to
-            workflow)
-        scale_y (int): size of the membrane mask in Y dimension (as passed to
-            workflow)
-        scale_z (int): size of the membrane mask in Z dimension (as passed to
-            workflow)
-        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
-            it should be chosen to correspond to radius of smallest features of
-            interest on the surface
-        epsilon (int): as defined in workflow
-        eta (int): as defined in workflow
+        surf_vtp_file (str): surface .vtp file, should contain the final surface
+            with curvatures
+        outfile_base (str): base name for the output .mrc (and .log) files
+        pixel_size (float): pixel size in nanometer of the membrane mask
+        scale_x (int): size of the membrane mask in X dimension
+        scale_y (int): size of the membrane mask in Y dimension
+        scale_z (int): size of the membrane mask in Z dimension
         mean (boolean, optional): if True (default False), in case multiple
             triangles map to the same voxel, takes the mean value, else the
             maximal value
         log_files (boolean, optional): if True (default False), writes the log
             files for such cases
+        compress (boolean, optional): if True (default False), compresses the
+            '.mrc' files with gzip.
 
     Returns:
         None
     """
-    array_name1 = "kappa_1"
-    name1 = "max_curvature"
-    array_name2 = "kappa_2"
-    name2 = "min_curvature"
-    array_name3 = "curvedness_VV"
-    name3 = "curvedness"
+    array_names = ["kappa_1", "kappa_2", "curvedness_VV"]
+    names = ["max_curvature", "min_curvature", "curvedness"]
 
     if mean:
-        voxel_mean_str = ".voxel_mean"
+        voxel_value_str = "voxel_mean"
     else:
-        voxel_mean_str = ""
-    mrcfilename1 = '%s.VV_rh%s_epsilon%s_eta%s.%s.volume%s.mrc' % (
-        all_file_base, radius_hit, epsilon, eta, name1, voxel_mean_str)
-    mrcfilename2 = '%s.VV_rh%s_epsilon%s_eta%s.%s.volume%s.mrc' % (
-        all_file_base, radius_hit, epsilon, eta, name2, voxel_mean_str)
-    mrcfilename3 = '%s.VV_rh%s_epsilon%s_eta%s.%s.volume%s.mrc' % (
-        all_file_base, radius_hit, epsilon, eta, name3, voxel_mean_str)
-    if log_files:
-        logfilename1 = mrcfilename1[0:-4] + '.log'
-        logfilename2 = mrcfilename2[0:-4] + '.log'
-        logfilename3 = mrcfilename3[0:-4] + '.log'
-    else:
-        logfilename1 = None
-        logfilename2 = None
-        logfilename3 = None
+        voxel_value_str = "voxel_max"
+    mrcfilenames = []
+    logfilenames = []
+    for name in names:
+        mrcfilename = "{}.{}.{}.mrc".format(outfile_base, name, voxel_value_str)
+        mrcfilenames.append(mrcfilename)
+        if log_files:
+            logfilename = "{}.{}.{}.log".format(outfile_base, name,
+                                                voxel_value_str)
+        else:
+            logfilename = None
+        logfilenames.append(logfilename)
 
     # Load the vtkPolyData object from the '.vtp' file, calculate the volumes
     # from arrays, write '.log' files, and save the volumes as '.mrc' files:
-    poly = io.load_poly(all_surf_VV_vtp_file)
-    volume1 = io.poly_array_to_volume(poly, array_name1, pixel_size,
-                                      scale_x, scale_y, scale_z,
-                                      logfilename=logfilename1, mean=mean)
-    io.save_numpy(volume1, mrcfilename1)
-    volume2 = io.poly_array_to_volume(poly, array_name2, pixel_size,
-                                      scale_x, scale_y, scale_z,
-                                      logfilename=logfilename2, mean=mean)
-    io.save_numpy(volume2, mrcfilename2)
-    volume3 = io.poly_array_to_volume(poly, array_name3, pixel_size,
-                                      scale_x, scale_y, scale_z,
-                                      logfilename=logfilename3, mean=mean)
-    io.save_numpy(volume3, mrcfilename3)
+    poly = io.load_poly(surf_vtp_file)
+    for i, array_name in enumerate(array_names):
+        volume = io.poly_array_to_volume(
+            poly, array_name, pixel_size, scale_x, scale_y, scale_z,
+            logfilename=logfilenames[i], mean=mean)
+        io.save_numpy(volume, mrcfilenames[i])
 
-    # Gunzip the '.mrc' files and delete the uncompressed files:
-    for mrcfilename in [mrcfilename1, mrcfilename2, mrcfilename3]:
-        with open(mrcfilename) as f_in, \
-                gzip.open(mrcfilename + '.gz', 'wb') as f_out:
-            f_out.writelines(f_in)
-        remove(mrcfilename)
-        print 'Archive %s.gz was written' % mrcfilename
+    if compress:
+        # Gunzip the '.mrc' files and delete the uncompressed files:
+        for mrcfilename in mrcfilenames:
+            with open(mrcfilename) as f_in, \
+                    gzip.open(mrcfilename + '.gz', 'wb') as f_out:
+                f_out.writelines(f_in)
+            remove(mrcfilename)
+            print 'Archive {}.gz was written'.format(mrcfilename)
 
 
 def new_workflow(
@@ -536,7 +556,7 @@ def new_workflow(
         # Remove the wrong borders (surface generation artefact)
         b = 0
         if remove_wrong_borders:
-            b += 2  # because of MAX_DIST_SURF parameter in surface generation
+            b += 3  # because of MAX_DIST_SURF parameter in surface generation
         if holes < 0:
             b += abs(holes)
         if b > 0:
@@ -910,13 +930,13 @@ def annas_workflow(
             gt_file, surf_file))
 
 
-def main(membrane, rh):
+def main(membrane, radius_hit):
     """
     Main function for running the new_workflow function for Javier's cER or PM.
 
     Args:
         membrane (string): what membrane segmentation to use 'cER' or 'PM'
-        rh (int): RadiusHit parameter (in nm)
+        radius_hit (int): RadiusHit parameter (in nm)
 
     Returns:
         None
@@ -942,10 +962,19 @@ def main(membrane, rh):
     # fold = "{}TCB/170924_TITAN_l2_t2/".format(base_fold)
     # seg_file = "t2_ny01_lbl.labels.mrc"
     # base_filename = "TCBl2t2_{}".format(membrane)
+
     # Another tcb with surface generation problems:
-    fold = "{}TCB/170924_TITAN_l1_t1/smooth/".format(base_fold)
-    seg_file = "t1_cleaned_pt_lbl.labels_FILLED.mrc"
-    base_filename = "TCBl1t1_{}".format(membrane)
+    # fold = "{}TCB/170924_TITAN_l1_t1/smooth/".format(base_fold)
+    # seg_file = "t1_cleaned_pt_lbl.labels_FILLED.mrc"
+    # base_filename = "TCBl1t1_{}".format(membrane)
+
+    # tcb for Ruben:
+    fold = "{}TCB/180830_TITAN_l2_t2/smooth/".format(base_fold)
+    seg_file = "t2_ny01_lbl.labels_FILLED.mrc"
+    base_filename = "TCBl2t2_180830_{}".format(membrane)
+    scale_x = 928
+    scale_y = scale_x
+    scale_z = 123
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
     # tomo = "scs_171108_l2_t4_ny01"
@@ -968,7 +997,6 @@ def main(membrane, rh):
     # same for all:
     pixel_size = 1.368  # same for whole new data set
     holes = 3  # surface was better for the "sheety" one with 3 than with 0 or 5
-    radius_hit = rh
     min_component = 100
 
     if membrane == "PM":
@@ -990,8 +1018,15 @@ def main(membrane, rh):
             print("\nExtracting curvatures for {} without {} nm from border"
                   .format(membrane, b))
             extract_curvatures_after_new_workflow(
-                fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+                fold, base_filename, radius_hit, methods=['VV'],
                 exclude_borders=b, categorize_shape_index=True)
+
+        surf_vtp_file = '{}{}.{}_rh{}_epsilon0_eta0.vtp'.format(
+            fold, base_filename, 'VV_area2', radius_hit)
+        outfile_base = '{}{}.{}_rh{}'.format(
+            fold, base_filename, 'VV_area2', radius_hit)
+        convert_vtp_to_stl_surface_and_mrc_curvatures(
+            surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z)
     else:
         print("Membrane not known.")
         exit(0)
@@ -1101,11 +1136,9 @@ def main_anna():
     annas_workflow(fold, base_filename, radius_hit, seg_file)
 
 if __name__ == "__main__":
-    # main("cER", 10)
-
-    # membrane = sys.argv[1]
-    # rh = int(sys.argv[2])
-    # main(membrane, rh)
+    membrane = sys.argv[1]
+    rh = int(sys.argv[2])
+    main(membrane, rh)
 
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
     # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh{}.stats'.format(
@@ -1117,6 +1150,6 @@ if __name__ == "__main__":
     # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
     # cProfile.run('main2()', stats_file)
 
-    main2()
+    # main2()
 
     # main_anna()

@@ -1274,42 +1274,42 @@ class VectorVotingTestCase(unittest.TestCase):
     #             page_curvature_formula=False, area2=True, inverse=True)
     #             # num_points=p
     #
-    # def test_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated for a sphere with a
-    #     certain radius and noise level:
-    #
-    #     kappa1 = kappa2 = 1/r; 30% of difference is allowed
-    #     """
-    #     # # Icosahedron sphere with 1280 faces:
-    #     # for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-    #     #     for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
-    #     #         self.parametric_test_sphere_curvatures(
-    #     #             10, rh, ico=1280, noise=n, methods=['VVCF'],
-    #     #             page_curvature_formula=False, num_points=p)
-    #     #     self.parametric_test_sphere_curvatures(
-    #     #         10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
-    #     #         page_curvature_formula=False)
-    #     # Binary sphere with different radii:
-    #     runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-    #                    "sphere/binary/files4plotting/bin_spheres_runtimes.csv"
-    #     with open(runtimes_csv, 'w') as f:
-    #         f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-    #                 "duration1;method;duration2\n")
-    #     for r in [10, 20, 30]:
-    #         for rh in [8]:  # 5, 6, 7, 8, 9, 10; 18; 28
-    #             for cores in range(1, 9):
-    #                 self.parametric_test_sphere_curvatures(
-    #                     r, rh, binary=True, methods=['VV'],  # , 'VCTV'
-    #                     full_dist_map=False, area2=True,
-    #                     cores=cores, runtimes=runtimes_csv)
-    #     # Gaussian sphere with different radii:
-    #     for r in [10]:  # 20, 30
-    #         for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
-    #             self.parametric_test_sphere_curvatures(
-    #                 r, rh, methods=['VV'],  # 'VCTV'
-    #                 full_dist_map=True,  area2=True,
-    #                 page_curvature_formula=True)
+    def test_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated for a sphere with a
+        certain radius and noise level:
+
+        kappa1 = kappa2 = 1/r; 30% of difference is allowed
+        """
+        # # Icosahedron sphere with 1280 faces:
+        # for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
+        #     for p in [50]:  # 5, 10, 15, 20, 30, 40, 50
+        #         self.parametric_test_sphere_curvatures(
+        #             10, rh, ico=1280, noise=n, methods=['VVCF'],
+        #             page_curvature_formula=False, num_points=p)
+        #     self.parametric_test_sphere_curvatures(
+        #         10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
+        #         page_curvature_formula=False)
+        # Binary sphere with different radii:
+        runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+                       "sphere/binary/files4plotting/bin_spheres_runtimes.csv"
+        with open(runtimes_csv, 'w') as f:
+            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+                    "duration1;method;duration2\n")
+        for r in [10]:  # , 20, 30
+            for rh in [12]:  # 5, 6, 7, 8, 9, 10; 18; 28
+                for cores in [4]:  # range(1, 9):
+                    self.parametric_test_sphere_curvatures(
+                        r, rh, binary=True, methods=['VV'],  # , 'VCTV'
+                        full_dist_map=False, area2=True,
+                        cores=cores, runtimes=runtimes_csv)
+        # # Gaussian sphere with different radii:
+        # for r in [10]:  # 20, 30
+        #     for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
+        #         self.parametric_test_sphere_curvatures(
+        #             r, rh, methods=['VV'],  # 'VCTV'
+        #             full_dist_map=True,  area2=True,
+        #             page_curvature_formula=True)
     #
     # def test_inverse_sphere_curvatures(self):
     #     """
@@ -1326,24 +1326,24 @@ class VectorVotingTestCase(unittest.TestCase):
     #             methods=['VV'],  # , 'VCTV', 'VVCF'
     #             page_curvature_formula=False, area2=True)  # num_points=p
 
-    def test_torus_curvatures(self):
-        """
-        Runs parametric_test_torus_directions_curvatures with certain
-        parameters.
-        """
-        runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-                       "torus/files4plotting/torus_rr25_csr10_runtimes_VCTV.csv"
-        # with open(runtimes_csv, 'w') as f:
-        #     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-        #             "duration1;method;duration2\n")
-        # p = 50
-        for rh in [12]:  # 8, 10, 
-            for cores in [4]:  # range((1, 9)
-                self.parametric_test_torus_directions_curvatures(
-                    25, 10, rh, methods=['VCTV'],  # 'VV', 'VVCF'
-                    page_curvature_formula=False, full_dist_map=False,
-                    area2=True, cores=cores, runtimes=runtimes_csv)
-                    # num_points=p
+    # def test_torus_curvatures(self):
+    #     """
+    #     Runs parametric_test_torus_directions_curvatures with certain
+    #     parameters.
+    #     """
+    #     runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+    #                    "torus/files4plotting/torus_rr25_csr10_runtimes_VCTV.csv"
+    #     # with open(runtimes_csv, 'w') as f:
+    #     #     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+    #     #             "duration1;method;duration2\n")
+    #     # p = 50
+    #     for rh in [12]:  # 8, 10,
+    #         for cores in [4]:  # range((1, 9)
+    #             self.parametric_test_torus_directions_curvatures(
+    #                 25, 10, rh, methods=['VCTV'],  # 'VV', 'VVCF'
+    #                 page_curvature_formula=False, full_dist_map=False,
+    #                 area2=True, cores=cores, runtimes=runtimes_csv)
+    #                 # num_points=p
 
     # def test_cone(self):
     #     """

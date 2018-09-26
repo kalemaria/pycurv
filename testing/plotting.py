@@ -564,32 +564,32 @@ def plot_sphere_kappa_1_and_2_diff_rh(r=10, n=0, ico=1280, binary=False,
             labels.append(label)
         if method == "VV_area2":
             method = "VV2"
-        # plot_composite_line_hist(  # kappa_1
-        #     data_arrays=kappa_1_arrays,
-        #     labels=labels,
-        #     line_styles=['-.', '-.', '--', '-', ':'],
-        #     markers=['x', 'v', '^', 's', 'o'],
-        #     colors=['b', 'c', 'g', 'y', 'r'],
-        #     title="{} on sphere ({})".format(method, type),
-        #     xlabel="Estimated maximal principal curvature",
-        #     ylabel="Counts",
-        #     outfile=("{}{}.{}_rh{}-{}.kappa_1.png".format(
-        #         plot_fold, basename, method, rhs[0], rhs[-1])),
-        #     num_bins=5, value_range=None, max_val=None, freq=False
-        # )
-        # plot_composite_line_hist(  # kappa_2
-        #     data_arrays=kappa_2_arrays,
-        #     labels=labels,
-        #     line_styles=['-.', '-.', '--', '-', ':'],
-        #     markers=['x', 'v', '^', 's', 'o'],
-        #     colors=['b', 'c', 'g', 'y', 'r'],
-        #     title="{} on sphere ({})".format(method, type),
-        #     xlabel="Estimated minimal principal curvature",
-        #     ylabel="Counts",
-        #     outfile=("{}{}.{}_rh{}-{}.kappa_2.png".format(
-        #         plot_fold, basename, method, rhs[0], rhs[-1])),
-        #     num_bins=5, value_range=None, max_val=None, freq=False
-        # )
+        plot_composite_line_hist(  # kappa_1
+            data_arrays=kappa_1_arrays,
+            labels=labels,
+            line_styles=['-.', '-.', '--', '-', ':'],
+            markers=['x', 'v', '^', 's', 'o'],
+            colors=['b', 'c', 'g', 'y', 'r'],
+            title="{} on sphere ({})".format(method, type),
+            xlabel="Estimated maximal principal curvature",
+            ylabel="Counts",
+            outfile=("{}{}.{}_rh{}-{}.kappa_1_slides.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1])),
+            num_bins=5, value_range=None, max_val=None, freq=False
+        )
+        plot_composite_line_hist(  # kappa_2
+            data_arrays=kappa_2_arrays,
+            labels=labels,
+            line_styles=['-.', '-.', '--', '-', ':'],
+            markers=['x', 'v', '^', 's', 'o'],
+            colors=['b', 'c', 'g', 'y', 'r'],
+            title="{} on sphere ({})".format(method, type),
+            xlabel="Estimated minimal principal curvature",
+            ylabel="Counts",
+            outfile=("{}{}.{}_rh{}-{}.kappa_2_slides.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1])),
+            num_bins=5, value_range=None, max_val=None, freq=False
+        )
         plot_composite_line_hist(  # kappa_1 + kappa_2
             data_arrays=kappas_arrays,
             labels=labels,
@@ -1229,9 +1229,9 @@ if __name__ == "__main__":
     # plot_cylinder_kappa_1_diff_rh()
     # plot_cylinder_T_2_and_kappa_1_errors_VV_VVarea2_VCTV(
     #     y_range=(-0.05, 1.05), exclude_borders=0)
-    plot_cylinder_T_2_and_kappa_1_errors_VV_VCTV(
-        y_range=(-0.05, 1.05), value_range_T=(0, 0.006),
-        value_range_kappa=(0, 1.0), exclude_borders=0, area2=True)
+    # plot_cylinder_T_2_and_kappa_1_errors_VV_VCTV(
+    #     y_range=(-0.05, 1.05), value_range_T=(0, 0.006),
+    #     value_range_kappa=(0, 1.0), exclude_borders=0, area2=True)
     # plot_inverse_cylinder_T_1_and_kappa_2_errors()
     # plot_torus_kappa_1_and_2_diff_rh()
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_noVVCF(y_range=(-0.05, 1.05),
@@ -1250,9 +1250,9 @@ if __name__ == "__main__":
         #     r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, value_range=(0, 0.05),
         #     y_range=(-0.05, 1.05), area2=True)
 
-    # # binary sphere
-    # # plot_sphere_kappa_1_and_2_diff_rh(
-    # #     r=10, binary=True, methods=["VCTV", "VV", "VV_area2"], rhs=range(5, 10))
+    # binary sphere
+    plot_sphere_kappa_1_and_2_diff_rh(
+        r=10, binary=True, methods=["VV_area2"], rhs=range(8, 13))  # "VCTV", "VV"
     # for r in [10, 20, 30]:
     #     # plot_sphere_kappa_1_and_2_errors_noVVCF(
     #     #     r=r, rhVV=9, rhVCTV=8, ico=0, binary=True, y_range=(-0.05, 1.05))
