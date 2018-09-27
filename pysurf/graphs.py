@@ -171,9 +171,9 @@ class SegmentationGraph(object):
                 expr='calculate_density (SegmentationGraph)',
                 msg="No target voxels were found! Check your input ('mask' or "
                     "'target_coordinates').")
-        print '%s target voxels' % len(target_coordinates)
+        print('{} target voxels'.format(len(target_coordinates)))
         if verbose:
-            print target_coordinates
+            print(target_coordinates)
 
         # Pre-filter the target coordinates to those existing in the graph
         # (should already all be in the graph, but just in case):
@@ -184,13 +184,13 @@ class SegmentationGraph(object):
             else:
                 raise pexceptions.PySegInputWarning(
                     expr='calculate_density (SegmentationGraph)',
-                    msg=('Target (%s, %s, %s) not inside the membrane!'
-                         % (target_xyz[0], target_xyz[1], target_xyz[2])))
+                    msg=('Target ({}, {}, {}) not inside the membrane!'.format(
+                        target_xyz[0], target_xyz[1], target_xyz[2])))
 
-        print '%s target coordinates in graph' % len(
-            target_coordinates_in_graph)
+        print('{} target coordinates in graph'.format(len(
+            target_coordinates_in_graph)))
         if verbose:
-            print target_coordinates_in_graph
+            print(target_coordinates_in_graph)
 
         # Get all indices of the target coordinates:
         target_vertices_indices = []
@@ -210,8 +210,8 @@ class SegmentationGraph(object):
             # Get its coordinates:
             membrane_xyz = self.graph.vp.xyz[v_membrane]
             if verbose:
-                print ('Membrane vertex (%s, %s, %s)'
-                       % (membrane_xyz[0], membrane_xyz[1], membrane_xyz[2]))
+                print('Membrane vertex ({}, {}, {})'.format((
+                    membrane_xyz[0], membrane_xyz[1], membrane_xyz[2])))
             # Get a distance map with all pairs of distances between current
             # graph vertex (membrane_xyz) and target vertices (ribosome
             # coordinates):
@@ -230,14 +230,14 @@ class SegmentationGraph(object):
                 dist_map = [dist_map]
             for d in dist_map:
                 if verbose:
-                    print '\tTarget vertex ...'
+                    print('\tTarget vertex ...')
                 # if unreachable, the maximum float64 is stored
                 if d == np.finfo(np.float64).max:
                     if verbose:
-                        print '\t\tunreachable'
+                        print('\t\tunreachable')
                 else:
                     if verbose:
-                        print '\t\td = %s' % d
+                        print('\t\td = {}'.format(d))
                     density += 1 / (d + 1)
 
             # Add the density of the membrane vertex as a property of the
@@ -258,12 +258,13 @@ class SegmentationGraph(object):
                 voxel_to_densities[voxel] = [density]
 
             if verbose:
-                print '\tdensity = %s' % density
+                print('\tdensity = {}'.format(density))
             if (self.graph.vertex_index[v_membrane] + 1) % 1000 == 0:
                 now = datetime.now()
-                print ('%s membrane vertices processed on: %s-%s-%s %s:%s:%s'
-                       % (self.graph.vertex_index[v_membrane] + 1, now.year,
-                          now.month, now.day, now.hour, now.minute, now.second))
+                print('{} membrane vertices processed on: {}-{}-{} {}:{}:{}'
+                      .format(self.graph.vertex_index[v_membrane] + 1,
+                              now.year, now.month, now.day,
+                              now.hour, now.minute, now.second))
 
         # Initialize an array scaled like the original segmentation, which will
         # hold in each membrane voxel the maximal density among the
@@ -276,7 +277,7 @@ class SegmentationGraph(object):
             densities[voxel[0], voxel[1], voxel[2]] = 1 + max(
                 voxel_to_densities[voxel])
         if verbose:
-            print 'densities:\n%s' % densities
+            print('densities:\n{}'.format(densities))
         return densities
 
     def graph_to_points_and_lines_polys(self, vertices=True, edges=True,
@@ -310,8 +311,8 @@ class SegmentationGraph(object):
             if (data_type != 'string' and data_type != 'python::object' and
                     prop_key != 'xyz'):
                 if verbose:
-                    print '\nvertex property key: %s' % prop_key
-                    print 'value type: %s' % data_type
+                    print('\nvertex property key: {}'.format(prop_key))
+                    print('value type: {}'.format(data_type))
                 if data_type[0:6] != 'vector':  # scalar
                     num_components = 1
                 else:  # vector
@@ -320,7 +321,7 @@ class SegmentationGraph(object):
                 array = TypesConverter().gt_to_vtk(data_type)
                 array.SetName(prop_key)
                 if verbose:
-                    print 'number of components: %s' % num_components
+                    print('number of components: {}'.format(num_components))
                 array.SetNumberOfComponents(num_components)
                 vertex_arrays.append(array)
         # Edge property arrays
@@ -328,8 +329,8 @@ class SegmentationGraph(object):
             data_type = self.graph.ep[prop_key].value_type()
             if data_type != 'string' and data_type != 'python::object':
                 if verbose:
-                    print '\nedge property key: %s' % prop_key
-                    print 'value type: %s' % data_type
+                    print('\nedge property key: {}'.format(prop_key))
+                    print('value type: {}'.format(data_type))
                 if data_type[0:6] != 'vector':  # scalar
                     num_components = 1
                 else:  # vector (all edge properties so far are scalars)
@@ -337,17 +338,17 @@ class SegmentationGraph(object):
                     #     self.graph.ep[prop_key][self.graph.edge(0, 1)])
                     num_components = 3
                     if verbose:
-                        print ('Sorry, not implemented yet, assuming a vector '
-                               'with 3 components.')
+                        print('Sorry, not implemented yet, assuming a vector '
+                              'with 3 components.')
                 array = TypesConverter().gt_to_vtk(data_type)
                 array.SetName(prop_key)
                 if verbose:
-                    print 'number of components: %s' % num_components
+                    print('number of components: {}'.format(num_components))
                 array.SetNumberOfComponents(num_components)
                 edge_arrays.append(array)
         if verbose:
-            print '\nvertex arrays length: %s' % len(vertex_arrays)
-            print 'edge arrays length: %s' % len(edge_arrays)
+            print('\nvertex arrays length: {}'.format(len(vertex_arrays)))
+            print('edge arrays length: {}'.format(len(edge_arrays)))
 
         # Geometry
         lut = np.zeros(shape=self.graph.num_vertices(), dtype=np.int)
@@ -356,7 +357,7 @@ class SegmentationGraph(object):
             points.InsertPoint(i, x, y, z)
             lut[self.graph.vertex_index[vd]] = i
         if verbose:
-            print 'number of points: %s' % points.GetNumberOfPoints()
+            print('number of points: {}'.format(points.GetNumberOfPoints()))
 
         # Topology
         # Vertices
@@ -373,7 +374,8 @@ class SegmentationGraph(object):
                     array.InsertNextTuple(self.get_vertex_prop_entry(
                         prop_key, vd, n_comp, data_type))
             if verbose:
-                print 'number of vertex cells: %s' % verts.GetNumberOfCells()
+                print('number of vertex cells: {}'.format(
+                    verts.GetNumberOfCells()))
         # Edges
         lines = vtk.vtkCellArray()
         if edges:
@@ -389,7 +391,8 @@ class SegmentationGraph(object):
                     array.InsertNextTuple(self.get_edge_prop_entry(
                         prop_key, ed, n_comp, data_type))
             if verbose:
-                print 'number of line cells: %s' % lines.GetNumberOfCells()
+                print('number of line cells: {}'.format(
+                    lines.GetNumberOfCells()))
 
         # vtkPolyData construction
         poly_verts.SetPoints(points)
@@ -495,17 +498,17 @@ class SegmentationGraph(object):
         average_edge_length = None
         if prop_e is None:
             if verbose:
-                print "Considering all edges:"
+                print("Considering all edges:")
             if self.graph.num_edges() > 0:
                 if verbose:
-                    print ("{} edges".format(self.graph.num_edges()))
+                    print("{} edges".format(self.graph.num_edges()))
                 average_edge_length = np.mean(self.graph.ep.distance.a)
             else:
-                print "There are no edges in the graph!"
+                print("There are no edges in the graph!")
         elif prop_e in self.graph.edge_properties:
             if verbose:
-                print ("Considering only edges with property %s equaling value "
-                       "%s " % (prop_e, value))
+                print("Considering only edges with property {} equaling value "
+                      "{}!".format(prop_e, value))
             num_special_edges = 0
             for ed in self.graph.edges():
                 if self.graph.edge_properties[prop_e][ed] == value:
@@ -513,13 +516,13 @@ class SegmentationGraph(object):
                     total_edge_length += self.graph.ep.distance[ed]
             if num_special_edges > 0:
                 if verbose:
-                    print ("{} such edges".format(num_special_edges))
+                    print("{} such edges".format(num_special_edges))
                 average_edge_length = total_edge_length / num_special_edges
             else:
-                print ("There are no edges with the property %s equaling value "
-                       "%s!" % (prop_e, value))
+                print("There are no edges with the property {} equaling value "
+                      "{}!".format((prop_e, value)))
         if verbose:
-            print "Average length: %s" % average_edge_length
+            print("Average length: {}".format(average_edge_length))
         return average_edge_length
 
     def find_geodesic_neighbors(self, v, g_max, full_dist_map=None,
@@ -563,7 +566,7 @@ class SegmentationGraph(object):
                 neighbor_id_to_dist[idx] = dist
 
         if verbose:
-            print "%s neighbors" % len(neighbor_id_to_dist)
+            print("{} neighbors".format(len(neighbor_id_to_dist)))
         return neighbor_id_to_dist
 
     def get_vertex_property_array(self, property_name):
@@ -581,9 +584,9 @@ class SegmentationGraph(object):
                 property_name in self.graph.vertex_properties):
             values = np.array(
                 self.graph.vertex_properties[property_name].get_array())
-            print '{} "{}" values'.format(len(values), property_name)
-            print 'min = {}, max = {}, mean = {}'.format(
-                min(values), max(values), np.mean(values))
+            print('{} "{}" values'.format(len(values), property_name))
+            print('min = {}, max = {}, mean = {}'.format(
+                min(values), max(values), np.mean(values)))
             return values
         else:
             raise pexceptions.PySegInputError(

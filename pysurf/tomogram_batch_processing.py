@@ -52,8 +52,8 @@ def split_segmentation(infile, lbl=1, close=True, close_cube_size=5,
     # If requested, close small holes in the segmentation:
     outfile = infile
     if close:
-        outfile = ("%s%s_closed_size%s_iter%s.mrc"
-                   % (infile[0:-4], lbl, close_cube_size, close_iter))
+        outfile = ("{}{}_closed_size{}_iter{}.mrc".format(
+            infile[0:-4], lbl, close_cube_size, close_iter))
         if not isfile(outfile):
             from scipy import ndimage
             cube = np.ones((close_cube_size, close_cube_size, close_cube_size))
@@ -62,12 +62,12 @@ def split_segmentation(infile, lbl=1, close=True, close_cube_size=5,
             ).astype(data_type)
             # Write the closed binary segmentation into a file:
             io.save_numpy(binary_seg, outfile)
-            print ("Closed the binary segmentation and saved it into the file "
-                   "%s" % outfile)
+            print("Closed the binary segmentation and saved it into the file {}"
+                  .format(outfile))
         else:  # the '.mrc' file already exists
             binary_seg = io.load_tomo(outfile)
-            print ("The closed binary segmentation was loaded from the file "
-                   "%s" % outfile)
+            print("The closed binary segmentation was loaded from the file {}"
+                  .format(outfile))
 
     # Label each connected region of the binary segmentation:
     label_seg = label(binary_seg)
@@ -77,7 +77,8 @@ def split_segmentation(infile, lbl=1, close=True, close_cube_size=5,
     for i, region in enumerate(regionprops(label_seg)):
         region_area = region.area
         if region_area >= min_region_size:
-            print "%s. region has %s voxels and pass" % (i + 1, region_area)
+            print("{}. region has {} voxels and pass".format(
+                i + 1, region_area))
             # Get the region coordinates and make an ndarray with same shape as
             # the segmentation and 1 at those coordinates:
             region_ndarray = np.zeros(shape=tuple(seg.shape), dtype=data_type)
@@ -90,7 +91,7 @@ def split_segmentation(infile, lbl=1, close=True, close_cube_size=5,
                                region_coords[i, 2]] = 1
             regions.append(region_ndarray)
         else:
-            print ("%s. region has %s voxels and does NOT pass"
-                   % (i + 1, region_area))
-    print "%s regions passed." % len(regions)
+            print("{}. region has {} voxels and does NOT pass".format(
+                i + 1, region_area))
+    print("{} regions passed.".format(len(regions)))
     return regions, outfile

@@ -21,9 +21,6 @@ def main(tomo):
     fold = "/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/"
     base_filename = "{}_ER".format(tomo)
     pixel_size = 2.526  # nm
-    scale_x = 1
-    scale_y = 1
-    scale_z = 1
     radius_hit = 10  # nm
     seg_file = ""
     lbl = 1
@@ -49,7 +46,7 @@ def main(tomo):
     elif tomo == "t84":
         fold = "{}Htt97Q_IB_t84/".format(fold)
         seg_file = "{}_mask_membrane_final_ER.mrc".format(tomo)
-    elif tomo == "t92":  # running on loewenbraeu from 2018-05-29 14:05, finished at 20:21
+    elif tomo == "t92":
         fold = "{}Htt97Q_IB_t92/".format(fold)
         seg_file = "{}_final_ER1_vesicles2_NE3.Labels.mrc".format(tomo)
     elif tomo == "t138":
@@ -72,7 +69,8 @@ def main(tomo):
 
     t_end = time.time()
     duration = t_end - t_begin
-    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
 
 
 if __name__ == "__main__":

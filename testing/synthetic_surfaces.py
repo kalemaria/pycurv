@@ -89,21 +89,21 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     var = percent / 100.0 * l_ave
     std = math.sqrt(var)  # standard deviation
     if verbose:
-        print ("variance = {}".format(var))
+        print("variance = {}".format(var))
 
     # Get the point normals of the surface
     point_normals = _get_point_normals(surface)
     if point_normals is None:
-        print "No point normals were found. Computing normals..."
+        print("No point normals were found. Computing normals...")
         surface = _compute_point_normals(surface)
         point_normals = _get_point_normals(surface)
         if point_normals is None:
-            print "Failed to compute point normals! Exiting..."
+            print("Failed to compute point normals! Exiting...")
             exit(0)
         else:
-            print "Successfully computed point normals!"
+            print("Successfully computed point normals!")
     else:
-        print "Point normals were found!"
+        print("Point normals were found!")
 
     # Copy the surface and initialize vtkPoints data structure
     new_surface = vtk.vtkPolyData()
@@ -228,8 +228,8 @@ def are_triangle_vertices_on_smooth_sphere_surface(surface, r, center=[0, 0, 0],
         if is_coordinate_on_sphere_surface(x, y, z, r, error=error) is True:
             num_points_on_smooth_sphere_surface += 1
 
-    print "From {} points, {} are on smooth sphere surface".format(
-        surface.GetNumberOfPoints(), num_points_on_smooth_sphere_surface)
+    print("From {} points, {} are on smooth sphere surface".format(
+        surface.GetNumberOfPoints(), num_points_on_smooth_sphere_surface))
 
 
 class PlaneGenerator(object):
@@ -307,7 +307,7 @@ class SphereGenerator(object):
         # the radius of the sphere
         sphere.SetRadius(r)
         # sphere.LatLongTessellationOn() #doesn't work as expected (default Off)
-        # print sphere.GetLatLongTessellation()
+        # print(sphere.GetLatLongTessellation())
 
         # The sphere is made of strips, so pass it through a triangle filter
         # to get a triangle mesh
@@ -522,7 +522,7 @@ class ConeGenerator(object):
             a cylinder surface (vtk.vtkPolyData)
         """
         if verbose:
-            print "Generating a cone surface..."
+            print("Generating a cone surface...")
         cone = vtk.vtkConeSource()
         cone.SetRadius(r)
         cone.SetHeight(h)

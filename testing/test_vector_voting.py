@@ -226,12 +226,12 @@ class VectorVotingTestCase(unittest.TestCase):
         vv_eval_file = '{}.VCTV_rh{}.csv'.format(base_filename, radius_hit)
         vtk_eval_file = '{}.VTK.csv'.format(base_filename)
 
-        print ("\n*** Generating a surface and a graph for a plane with half-"
-               "size {} and {}% noise ***".format(half_size, noise))
+        print("\n*** Generating a surface and a graph for a plane with "
+              "half-size {} and {}% noise ***".format(half_size, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             if res == 0:  # generate surface from a mask with gen_surface
-                print "Sorry, not implemented yet"
+                print("Sorry, not implemented yet")
                 exit(0)
             else:  # generate surface directly with VTK
                 pg = PlaneGenerator()
@@ -244,19 +244,20 @@ class VectorVotingTestCase(unittest.TestCase):
         # it into a triangle graph:
         t_begin = time.time()
 
-        print '\nReading in the surface file to get a vtkPolyData surface...'
+        print('\nReading in the surface file to get a vtkPolyData surface...')
         surf = io.load_poly(surf_file)
-        print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-               'curvatures...')
+        print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+              'curvatures...')
         tg = TriangleGraph()
         tg.build_graph_from_vtk_surface(
             surf, scale_factor_to_nm, verbose=False, reverse_normals=False)
-        print tg.graph
+        print(tg.graph)
 
         t_end = time.time()
         duration = t_end - t_begin
-        print ('Graph construction from surface took: {} min {} s'.format(
-            divmod(duration, 60)[0], divmod(duration, 60)[1]))
+        minutes, seconds = divmod(duration, 60)
+        print('Graph construction from surface took: {} min {} s'.format(
+            minutes, seconds))
 
         # Running the modified Normal Vector Voting algorithm (with curvature
         # tensor voting, because its second pass is the fastest):
@@ -395,19 +396,19 @@ class VectorVotingTestCase(unittest.TestCase):
         VTK_eval_file = '{}.VTK.csv'.format(base_filename)
 
         if inverse:
-            print ("\n*** Generating a surface and a graph for an inverse "
-                   "cylinder with radius {}, height {} and {}% noise ***".
-                   format(r, h, noise))
+            print("\n*** Generating a surface and a graph for an inverse "
+                  "cylinder with radius {}, height {} and {}% noise ***".format(
+                r, h, noise))
         else:
-            print ("\n*** Generating a surface and a graph for a cylinder with "
-                   "radius {}, height {} and {}% noise ***".format(r, h, noise))
+            print("\n*** Generating a surface and a graph for a cylinder with "
+                  "radius {}, height {} and {}% noise ***".format(r, h, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             cg = CylinderGenerator()
             if res == 0:  # generate surface from a gaussian mask
                 cylinder = cg.generate_gauss_cylinder_surface(r)
             else:  # generate surface directly with VTK
-                print "Warning: cylinder contains planes!"
+                print("Warning: cylinder contains planes!")
                 cylinder = cg.generate_cylinder_surface(r, h, res=50)
             if noise > 0:
                 cylinder = add_gaussian_noise_to_surface(cylinder,
@@ -418,10 +419,10 @@ class VectorVotingTestCase(unittest.TestCase):
         # it into a triangle graph:
         t_begin = time.time()
 
-        print '\nReading in the surface file to get a vtkPolyData surface...'
+        print('\nReading in the surface file to get a vtkPolyData surface...')
         surf = io.load_poly(surf_file)
-        print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-               'curvatures...')
+        print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+              'curvatures...')
         tg = TriangleGraph()
         # VTK has opposite surface normals convention than we use
         # a graph with normals pointing outwards is generated (normal case
@@ -434,12 +435,13 @@ class VectorVotingTestCase(unittest.TestCase):
             reverse_normals = True
         tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm, verbose=False,
                                         reverse_normals=reverse_normals)
-        print tg.graph
+        print(tg.graph)
 
         t_end = time.time()
         duration = t_end - t_begin
-        print ('Graph construction from surface took: {} min {} s'.format(
-            divmod(duration, 60)[0], divmod(duration, 60)[1]))
+        minutes, seconds = divmod(duration, 60)
+        print('Graph construction from surface took: {} min {} s'.format(
+            minutes, seconds))
 
         # Running the modified Normal Vector Voting algorithm:
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
@@ -478,7 +480,7 @@ class VectorVotingTestCase(unittest.TestCase):
             io.save_vtp(surf, surf_file)
 
             # Evaluating each method:
-            print "\nEvaluating {}...".format(method)
+            print("\nEvaluating {}...".format(method))
             eval_file = '{}.{}_rh{}.csv'.format(
                 base_filename, method, radius_hit)
 
@@ -564,9 +566,9 @@ class VectorVotingTestCase(unittest.TestCase):
             # Asserting that all estimated T_h vectors are close to the true
             # vector, allowing error of 30%:
             if not inverse:
-                print "Testing the minimal principal directions (T_2)..."
+                print("Testing the minimal principal directions (T_2)...")
             else:
-                print "Testing the maximal principal directions (T_1)..."
+                print("Testing the maximal principal directions (T_1)...")
             for error in T_h_errors:
                 msg = '{} is > {}!'.format(error, 0.3)
                 self.assertLessEqual(error, 0.3, msg=msg)
@@ -575,12 +577,12 @@ class VectorVotingTestCase(unittest.TestCase):
             # ones allowing error of +-30% of the maximal absolute true value
             allowed_error = 0.3 * max(abs(true_kappa_1), abs(true_kappa_2))
             if true_kappa_1 != 0:  # not inverse
-                print "Testing the maximal principal curvature (kappa_1)..."
+                print("Testing the maximal principal curvature (kappa_1)...")
                 for i, error in enumerate(abs_kappa_1_errors):
                     msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
                     self.assertLessEqual(error, allowed_error, msg=msg)
             else:  # inverse
-                print "Testing the minimal principal curvature (kappa_2)..."
+                print("Testing the minimal principal curvature (kappa_2)...")
                 for i, error in enumerate(abs_kappa_2_errors):
                     msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
                     self.assertLessEqual(error, allowed_error, msg=msg)
@@ -678,13 +680,12 @@ class VectorVotingTestCase(unittest.TestCase):
         VTK_eval_file = '{}.VTK.csv'.format(base_filename)
 
         if inverse:
-            print ("\n*** Generating a surface and a graph for an inverse "
-                   "sphere with radius {} and {}% noise***"
-                   .format(radius, noise))
+            print("\n*** Generating a surface and a graph for an inverse "
+                  "sphere with radius {} and {}% noise***".format(
+                radius, noise))
         else:
-            print ("\n*** Generating a surface and a graph for a sphere "
-                   "with radius {} and {}% noise***".format(
-                    radius, noise))
+            print("\n*** Generating a surface and a graph for a sphere with "
+                  "radius {} and {}% noise***".format(radius, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SphereGenerator()
@@ -700,13 +701,13 @@ class VectorVotingTestCase(unittest.TestCase):
                                                                percent=noise)
                     io.save_vtp(sphere, surf_file)
                 elif ico > 0:
-                    print ("Sorry, you have to generate the icosahedron\n"
-                           "sphere beforehand e.g. with Blender, export it as\n"
-                           "STL file and convert it to VTP file using the\n"
-                           "function pysurf_io.stl_file_to_vtp_file,\n"
-                           "optionally add noise with\n"
-                           "add_gaussian_noise_to_surface and save it as\n{}"
-                           .format(surf_file))
+                    print("Sorry, you have to generate the icosahedron\n"
+                          "sphere beforehand e.g. with Blender, export it as\n"
+                          "STL file and convert it to VTP file using the\n"
+                          "function pysurf_io.stl_file_to_vtp_file,\n"
+                          "optionally add noise with\n"
+                          "add_gaussian_noise_to_surface and save it as\n{}"
+                          .format(surf_file))
                     exit(0)
                 else:  # generate a sphere surface from a gaussian mask
                     sphere = sg.generate_gauss_sphere_surface(radius)
@@ -719,10 +720,10 @@ class VectorVotingTestCase(unittest.TestCase):
         # it into a triangle graph:
         t_begin = time.time()
 
-        print '\nReading in the surface file to get a vtkPolyData surface...'
+        print('\nReading in the surface file to get a vtkPolyData surface...')
         surf = io.load_poly(surf_file)
-        print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-               'curvatures...')
+        print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+              'curvatures...')
         tg = TriangleGraph()
         # VTK has opposite surface normals convention than we use
         # a graph with normals pointing outwards is generated (normal case
@@ -735,12 +736,13 @@ class VectorVotingTestCase(unittest.TestCase):
             reverse_normals = True
         tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm, verbose=False,
                                         reverse_normals=reverse_normals)
-        print tg.graph
+        print(tg.graph)
 
         t_end = time.time()
         duration = t_end - t_begin
-        print ('Graph construction from surface took: {} min {} s'.format(
-            divmod(duration, 60)[0], divmod(duration, 60)[1]))
+        minutes, seconds = divmod(duration, 60)
+        print('Graph construction from surface took: {} min {} s'.format(
+            minutes, seconds))
 
         # Running the modified Normal Vector Voting algorithm:
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
@@ -773,7 +775,7 @@ class VectorVotingTestCase(unittest.TestCase):
             io.save_vtp(surf, surf_file)
 
             # Evaluating each method:
-            print "\nEvaluating {}...".format(method)
+            print("\nEvaluating {}...".format(method))
             eval_file = '{}.{}_rh{}.csv'.format(
                 base_filename, method, radius_hit)
 
@@ -834,11 +836,11 @@ class VectorVotingTestCase(unittest.TestCase):
             # Asserting that all values of both principal curvatures are close
             # to the true value, allowing error of +-30%:
             allowed_error = 0.3 * abs(true_curvature)
-            print "Testing the maximal principal curvature (kappa_1)..."
+            print("Testing the maximal principal curvature (kappa_1)...")
             for i, error in enumerate(abs_kappa_1_errors):
                 msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
                 self.assertLessEqual(error, allowed_error, msg=msg)
-            print "Testing the minimal principal curvature (kappa_2)..."
+            print("Testing the minimal principal curvature (kappa_2)...")
             for i, error in enumerate(abs_kappa_2_errors):
                 msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
                 self.assertLessEqual(error, allowed_error, msg=msg)
@@ -900,9 +902,8 @@ class VectorVotingTestCase(unittest.TestCase):
             os.makedirs(files_fold)
         base_filename = "{}torus_rr{}_csr{}".format(files_fold, rr, csr)
         VTK_eval_file = '{}.VTK.csv'.format(base_filename)
-        print ("\n*** Generating a surface and a graph for a torus "
-               "with ring radius {} and cross-section radius {}***"
-               .format(rr, csr))
+        print("\n*** Generating a surface and a graph for a torus with ring "
+              "radius {} and cross-section radius {}***".format(rr, csr))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             sg = SaddleGenerator()
@@ -913,22 +914,23 @@ class VectorVotingTestCase(unittest.TestCase):
         # it into a triangle graph:
         t_begin = time.time()
 
-        print '\nReading in the surface file to get a vtkPolyData surface...'
+        print('\nReading in the surface file to get a vtkPolyData surface...')
         surf = io.load_poly(surf_file)
-        print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-               'curvatures...')
+        print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+              'curvatures...')
         tg = TriangleGraph()
         # VTK has opposite surface normals convention than we use,
         # a graph with normals pointing inwards is generated (VTK normals have
         # to be flipped)
         tg.build_graph_from_vtk_surface(
             surf, scale_factor_to_nm, verbose=False, reverse_normals=True)
-        print tg.graph
+        print(tg.graph)
 
         t_end = time.time()
         duration = t_end - t_begin
-        print ('Graph construction from surface took: {} min {} s'.format(
-            divmod(duration, 60)[0], divmod(duration, 60)[1]))
+        minutes, seconds = divmod(duration, 60)
+        print('Graph construction from surface took: {} min {} s'.format(
+            minutes, seconds))
 
         # Ground-truth principal curvatures and directions
         # Vertex properties for storing the true maximal and minimal curvatures
@@ -985,7 +987,7 @@ class VectorVotingTestCase(unittest.TestCase):
             io.save_vtp(surf, surf_file)
 
             # Evaluating each method:
-            print "\nEvaluating {}...".format(method)
+            print("\nEvaluating {}...".format(method))
             eval_file = '{}.{}_rh{}.csv'.format(
                 base_filename, method, radius_hit)
 
@@ -1014,8 +1016,6 @@ class VectorVotingTestCase(unittest.TestCase):
             vtk_kappa_2 = tg.get_vertex_property_array("min_curvature")
 
             # Computing errors of the estimated curvatures wrt the true ones:
-            if tg.graph is None:  # test
-                print "tg.graph is None!"  # test
             abs_kappa_1_errors = np.array(map(
                 lambda x, y: absolute_error_scalar(x, y), true_kappa_1, kappa_1))
             # abs_kappa_1_errors = []  # the same as map
@@ -1071,11 +1071,11 @@ class VectorVotingTestCase(unittest.TestCase):
 
             # Asserting that all estimated T_1 and T_2 vectors are close to the
             # corresponding true vector, allowing error of 30%:
-            print "Testing the maximal principal directions (T_1)..."
+            print("Testing the maximal principal directions (T_1)...")
             for i, error in enumerate(T_1_errors):
                 msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
                 self.assertLessEqual(error, 0.3, msg=msg)
-            print "Testing the minimal principal directions (T_2)..."
+            print("Testing the minimal principal directions (T_2)...")
             for i, error in enumerate(T_2_errors):
                 msg = 'triangle {}: {} is > {}!'.format(i, error, 0.3)
                 self.assertLessEqual(error, 0.3, msg=msg)
@@ -1083,12 +1083,12 @@ class VectorVotingTestCase(unittest.TestCase):
             # to the corresponding true values, allowing error of 30% from the
             # true value (the maximal absolute value in case of kappa_2, because
             # it can be 0 or negative):
-            print "Testing the maximal principal curvature (kappa_1)..."
+            print("Testing the maximal principal curvature (kappa_1)...")
             allowed_error = 0.3 * max(true_kappa_1)
             for i, error in enumerate(abs_kappa_1_errors):
                 msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
                 self.assertLessEqual(error, allowed_error, msg=msg)
-            print "Testing the minimal principal curvature (kappa_2)..."
+            print("Testing the minimal principal curvature (kappa_2)...")
             allowed_error = 0.3 * max(abs(true_kappa_2))
             for i, error in enumerate(abs_kappa_2_errors):
                 msg = 'triangle {}: {} is > {}%!'.format(i, error, 30)
@@ -1161,13 +1161,13 @@ class VectorVotingTestCase(unittest.TestCase):
         base_filename = "{}cone_r{}_h{}".format(files_fold, r, h)
         # VTK_eval_file = '{}.VTK.csv'.format(base_filename)
 
-        print ("\n*** Generating a surface and a graph for a cone with "
-               "radius {}, height {} and {}% noise ***".format(r, h, noise))
+        print("\n*** Generating a surface and a graph for a cone with radius "
+              "{}, height {} and {}% noise ***".format(r, h, noise))
         # If the .vtp file with the test surface does not exist, create it:
         if not os.path.isfile(surf_file):
             cg = ConeGenerator()
             if res == 0:  # generate surface from a binary mask
-                print "Warning: cone contains a plane!"
+                print("Warning: cone contains a plane!")
                 cone = cg.generate_binary_cone_surface(r, h)
             else:  # generate surface directly with VTK
                 cone = cg.generate_cone(r, h, res, subdivisions=3, decimate=0.8)
@@ -1179,22 +1179,23 @@ class VectorVotingTestCase(unittest.TestCase):
         # it into a triangle graph:
         t_begin = time.time()
 
-        print '\nReading in the surface file to get a vtkPolyData surface...'
+        print('\nReading in the surface file to get a vtkPolyData surface...')
         surf = io.load_poly(surf_file)
-        print ('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-               'curvatures...')
+        print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+              'curvatures...')
         tg = TriangleGraph()
         # VTK has opposite surface normals convention than we use
         # a graph with normals pointing inwards is generated (positive
         # curvatures)
         tg.build_graph_from_vtk_surface(
             surf, scale_factor_to_nm, verbose=False, reverse_normals=True)
-        print tg.graph
+        print(tg.graph)
 
         t_end = time.time()
         duration = t_end - t_begin
-        print ('Graph construction from surface took: {} min {} s'.format(
-            divmod(duration, 60)[0], divmod(duration, 60)[1]))
+        minutes, seconds = divmod(duration, 60)
+        print('Graph construction from surface took: {} min {} s'.format(
+            minutes, seconds))
 
         # Running the modified Normal Vector Voting algorithm:
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
@@ -1236,44 +1237,44 @@ class VectorVotingTestCase(unittest.TestCase):
 
     # *** The following tests will be run by unittest ***
 
-    # def test_plane_normals(self):
-    #     """
-    #     Tests whether normals are correctly estimated for a plane surface with
-    #     known orientation (parallel to to X and Y axes), certain size,
-    #     resolution and noise level.
-    #     """
-    #     for n in [0]:  # 10
-    #         for rh in [1]:  # 4, 8
-    #             self.parametric_test_plane_normals(
-    #                 20, rh, res=20, noise=n)
-    #
-    # def test_cylinder_directions_curvatures(self):
-    #     """
-    #     Tests whether minimal principal directions (T_2) and curvatures are
-    #     correctly estimated for an opened cylinder surface (without the
-    #     circular planes) with known orientation (height, i.e. T_2, parallel to
-    #     the Z axis), certain radius and noise level.
-    #     """
-    #     # p = 50
-    #     for rh in [8]:  # 6, 7, 8, 9
-    #         self.parametric_test_cylinder_directions_curvatures(
-    #             10, rh, eb=5, noise=0, methods=['VV'],  # 'VCTV', 'VVCF',
-    #             page_curvature_formula=False, area2=True)  # num_points=p
-    #
-    # def test_inverse_cylinder_directions_curvatures(self):
-    #     """
-    #     Tests whether maximal principal directions (T_1) and curvatures are
-    #     correctly estimated for an inverse opened cylinder surface (without the
-    #     circular planes) with known orientation (height, i.e. T_1, parallel to
-    #     the Z axis), certain radius and noise level.
-    #     """
-    #     # p = 50
-    #     for rh in [8]:
-    #         self.parametric_test_cylinder_directions_curvatures(
-    #             10, rh, eb=5, noise=0, methods=['VV'],  # 'VCTV', 'VVCF'
-    #             page_curvature_formula=False, area2=True, inverse=True)
-    #             # num_points=p
-    #
+    def test_plane_normals(self):
+        """
+        Tests whether normals are correctly estimated for a plane surface with
+        known orientation (parallel to to X and Y axes), certain size,
+        resolution and noise level.
+        """
+        for n in [10]:
+            for rh in [8]:
+                self.parametric_test_plane_normals(
+                    20, rh, res=20, noise=n)
+
+    def test_cylinder_directions_curvatures(self):
+        """
+        Tests whether minimal principal directions (T_2) and curvatures are
+        correctly estimated for an opened cylinder surface (without the
+        circular planes) with known orientation (height, i.e. T_2, parallel to
+        the Z axis), certain radius and noise level.
+        """
+        # p = 50
+        for rh in [8]:  # 6, 7, 8, 9
+            self.parametric_test_cylinder_directions_curvatures(
+                10, rh, eb=5, noise=0, methods=['VV'],  # 'VCTV', 'VVCF',
+                page_curvature_formula=False, area2=True)  # num_points=p
+
+    def test_inverse_cylinder_directions_curvatures(self):
+        """
+        Tests whether maximal principal directions (T_1) and curvatures are
+        correctly estimated for an inverse opened cylinder surface (without the
+        circular planes) with known orientation (height, i.e. T_1, parallel to
+        the Z axis), certain radius and noise level.
+        """
+        # p = 50
+        for rh in [8]:
+            self.parametric_test_cylinder_directions_curvatures(
+                10, rh, eb=5, noise=0, methods=['VV'],  # 'VCTV', 'VVCF'
+                page_curvature_formula=False, area2=True, inverse=True)
+                # num_points=p
+
     def test_sphere_curvatures(self):
         """
         Tests whether curvatures are correctly estimated for a sphere with a
@@ -1297,66 +1298,66 @@ class VectorVotingTestCase(unittest.TestCase):
             f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
                     "duration1;method;duration2\n")
         for r in [10]:  # , 20, 30
-            for rh in [12]:  # 5, 6, 7, 8, 9, 10; 18; 28
+            for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
                 for cores in [4]:  # range(1, 9):
                     self.parametric_test_sphere_curvatures(
                         r, rh, binary=True, methods=['VV'],  # , 'VCTV'
                         full_dist_map=False, area2=True,
                         cores=cores, runtimes=runtimes_csv)
-        # # Gaussian sphere with different radii:
-        # for r in [10]:  # 20, 30
-        #     for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
-        #         self.parametric_test_sphere_curvatures(
-        #             r, rh, methods=['VV'],  # 'VCTV'
-        #             full_dist_map=True,  area2=True,
-        #             page_curvature_formula=True)
-    #
-    # def test_inverse_sphere_curvatures(self):
-    #     """
-    #     Tests whether curvatures are correctly estimated for an inverse sphere
-    #     with a certain radius and noise level:
-    #
-    #     kappa1 = kappa2 = -1/r; 30% of difference is allowed
-    #     """
-    #     # Gaussian sphere
-    #     # p = 50
-    #     for rh in [8]:  # 9
-    #         self.parametric_test_sphere_curvatures(
-    #             10, rh, ico=0, noise=0, inverse=True,
-    #             methods=['VV'],  # , 'VCTV', 'VVCF'
-    #             page_curvature_formula=False, area2=True)  # num_points=p
+        # Gaussian sphere with different radii:
+        for r in [10]:  # 20, 30
+            for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
+                self.parametric_test_sphere_curvatures(
+                    r, rh, methods=['VV'],  # 'VCTV'
+                    full_dist_map=True,  area2=True,
+                    page_curvature_formula=True)
 
-    # def test_torus_curvatures(self):
-    #     """
-    #     Runs parametric_test_torus_directions_curvatures with certain
-    #     parameters.
-    #     """
-    #     runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-    #                    "torus/files4plotting/torus_rr25_csr10_runtimes_VCTV.csv"
-    #     # with open(runtimes_csv, 'w') as f:
-    #     #     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-    #     #             "duration1;method;duration2\n")
-    #     # p = 50
-    #     for rh in [12]:  # 8, 10,
-    #         for cores in [4]:  # range((1, 9)
-    #             self.parametric_test_torus_directions_curvatures(
-    #                 25, 10, rh, methods=['VCTV'],  # 'VV', 'VVCF'
-    #                 page_curvature_formula=False, full_dist_map=False,
-    #                 area2=True, cores=cores, runtimes=runtimes_csv)
-    #                 # num_points=p
+    def test_inverse_sphere_curvatures(self):
+        """
+        Tests whether curvatures are correctly estimated for an inverse sphere
+        with a certain radius and noise level:
 
-    # def test_cone(self):
-    #     """
-    #     Runs test_cone with certain parameters.
-    #     """
-    #     p = 50
-    #     n = 0  # 10
-    #     res = 38  # 0
-    #     for rh in [5]:  # 1, 2, 3, 4, 5, 6
-    #         self.parametric_test_cone(
-    #             6, 6, radius_hit=rh, res=res, noise=n, num_points=p,
-    #             methods=['VV', 'VCTV', 'VVCF'],
-    #             page_curvature_formula=False, area2=True)
+        kappa1 = kappa2 = -1/r; 30% of difference is allowed
+        """
+        # Gaussian sphere
+        # p = 50
+        for rh in [8]:  # 9
+            self.parametric_test_sphere_curvatures(
+                10, rh, ico=0, noise=0, inverse=True,
+                methods=['VV'],  # , 'VCTV', 'VVCF'
+                page_curvature_formula=False, area2=True)  # num_points=p
+
+    def test_torus_curvatures(self):
+        """
+        Runs parametric_test_torus_directions_curvatures with certain
+        parameters.
+        """
+        runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+                       "torus/files4plotting/torus_rr25_csr10_runtimes_VCTV.csv"
+        # with open(runtimes_csv, 'w') as f:
+        #     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+        #             "duration1;method;duration2\n")
+        # p = 50
+        for rh in [8]:
+            for cores in [4]:  # range((1, 9)
+                self.parametric_test_torus_directions_curvatures(
+                    25, 10, rh, methods=['VCTV'],  # 'VV', 'VVCF'
+                    page_curvature_formula=False, full_dist_map=False,
+                    area2=True, cores=cores, runtimes=runtimes_csv)
+                    # num_points=p
+
+    def test_cone(self):
+        """
+        Runs test_cone with certain parameters.
+        """
+        p = 50
+        n = 0  # 10
+        res = 38  # 0
+        for rh in [5]:  # 1, 2, 3, 4, 5, 6
+            self.parametric_test_cone(
+                6, 6, radius_hit=rh, res=res, noise=n, num_points=p,
+                methods=['VV', 'VCTV', 'VVCF'],
+                page_curvature_formula=False, area2=True)
 
 
 if __name__ == '__main__':
@@ -1364,8 +1365,8 @@ if __name__ == '__main__':
     # torus_stats_file = ('/fs/pool/pool-ruben/Maria/curvature/'
     #              'synthetic_surfaces/torus/files4plotting/'
     #              'torus_rr25_csr10.VCTV_rh8_cProfile_full_dist_map.stats')
-    # cProfile.run('unittest.main()', torus_stats_file)
+    # cProfile.run('unittest.main_javier()', torus_stats_file)
     # bin_sphere_stats_file = ('/fs/pool/pool-ruben/Maria/curvature/'
     #              'synthetic_surfaces/sphere/binary/files4plotting/'
     #              'sphere_r20.VVrh18_VCTVrh18_cProfile_partial_dist_maps.stats')
-    # cProfile.run('unittest.main()', bin_sphere_stats_file)
+    # cProfile.run('unittest.main_javier()', bin_sphere_stats_file)

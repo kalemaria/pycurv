@@ -140,7 +140,7 @@ def fit_curve(pos_x_2d, pos_y_2d):
             var_a = 1
         return a, var_a
     except RuntimeError as e:
-        print "RuntimeError happened:"
+        print("RuntimeError happened:")
         print(e)  # has to be: "Optimal parameters not found: gtol=0.000000 is
         # too small, func(x) is orthogonal to the columns of
         # the Jacobian to machine precision."
@@ -183,6 +183,7 @@ def perpendicular_vector(iv, debug=False):
         print("Requires a non-zero 3D vector")
         return None
     ov = np.array([0.0, 0.0, 0.0])
+    m = 0
     for m in range(3):
         if iv[m] != 0:
             break
@@ -343,14 +344,14 @@ class PointGraph(SurfaceGraph):
 
         if verbose:
             # 0. Check numbers of cells and all points.
-            print '%s cells' % surface.GetNumberOfCells()
-            print '%s points' % surface.GetNumberOfPoints()
+            print('{} cells'.format(surface.GetNumberOfCells()))
+            print('{} points'.format(surface.GetNumberOfPoints()))
 
         # 1. Iterate over all cells, adding their points as vertices to the
         # graph and connecting them by edges.
         for i in xrange(surface.GetNumberOfCells()):
             if verbose:
-                print 'Cell number %s:' % i
+                print('Cell number {}:'.format(i))
 
             # Get all points which made up the cell & check that they are 3.
             points_cell = surface.GetCell(i).GetPoints()
@@ -366,8 +367,8 @@ class PointGraph(SurfaceGraph):
                         self.coordinates_to_vertex_index[p] = \
                             self.graph.vertex_index[vd]
                         if verbose:
-                            print ('\tThe point (%s, %s, %s) has been added'
-                                   ' to the graph as a vertex.' % (x, y, z))
+                            print('\tThe point ({}, {}, {}) has been added to '
+                                  'the graph as a vertex.'.format(x, y, z))
 
                 # 1b) Add an edge with a distance between all 3 pairs of
                 # vertices, if it has not been added yet.
@@ -392,15 +393,14 @@ class PointGraph(SurfaceGraph):
                                 self.distance_between_voxels(p1, p2)
                             self.coordinates_pair_connected[(p1, p2)] = True
                             if verbose:
-                                print ('\tThe neighbor points (%s, %s, %s) '
-                                       'and (%s, %s, %s) have been '
-                                       'connected by an edge with a '
-                                       'distance of %s pixels.'
-                                       % (x1, y1, z1, x2, y2, z2,
-                                          self.graph.ep.distance[ed]))
+                                print('\tThe neighbor points ({}, {}, {}) and '
+                                      '({}, {}, {}) have been connected by an '
+                                      'edge with a distance of {} pixels.'
+                                      .format(x1, y1, z1, x2, y2, z2,
+                                              self.graph.ep.distance[ed]))
             else:
-                print ('Oops, there are %s points in cell number %s'
-                       % (points_cell.GetNumberOfPoints(), i))
+                print('Oops, there are {} points in cell number {}'.format(
+                    points_cell.GetNumberOfPoints(), i))
 
         # 2. Check if the numbers of vertices and edges are as they should
         # be:
@@ -408,7 +408,7 @@ class PointGraph(SurfaceGraph):
             self.coordinates_to_vertex_index)
         assert self.graph.num_edges() == len(
             self.coordinates_pair_connected)
-        print '%s triangle vertices' % self.graph.num_vertices()
+        print('{} triangle vertices'.format(self.graph.num_vertices()))
 
 
 class TriangleGraph(SurfaceGraph):
@@ -492,7 +492,7 @@ class TriangleGraph(SurfaceGraph):
             # rescale the surface to nm
             surface = rescale_surface(surface, scale_factor_to_nm)
 
-        print 'Adding curvatures to the vtkPolyData surface...'
+        print('Adding curvatures to the vtkPolyData surface...')
         # because VTK and we (gen_surface) have the opposite normal
         # convention: VTK outwards pointing normals, we: inwards pointing
         if reverse_normals:
@@ -504,8 +504,8 @@ class TriangleGraph(SurfaceGraph):
 
         if verbose:
             # Check numbers of cells and all points.
-            print '%s cells' % surface.GetNumberOfCells()
-            print '%s points' % surface.GetNumberOfPoints()
+            print('{} cells'.format(surface.GetNumberOfCells()))
+            print('{} points'.format(surface.GetNumberOfPoints()))
 
         point_data = surface.GetPointData()
         n = point_data.GetNumberOfArrays()
@@ -531,12 +531,12 @@ class TriangleGraph(SurfaceGraph):
             # Get the cell i and check if it's a triangle:
             cell = surface.GetCell(cell_id)
             if not isinstance(cell, vtk.vtkTriangle):
-                print ('Oops, the cell number %s is not a vtkTriangle but '
-                       'a %s! It will be ignored.'
-                       % (cell_id, cell.__class__.__name__))
+                print('Oops, the cell number {} is not a vtkTriangle but a {}! '
+                      'It will be ignored.'.format(
+                       cell_id, cell.__class__.__name__))
                 continue
             if verbose:
-                print 'Triangle cell number %s' % cell_id
+                print('Triangle cell number {}'.format(cell_id))
 
             # Initialize a list for storing the points coordinates making
             # out the cell
@@ -552,9 +552,9 @@ class TriangleGraph(SurfaceGraph):
             try:
                 assert(area > 0)
             except AssertionError:
-                print ('\tThe cell %s cannot be added to the graph as a vertex,'
-                       ' because the triangle area is not positive, but is %s. '
-                       % (cell_id, area))
+                print('\tThe cell {} cannot be added to the graph as a vertex, '
+                      'because the triangle area is not positive, but is {}.'
+                      .format(cell_id, area))
                 continue
 
             # Calculate the centroid of the triangle:
@@ -633,15 +633,15 @@ class TriangleGraph(SurfaceGraph):
             self.graph.vp.points[vd] = points_xyz
 
             if verbose:
-                print ('\tThe triangle centroid %s has been added to the '
-                       'graph as a vertex. Triangle area = %s, normal = %s,'
-                       '\naverage minimal curvature = %s,'
-                       'average maximal curvature = %s, points = %s.'
-                       % (self.graph.vp.xyz[vd],
-                          self.graph.vp.area[vd], self.graph.vp.normal[vd],
-                          self.graph.vp.min_curvature[vd],
-                          self.graph.vp.max_curvature[vd],
-                          self.graph.vp.points[vd]))
+                print('\tThe triangle centroid {} has been added to the graph '
+                      'as a vertex. Triangle area = {}, normal = {},\n'
+                      'average minimal curvature = {},'
+                      'average maximal curvature = {}, points = {}.'.format(
+                       self.graph.vp.xyz[vd], self.graph.vp.area[vd],
+                       self.graph.vp.normal[vd],
+                       self.graph.vp.min_curvature[vd],
+                       self.graph.vp.max_curvature[vd],
+                       self.graph.vp.points[vd]))
 
             triangle_cell_ids.append(cell_id)
 
@@ -651,7 +651,7 @@ class TriangleGraph(SurfaceGraph):
             # they were added in this order
             cell = surface.GetCell(cell_id)
             if verbose:
-                print '(Triangle) cell number %s:' % cell_id
+                print('(Triangle) cell number {}:'.format(cell_id))
 
             # Find the "neighbor cells" and how many points they share with
             # cell i (1 or 2) as follows.
@@ -675,7 +675,7 @@ class TriangleGraph(SurfaceGraph):
                             idx = neighbor_cells.index(neighbor_cell_id)
                             shared_points[idx] += 1
             if verbose:
-                print "has %s neighbor cells" % len(neighbor_cells)
+                print("has {} neighbor cells".format(len(neighbor_cells)))
 
             # Get the vertex descriptor representing the cell i (vertex i):
             vd_i = self.graph.vertex(i)
@@ -720,24 +720,25 @@ class TriangleGraph(SurfaceGraph):
                         strength = 'weak'
                     self.graph.ep.is_strong[ed] = is_strong
                     if verbose:
-                        print ('\tThe neighbor vertices (%s, %s, %s) and '
-                               '(%s, %s, %s) have been connected by a %s '
-                               'edge with a distance of %s pixels.'
-                               % (p_i[0], p_i[1], p_i[2],
-                                  p_x[0], p_x[1], p_x[2], strength,
-                                  self.graph.ep.distance[ed]))
+                        print('\tThe neighbor vertices ({}, {}, {}) and '
+                              '({}, {}, {}) have been connected by a {} '
+                              'edge with a distance of {} pixels.'.format(
+                               p_i[0], p_i[1], p_i[2],
+                               p_x[0], p_x[1], p_x[2], strength,
+                               self.graph.ep.distance[ed]))
 
         # 4. Check if the numbers of vertices and edges are as they should be:
         assert self.graph.num_vertices() == len(triangle_cell_ids)
         assert self.graph.num_edges() == len(self.coordinates_pair_connected)
         if verbose:
-            print ('Real number of unique points: %s'
-                   % len(self.point_in_cells))
+            print('Real number of unique points: {}'.format(
+                len(self.point_in_cells)))
 
         t_end = time.time()
         duration = t_end - t_begin
-        print ('Surface graph generation took: %s min %s s'
-               % divmod(duration, 60))
+        minutes, seconds = divmod(duration, 60)
+        print('Surface graph generation took: {} min {} s'.format(
+            minutes, seconds))
 
         return surface
 
@@ -764,8 +765,8 @@ class TriangleGraph(SurfaceGraph):
                 if (data_type != 'string' and data_type != 'python::object' and
                         prop_key != 'points' and prop_key != 'xyz'):
                     if verbose:
-                        print '\nvertex property key: %s' % prop_key
-                        print 'value type: %s' % data_type
+                        print('\nvertex property key: {}'.format(prop_key))
+                        print('value type: {}'.format(data_type))
                     if data_type[0:6] != 'vector':  # scalar
                         num_components = 1
                     else:  # vector
@@ -774,11 +775,11 @@ class TriangleGraph(SurfaceGraph):
                     array = TypesConverter().gt_to_vtk(data_type)
                     array.SetName(prop_key)
                     if verbose:
-                        print 'number of components: %s' % num_components
+                        print('number of components: {}'.format(num_components))
                     array.SetNumberOfComponents(num_components)
                     vertex_arrays.append(array)
             if verbose:
-                print '\nvertex arrays length: %s' % len(vertex_arrays)
+                print('\nvertex arrays length: {}'.format(len(vertex_arrays)))
 
             # Geometry
             # lut[vertex_index, triangle_point_index*] = point_array_index**
@@ -801,7 +802,7 @@ class TriangleGraph(SurfaceGraph):
                         lut[self.graph.vertex_index[vd], j] = points_dict[
                             (x, y, z)]
             if verbose:
-                print 'number of points: %s' % points.GetNumberOfPoints()
+                print('number of points: {}'.format(points.GetNumberOfPoints()))
 
             # Topology
             # Triangles
@@ -828,8 +829,8 @@ class TriangleGraph(SurfaceGraph):
                     array.InsertNextTuple(self.get_vertex_prop_entry(
                         prop_key, vd, n_comp, data_type))
             if verbose:
-                print ('number of triangle cells: %s'
-                       % triangles.GetNumberOfCells())
+                print('number of triangle cells: {}'.format(
+                    triangles.GetNumberOfCells()))
 
             # vtkPolyData construction
             poly_triangles.SetPoints(points)
@@ -840,7 +841,7 @@ class TriangleGraph(SurfaceGraph):
             return poly_triangles
 
         else:
-            print "The graph is empty!"
+            print("The graph is empty!")
             return None
 
     def find_graph_border(self, purge=False):
@@ -857,7 +858,7 @@ class TriangleGraph(SurfaceGraph):
             list of indices of vertices at the graph border
         """
         if "is_on_border" not in self.graph.vertex_properties:
-            print 'Finding vertices at the graph border...'
+            print('Finding vertices at the graph border...')
             # Add a vertex property for storing the number of strong edges:
             self.graph.vp.num_strong_edges = self.graph.new_vertex_property(
                 "int")
@@ -865,8 +866,6 @@ class TriangleGraph(SurfaceGraph):
             # to the new property:
             incident_edges_op(self.graph, "out", "sum", self.graph.ep.is_strong,
                               self.graph.vp.num_strong_edges)
-            # print ('number of strong edges: min = %s, max = %s'
-            #        % (min(num_strong_edges.a), max(num_strong_edges.a)))
 
             # Add a boolean vertex property telling whether a vertex is on
             # border:
@@ -882,12 +881,12 @@ class TriangleGraph(SurfaceGraph):
         else:
             border_vertices_indices = np.where(
                 self.graph.vp.is_on_border.a == 1)[0]
-        print ('%s vertices are at the graph border.'
-               % len(border_vertices_indices))
+        print('{} vertices are at the graph border.'.format(
+            len(border_vertices_indices)))
 
         if purge is True:
-            print ('Filtering out the vertices at the graph borders and their '
-                   'edges...')
+            print('Filtering out the vertices at the graph borders and their '
+                  'edges...')
             # Set the filter to get only vertices NOT on border.
             self.graph.set_vertex_filter(self.graph.vp.is_on_border,
                                          inverted=True)
@@ -920,8 +919,8 @@ class TriangleGraph(SurfaceGraph):
         if "is_near_border" not in self.graph.vertex_properties:
             border_vertices_indices = self.find_graph_border()
 
-            print ('For each graph border vertex, finding vertices within '
-                   'geodesic distance %s to it...' % b)
+            print('For each graph border vertex, finding vertices within '
+                  'geodesic distance {} to it...'.format(b))
             vertex_id_within_b_to_border = dict()
             for border_v_i in border_vertices_indices:
                 border_v = self.graph.vertex(border_v_i)
@@ -938,8 +937,8 @@ class TriangleGraph(SurfaceGraph):
                             dist, vertex_id_within_b_to_border[idx])
                     except KeyError:
                         vertex_id_within_b_to_border[idx] = dist
-            print ('%s vertices are within distance %s nm to the graph border.'
-                   % (len(vertex_id_within_b_to_border), b))
+            print('{} vertices are within distance {} nm to the graph border.'
+                  .format(len(vertex_id_within_b_to_border), b))
 
             # Add a boolean vertex property telling whether a vertex is within
             # distance b to border:
@@ -953,7 +952,7 @@ class TriangleGraph(SurfaceGraph):
                     self.graph.vp.is_near_border[v] = 0
 
         if purge is True:
-            print 'Filtering out those vertices and their edges...'
+            print('Filtering out those vertices and their edges...')
             # Set the filter to get only vertices NOT within distance b to
             # border.
             self.graph.set_vertex_filter(self.graph.vp.is_near_border,
@@ -967,7 +966,8 @@ class TriangleGraph(SurfaceGraph):
             # Update graph's dictionary coordinates_to_vertex_index:
             self.update_coordinates_to_vertex_index()
 
-    def find_vertices_outside_mask(self, mask, label=1, allowed_dist=0):
+    def find_vertices_outside_mask(
+            self, mask, scale_factor_to_nm, label=1, allowed_dist=0):
         """
         Finds vertices that are outside a mask.
 
@@ -977,6 +977,7 @@ class TriangleGraph(SurfaceGraph):
         Args:
             mask (numpy.ndarray): 3D mask of the segmentation from which the
                 underlying surface was created
+            scale_factor_to_nm (float): voxel size in nanometers
             label (int, optional): the label in the mask to be considered
                 (default 1)
             allowed_dist (int, optional): allowed distance in pixels between a
@@ -986,7 +987,7 @@ class TriangleGraph(SurfaceGraph):
             None
         """
         if isinstance(mask, np.ndarray):
-            print '\nFinding vertices outside the membrane mask...'
+            print('\nFinding vertices outside the membrane mask...')
             # Add a boolean vertex property telling whether a vertex is outside
             # the mask:
             self.graph.vp.is_outside_mask = \
@@ -994,15 +995,14 @@ class TriangleGraph(SurfaceGraph):
             # Invert the boolean matrix, because distance_transform_edt
             # calculates distances from '0's, not from '1's!
             maskd = ndimage.morphology.distance_transform_edt(
-                np.invert(mask == label)
-            )
+                np.invert(mask == label))
 
             num_vertices_outside_mask = 0
             for v in self.graph.vertices():
                 v_xyz = self.graph.vp.xyz[v]
-                v_pixel_x = int(round(v_xyz[0] / self.scale_factor_to_nm))
-                v_pixel_y = int(round(v_xyz[1] / self.scale_factor_to_nm))
-                v_pixel_z = int(round(v_xyz[2] / self.scale_factor_to_nm))
+                v_pixel_x = int(round(v_xyz[0] / scale_factor_to_nm))
+                v_pixel_y = int(round(v_xyz[1] / scale_factor_to_nm))
+                v_pixel_z = int(round(v_xyz[2] / scale_factor_to_nm))
                 try:
                     if maskd[v_pixel_x, v_pixel_y, v_pixel_z] > allowed_dist:
                         self.graph.vp.is_outside_mask[v] = 1
@@ -1010,23 +1010,24 @@ class TriangleGraph(SurfaceGraph):
                     else:
                         self.graph.vp.is_outside_mask[v] = 0
                 except IndexError:
-                    print ("IndexError happened. Vertex with coordinates in nm "
-                           "(%s, %s, %s)" % (v_xyz[0], v_xyz[1], v_xyz[2]))
-                    print ("was transformed to pixel (%s, %s, %s),"
-                           % (v_pixel_x, v_pixel_y, v_pixel_z))
-                    print ("which is not inside the mask with shape "
-                           "(%s, %s, %s)"
-                           % (maskd.shape[0], maskd.shape[1], maskd.shape[2]))
-            print ('%s vertices are further away than %s pixel to the mask.'
-                   % (num_vertices_outside_mask, allowed_dist))
+                    print("IndexError happened. Vertex with coordinates in nm "
+                          "({}, {}, {})".format(v_xyz[0], v_xyz[1], v_xyz[2]))
+                    print("was transformed to pixel ({}, {}, {}),".format(
+                        v_pixel_x, v_pixel_y, v_pixel_z))
+                    print("which is not inside the mask with shape ({}, {}, {})"
+                          .format(maskd.shape[0], maskd.shape[1],
+                                  maskd.shape[2]))
+            print('{} vertices are further away than {} pixel to the mask.'
+                  .format(num_vertices_outside_mask, allowed_dist))
 
         else:
             raise pexceptions.PySegInputError(
                 expr='find_vertices_outside_mask (TriangleGraph)',
                 msg="A a 3D numpy ndarray object required as the first input.")
 
-    def find_vertices_near_border_and_outside_mask(self, b, mask, label=1,
-                                                   allowed_dist=0, purge=False):
+    def find_vertices_near_border_and_outside_mask(
+            self, b, mask, scale_factor_to_nm, label=1, allowed_dist=0,
+            purge=False):
         """
         Finds vertices that are within distance in nanometers to the graph
         border and outside a mask.
@@ -1039,6 +1040,7 @@ class TriangleGraph(SurfaceGraph):
             b (float): distance from border in nanometers
             mask (numpy.ndarray): 3D mask of the segmentation from which the
                 underlying surface was created
+            scale_factor_to_nm (float): voxel size in nanometers
             label (int, optional): the label in the mask to be considered
                 (default 1)
             allowed_dist (int, optional): allowed distance in pixels between a
@@ -1053,7 +1055,7 @@ class TriangleGraph(SurfaceGraph):
         # don't remove vertices near border, because have to intersect with the
         # mask first!
         self.find_vertices_near_border(b, purge=False)
-        self.find_vertices_outside_mask(mask, label=label,
+        self.find_vertices_outside_mask(mask, scale_factor_to_nm, label=label,
                                         allowed_dist=allowed_dist)
 
         # Add a boolean vertex property telling whether a vertex within distance
@@ -1068,17 +1070,16 @@ class TriangleGraph(SurfaceGraph):
                 num_vertices_near_border_and_outside_mask += 1
             else:
                 self.graph.vp.is_near_border_and_outside_mask[v] = 0
-        print ('%s vertices are within distance %s nm to the graph border and '
-               'further than %s pixel from the mask.'
-               % (num_vertices_near_border_and_outside_mask, b, allowed_dist))
+        print('{} vertices are within distance {} nm to the graph border and '
+              'further than {} pixel from the mask.'.format(
+               num_vertices_near_border_and_outside_mask, b, allowed_dist))
 
         if purge is True:
-            print 'Filtering out those vertices and their edges...'
+            print('Filtering out those vertices and their edges...')
             # Set the filter to get only vertices NOT {near border and outside
             # mask}.
             self.graph.set_vertex_filter(
-                self.graph.vp.is_near_border_and_outside_mask, inverted=True
-            )
+                self.graph.vp.is_near_border_and_outside_mask, inverted=True)
             # Purge filtered out vertices and edges permanently from the graph:
             self.graph.purge_vertices()
             # Remove the properties used for filtering that are no longer true:
@@ -1107,16 +1108,16 @@ class TriangleGraph(SurfaceGraph):
             split into multiple parts during surface generation of subsequent
             surface cleaning.
         """
-        print ('Total number of vertices in the graph: %s'
-               % self.graph.num_vertices())
+        print('Total number of vertices in the graph: {}'.format(
+            self.graph.num_vertices()))
         is_in_lcc = label_largest_component(self.graph)
         lcc = GraphView(self.graph, vfilt=is_in_lcc)
-        print ('Number of vertices in the largest connected component of the '
-               'graph: %s' % lcc.num_vertices())
+        print('Number of vertices in the largest connected component of the '
+              'graph: {}'.format(lcc.num_vertices()))
 
         if replace is True and lcc.num_vertices() < self.graph.num_vertices():
-            print ('Filtering out those vertices and edges not belonging to '
-                   'the largest connected component...')
+            print('Filtering out those vertices and edges not belonging to the '
+                  'largest connected component...')
             # Set the filter to get only vertices belonging to the lcc.
             self.graph.set_vertex_filter(is_in_lcc, inverted=False)
             # Purge filtered out vertices and edges permanently from the graph:
@@ -1152,11 +1153,11 @@ class TriangleGraph(SurfaceGraph):
             comp_label = i
             if size < threshold:
                 small_components.append(comp_label)
-        print ("The graph has %s components, %s of them have size < %s"
-               % (len(sizes), len(small_components), threshold))
+        print("The graph has {} components, {} of them have size < {}".format(
+            len(sizes), len(small_components), threshold))
         if verbose:
-            print "Sizes of components:"
-            print sizes
+            print("Sizes of components:")
+            print(sizes)
 
         # Add a boolean vertex property telling whether a vertex belongs to a
         # small component with size below the threshold:
@@ -1169,12 +1170,12 @@ class TriangleGraph(SurfaceGraph):
                 num_vertices_in_small_components += 1
             else:
                 self.graph.vp.small_component[v] = 0
-        print ("%s vertices are in the small components."
-               % num_vertices_in_small_components)
+        print("{} vertices are in the small components.".format(
+            num_vertices_in_small_components))
 
         if len(small_components) > 0 and purge is True:
-            print ('Filtering out those vertices and their edges belonging to '
-                   'the small components...')
+            print('Filtering out those vertices and their edges belonging to '
+                  'the small components...')
             # Set the filter to get only vertices NOT belonging to a small
             # component.
             self.graph.set_vertex_filter(self.graph.vp.small_component,
@@ -1188,8 +1189,8 @@ class TriangleGraph(SurfaceGraph):
 
         t_end = time.time()
         duration = t_end - t_begin
-        print 'Finding small components took: %s min %s s' % divmod(duration,
-                                                                    60)
+        print('Finding small components took: {} min {} s'.format(
+            divmod(duration, 60)))
 
     def get_areas(self, verbose=False):
         """
@@ -1208,10 +1209,10 @@ class TriangleGraph(SurfaceGraph):
         triangle_areas = self.graph.vp.area.get_array()
         total_area = np.sum(triangle_areas)
         if verbose:
-            print '%s triangle area values' % len(triangle_areas)
-            print 'min = %s, max = %s' % (min(triangle_areas),
-                                          max(triangle_areas))
-            print 'total surface area = %s' % total_area
+            print('{} triangle area values'.format(len(triangle_areas)))
+            print('min = {}, max = {}'.format(
+                min(triangle_areas), max(triangle_areas)))
+            print('total surface area = {}'.format(total_area))
         return triangle_areas, total_area
 
     # * The following TriangleGraph methods are implementing with adaptations
@@ -1278,16 +1279,16 @@ class TriangleGraph(SurfaceGraph):
         try:
             assert len(neighbor_idx_to_dist) > 0
         except AssertionError:
-            print ("\nWarning: the vertex v = %s has 0 neighbors. "
-                   "It will be ignored later." % v)
+            print("\nWarning: the vertex v = {} has 0 neighbors. It will be "
+                  "ignored later.".format(v))
             # return a placeholder instead of V_v
             return 0, np.zeros(shape=(3, 3))
             # if don't want to calculate average number of neighbors:
             # return np.zeros(shape=(3, 3))
 
         if verbose:
-            print "\nv = %s" % v
-            print "%s neighbors" % len(neighbor_idx_to_dist)
+            print("\nv = {}".format(v))
+            print("{} neighbors".format(len(neighbor_idx_to_dist)))
 
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated and returned:
@@ -1324,22 +1325,22 @@ class TriangleGraph(SurfaceGraph):
             w_i = A_i / A_max * exp(- g_i / sigma)
 
             if verbose:
-                print "\nc_i = %s" % c_i
-                print "N = %s" % N
-                print "vc_i = %s" % vc_i
-                print "||vc_i|| = %s" % vc_i_len
-                print "cos(theta_i) = %s" % cos_theta_i
-                print "N_i = %s" % N_i
-                print "V_i = %s" % V_i
-                print "A_i = %s" % A_i
-                print "g_i = %s" % g_i
-                print "w_i = %s" % w_i
+                print("\nc_i = {}".format(c_i))
+                print("N = {}".format(N))
+                print("vc_i = {}".format(vc_i))
+                print("||vc_i|| = {}".format(vc_i_len))
+                print("cos(theta_i) = {}".format(cos_theta_i))
+                print("N_i = {}".format(N_i))
+                print("V_i = {}".format(V_i))
+                print("A_i = {}".format(A_i))
+                print("g_i = {}".format(g_i))
+                print("w_i = {}".format(w_i))
 
             # Weigh V_i and add it to the weighted matrix sum:
             V_v += w_i * V_i
 
         if verbose:
-            print "\nV_v: %s" % V_v
+            print("\nV_v: {}".format(V_v))
         return len(neighbor_idx_to_dist), V_v
         # return V_v  # if don't want to calculate average number of neighbors
 
@@ -1403,17 +1404,17 @@ class TriangleGraph(SurfaceGraph):
         S_n = lambda_3  # no preferred orientation
 
         if verbose is True:
-            print "\nlambda_1 = %s" % lambda_1
-            print "lambda_2 = %s" % lambda_2
-            print "lambda_3 = %s" % lambda_3
-            print "E_1 = %s" % E_1
-            print "E_2 = %s" % E_2
-            print "E_3 = %s" % E_3
-            print "S_s = %s" % S_s
-            print "S_c = %s" % S_c
-            print "epsilon * S_c = %s" % str(epsilon * S_c)
-            print "S_n = %s" % S_n
-            print "epsilon * eta * S_n = %s" % str(epsilon * eta * S_n)
+            print("\nlambda_1 = {}".format(lambda_1))
+            print("lambda_2 = {}".format(lambda_2))
+            print("lambda_3 = {}".format(lambda_3))
+            print("E_1 = {}".format(E_1))
+            print("E_2 = {}".format(E_2))
+            print("E_3 = {}".format(E_3))
+            print("S_s = {}".format(S_s))
+            print("S_c = {}".format(S_c))
+            print("epsilon * S_c = {}".format(str(epsilon * S_c)))
+            print("S_n = {}".format(S_n))
+            print("epsilon * eta * S_n = {}".format(str(epsilon * eta * S_n)))
 
         # Make decision and add the estimated normal or tangent as properties to
         # the graph (add a placeholder [0, 0, 0] to each property, where it does
@@ -1434,15 +1435,15 @@ class TriangleGraph(SurfaceGraph):
             else:
                 N_v = normal2
             if verbose is True:
-                print "surface patch with normal N_v = %s" % N_v
+                print("surface patch with normal N_v = {}".format(N_v))
             return 1, N_v, np.zeros(shape=3)
         elif max_saliency == (epsilon * S_c):
             if verbose is True:
-                print "crease junction with tangent T_v = %s" % E_3
+                print("crease junction with tangent T_v = {}".format(E_3))
             return 2, np.zeros(shape=3), E_3
         else:
             if verbose is True:
-                print "no preferred orientation"
+                print("no preferred orientation")
             return 3, np.zeros(shape=3), np.zeros(shape=3)
 
     def collecting_curvature_votes(
@@ -1553,12 +1554,12 @@ class TriangleGraph(SurfaceGraph):
         try:
             assert(sum_w_i > 0)
         except AssertionError:  # can be 0 if no surface patch neighbors exist
-            print ("\nWarning: sum of the weights is not positive, but %s, for "
-                   "the vertex v = %s, index = %s" % (sum_w_i, v, int(v)))
-            print ("%s neighbors in a surface patch with weights w_i:"
-                   % len(surface_neighbors_idx))
-            print all_w_i
-            print "The vertex will be ignored."
+            print("\nWarning: sum of the weights is not positive, but {}, for "
+                  "the vertex v = {}, index = {}".format(sum_w_i, v, int(v)))
+            print("{} neighbors in a surface patch with weights w_i:".format(
+                len(surface_neighbors_idx)))
+            print(all_w_i)
+            print("The vertex will be ignored.")
             return None
 
         wanted_sum_w_i = 2 * pi
@@ -1566,11 +1567,11 @@ class TriangleGraph(SurfaceGraph):
         all_w_i = factor * all_w_i  # normalized weights!
 
         if verbose:
-            print "\nv = %s" % v
-            print "N_v = %s" % N_v
-            print ("%s neighbors in a surface patch with normalized weights "
-                   "w_i:" % len(surface_neighbors_idx))
-            print all_w_i
+            print("\nv = {}".format(v))
+            print("N_v = {}".format(N_v))
+            print("{} neighbors in a surface patch with normalized weights w_i:"
+                  .format(len(surface_neighbors_idx)))
+            print(all_w_i)
 
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated:
@@ -1626,18 +1627,18 @@ class TriangleGraph(SurfaceGraph):
             w_i = all_w_i[i]
 
             if verbose:
-                print "\nv_i = %s" % v_i
-                print "vv_i = %s" % vv_i
-                print "t_i = %s" % t_i
-                print "||t_i|| = %s" % t_i_len
-                print "T_i = %s" % T_i
-                print "P_i = %s" % P_i
-                print "N_v_i = %s" % N_v_i
-                print "n_i = %s" % n_i
-                print "||n_i|| = %s" % n_i_len
-                print "theta = %s" % theta
-                print "kappa_i = %s" % kappa_i
-                print "w_i = %s" % w_i
+                print("\nv_i = {}".format(v_i))
+                print("vv_i = {}".format(vv_i))
+                print("t_i = {}".format(t_i))
+                print("||t_i|| = {}".format(t_i_len))
+                print("T_i = {}".format(T_i))
+                print("P_i = {}".format(P_i))
+                print("N_v_i = {}".format(N_v_i))
+                print("n_i = {}".format(n_i))
+                print("||n_i|| = {}".format(n_i_len))
+                print("theta = {}".format(theta))
+                print("kappa_i = {}".format(kappa_i))
+                print("w_i = {}".format(w_i))
 
             # Finally, sum up the components of B_v:
             B_v += w_i * kappa_i * outer(T_i, T_i)
@@ -1645,7 +1646,7 @@ class TriangleGraph(SurfaceGraph):
         B_v /= (2 * pi)
 
         if verbose:
-            print "\nB_v = %s" % B_v
+            print("\nB_v = {}".format(B_v))
 
         return B_v
 
@@ -1700,7 +1701,7 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
             if verbose:
-                print "T_3 has to be equal to the normal |N_v|, but:"
+                print("T_3 has to be equal to the normal |N_v|, but:")
                 print("T_1 = {}".format(T_1))
                 print("T_2 = {}".format(T_2))
                 print("T_3 = {}".format(T_3))
@@ -1741,12 +1742,12 @@ class TriangleGraph(SurfaceGraph):
             kappa_1, kappa_2 = kappa_2, kappa_1
 
         if verbose:
-            print "\nb_1 = %s" % b_1
-            print "b_2 = %s" % b_2
-            print "T_1 = %s" % T_1
-            print "T_2 = %s" % T_2
-            print "kappa_1 = %s" % kappa_1
-            print "kappa_2 = %s" % kappa_2
+            print("\nb_1 = {}".format(b_1))
+            print("b_2 = {}".format(b_2))
+            print("T_1 = {}".format(T_1))
+            print("T_2 = {}".format(T_2))
+            print("kappa_1 = {}".format(kappa_1))
+            print("kappa_2 = {}".format(kappa_2))
 
         # return T_1, T_2, kappa_1, kappa_2, Gaussian, mean curvature,
         # shape index and curvedness of vertex v:
@@ -1821,7 +1822,7 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
             if verbose:
-                print "T_3 has to be equal to the normal |N_v|, but:"
+                print("T_3 has to be equal to the normal |N_v|, but:")
                 print("T_1 = {}".format(T_1))
                 print("T_2 = {}".format(T_2))
                 print("T_3 = {}".format(T_3))
@@ -1867,12 +1868,12 @@ class TriangleGraph(SurfaceGraph):
             kappa_1, kappa_2 = kappa_2, kappa_1
 
         if verbose:
-            print "\nT_1 = {}".format(T_1)
-            print "T_2 = {}".format(T_2)
-            print "fit_error_1 = {}".format(var_a_1)
-            print "fit_error_2 = {}".format(var_a_2)
-            print "kappa_1 = {}".format(kappa_1)
-            print "kappa_2 = {}".format(kappa_2)
+            print("\nT_1 = {}".format(T_1))
+            print("T_2 = {}".format(T_2))
+            print("fit_error_1 = {}".format(var_a_1))
+            print("fit_error_2 = {}".format(var_a_2))
+            print("kappa_1 = {}".format(kappa_1))
+            print("kappa_2 = {}".format(kappa_2))
 
         # return T_1, T_2, curve fitting errors (variances), kappa_1, kappa_2,
         # Gaussian, mean curvature, shape index and curvedness of vertex v:
@@ -1926,9 +1927,9 @@ class TriangleGraph(SurfaceGraph):
         normal = np.array(self.graph.vp.N_v[vertex_v])
 
         if verbose:
-            print "\nv = ({},{},{})".format(v[0], v[1], v[2])
-            print "T = [{},{},{}]".format(tangent[0], tangent[1], tangent[2])
-            print "N = [{},{},{}]".format(normal[0], normal[1], normal[2])
+            print("\nv = ({},{},{})".format(v[0], v[1], v[2]))
+            print("T = [{},{},{}]".format(tangent[0], tangent[1], tangent[2]))
+            print("N = [{},{},{}]".format(normal[0], normal[1], normal[2]))
 
         # Define a cellLocator to be able to compute intersections between lines
         # and the surface:
@@ -1973,13 +1974,13 @@ class TriangleGraph(SurfaceGraph):
                 locator.IntersectWithLine(p1, p2, tolerance, t, pos, pcoords,
                                           sub_id, cell_id)
                 if verbose:
-                    print "\nPoint {}:".format(direction * i)
+                    print("\nPoint {}:".format(direction * i))
 
                 # If no intersection was found (pos stays like initialized),
                 # exclude and stop searching in that direction
                 if pos == [0.0, 0.0, 0.0]:
                     if verbose:
-                        print "No intersection point"
+                        print("No intersection point")
                     break
 
                 # If euclidean distance between p0 and pos is > radius_hit (i.e.
@@ -1988,7 +1989,7 @@ class TriangleGraph(SurfaceGraph):
                 pos_p0 = sqrt(dot(p0 - pos, p0 - pos))
                 if pos_p0 > radius_hit:
                     if verbose:
-                        print "Point NOT within geodesic radius to the tangent"
+                        print("Point NOT within geodesic radius to the tangent")
                     break
 
                 # Check orientation (curvature in or against the normal)
@@ -2011,10 +2012,10 @@ class TriangleGraph(SurfaceGraph):
                                              last_pos - before_last_pos))
                     if current_pos_dist > 1.5 * last_pos_dist:
                         if verbose:
-                            print "Point too far away from the previous one"
-                            print "current distance = {}".format(
-                                current_pos_dist)
-                            print "last distance = {}".format(last_pos_dist)
+                            print("Point too far away from the previous one")
+                            print("current distance = {}".format(
+                                current_pos_dist))
+                            print("last distance = {}".format(last_pos_dist))
                         break
 
                 # Add the x, y, z position of the intersection
@@ -2022,25 +2023,17 @@ class TriangleGraph(SurfaceGraph):
                 positions_2D_x.append(pos_2D_x)
                 positions_2D_y.append(pos_2D_y)
                 if verbose:
-                    print "Added a valid point"
-                #     print "p0 = ({},{},{})".format(p0[0], p0[1], p0[2])
-                #     print "p1 = ({},{},{})".format(p1[0], p1[1], p1[2])
-                #     print "p2 = ({},{},{})".format(p2[0], p2[1], p2[2])
-                #     print "point = ({}, {}, {})".format(pos[0], pos[1], pos[2])
-                #     print "cell id = {}".format(cell_id)
-                #     print "sign = {}".format(sign)
-                #     print "coordinates in 2D = ({}, {})".format(
-                #         pos_2D_x, pos_2D_y)
+                    print("Added a valid point")
 
         # Fit a simple parabola curve:
         a, var_a = fit_curve(positions_2D_x, positions_2D_y)  # a = 1 / (2 * R)
         curvature = 2 * a  # curvature = 1 / R
 
         if verbose:  # or var_a == 1 or var_a == -1:
-            print ("{} intersection points found".format(
+            print("{} intersection points found".format(
                 points.GetNumberOfPoints()))
-            print "variance = {}".format(var_a)
-            print "curvature = {}".format(curvature)
+            print("variance = {}".format(var_a))
+            print("curvature = {}".format(curvature))
 
         if poly_file is not None:  # vtkPolyData construction
             poly_verts = vtk.vtkPolyData()
@@ -2205,7 +2198,7 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[2]), 7) == round(abs(N_r[2]), 7))
         except AssertionError:
             if verbose:
-                print "T_3 has to be equal to the normal |N_r|, but:"
+                print("T_3 has to be equal to the normal |N_r|, but:")
                 print("T_1 = {}".format(T_1))
                 print("T_2 = {}".format(T_2))
                 print("T_3 = {}".format(T_3))

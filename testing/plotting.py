@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-# print plt.style.available
+# print(plt.style.available)
 plt.style.use('presentation')
 import numpy as np
 import os
@@ -198,7 +198,7 @@ def plot_composite_line_hist(
         for i, data_file in enumerate(data_files):
             # Reading in the error values from files:
             if not os.path.exists(data_file):
-                print ("File {} not found!".format(data_file))
+                print("File {} not found!".format(data_file))
                 exit(0)
             errors = np.loadtxt(data_file)
             add_line_hist(
@@ -224,7 +224,7 @@ def plot_composite_line_hist(
         plt.show()
     elif isinstance(outfile, str):
         fig.savefig(outfile)
-        print ("The plot was saved as {}".format(outfile))
+        print("The plot was saved as {}".format(outfile))
 
 
 def plot_plane_normals(n=10, y_range=None, res=20):
@@ -1243,7 +1243,6 @@ if __name__ == "__main__":
     # for r in [10, 20, 30]:
     #     plot_sphere_kappa_1_and_2_errors_noVVCF(
     #         r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, y_range=(-0.05, 1.05))
-        # plot_sphere_kappa_1_and_2_errors_VV_VVarea2_VCTV(
         #     r=r, rhVV=9, rhVCTV=9, ico=0, binary=False, value_range=(0, 0.178),
         #     y_range=(-0.05, 1.05))
         # plot_sphere_kappa_1_and_2_errors_VV_VCTV(

@@ -31,12 +31,12 @@ def read_in_mask(mask_file, verbose=False):
     Returns:
         the read in mask (numpy.ndarray)
     """
-    print '\nReading in the mask %s' % mask_file
+    print('\nReading in the mask {}'.format(mask_file))
     mask = io.load_tomo(mask_file)
     if verbose:
-        print 'Shape and data type:'
-        print mask.shape
-        print mask.dtype
+        print('Shape and data type:')
+        print(mask.shape)
+        print(mask.dtype)
     return mask
 
 
@@ -196,9 +196,9 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
         # Find the set of voxels of ribosome centers mapped on the membrane,
         # called 'target voxels' from now on:
         target_voxels = get_foreground_voxels_from_mask(ribo_mask)
-        print '%s target voxels' % len(target_voxels)
+        print('{} target voxels'.format(len(target_voxels)))
         if verbose:
-            print target_voxels
+            print(target_voxels)
 
         target_voxels_in_membrane_mask = []
         for target_voxel in target_voxels:
@@ -207,12 +207,13 @@ def get_target_voxels_in_membrane_mask(ribo_mask, mem_mask, verbose=False):
             else:
                 raise pexceptions.PySegInputWarning(
                     expr='get_target_voxels_in_membrane_mask',
-                    msg=('Target voxel (%s, %s, %s) not inside the membrane!' %
-                         (target_voxel[0], target_voxel[1], target_voxel[2])))
-        print ('%s target voxels in membrane'
-               % len(target_voxels_in_membrane_mask))
+                    msg=('Target voxel ({}, {}, {}) not inside the membrane!'
+                         .format(target_voxel[0], target_voxel[1],
+                                 target_voxel[2])))
+        print('{} target voxels in membrane'.format(
+            len(target_voxels_in_membrane_mask)))
         if verbose:
-            print target_voxels_in_membrane_mask
+            print(target_voxels_in_membrane_mask)
         return target_voxels_in_membrane_mask
     else:
         raise pexceptions.PySegInputError(
@@ -319,9 +320,9 @@ class VoxelGraph(graphs.SegmentationGraph):
             # Find the set of the membrane voxels, which become the vertices of
             # the graph:
             membrane_voxels = get_foreground_voxels_from_mask(mask)
-            print '%s membrane voxels' % len(membrane_voxels)
+            print('{} membrane voxels'.format(len(membrane_voxels)))
             if verbose:
-                print membrane_voxels
+                print(membrane_voxels)
             self._expand_voxels(mask, membrane_voxels, verbose)
         else:
             raise pexceptions.PySegInputError(
@@ -352,21 +353,22 @@ class VoxelGraph(graphs.SegmentationGraph):
         while len(remaining_mem_voxels) > 0:
             try:
                 if verbose:
-                    print ('%s remaining membrane voxels'
-                           % len(remaining_mem_voxels))
+                    print('{} remaining membrane voxels'.format(
+                        len(remaining_mem_voxels)))
                 elif len(remaining_mem_voxels) % 1000 == 0:
                     now = datetime.now()
-                    print ('%s remaining membrane voxels on: %s-%s-%s %s:%s:%s'
-                           % (len(remaining_mem_voxels), now.year, now.month,
-                              now.day, now.hour, now.minute, now.second))
+                    print('{} remaining membrane voxels on: {}-{}-{} {}:{}:{}'
+                          .format(len(remaining_mem_voxels),
+                                  now.year, now.month, now.day,
+                                  now.hour, now.minute, now.second))
 
                 # get and remove the last voxel on the list of remaining
                 # membrane voxels to expand it next
                 voxel_to_expand = remaining_mem_voxels.pop()
                 if verbose:
-                    print ('\nCurrent voxel to expand: (%s, %s, %s)'
-                           % (voxel_to_expand[0], voxel_to_expand[1],
-                              voxel_to_expand[2]))
+                    print('\nCurrent voxel to expand: ({}, {}, {})'.format(
+                        voxel_to_expand[0], voxel_to_expand[1],
+                        voxel_to_expand[2]))
 
                 scaled_voxel_to_expand = (
                     voxel_to_expand[0] * self.scale_factor_to_nm,
@@ -390,8 +392,8 @@ class VoxelGraph(graphs.SegmentationGraph):
                     self.coordinates_to_vertex_index[scaled_voxel_to_expand] = \
                         self.graph.vertex_index[v_expanded]
                     if verbose:
-                        print ('This voxel has been added to the graph as '
-                               'vertex.')
+                        print('This voxel has been added to the graph as a'
+                              'vertex.')
 
                 # Get the neighbor membrane voxels of the current voxel:
                 neighbor_voxels = self.foreground_neighbors_of_voxel(
@@ -429,10 +431,11 @@ class VoxelGraph(graphs.SegmentationGraph):
                                 scaled_neighbor_voxel
                             ] = self.graph.vertex_index[v_neighbor]
                             if verbose:
-                                print ('The neighbor voxel (%s, %s, %s) has '
-                                       'been added to the graph as a vertex.'
-                                       % (neighbor_voxel[0], neighbor_voxel[1],
-                                          neighbor_voxel[2]))
+                                print('The neighbor voxel ({}, {}, {}) has '
+                                      'been added to the graph as a vertex.'
+                                      .format(neighbor_voxel[0],
+                                              neighbor_voxel[1],
+                                              neighbor_voxel[2]))
 
                         # Add an edge with a distance between the expanded
                         # scaled vertex and the scaled neighbor vertex, if it
@@ -450,20 +453,23 @@ class VoxelGraph(graphs.SegmentationGraph):
                                 scaled_voxel_to_expand,
                                 scaled_neighbor_voxel)] = True
                             if verbose:
-                                print ('The neighbor voxels (%s, %s, %s) and '
-                                       '(%s, %s, %s) have been connected by an '
-                                       'edge with a distance of %s pixels.' %
-                                       (voxel_to_expand[0], voxel_to_expand[1],
-                                        voxel_to_expand[2], neighbor_voxel[0],
-                                        neighbor_voxel[1], neighbor_voxel[2],
-                                        self.graph.ep.distance[ed]))
+                                print('The neighbor voxels ({}, {}, {}) and '
+                                      '({}, {}, {}) have been connected by an '
+                                      'edge with a distance of {} pixels.'
+                                      .format(voxel_to_expand[0],
+                                              voxel_to_expand[1],
+                                              voxel_to_expand[2],
+                                              neighbor_voxel[0],
+                                              neighbor_voxel[1],
+                                              neighbor_voxel[2],
+                                              self.graph.ep.distance[ed]))
             except Exception, exc:
-                print "An exception happened: " + str(exc)
-                print ('There were %s remaining membrane voxels.'
-                       % len(remaining_mem_voxels))
+                print("An exception happened: " + str(exc))
+                print('There were {} remaining membrane voxels.'.format(
+                    len(remaining_mem_voxels)))
         else:
             if verbose:
-                print '0 remaining membrane voxels'
+                print('0 remaining membrane voxels')
 
     @staticmethod
     def foreground_neighbors_of_voxel(mask, voxel):

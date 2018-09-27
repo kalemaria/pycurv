@@ -25,8 +25,8 @@ def calculate_g_max_from_radius_hit(radius_hit):
         g_max
     """
     g_max = math.pi * radius_hit / 2
-    print "radius_hit = {}".format(radius_hit)
-    print "corresponding g_max = {}".format(g_max)
+    print("radius_hit = {}".format(radius_hit))
+    print("corresponding g_max = {}".format(g_max))
     return g_max
 
 
@@ -50,8 +50,8 @@ def calculate_distances_from_triangle(
     tg = TriangleGraph()
     tg.build_graph_from_vtk_surface(surface, scale_factor_to_nm)
     if verbose:
-        print ('The graph has {} vertices and {} edges'.format(
-                tg.graph.num_vertices(), tg.graph.num_edges()))
+        print('The graph has {} vertices and {} edges'.format(
+            tg.graph.num_vertices(), tg.graph.num_edges()))
 
     # Find the vertex from triangle index:
     v = tg.graph.vertex(triangle_index)

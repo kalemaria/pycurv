@@ -210,7 +210,6 @@ class ConeMask(object):
         cone = np.zeros(shape=(box, box, box))
         bottom = int(math.floor((box - h - 1) / 2.0))
         for u in range(h + 1):
-            # print "u = {}".format(u)
             # Create a 2D grid with center (0, 0) in the middle
             # (slice through the box in XY plane)
             low = - math.floor(box / 2.0)
@@ -219,7 +218,6 @@ class ConeMask(object):
 
             # Threshold using implicit cone equation to generate a filled circle
             circle = (x ** 2 + y ** 2) / ((r / float(h)) ** 2) <= (h - u) ** 2
-            # print circle.astype(int)
             z = u + bottom
             cone[:, :, z] = circle.astype(int)
 

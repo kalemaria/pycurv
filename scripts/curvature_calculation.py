@@ -11,8 +11,8 @@ import vtk  # for Anna's workflow
 # import cProfile
 
 from pysurf import (
-    pexceptions, normals_directions_and_curvature_estimation, vector_voting,
-    run_gen_surface, TriangleGraph, split_segmentation, curvature_estimation)
+    pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
+    TriangleGraph, curvature_estimation)
 from pysurf import pysurf_io as io
 
 """
@@ -28,302 +28,6 @@ __author__ = 'kalemanov'
 # when convoluting a binary mask with a gaussian kernel with sigma 1, values 1
 # at the boundary with 0's become this value:
 THRESH_SIGMA1 = 0.699471735
-
-
-def workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
-             radius_hit):
-    """
-    A script for running all processing steps to estimate membrane curvature.
-
-    The three steps are: 1. signed surface generation, 2. surface cleaning using
-    a graph, 3. curvature calculation using a graph generated from the clean
-    surface.
-
-    It was written for Felix data. Segmentation is split in regions in order
-    to parallelize a bit, in the end all .txt and .vtp files are merged.
-
-    Args:
-        fold (str): path where the input membrane segmentation is and where the
-            output will be written
-        tomo (str): tomogram name with which the segmentation file starts
-        seg_file (str): membrane segmentation mask (may contain 'fold' and
-            'tomo')
-        label (int): label to be considered in the membrane mask
-        pixel_size (float): pixel size in nanometer of the membrane mask
-        scale_x (int): size of the membrane mask in X dimension
-        scale_y (int): size of the membrane mask in Y dimension
-        scale_z (int): size of the membrane mask in Z dimension
-        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
-            it should be chosen to correspond to radius of smallest features of
-            interest on the surface
-
-    Returns:
-        None
-    """
-    epsilon = 0
-    eta = 0
-    region_file_base = "%s%s_ERregion" % (fold, tomo)
-    all_kappa_1_values = []
-    all_kappa_2_values = []
-    all_gauss_curvature_VV_values = []
-    all_mean_curvature_VV_values = []
-    all_shape_index_VV_values = []
-    all_curvedness_VV_values = []
-    region_surf_with_borders_files = []
-    region_surf_VV_files = []
-    all_file_base = "%s%s_ER" % (fold, tomo)
-    all_kappa_1_file = ("%s.VV_rh%s_epsilon%s_eta%s.max_curvature.txt"
-                        % (all_file_base, radius_hit, epsilon, eta))
-    all_kappa_2_file = ("%s.VV_rh%s_epsilon%s_eta%s.min_curvature.txt"
-                        % (all_file_base, radius_hit, epsilon, eta))
-    all_gauss_curvature_VV_file = (
-        "%s.VV_rh%s_epsilon%s_eta%s.gauss_curvature.txt" % (
-            all_file_base, radius_hit, epsilon, eta))
-    all_mean_curvature_VV_file = ("%s.VV_rh%s_epsilon%s_eta%s.mean_curvature.txt"
-                                  % (all_file_base, radius_hit, epsilon, eta))
-    all_shape_index_VV_file = ("%s.VV_rh%s_epsilon%s_eta%s.shape_index.txt"
-                               % (all_file_base, radius_hit, epsilon, eta))
-    all_curvedness_VV_file = ("%s.VV_rh%s_epsilon%s_eta%s.curvedness.txt"
-                              % (all_file_base, radius_hit, epsilon, eta))
-    all_surf_with_borders_vtp_file = ('%s.cleaned_surface_with_borders_nm.vtp'
-                                      % all_file_base)
-    all_surf_VV_vtp_file = ('%s.cleaned_surface_nm.VV_rh%s_epsilon%s_eta%s.vtp'
-                            % (all_file_base, radius_hit, epsilon, eta))
-
-    # Split the segmentation into regions:
-    regions, mask_file = split_segmentation(
-        seg_file, lbl=label, close=True, close_cube_size=3, close_iter=1,
-        min_region_size=100)
-    for i, region in enumerate(regions):
-        print "\n\nRegion %s" % (i + 1)
-
-        # ***Part 1: surface generation***
-        surf_file_base = "%s%s" % (region_file_base, i + 1)
-        # region surface file, output of run_gen_surface
-        surf_file = surf_file_base + '.surface.vtp'
-        surf = None
-        if not isfile(surf_file):
-            print "\nGenerating a surface..."
-            surf = run_gen_surface(region, surf_file_base, lbl=label,
-                                   save_input_as_vti=True)
-
-        # ***Part 2: surface cleaning***
-        scale_factor_to_nm = pixel_size
-        cleaned_scaled_surf_file = (
-            surf_file_base + '.cleaned_surface_with_borders_nm.vtp')
-        cleaned_scaled_graph_file = (
-            surf_file_base + '.cleaned_triangle_graph_with_borders_nm.gt')
-        # The cleaned scaled surface .vtp file does not exist yet if no cleaned
-        # scaled surface .vtp file was generated, then also no cleaned scaled
-        # graph .gt file was written -> have to generate the scaled graph from
-        # the original surface and clean it:
-        if not isfile(cleaned_scaled_surf_file):
-            # this is the case if surface was generated in an earlier run
-            if surf is None:
-                surf = io.load_poly(surf_file)
-                print 'A surface was loaded from the file %s' % surf_file
-
-            print ('\nBuilding the TriangleGraph from the vtkPolyData surface '
-                   'with curvatures...')
-            tg = TriangleGraph()
-            surf_nm = tg.build_graph_from_vtk_surface(
-                surf, scale_factor_to_nm, verbose=False)
-            print ('The graph has %s vertices and %s edges'
-                   % (tg.graph.num_vertices(), tg.graph.num_edges()))
-
-            io.save_vtp(surf_nm, surf_file[0:-4] + "_nm.vtp")
-            print ('The surface scaled to nm was written into the file %s_nm'
-                   '.vtp' % surf_file[0:-4])
-
-            print '\nFinding triangles that are 3 pixels to surface borders...'
-            tg.find_vertices_near_border(3 * scale_factor_to_nm, purge=True)
-            print ('The graph has %s vertices and %s edges'
-                   % (tg.graph.num_vertices(), tg.graph.num_edges()))
-
-            print '\nFinding small connected components of the graph...'
-            tg.find_small_connected_components(threshold=100, purge=True)
-
-            if tg.graph.num_vertices() > 0:
-                print ('The graph has %s vertices and %s edges and following '
-                       'properties'
-                       % (tg.graph.num_vertices(), tg.graph.num_edges()))
-                tg.graph.list_properties()
-                tg.graph.save(cleaned_scaled_graph_file)
-                print ('Cleaned and scaled graph with outer borders was '
-                       'written into the file %s' % cleaned_scaled_graph_file)
-
-                poly_triangles_filtered_with_borders = \
-                    tg.graph_to_triangle_poly()
-                io.save_vtp(poly_triangles_filtered_with_borders,
-                            cleaned_scaled_surf_file)
-                print ('Cleaned and scaled surface with outer borders was '
-                       'written into the file %s' % cleaned_scaled_surf_file)
-                calculate_curvature = True
-            else:
-                print ("Region %s was completely filtered out and will be "
-                       "omitted." % (i + 1))
-                calculate_curvature = False
-        # This is the case if graph generation and cleaning was done in an
-        # earlier run and the cleaned scaled surface .vtp file exists:
-        else:
-            # the graph has vertices for sure if the .vtp file was written
-            calculate_curvature = True
-            # the graph was not saved and has to be reversed-engineered from the
-            # surface
-            if not isfile(cleaned_scaled_graph_file):
-                surf = io.load_poly(cleaned_scaled_surf_file)
-                print ('The cleaned and scaled surface with outer borders was '
-                       'loaded from the file %s' % cleaned_scaled_surf_file)
-
-                print '\nBuilding the triangle graph from the surface...'
-                tg = TriangleGraph()
-                tg.build_graph_from_vtk_surface(
-                    surf, scale_factor_to_nm=1, verbose=False)
-                print ('The graph has %s vertices and %s edges'
-                       % (tg.graph.num_vertices(), tg.graph.num_edges()))
-                tg.graph.list_properties()
-                tg.graph.save(cleaned_scaled_graph_file)
-                print ('Cleaned and scaled graph with outer borders was '
-                       'written into the file %s' % cleaned_scaled_graph_file)
-            # cleaned scaled graph can just be loaded from the found .gt file
-            else:
-                tg = TriangleGraph()
-                tg.graph = load_graph(cleaned_scaled_graph_file)
-                print ('Cleaned and scaled graph with outer borders was loaded '
-                       'from the file %s' % cleaned_scaled_graph_file)
-                print ('The graph has %s vertices and %s edges'
-                       % (tg.graph.num_vertices(), tg.graph.num_edges()))
-
-        # ***Part 3: curvature calculation***
-        if calculate_curvature:
-            # Running the Normal Vector Voting algorithm and saving the output:
-            cleaned_scaled_graph_VV_file = (
-                surf_file_base +
-                '.cleaned_triangle_graph_nm.VV_rh%s_epsilon%s_eta%s.gt'
-                % (radius_hit, epsilon, eta)
-            )
-            cleaned_scaled_surf_VV_file = (
-                surf_file_base +
-                '.cleaned_surface_nm.VV_rh%s_epsilon%s_eta%s.vtp'
-                % (radius_hit, epsilon, eta)
-            )
-            kappa_1_file = "%s%s.VV_rh%s_epsilon%s_eta%s.max_curvature.txt" % (
-                region_file_base, i + 1, radius_hit, epsilon, eta)
-            kappa_2_file = "%s%s.VV_rh%s_epsilon%s_eta%s.min_curvature.txt" % (
-                region_file_base, i + 1, radius_hit, epsilon, eta)
-            gauss_curvature_VV_file = (
-                "%s%s.VV_rh%s_epsilon%s_eta%s.gauss_curvature.txt"
-                % (region_file_base, i + 1, radius_hit, epsilon, eta))
-            mean_curvature_VV_file = (
-                "%s%s.VV_rh%s_epsilon%s_eta%s.mean_curvature.txt"
-                % (region_file_base, i + 1, radius_hit, epsilon, eta))
-            shape_index_VV_file = (
-                "%s%s.VV_rh%s_epsilon%s_eta%s.shape_index.txt" % (
-                    region_file_base, i + 1, radius_hit, epsilon, eta))
-            curvedness_VV_file = (
-                "%s%s.VV_rh%s_epsilon%s_eta%s.curvedness.txt" % (
-                    region_file_base, i + 1, radius_hit, epsilon, eta))
-            # does not calculate curvatures for triangles at borders and removes
-            # them in the end
-            surf_VV = vector_voting(tg, radius_hit, epsilon=epsilon, eta=eta,
-                                    exclude_borders=True)
-            print ('The graph without outer borders and with VV curvatures has '
-                   '%s vertices and %s edges'
-                   % (tg.graph.num_vertices(), tg.graph.num_edges()))
-            tg.graph.list_properties()
-            tg.graph.save(cleaned_scaled_graph_VV_file)
-            print ('The graph without outer borders and with VV curvatures was '
-                   'written into the file %s' % cleaned_scaled_graph_VV_file)
-
-            io.save_vtp(surf_VV, cleaned_scaled_surf_VV_file)
-            print ('The surface without outer borders and with VV curvatures '
-                   'was written into the file %s' % cleaned_scaled_surf_VV_file)
-
-            # Making a list of all the region .vtp files
-            region_surf_with_borders_files.append(cleaned_scaled_surf_file)
-            region_surf_VV_files.append(cleaned_scaled_surf_VV_file)
-
-            # Getting the VV curvatures from the output graph (without outer
-            # borders), and merging the respective values for all regions:
-            kappa_1_values = tg.get_vertex_property_array("kappa_1")
-            all_kappa_1_values.extend(kappa_1_values.tolist())
-            kappa_2_values = tg.get_vertex_property_array("kappa_2")
-            all_kappa_2_values.extend(kappa_2_values.tolist())
-            gauss_curvature_VV_values = tg.get_vertex_property_array(
-                "gauss_curvature_VV")
-            all_gauss_curvature_VV_values.extend(
-                gauss_curvature_VV_values.tolist())
-            mean_curvature_VV_values = tg.get_vertex_property_array(
-                "mean_curvature_VV")
-            all_mean_curvature_VV_values.extend(
-                mean_curvature_VV_values.tolist())
-            shape_index_VV_values = tg.get_vertex_property_array(
-                "shape_index_VV")
-            all_shape_index_VV_values.extend(shape_index_VV_values.tolist())
-            curvedness_VV_values = tg.get_vertex_property_array("curvedness_VV")
-            all_curvedness_VV_values.extend(curvedness_VV_values.tolist())
-
-            # Writing all the region curvature values into files:
-            io.write_values_to_file(kappa_1_values, kappa_1_file)
-            io.write_values_to_file(kappa_2_values, kappa_2_file)
-            io.write_values_to_file(gauss_curvature_VV_values,
-                                    gauss_curvature_VV_file)
-            io.write_values_to_file(mean_curvature_VV_values,
-                                    mean_curvature_VV_file)
-            io.write_values_to_file(shape_index_VV_values, shape_index_VV_file)
-            io.write_values_to_file(curvedness_VV_values, curvedness_VV_file)
-            print ('All the curvature values for the region were written into '
-                   'files')
-
-    # Writing all the joint curvature values into files:
-    io.write_values_to_file(all_kappa_1_values, all_kappa_1_file)
-    io.write_values_to_file(all_kappa_2_values, all_kappa_2_file)
-    io.write_values_to_file(all_gauss_curvature_VV_values,
-                            all_gauss_curvature_VV_file)
-    io.write_values_to_file(all_mean_curvature_VV_values,
-                            all_mean_curvature_VV_file)
-    io.write_values_to_file(all_shape_index_VV_values, all_shape_index_VV_file)
-    io.write_values_to_file(all_curvedness_VV_values, all_curvedness_VV_file)
-    print ('All the curvature values for the whole tomogram were written into '
-           'files')
-
-    # Merging all region '.vtp' files (once with outer borders before VV, if it
-    # has not been done yet, and once after VV):
-    if not isfile(all_surf_with_borders_vtp_file):
-        io.merge_vtp_files(region_surf_with_borders_files,
-                           all_surf_with_borders_vtp_file)
-        print ("Done merging all the found region cleaned and scaled surface "
-               "with outer borders '.vtp' files into the file %s"
-               % all_surf_with_borders_vtp_file)
-    io.merge_vtp_files(region_surf_VV_files, all_surf_VV_vtp_file)
-    print ("Done merging all the found region cleaned and scaled surface with "
-           "curvatures '.vtp' files into the file %s" % all_surf_VV_vtp_file)
-
-    # Converting the '.vtp' tomogram files to '.stl' files:
-    all_surf_with_borders_stl_file = (all_surf_with_borders_vtp_file[0:-4] +
-                                      '.stl')
-    if not isfile(all_surf_with_borders_stl_file):
-        io.vtp_file_to_stl_file(all_surf_with_borders_vtp_file,
-                                all_surf_with_borders_stl_file)
-        print ("The '.vtp' file %s was converted to .stl format"
-               % all_surf_with_borders_vtp_file)
-    all_surf_VV_stl_file = all_surf_VV_vtp_file[0:-4] + '.stl'
-    io.vtp_file_to_stl_file(all_surf_VV_vtp_file, all_surf_VV_stl_file)
-    print ("The '.vtp' file %s was converted to .stl format"
-           % all_surf_VV_vtp_file)
-
-    # Converting vtkPolyData selected cell arrays from the '.vtp' file to 3-D
-    # volumes and saving them as '.mrc.gz' files.
-    # max voxel value & .log files:
-    outfile_base = "{}.VV2_rh{}_epsilon{}_eta{}".format(
-        all_file_base, radius_hit, epsilon, eta)
-    _vtp_arrays_to_mrc_volumes(
-        all_surf_VV_vtp_file, outfile_base, pixel_size, scale_x, scale_y,
-        scale_z, log_files=True)
-    # mean voxel value:
-    _vtp_arrays_to_mrc_volumes(
-        all_surf_VV_vtp_file, outfile_base, pixel_size, scale_x, scale_y,
-        scale_z, mean=True)
 
 
 def convert_vtp_to_stl_surface_and_mrc_curvatures(
@@ -349,7 +53,7 @@ def convert_vtp_to_stl_surface_and_mrc_curvatures(
     surf_stl_file = (surf_vtp_file[0:-4] + '.stl')
     if not isfile(surf_stl_file):
         io.vtp_file_to_stl_file(surf_vtp_file, surf_stl_file)
-        print ("The '.vtp' file {} was converted to .stl format".format(
+        print("The '.vtp' file {} was converted to .stl format".format(
             surf_vtp_file))
 
     # Converting vtkPolyData selected cell arrays from the '.vtp' file as 3-D
@@ -426,7 +130,7 @@ def _vtp_arrays_to_mrc_volumes(
                     gzip.open(mrcfilename + '.gz', 'wb') as f_out:
                 f_out.writelines(f_in)
             remove(mrcfilename)
-            print 'Archive {}.gz was written'.format(mrcfilename)
+            print('Archive {}.gz was written'.format(mrcfilename))
 
 
 def new_workflow(
@@ -505,12 +209,12 @@ def new_workflow(
         if label == 2 and np.max(seg) == 3:  # if cER and filled cER seg. exists
             # Surface generation with filled segmentation using vtkMarchingCubes
             # and applying the mask of unfilled segmentation
-            print ("\nMaking filled and unfilled binary segmentations...")
+            print("\nMaking filled and unfilled binary segmentations...")
             # have to combine the outer and inner seg. for the filled one:
             filled_binary_seg = np.logical_or(seg == 2, seg == 3).astype(
                 data_type)
             binary_seg = (seg == 2).astype(data_type)
-            print ("\nGenerating a surface...")
+            print("\nGenerating a surface...")
             surf = run_gen_surface(
                 filled_binary_seg, fold + base_filename, lbl=1,
                 other_mask=binary_seg, isosurface=True, sg=1, thr=THRESH_SIGMA1)
@@ -524,13 +228,13 @@ def new_workflow(
         else:  # Surface generation with vtkSurfaceReconstructionFilter method
             # Load the segmentation numpy array from a file and get only the
             # requested labels as 1 and the background as 0:
-            print ("\nMaking the segmentation binary...")
+            print("\nMaking the segmentation binary...")
             binary_seg = (seg == label).astype(data_type)
             if holes != 0:  # reduce / increase holes in the segmentation
                 cube_size = abs(holes)
                 cube = np.ones((cube_size, cube_size, cube_size))
                 if holes > 0:  # close (reduce) holes
-                    print ("\nReducing holes in the segmentation...")
+                    print("\nReducing holes in the segmentation...")
                     binary_seg = ndimage.binary_closing(
                         binary_seg, structure=cube, iterations=1).astype(
                         data_type)
@@ -538,19 +242,19 @@ def new_workflow(
                     binary_seg_file = "{}{}.binary_seg.mrc".format(
                         fold, base_filename)
                     io.save_numpy(binary_seg, binary_seg_file)
-            print ("\nGenerating a surface from the binary segmentation...")
+            print("\nGenerating a surface from the binary segmentation...")
             surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
     else:
-        print ('\nReading in the surface from file...')
+        print('\nReading in the surface from file...')
         surf = io.load_poly(fold + surf_file)
 
     clean_graph_file = '{}.scaled_cleaned.gt'.format(base_filename)
     clean_surf_file = '{}.scaled_cleaned.vtp'.format(base_filename)
     if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
-        print ('\nBuilding a triangle graph from the surface...')
+        print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
         tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
-        print ('The graph has {} vertices and {} edges'.format(
+        print('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
 
         # Remove the wrong borders (surface generation artefact)
@@ -560,18 +264,18 @@ def new_workflow(
         if holes < 0:
             b += abs(holes)
         if b > 0:
-            print ('\nFinding triangles that are {} pixels to surface '
+            print('\nFinding triangles that are {} pixels to surface '
                    'borders...'.format(b))
             tg.find_vertices_near_border(b * scale_factor_to_nm, purge=True)
-            print ('The graph has {} vertices and {} edges'.format(
+            print('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
 
         # Filter out possibly occurring small disconnected fragments
         if remove_small_components > 0:
-            print ('\nFinding small connected components of the graph...')
+            print('\nFinding small connected components of the graph...')
             tg.find_small_connected_components(
                 threshold=remove_small_components, purge=True, verbose=True)
-            print ('The graph has {} vertices and {} edges'.format(
+            print('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
 
         # Saving the scaled (and cleaned) graph and surface:
@@ -579,15 +283,16 @@ def new_workflow(
         surf_clean = tg.graph_to_triangle_poly()
         io.save_vtp(surf_clean, fold + clean_surf_file)
     else:
-        print ('\nReading in the cleaned graph and surface from files...')
+        print('\nReading in the cleaned graph and surface from files...')
         surf_clean = io.load_poly(fold + clean_surf_file)
         tg = TriangleGraph()
         tg.graph = load_graph(fold + clean_graph_file)
 
     t_end = time.time()
     duration = t_end - t_begin
-    print ('Surface and graph generation (and cleaning) took: {} min {} s'
-           .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
+    minutes, seconds = divmod(duration, 60)
+    print('Surface and graph generation (and cleaning) took: {} min {} s'
+          .format(minutes, seconds))
 
     gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
         fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
@@ -846,7 +551,7 @@ def annas_workflow(
         seg = io.load_tomo(fold + seg_file)
         assert(isinstance(seg, np.ndarray))
 
-        print ("\nGenerating a surface...")
+        print("\nGenerating a surface...")
         # Generate isosurface from the smoothed segmentation
         seg_vti = io.numpy_to_vti(seg)
         surfaces = vtk.vtkMarchingCubes()
@@ -868,19 +573,19 @@ def annas_workflow(
 
         # Writing the vtkPolyData surface into a VTP file
         io.save_vtp(surf, fold + surf_file)
-        print ('Surface was written to the file {}'.format(surf_file))
+        print('Surface was written to the file {}'.format(surf_file))
 
     else:
-        print ('\nReading in the surface from file...')
+        print('\nReading in the surface from file...')
         surf = io.load_poly(fold + surf_file)
 
     clean_graph_file = '{}.scaled_cleaned.gt'.format(base_filename)
     clean_surf_file = '{}.scaled_cleaned.vtp'.format(base_filename)
     if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
-        print ('\nBuilding a triangle graph from the surface...')
+        print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
         tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
-        print ('The graph has {} vertices and {} edges'.format(
+        print('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
 
         # Saving the scaled (and cleaned) graph and surface:
@@ -888,15 +593,16 @@ def annas_workflow(
         surf_clean = tg.graph_to_triangle_poly()
         io.save_vtp(surf_clean, fold + clean_surf_file)
     else:
-        print ('\nReading in the cleaned graph and surface from files...')
+        print('\nReading in the cleaned graph and surface from files...')
         surf_clean = io.load_poly(fold + clean_surf_file)
         tg = TriangleGraph()
         tg.graph = load_graph(fold + clean_graph_file)
 
     t_end = time.time()
     duration = t_end - t_begin
-    print ('Surface and graph generation (and cleaning) took: {} min {} s'
-           .format(divmod(duration, 60)[0], divmod(duration, 60)[1]))
+    minutes, seconds = divmod(duration, 60)
+    print('Surface and graph generation (and cleaning) took: {} min {} s'
+          .format(minutes, seconds))
 
     gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
         fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
@@ -930,7 +636,7 @@ def annas_workflow(
             gt_file, surf_file))
 
 
-def main(membrane, radius_hit):
+def main_javier(membrane, radius_hit):
     """
     Main function for running the new_workflow function for Javier's cER or PM.
 
@@ -1033,10 +739,11 @@ def main(membrane, radius_hit):
 
     t_end = time.time()
     duration = t_end - t_begin
-    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
 
 
-def main2():
+def main_felix():
     """
     Main function for running the new_workflow function for Felix' data.
 
@@ -1044,20 +751,6 @@ def main2():
         None
     """
     t_begin = time.time()
-
-    # Change those parameters for each tomogram & label:
-    # fold = \
-    #     "/fs/pool/pool-ruben/Maria/curvature/Felix/new_workflow/diffuseHtt97Q/"
-    # tomo = "t112"
-    # seg_file = "%s%s_final_ER1_vesicles2_notER3_NE4.Labels.mrc" % (fold, tomo)
-    # label = 1
-    # pixel_size = 2.526
-    # scale_x = 620
-    # scale_y = 620
-    # scale_z = 80
-    # radius_hit = 3
-    # workflow(fold, tomo, seg_file, label, pixel_size, scale_x, scale_y, scale_z,
-    #          radius_hit)
 
     # Felix's vesicle:
     base_filename = "t74_vesicle3"
@@ -1079,10 +772,11 @@ def main2():
 
     t_end = time.time()
     duration = t_end - t_begin
-    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
 
 
-def main3():
+def main_missing_wedge():
     """
     Main function for running the new_workflow function for normal vs. missing
     wedge containing sphere surface.
@@ -1118,8 +812,8 @@ def main3():
 
     t_end = time.time()
     duration = t_end - t_begin
-    print('\nTotal elapsed time: {} min {} s'.format(
-        divmod(duration, 60)[0], divmod(duration, 60)[1]))
+    minutes, seconds = divmod(duration, 60)
+    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
 
 
 def main_anna():
@@ -1138,18 +832,18 @@ def main_anna():
 if __name__ == "__main__":
     membrane = sys.argv[1]
     rh = int(sys.argv[2])
-    main(membrane, rh)
+    main_javier(membrane, rh)
 
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
     # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh{}.stats'.format(
     #     fold, membrane, rh)
-    # cProfile.run('main(membrane, rh)', stats_file)
+    # cProfile.run('main_javier(membrane, rh)', stats_file)
 
     # fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/'
     #         'vesicle3_t74/')
     # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
-    # cProfile.run('main2()', stats_file)
+    # cProfile.run('main_felix()', stats_file)
 
-    # main2()
+    # main_felix()
 
     # main_anna()

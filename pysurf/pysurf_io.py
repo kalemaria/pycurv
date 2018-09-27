@@ -78,7 +78,7 @@ def load_tomo(fname, mmap=False):
         im_data = vti_to_numpy(reader.GetOutput())
     else:
         raise pexceptions.PySegInputError(
-            expr='load_tomo', msg='%s is non valid format.' % ext)
+            expr='load_tomo', msg='{} is non valid format.'.format(ext))
 
     # For avoiding 2D arrays
     if len(im_data.shape) == 2:
@@ -163,8 +163,8 @@ def save_numpy(array, fname):
         img.setData(array)
         img.writeEM(fname)
     else:
-        raise pexceptions.PySegInputError(expr='save_numpy',
-                                          msg='Format not valid %s.' % ext)
+        raise pexceptions.PySegInputError(
+            expr='save_numpy', msg='Format not valid {}.'.format(ext))
 
 
 def numpy_to_vti(array, offset=[0, 0, 0], spacing=[1, 1, 1]):
@@ -217,7 +217,7 @@ def save_vti(image, fname, outputdir):
     if writer.Write() != 1:
         raise pexceptions.PySegInputError(
             expr='save_vti',
-            msg='Error writing the %s file on %s.' % (fname, outputdir))
+            msg='Error writing the {} file on {}.'.format(fname, outputdir))
 
 
 def save_vtp(poly, fname):
@@ -236,7 +236,7 @@ def save_vtp(poly, fname):
     writer.SetInputData(poly)
     if writer.Write() != 1:
         raise pexceptions.PySegInputError(
-            expr='save_vtp', msg='Error writing the file %s.' % fname)
+            expr='save_vtp', msg='Error writing the file {}.'.format(fname))
 
 
 def load_poly(fname):
@@ -299,7 +299,8 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
             tomo = vti_to_numpy(reader.GetOutput())
         else:
             raise pexceptions.PySegInputError(
-                expr='gen_isosurface', msg='Format %s not readable.' % fext)
+                expr='gen_isosurface', msg='Format {} not readable.'.format(
+                    fext))
     elif not isinstance(tomo, np.ndarray):
         raise pexceptions.PySegInputError(
             expr='gen_isosurface',
@@ -415,7 +416,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
             tomo = vti_to_numpy(reader.GetOutput())
         else:
             raise pexceptions.PySegInputError(
-                expr='gen_surface', msg='Format %s not readable.' % fext)
+                expr='gen_surface', msg='Format {} not readable.'.format(fext))
     elif not isinstance(tomo, np.ndarray):
         raise pexceptions.PySegInputError(
             expr='gen_surface',
@@ -446,7 +447,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
                     count += 1
 
     if verbose:
-        print 'Cloud of points loaded...'
+        print('Cloud of points loaded...')
 
     # Creating the isosurface
     surf = vtk.vtkSurfaceReconstructionFilter()
@@ -470,7 +471,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
     rsurf = reverse.GetOutput()
 
     if verbose:
-        print 'Isosurfaces generated...'
+        print('Isosurfaces generated...')
 
     # Translate and scale to the proper positions
     cloud.ComputeBounds()
@@ -496,7 +497,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
     tsurf = tpd.GetOutput()
 
     if verbose:
-        print 'Rescaled and translated...'
+        print('Rescaled and translated...')
 
     # Masking according to distance to the original segmentation
     if mask:
@@ -528,7 +529,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
         tsurf.RemoveDeletedCells()
 
         if verbose:
-            print 'Mask applied...'
+            print('Mask applied...')
 
     # Field distance
     if field:
@@ -555,7 +556,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
         #     points_cell = tsurf.GetCell(i).GetPoints()
         #     for j in range(0, points_cell.GetNumberOfPoints()):
         #         x, y, z = points_cell.GetPoint(j)
-        #         # print x, y, z, array.GetTuple(j)
+        #         # print(x, y, z, array.GetTuple(j))
         #         x, y, z = int(round(x)), int(round(y)), int(round(z))
         #         tomo[x, y, z] = False
         #         tomon[x, y, z, :] = array.GetTuple(j)
@@ -563,7 +564,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
             points_cell = tsurf.GetCell(i).GetPoints()
             for j in range(0, points_cell.GetNumberOfPoints()):
                 x, y, z = points_cell.GetPoint(j)
-                # print x, y, z, array.GetTuple(j)
+                # print(x, y, z, array.GetTuple(j))
                 x, y, z = int(round(x)), int(round(y)), int(round(z))
                 if tomo[x, y, z] == lbl:
                     tomoh[x, y, z] = False
@@ -607,12 +608,12 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
                         tomod[x, y, z] = tomod[x, y, z] * np.sign(dprod)
 
         if verbose:
-            print 'Distance field generated...'
+            print('Distance field generated...')
 
         return tsurf, tomod
 
     if verbose:
-        print 'Finished!'
+        print('Finished!')
 
     return tsurf
 
@@ -806,8 +807,8 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
         the 3D numpy.ndarray of size like the segmentation containing the cell
             data values at the corresponding coordinates
     """
-    print ('Converting the vtkPolyData cell array %s to a 3D volume...'
-           % array_name)
+    print('Converting the vtkPolyData cell array {} to a 3D volume...'.format(
+        array_name))
     # Find the array with the wanted name:
     array = None
     numberOfCellArrays = poly.GetCellData().GetNumberOfArrays()
@@ -817,17 +818,17 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
                 array = poly.GetCellData().GetArray(i)
                 break
     else:
-        print 'No cell arrays present in the PolyData!'
+        print('No cell arrays present in the PolyData!')
         return None
 
     # Check that the array was found and that it has 1 component values:
     if array is None:
-        print 'Array %s was not found!' % array_name
+        print('Array {} was not found!'.format(array_name))
         return None
     n_comp_array = array.GetNumberOfComponents()
     if n_comp_array != 1:
-        print ('Array has %s components but 1 component is expected!'
-               % n_comp_array)
+        print('Array has {} components but 1 component is expected!'.format(
+            n_comp_array))
         return None
 
     # Dictionary mapping voxel coordinates (for the volume returned later) to a
@@ -872,17 +873,19 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
                 voxel_to_values[voxel] = [cell_value]
 
             if verbose:
-                print '\n(Triangle) cell number %s' % cell_id
-                print 'centroid (%s, %s, %s)' % (x_center, y_center, z_center)
-                print 'voxel (%s, %s, %s)' % (voxel[0], voxel[1], voxel[2])
-                print '%s value = %s' % (array_name, cell_value)
+                print('\n(Triangle) cell number {}'.format(cell_id))
+                print('centroid ({}, {}, {})'.format(
+                    x_center, y_center, z_center))
+                print('voxel ({}, {}, {})'.format(voxel[0], voxel[1], voxel[2]))
+                print('{} value = {}'.format(array_name, cell_value))
 
         else:
-            print ('\nOops, the cell number %s is not a vtkTriangle but a %s! '
-                   'It will be ignored.' % (cell_id, cell.__class__.__name__))
+            print('\nOops, the cell number {} is not a vtkTriangle but a {}! '
+                  'It will be ignored.'.format(
+                   cell_id, cell.__class__.__name__))
 
-    print '%s voxels mapped from %s cells' % (len(voxel_to_values),
-                                              poly.GetNumberOfCells())
+    print('{} voxels mapped from {} cells'.format(
+        len(voxel_to_values), poly.GetNumberOfCells()))
 
     # Initialize a 3D array scaled like the original segmentation, which will
     # hold in each voxel the maximal value among the corresponding vertex
@@ -904,9 +907,9 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
         volume[voxel[0], voxel[1], voxel[2]] = final_value
 
         if (logfilename is not None) and (len(value_list) > 1):
-            line = '%s\t%s\t%s\t' % (voxel[0], voxel[1], voxel[2])
+            line = '{}\t{}\t{}\t'.format(voxel[0], voxel[1], voxel[2])
             for value in value_list:
-                line += '%s\t' % value
+                line += '{}\t'.format(value)
             line = line[0:-1] + '\n'
             f.write(line)
     if logfilename is not None:

@@ -63,12 +63,12 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
     """
     # Preparation (calculations that are the same for the whole graph)
     t_begin = time.time()
-    print '\nPreparing for running modified Vector Voting...'
+    print('\nPreparing for running modified Vector Voting...')
 
     # * Maximal geodesic neighborhood distance g_max for normal vector voting *
     g_max = math.pi * radius_hit / 2
-    print "radius_hit = {}".format(radius_hit)
-    print "g_max = {}".format(g_max)
+    print("radius_hit = {}".format(radius_hit))
+    print("g_max = {}".format(g_max))
 
     # * sigma *
     sigma = g_max / 3.0
@@ -76,11 +76,11 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
     # * Maximal triangle area *
     A, _ = tg.get_areas()
     A_max = np.max(A)
-    print "Maximal triangle area = %s" % A_max
+    print("Maximal triangle area = {}".format(A_max))
 
     # * Orientation classification parameters *
-    print "epsilon = %s" % epsilon
-    print "eta = %s" % eta
+    print("epsilon = {}".format(epsilon))
+    print("eta = {}".format(eta))
 
     # * Adding vertex properties to be filled in classifying_orientation *
     # vertex property storing the orientation class of the vertex: 1 if it
@@ -120,7 +120,8 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Preparation took: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('Preparation took: {} min {} s'.format(minutes, seconds))
 
     # Main algorithm
     t_begin = time.time()
@@ -128,10 +129,10 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
     # * For all vertices, collecting normal vector votes, while calculating
     # average number of the geodesic neighbors, and classifying the orientation
     # of each vertex *
-    print "\nRunning modified Vector Voting for all vertices..."
+    print("\nRunning modified Vector Voting for all vertices...")
 
-    print ("\nFirst run: classifying orientation and estimating normals for "
-           "surface patches and tangents for creases...")
+    print("\nFirst run: classifying orientation and estimating normals for "
+          "surface patches and tangents for creases...")
     t_begin1 = time.time()
 
     collecting_normal_votes = tg.collecting_normal_votes
@@ -151,17 +152,18 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
 
     # Printing out some numbers concerning the first run:
     avg_num_neighbors = np.mean(np.array(all_num_neighbors))
-    print ("Average number of geodesic neighbors for all vertices: %s"
-           % avg_num_neighbors)
-    print "%s surface patches" % classes_counts[1]
+    print("Average number of geodesic neighbors for all vertices: {}".format(
+        avg_num_neighbors))
+    print("{} surface patches".format(classes_counts[1]))
     if 2 in classes_counts:
-        print "%s crease junctions" % classes_counts[2]
+        print("{} crease junctions".format(classes_counts[2]))
     if 3 in classes_counts:
-        print "%s no preferred orientation" % classes_counts[3]
+        print("{} no preferred orientation".format(classes_counts[3]))
 
     t_end1 = time.time()
     duration1 = t_end1 - t_begin1
-    print 'First run took: %s min %s s' % divmod(duration1, 60)
+    minutes, seconds = divmod(duration1, 60)
+    print('First run took: {} min {} s'.format(minutes, seconds))
 
     condition1 = "orientation_class[v] == 1"
     condition2 = "orientation_class[v] != 1 or B_v is None"
@@ -171,21 +173,22 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
 
         t_begin0 = time.time()
 
-        print ('\nFinding triangles that are at surface borders and '
-               'excluding them from curvatures calculation...')
+        print('\nFinding triangles that are at surface borders and excluding '
+              'them from curvatures calculation...')
         # Mark vertices at borders with vertex property 'is_on_border', do not
         # delete
         tg.find_graph_border(purge=False)
 
         t_end0 = time.time()
         duration0 = t_end0 - t_begin0
-        print 'Finding graph border took: %s min %s s' % divmod(duration0, 60)
+        minutes, seconds = divmod(duration0, 60)
+        print('Finding graph border took: {} min {} s'.format(minutes, seconds))
 
         condition1 += " and is_on_border[v] == 0"
         condition2 += " or is_on_border[v] == 1"
 
-    print ("\nSecond run: estimating principle curvatures and directions for "
-           "surface patches...")
+    print("\nSecond run: estimating principle curvatures and directions for "
+          "surface patches...")
     t_begin2 = time.time()
 
     orientation_class = tg.graph.vp.orientation_class
@@ -225,11 +228,13 @@ def vector_voting(tg, radius_hit, epsilon=0, eta=0, exclude_borders=True,
 
     t_end2 = time.time()
     duration2 = t_end2 - t_begin2
-    print 'Second run took: %s min %s s' % divmod(duration2, 60)
+    minutes, seconds = divmod(duration2, 60)
+    print('Second run took: {} min {} s'.format(minutes, seconds))
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('Modified Vector Voting took: {} min {} s'.format(minutes, seconds))
 
     # Transforming the resulting graph to a surface with triangles:
     surface_VV = tg.graph_to_triangle_poly()
@@ -279,12 +284,12 @@ def vector_voting_curve_fitting(
     """
     # Preparation (calculations that are the same for the whole graph)
     t_begin = time.time()
-    print '\nPreparing for running modified Vector Voting...'
+    print('\nPreparing for running modified Vector Voting...')
 
     # * Maximal geodesic neighborhood distance g_max for normal vector voting *
     g_max = math.pi * radius_hit / 2
-    print "radius_hit = {}".format(radius_hit)
-    print "g_max = {}".format(g_max)
+    print("radius_hit = {}".format(radius_hit))
+    print("g_max = {}".format(g_max))
 
     # * sigma *
     sigma = g_max / 3.0
@@ -292,11 +297,11 @@ def vector_voting_curve_fitting(
     # * Maximal triangle area *
     A, _ = tg.get_areas()
     A_max = np.max(A)
-    print "Maximal triangle area = %s" % A_max
+    print("Maximal triangle area = {}".format(A_max))
 
     # * Orientation classification parameters *
-    print "epsilon = %s" % epsilon
-    print "eta = %s" % eta
+    print("epsilon = {}".format(epsilon))
+    print("eta = {}".format(eta))
 
     # * Adding vertex properties to be filled in classifying_orientation *
     # vertex property storing the orientation class of the vertex: 1 if it
@@ -341,7 +346,8 @@ def vector_voting_curve_fitting(
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Preparation took: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('Preparation took: {} min {} s'.format(minutes, seconds))
 
     # Main algorithm
     t_begin = time.time()
@@ -349,10 +355,10 @@ def vector_voting_curve_fitting(
     # * For all vertices, collecting normal vector votes, while calculating
     # average number of the geodesic neighbors, and classifying the orientation
     # of each vertex *
-    print "\nRunning modified Vector Voting for all vertices..."
+    print("\nRunning modified Vector Voting for all vertices...")
 
-    print ("\nFirst run: classifying orientation and estimating normals for "
-           "surface patches and tangents for creases...")
+    print("\nFirst run: classifying orientation and estimating normals for "
+          "surface patches and tangents for creases...")
     t_begin1 = time.time()
 
     collecting_normal_votes = tg.collecting_normal_votes
@@ -372,17 +378,18 @@ def vector_voting_curve_fitting(
 
     # Printing out some numbers concerning the first run:
     avg_num_neighbors = np.mean(np.array(all_num_neighbors))
-    print ("Average number of geodesic neighbors for all vertices: %s"
-           % avg_num_neighbors)
-    print "%s surface patches" % classes_counts[1]
+    print("Average number of geodesic neighbors for all vertices: {}".format(
+        avg_num_neighbors))
+    print("{} surface patches".format(classes_counts[1]))
     if 2 in classes_counts:
-        print "%s crease junctions" % classes_counts[2]
+        print("{} crease junctions".format(classes_counts[2]))
     if 3 in classes_counts:
-        print "%s no preferred orientation" % classes_counts[3]
+        print("{} no preferred orientation".format(classes_counts[3]))
 
     t_end1 = time.time()
     duration1 = t_end1 - t_begin1
-    print 'First run took: %s min %s s' % divmod(duration1, 60)
+    minutes, seconds = divmod(duration1, 60)
+    print('First run took: {} min {} s'.format(minutes, seconds))
 
     condition1 = "orientation_class[v] == 1"
     condition2 = "orientation_class[v] != 1 or B_v is None"
@@ -392,21 +399,22 @@ def vector_voting_curve_fitting(
 
         t_begin0 = time.time()
 
-        print ('\nFinding triangles that are at surface borders and '
-               'excluding them from curvatures calculation...')
+        print('\nFinding triangles that are at surface borders and excluding '
+              'them from curvatures calculation...')
         # Mark vertices at borders with vertex property 'is_on_border', do not
         # delete
         tg.find_graph_border(purge=False)
 
         t_end0 = time.time()
         duration0 = t_end0 - t_begin0
-        print 'Finding graph border took: %s min %s s' % divmod(duration0, 60)
+        minutes, seconds = divmod(duration0, 60)
+        print('Finding graph border took: {} min {} s'.format(minutes, seconds))
 
         condition1 += " and is_on_border[v] == 0"
         condition2 += " or is_on_border[v] == 1"
 
-    print ("\nSecond run: estimating principle directions and curvatures for "
-           "surface patches...")
+    print("\nSecond run: estimating principle directions and curvatures for "
+          "surface patches...")
     t_begin2 = time.time()
 
     orientation_class = tg.graph.vp.orientation_class
@@ -449,11 +457,13 @@ def vector_voting_curve_fitting(
 
     t_end2 = time.time()
     duration2 = t_end2 - t_begin2
-    print 'Second run took: %s min %s s' % divmod(duration2, 60)
+    minutes, seconds = divmod(duration2, 60)
+    print('Second run took: {} min {} s'.format(minutes, seconds))
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('Modified Vector Voting took: {} min {} s'.format(minutes, seconds))
 
     # Transforming the resulting graph to a surface with triangles:
     surface_VV = tg.graph_to_triangle_poly()
@@ -497,12 +507,12 @@ def vector_curvature_tensor_voting(
     """
     # Preparation (calculations that are the same for the whole graph)
     t_begin = time.time()
-    print '\nPreparing for running modified Vector Voting...'
+    print('\nPreparing for running modified Vector Voting...')
 
     # * Maximal geodesic neighborhood distance g_max for normal vector voting *
     g_max = math.pi * radius_hit / 2
-    print "radius_hit = {}".format(radius_hit)
-    print "g_max = {}".format(g_max)
+    print("radius_hit = {}".format(radius_hit))
+    print("g_max = {}".format(g_max))
 
     # * sigma *
     sigma = g_max / 3.0
@@ -510,11 +520,11 @@ def vector_curvature_tensor_voting(
     # * Maximal triangle area *
     A, _ = tg.get_areas()
     A_max = np.max(A)
-    print "Maximal triangle area = %s" % A_max
+    print("Maximal triangle area = {}".format(A_max))
 
     # * Orientation classification parameters *
-    print "epsilon = %s" % epsilon
-    print "eta = %s" % eta
+    print("epsilon = {}".format(epsilon))
+    print("eta = {}".format(eta))
 
     # * Adding vertex properties to be filled in classifying_orientation *
     # vertex property storing the orientation class of the vertex: 1 if it
@@ -555,7 +565,8 @@ def vector_curvature_tensor_voting(
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Preparation took: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('Preparation took: {} min {} s'.format(minutes, seconds))
 
     # Main algorithm
     t_begin = time.time()
@@ -563,10 +574,10 @@ def vector_curvature_tensor_voting(
     # * For all vertices, collecting normal vector votes, while calculating
     # average number of the geodesic neighbors, and classifying the orientation
     # of each vertex *
-    print "\nRunning modified Vector Voting for all vertices..."
+    print("\nRunning modified Vector Voting for all vertices...")
 
-    print ("\nFirst run: classifying orientation and estimating normals for "
-           "surface patches and tangents for creases...")
+    print("\nFirst run: classifying orientation and estimating normals for "
+          "surface patches and tangents for creases...")
     t_begin1 = time.time()
 
     collecting_normal_votes = tg.collecting_normal_votes
@@ -589,17 +600,18 @@ def vector_curvature_tensor_voting(
     # Printing out some numbers concerning the first run:
     avg_num_geodesic_neighbors = (sum(x for x in all_num_neighbors) /
                                   len(all_num_neighbors))
-    print ("Average number of geodesic neighbors for all vertices: %s"
-           % avg_num_geodesic_neighbors)
-    print "%s surface patches" % classes_counts[1]
+    print("Average number of geodesic neighbors for all vertices: {}".format(
+        avg_num_geodesic_neighbors))
+    print("{} surface patches".format(classes_counts[1]))
     if 2 in classes_counts:
-        print "%s crease junctions" % classes_counts[2]
+        print("{} crease junctions".format(classes_counts[2]))
     if 3 in classes_counts:
-        print "%s no preferred orientation" % classes_counts[3]
+        print("{} no preferred orientation".format(classes_counts[3]))
 
     t_end1 = time.time()
     duration1 = t_end1 - t_begin1
-    print 'First run took: %s min %s s' % divmod(duration1, 60)
+    minutes, seconds = divmod(duration1, 60)
+    print('First run took: {} min {} s'.format(minutes, seconds))
 
     condition1 = "orientation_class[v] == 1"
     condition2 = "orientation_class[v] != 1 or result is None"
@@ -609,21 +621,22 @@ def vector_curvature_tensor_voting(
 
         t_begin0 = time.time()
 
-        print ('\nFinding triangles that are at surface borders and '
-               'excluding them from curvatures calculation...')
+        print('\nFinding triangles that are at surface borders and excluding '
+              'them from curvatures calculation...')
         # Mark vertices at borders with vertex property 'is_on_border', do not
         # delete
         tg.find_graph_border(purge=False)
 
         t_end0 = time.time()
         duration0 = t_end0 - t_begin0
-        print 'Finding graph border took: %s min %s s' % divmod(duration0, 60)
+        minutes, seconds = divmod(duration0, 60)
+        print('Finding graph border took: {} min {} s'.format(minutes, seconds))
 
         condition1 += " and is_on_border[v] == 0"
         condition2 += " or is_on_border[v] == 1"
 
-    print ("\nSecond run: estimating principle directions and curvatures for "
-           "surface patches...")
+    print("\nSecond run: estimating principle directions and curvatures for "
+          "surface patches...")
     t_begin2 = time.time()
 
     orientation_class = tg.graph.vp.orientation_class
@@ -657,11 +670,13 @@ def vector_curvature_tensor_voting(
 
     t_end2 = time.time()
     duration2 = t_end2 - t_begin2
-    print 'Second run took: %s min %s s' % divmod(duration2, 60)
+    minutes, seconds = divmod(duration2, 60)
+    print('Second run took: {} min {} s'.format(minutes, seconds))
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Modified Vector Voting took: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('Modified Vector Voting took: {} min {} s'.format(minutes, seconds))
 
     # Transforming the resulting graph to a surface with triangles:
     surface_VV = tg.graph_to_triangle_poly()
@@ -747,7 +762,8 @@ def normals_directions_and_curvature_estimation(
 
         t_end = time.time()
         duration = t_end - t_begin
-        print 'Whole method took: %s min %s s' % divmod(duration, 60)
+        minutes, seconds = divmod(duration, 60)
+        print('Whole method took: {} min {} s'.format(minutes, seconds))
         return results
 
 
@@ -794,13 +810,13 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     """
     # Preparation (calculations that are the same for the whole graph)
     t_begin0 = time.time()
-    print '\nPreparing for running modified Vector Voting...'
+    print('\nPreparing for running modified Vector Voting...')
 
     # * Maximal geodesic neighborhood distance g_max for normal vector voting *
     # g_max is 1/4 of circle circumference with radius=radius_hit
     g_max = math.pi * radius_hit / 2
-    print "radius_hit = {}".format(radius_hit)
-    print "g_max = {}".format(g_max)
+    print("radius_hit = {}".format(radius_hit))
+    print("g_max = {}".format(g_max))
 
     # * sigma *
     sigma = g_max / 3.0
@@ -809,11 +825,11 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     A, _ = tg.get_areas()
     A = np.array(A)
     A_max = np.max(A)
-    print "Maximal triangle area = %s" % A_max
+    print("Maximal triangle area = {}".format(A_max))
 
     # * Orientation classification parameters *
-    print "epsilon = %s" % epsilon
-    print "eta = %s" % eta
+    print("epsilon = {}".format(epsilon))
+    print("eta = {}".format(eta))
 
     # * Adding vertex properties to be filled in classifying_orientation *
     # vertex property storing the orientation class of the vertex: 1 if it
@@ -829,41 +845,43 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
 
     t_end0 = time.time()
     duration0 = t_end0 - t_begin0
-    print 'Preparation took: %s min %s s' % divmod(duration0, 60)
+    minutes, seconds = divmod(duration0, 60)
+    print('Preparation took: {} min {} s' .format(minutes, seconds))
 
     if full_dist_map is True:
         # * Distance map between all pairs of vertices *
         t_begin0 = time.time()
-        print "\nCalculating the full distance map..."
+        print("\nCalculating the full distance map...")
         full_dist_map = shortest_distance(  # <class 'graph_tool.PropertyMap'>
             tg.graph, weights=tg.graph.ep.distance)
         t_end0 = time.time()
         duration0 = t_end0 - t_begin0
-        print 'Calculation of the full distance map took: %s min %s s' % divmod(
-            duration0, 60)
+        minutes, seconds = divmod(duration0, 60)
+        print('Calculation of the full distance map took: {} min {} s'.format(
+            minutes, seconds))
     else:
         full_dist_map = None
 
-    # First run of the main algorithm
+    # First run of the main_javier algorithm
 
     # * For all vertices, collecting normal vector votes, while calculating
     # average number of the geodesic neighbors, and classifying the orientation
     # of each vertex *
-    print "\nRunning modified Vector Voting for all vertices..."
+    print("\nRunning modified Vector Voting for all vertices...")
 
-    print ("\nFirst run: classifying orientation and estimating normals for "
-           "surface patches and tangents for creases...")
+    print("\nFirst run: classifying orientation and estimating normals for "
+          "surface patches and tangents for creases...")
     t_begin1 = time.time()
 
     collecting_normal_votes = tg.collecting_normal_votes
     classifying_orientation = tg.classifying_orientation
     num_v = tg.graph.num_vertices()
-    print ("number of vertices: {}".format(num_v))
+    print("number of vertices: {}".format(num_v))
     classes_counts = {}
 
     if cores > 1:  # parallel processing
         p = pp.ProcessPool(cores)
-        print ('Opened a pool with {} processes'.format(cores))
+        print('Opened a pool with {} processes'.format(cores))
 
         # output is a list with 2 columns:
         # column 0 = num_neighbors (int)
@@ -928,25 +946,19 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         avg_num_neighbors = float(sum_num_neighbors) / float(num_v)
 
     # Printing out some numbers concerning the first run:
-    print ("Average number of geodesic neighbors for all vertices: %s"
-           % avg_num_neighbors)
-    print "%s surface patches" % classes_counts[1]
+    print("Average number of geodesic neighbors for all vertices: {}".format(
+        avg_num_neighbors))
+    print("{} surface patches".format(classes_counts[1]))
     if 2 in classes_counts:
-        print "%s crease junctions" % classes_counts[2]
+        print("{} crease junctions".format(classes_counts[2]))
     if 3 in classes_counts:
-        print "%s no preferred orientation" % classes_counts[3]
+        print("{} no preferred orientation".format(classes_counts[3]))
 
     t_end1 = time.time()
     duration1 = t_end1 - t_begin1
-    print 'First run took: %s min %s s' % divmod(duration1, 60)
+    minutes, seconds = divmod(duration1, 60)
+    print('First run took: {} min {} s'.format(minutes, seconds))
 
-    # add to the runtimes CSV file:
-    # - number of vertices: num_v
-    # - radius_hit
-    # - g_max
-    # - average number of neighbors: avg_num_neighbors
-    # - number of cores: cores
-    # - duration1
     if runtimes is not None:
         with open(runtimes, 'a') as f:
             f.write("{};{};{};{};{};{};".format(
@@ -1004,16 +1016,17 @@ def preparation_for_curvature_estimation(
 
         t_begin0 = time.time()
 
-        print ('\nFinding triangles that are {} nm to surface borders and '
-               'excluding them from curvatures calculation...'.format(
-                exclude_borders))
+        print('\nFinding triangles that are {} nm to surface borders and '
+              'excluding them from curvatures calculation...'.format(
+            exclude_borders))
         # Mark vertices at borders with vertex property 'is_near_border', do not
         # delete
         tg.find_vertices_near_border(exclude_borders, purge=False)
 
         t_end0 = time.time()
         duration0 = t_end0 - t_begin0
-        print 'Finding borders took: %s min %s s' % divmod(duration0, 60)
+        minutes, seconds = divmod(duration0, 60)
+        print('Finding borders took: {} min {} s'.format(minutes, seconds))
 
     # Save the graph to a file for use by different methods in the second run:
     tg.graph.save(graph_file)
@@ -1071,18 +1084,19 @@ def curvature_estimation(
     if full_dist_map is True:
         # * Distance map between all pairs of vertices *
         t_begin0 = time.time()
-        print "\nCalculating the full distance map..."
+        print("\nCalculating the full distance map...")
         full_dist_map = shortest_distance(  # <class 'graph_tool.PropertyMap'>
             tg.graph, weights=tg.graph.ep.distance)
         t_end0 = time.time()
         duration0 = t_end0 - t_begin0
-        print 'Calculation of the full distance map took: %s min %s s' % divmod(
-            duration0, 60)
+        minutes, seconds = divmod(duration0, 60)
+        print('Calculation of the full distance map took: {} min {} s'.format(
+            minutes, seconds))
     else:
         full_dist_map = None
 
-    print ("\nSecond run: estimating principle curvatures and directions "
-           "for surface patches using {}...".format(method))
+    print("\nSecond run: estimating principle curvatures and directions for "
+          "surface patches using {}...".format(method))
     t_begin2 = time.time()
 
     collecting_curvature_votes = tg.collecting_curvature_votes
@@ -1102,7 +1116,7 @@ def curvature_estimation(
         A, _ = tg.get_areas()
         A = np.array(A)
         A_max = np.max(A)
-        print "Maximal triangle area = %s" % A_max
+        print("Maximal triangle area = {}".format(A_max))
     else:
         A_max = 0.0
 
@@ -1124,7 +1138,7 @@ def curvature_estimation(
     if method == "VV" or method == "VVCF":
         if cores > 1:  # parallel processing
             p = pp.ProcessPool(cores)
-            print ('Opened a pool with {} processes'.format(cores))
+            print('Opened a pool with {} processes'.format(cores))
 
             # Curvature votes collection is common for VV and VVCF:
             # None is returned if v does not have any neighbor belonging to
@@ -1266,7 +1280,7 @@ def curvature_estimation(
     t_end2 = time.time()
     duration2 = t_end2 - t_begin2
     minutes, seconds = divmod(duration2, 60)
-    print 'Second run of %s took: %s min %s s' % (method, minutes, seconds)
+    print('Second run of {} took: {} min {} s'.format(method, minutes, seconds))
 
     # adding to the runtimes CSV file:
     # - method

@@ -93,11 +93,12 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Surface generation took: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('Surface generation took: {} min {} s'.format(minutes, seconds))
 
     # Writing the vtkPolyData surface into a VTP file
     io.save_vtp(surface, outfile_base + '.surface.vtp')
-    print 'Surface was written to the file %s.surface.vtp' % outfile_base
+    print('Surface was written to the file {}.surface.vtp'.format(outfile_base))
 
     if save_input_as_vti is True:
         # If input is a file name, read in the segmentation array from the file:
@@ -110,7 +111,7 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
 
         # Save the segmentation as VTI for opening it in ParaView:
         io.save_numpy(tomo, outfile_base + '.vti')
-        print 'Input was saved as the file %s.vti' % outfile_base
+        print('Input was saved as the file {}.vti'.format(outfile_base))
 
     return surface
 
@@ -161,27 +162,26 @@ if __name__ == "__main__":
                    "SCSl2t4_cER_sg{}_thr{}".format(fold, sg, thr)
     # Surface generation with filled segmentation using vtkMarchingCubes
     # and applying the mask of unfilled segmentation
-    print ("\nMaking filled and unfilled binary segmentations...")
+    print("\nMaking filled and unfilled binary segmentations...")
     # have to combine the outer and inner seg. for the filled one:
     filled_binary_seg = np.logical_or(seg == 2, seg == 3).astype(data_type)
     binary_seg = (seg == 2).astype(data_type)
-    print ("\nGenerating a surface...")
+    print("\nGenerating a surface...")
     surf = run_gen_surface(
         filled_binary_seg, outfile_base, lbl=1, other_mask=binary_seg,
         isosurface=True, sg=sg, thr=thr)
-
 
     # in_seg = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
     #           "cylinder_r10_h20.mrc")
     # tomo_seg = io.load_tomo(in_seg)
     # for seg_sg in [2]:  # in voxels (Johannes: 2)
-    #     print "sigma = {}".format(seg_sg)
+    #     print("sigma = {}".format(seg_sg))
     #     for seg_th in [0.49]:  # (Johannes: 0.45)
-    #         print "threshold = {}".format(seg_th)
+    #         print("threshold = {}".format(seg_th))
     #         out_surf = ("/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
     #                     "cylinder_r10_h20.smooth_surface_sg{}_th{}.vtp".format(
     #                      seg_sg, seg_th))
     #         surf = tomo_smooth_surf(tomo_seg, seg_sg, seg_th)
-    #         print "The surface has %s cells" % surf.GetNumberOfCells()
-    #         print "%s points" % surf.GetNumberOfPoints()
+    #         print("The surface has {} cells".format(surf.GetNumberOfCells()))
+    #         print("{} points".format(surf.GetNumberOfPoints()))
     #         io.save_vtp(surf, out_surf)

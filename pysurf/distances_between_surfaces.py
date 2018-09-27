@@ -348,4 +348,5 @@ if __name__ == "__main__":
 
     t_end = time.time()
     duration = t_end - t_begin
-    print '\nTotal elapsed time: %s min %s s' % divmod(duration, 60)
+    minutes, seconds = divmod(duration, 60)
+    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))

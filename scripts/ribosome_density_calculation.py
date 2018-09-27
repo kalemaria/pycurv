@@ -39,23 +39,23 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1,
 
     # Build a graph from the membrane mask:
     now = datetime.now()
-    print ('\nStarting building the membrane graph on: %s-%s-%s %s:%s:%s'
-           % (now.year, now.month, now.day, now.hour, now.minute, now.second))
+    print('\nStarting building the membrane graph on: {}-{}-{} {}:{}:{}'.format(
+        now.year, now.month, now.day, now.hour, now.minute, now.second))
     vg = VoxelGraph(pixel_size_nm)
     vg.build_graph_from_np_ndarray(mem_mask, verbose)
     now = datetime.now()
-    print ('\nFinished building the graph on: %s-%s-%s %s:%s:%s'
-           % (now.year, now.month, now.day, now.hour, now.minute, now.second))
-    print vg.graph
+    print('\nFinished building the graph on: {}-{}-{} {}:{}:{}'.format(
+        now.year, now.month, now.day, now.hour, now.minute, now.second))
+    print(vg.graph)
     vg.graph.list_properties()
 
     # Write the graph to the file:
-    print '\nWriting the graph to the file %s' % mem_graph_file
+    print('\nWriting the graph to the file {}'.format(mem_graph_file))
     vg.graph.save(mem_graph_file)
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Elapsed time: %s s' % duration
+    print('Elapsed time: {} s'.format(duration))
 
 
 def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
@@ -85,44 +85,44 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
     t_begin = time.time()
 
     # Read in the graph from the file:
-    print '\nReading in the graph from the file %s' % mem_graph_file
+    print('\nReading in the graph from the file {}'.format(mem_graph_file))
     vg = VoxelGraph(pixel_size_nm)
     vg.graph = load_graph(mem_graph_file)
-    print vg.graph
+    print(vg.graph)
     vg.graph.list_properties()
 
     # Fill the dictionary of VoxelGraph, coordinates_to_vertex_index:
     vg.update_coordinates_to_vertex_index()
-    print ('Size of coordinates_to_vertex_index: %s'
-           % len(vg.coordinates_to_vertex_index))
+    print('Size of coordinates_to_vertex_index: {}'.format(
+        len(vg.coordinates_to_vertex_index)))
 
     # Calculate shortest distances for each node in the graph (membrane voxel)
     # to each reachable voxel of ribosome center mapped on the membrane, and
     # from the distances a density measure of ribosomes at each membrane voxel:
     now = datetime.now()
-    print ('\nStarting calculating shortest distances to each reachable '
-           'ribosome center and ribosome density for each membrane voxel on: '
-           '%s-%s-%s %s:%s:%s'
-           % (now.year, now.month, now.day, now.hour, now.minute, now.second))
+    print('\nStarting calculating shortest distances to each reachable '
+          'ribosome center and ribosome density for each membrane voxel on: '
+          '{}-{}-{} {}:{}:{}'.format(
+           now.year, now.month, now.day, now.hour, now.minute, now.second))
     densities = vg.calculate_density(
         ribo_mask.shape[0], ribo_mask.shape[1], ribo_mask.shape[2],
         mask=ribo_mask, verbose=verbose)
     now = datetime.now()
-    print ('\nFinished calculating the shortest distances and density on: '
-           '%s-%s-%s %s:%s:%s'
-           % (now.year, now.month, now.day, now.hour, now.minute, now.second))
+    print('\nFinished calculating the shortest distances and density on: '
+          '{}-{}-{} {}:{}:{}'.format(
+           now.year, now.month, now.day, now.hour, now.minute, now.second))
     vg.graph.list_properties()
 
     if vtp_files_base is not None:
-        print ('\nConverting the VoxelGraph to a VTK PolyData object and '
-               'writing it to .vtp files...')
+        print('\nConverting the VoxelGraph to a VTK PolyData object and '
+              'writing it to .vtp files...')
         poly_verts, poly_lines = vg.graph_to_points_and_lines_polys()
         io.save_vtp(poly_verts, vtp_files_base + '.vertices.vtp')
         io.save_vtp(poly_lines, vtp_files_base + '.edges.vtp')
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Elapsed time: %s s' % duration
+    print('Elapsed time: {} s'.format(duration))
 
     return densities
 
@@ -161,43 +161,43 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
 
     # Build a graph from the membrane mask:
     now = datetime.now()
-    print ('\nStarting building the VoxelGraph on: %s-%s-%s %s:%s:%s'
-           % (now.year, now.month, now.day, now.hour, now.minute, now.second))
+    print('\nStarting building the VoxelGraph on: {}-{}-{} {}:{}:{}'.format(
+        now.year, now.month, now.day, now.hour, now.minute, now.second))
     vg = VoxelGraph(pixel_size_nm)
     vg.build_graph_from_np_ndarray(mem_mask, verbose)
     now = datetime.now()
-    print ('\nFinished building the graph on: %s-%s-%s %s:%s:%s'
-           % (now.year, now.month, now.day, now.hour, now.minute, now.second))
-    print vg.graph
+    print('\nFinished building the graph on: {}-{}-{} {}:{}:{}'.format(
+        now.year, now.month, now.day, now.hour, now.minute, now.second))
+    print(vg.graph)
     vg.graph.list_properties()
 
     # Calculate shortest distances for each node in the graph (membrane voxel)
     # to each reachable voxel of ribosome center mapped on the membrane, and
     # from the distances a density measure of ribosomes at each membrane voxel:
     now = datetime.now()
-    print ('\nStarting calculating shortest distances to each reachable '
-           'ribosome center and ribosome density for each membrane voxel on: '
-           '%s-%s-%s %s:%s:%s'
-           % (now.year, now.month, now.day, now.hour, now.minute, now.second))
+    print('\nStarting calculating shortest distances to each reachable '
+          'ribosome center and ribosome density for each membrane voxel on: '
+          '{}-{}-{} {}:{}:{}'.format(
+           now.year, now.month, now.day, now.hour, now.minute, now.second))
     densities = vg.calculate_density(
         mem_mask.shape[0], mem_mask.shape[1], mem_mask.shape[2],
         mask=ribo_mask, verbose=verbose)
     now = datetime.now()
-    print ('\nFinished calculating the shortest distances and density on: '
-           '%s-%s-%s %s:%s:%s'
-           % (now.year, now.month, now.day, now.hour, now.minute, now.second))
+    print('\nFinished calculating the shortest distances and density on: '
+          '{}-{}-{} {}:{}:{}'.format(now.year, now.month, now.day,
+                                     now.hour, now.minute, now.second))
     vg.graph.list_properties()
 
     if vtp_files_base is not None:
-        print ('\nConverting the VoxelGraph to a VTK PolyData object and '
-               'writing it to .vtp files...')
+        print('\nConverting the VoxelGraph to a VTK PolyData object and '
+              'writing it to .vtp files...')
         poly_verts, poly_lines = vg.graph_to_points_and_lines_polys()
         io.save_vtp(poly_verts, vtp_files_base + '.vertices.vtp')
         io.save_vtp(poly_lines, vtp_files_base + '.edges.vtp')
 
     t_end = time.time()
     duration = t_end - t_begin
-    print 'Elapsed time: %s s' % duration
+    print('Elapsed time: {} s'.format(duration))
 
     return densities
 
