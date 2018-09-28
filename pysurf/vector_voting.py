@@ -759,6 +759,8 @@ def normals_directions_and_curvature_estimation(
                 page_curvature_formula, num_points, area2, poly_surf=poly_surf,
                 full_dist_map=full_dist_map, cores=cores, runtimes=runtimes)
             results[method] = (tg_curv, surface_curv)
+        if graph_file == 'temp.gt':
+            remove(graph_file)
 
         t_end = time.time()
         duration = t_end - t_begin
@@ -1078,8 +1080,6 @@ def curvature_estimation(
     """
     tg = TriangleGraph()
     tg.graph = load_graph(graph_file)
-    if graph_file == 'temp.gt':
-        remove(graph_file)
 
     if full_dist_map is True:
         # * Distance map between all pairs of vertices *
