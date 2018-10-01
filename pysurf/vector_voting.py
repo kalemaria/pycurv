@@ -746,7 +746,7 @@ def normals_directions_and_curvature_estimation(
     """
     t_begin = time.time()
 
-    tg = normals_estimation(tg, radius_hit, epsilon, eta, full_dist_map,
+    normals_estimation(tg, radius_hit, epsilon, eta, full_dist_map,
                             cores=cores, runtimes=runtimes)
 
     preparation_for_curvature_estimation(tg, exclude_borders, graph_file)
@@ -802,7 +802,7 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
             this file (default None)
 
     Returns:
-        tg (TriangleGraph): triangle graph with added properties
+        None
 
     Notes:
         * Maximal geodesic neighborhood distance g_max for normal vector voting
@@ -965,8 +965,6 @@ def normals_estimation(tg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         with open(runtimes, 'a') as f:
             f.write("{};{};{};{};{};{};".format(
                 num_v, radius_hit, g_max, avg_num_neighbors, cores, duration1))
-
-    return tg
 
 
 def preparation_for_curvature_estimation(

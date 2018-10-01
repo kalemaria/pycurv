@@ -24,7 +24,8 @@ __author__ = 'martinez and kalemanov'
 # CONSTANTS
 MAX_DIST_SURF = 3
 """int: a constant determining the maximal distance in pixels of a point on the
-surface from the segmentation mask, used in gen_surface method.
+surface from the segmentation mask, used in gen_isosurface and gen_surface
+functions.
 """
 
 
@@ -59,17 +60,11 @@ def load_tomo(fname, mmap=False):
     #     im_data = pyfits.getdata(fname).transpose()
     elif ext == '.mrc':
         image = ImageIO()
-        if mmap:
-            image.readMRC(fname, memmap=mmap)
-        else:
-            image.readMRC(fname)
+        image.readMRC(fname, memmap=mmap)
         im_data = image.data
     elif ext == '.em':
         image = ImageIO()
-        if mmap:
-            image.readEM(fname, memmap=mmap)
-        else:
-            image.readEM(fname)
+        image.readEM(fname, memmap=mmap)
         im_data = image.data
     elif ext == '.vti':
         reader = vtk.vtkXMLImageDataReader()
@@ -279,28 +274,9 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
     Returns:
         a surface (vtk.vtkPolyData)
     """
-    # Read in the segmentation
+    # Read in the segmentation (if file is given) and check format
     if isinstance(tomo, str):
-        fname, fext = os.path.splitext(tomo)
-        # if fext == '.fits':
-        #     tomo = pyfits.getdata(tomo)
-        if fext == '.mrc':
-            hold = ImageIO()
-            hold.readMRC(file=tomo)
-            tomo = hold.data
-        elif fext == '.em':
-            hold = ImageIO()
-            hold.readEM(file=tomo)
-            tomo = hold.data
-        elif fext == '.vti':
-            reader = vtk.vtkXMLImageDataReader()
-            reader.SetFileName(tomo)
-            reader.Update()
-            tomo = vti_to_numpy(reader.GetOutput())
-        else:
-            raise pexceptions.PySegInputError(
-                expr='gen_isosurface', msg='Format {} not readable.'.format(
-                    fext))
+        tomo = load_tomo(tomo)
     elif not isinstance(tomo, np.ndarray):
         raise pexceptions.PySegInputError(
             expr='gen_isosurface',
@@ -319,11 +295,11 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
 
     # Smoothing
     if sg > 0:
-        smoothed_seg = ndimage.filters.gaussian_filter(
+        binary_seg = ndimage.filters.gaussian_filter(
             binary_seg.astype(np.float), sg)
 
     # Generate isosurface
-    smoothed_seg_vti = numpy_to_vti(smoothed_seg)
+    smoothed_seg_vti = numpy_to_vti(binary_seg)
     surfaces = vtk.vtkMarchingCubes()
     surfaces.SetInputData(smoothed_seg_vti)
     surfaces.ComputeNormalsOn()
@@ -396,27 +372,9 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
         - output surface (vtk.vtkPolyData)
         - polarity distance scalar field (np.ndarray), if field is True
     """
-    # Check input format
+    # Read in the segmentation (if file is given) and check format
     if isinstance(tomo, str):
-        fname, fext = os.path.splitext(tomo)
-        # if fext == '.fits':
-        #     tomo = pyfits.getdata(tomo)
-        if fext == '.mrc':
-            hold = ImageIO()
-            hold.readMRC(file=tomo)
-            tomo = hold.data
-        elif fext == '.em':
-            hold = ImageIO()
-            hold.readEM(file=tomo)
-            tomo = hold.data
-        elif fext == '.vti':
-            reader = vtk.vtkXMLImageDataReader()
-            reader.SetFileName(tomo)
-            reader.Update()
-            tomo = vti_to_numpy(reader.GetOutput())
-        else:
-            raise pexceptions.PySegInputError(
-                expr='gen_surface', msg='Format {} not readable.'.format(fext))
+        tomo = load_tomo(tomo)
     elif not isinstance(tomo, np.ndarray):
         raise pexceptions.PySegInputError(
             expr='gen_surface',

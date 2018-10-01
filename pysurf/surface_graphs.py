@@ -492,7 +492,8 @@ class TriangleGraph(SurfaceGraph):
             # rescale the surface to nm
             surface = rescale_surface(surface, scale_factor_to_nm)
 
-        print('Adding curvatures to the vtkPolyData surface...')
+        # Adding curvatures to the vtkPolyData surface
+        # TODO remove if not testing
         # because VTK and we (gen_surface) have the opposite normal
         # convention: VTK outwards pointing normals, we: inwards pointing
         if reverse_normals:

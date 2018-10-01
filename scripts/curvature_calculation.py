@@ -25,9 +25,16 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 __author__ = 'kalemanov'
 
 
-# when convoluting a binary mask with a gaussian kernel with sigma 1, values 1
-# at the boundary with 0's become this value:
+# CONSTANTS
+MAX_DIST_SURF = 3
+"""int: a constant determining the maximal distance in pixels of a point on the
+surface from the segmentation mask, used in gen_isosurface and gen_surface
+functions.
+"""
 THRESH_SIGMA1 = 0.699471735
+""" float: when convoluting a binary mask with a gaussian kernel with sigma 1,
+values 1 at the boundary with 0's become this value.
+"""
 
 
 def convert_vtp_to_stl_surface_and_mrc_curvatures(
@@ -260,7 +267,7 @@ def new_workflow(
         # Remove the wrong borders (surface generation artefact)
         b = 0
         if remove_wrong_borders:
-            b += 3  # because of MAX_DIST_SURF parameter in surface generation
+            b += MAX_DIST_SURF  # "padding" from masking in surface generation
         if holes < 0:
             b += abs(holes)
         if b > 0:

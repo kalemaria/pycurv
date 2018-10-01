@@ -1,7 +1,7 @@
 from pathlib2 import Path, PurePath
 from curvature_calculation import (new_workflow,
                                    extract_curvatures_after_new_workflow)
-from pysurf import run_calculate_distances
+from pysurf import run_calculate_distances_and_thicknesses
 
 
 def task_correct_normals():
@@ -89,7 +89,7 @@ def task_calculate_distances():
             yield {'name': tomo,
                    'verbosity': 2,
                    'actions': [
-                       (run_calculate_distances,
+                       (run_calculate_distances_and_thicknesses,
                         [PM_graph_file, cER_surf_file, cER_graph_file,
                             cER_surf_outfile, cER_graph_outfile,
                             distances_outfile, maxdist_nm, maxdist2_nm],

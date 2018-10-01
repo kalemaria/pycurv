@@ -7,15 +7,96 @@ import pandas as pd
 
 from surface_graphs import TriangleGraph
 import pysurf_io as io
+from vector_voting import normals_estimation
 
 
 __author__ = 'kalemanov'
 
+# CONSTANTS
 SAMPLE_DST = 1
+"""int: sampling distance used in find_2_distances.
+"""
+
+MAX_DIST_SURF = 3
+"""int: a constant determining the maximal distance in pixels of a point on the
+surface from the segmentation mask, used in gen_isosurface and gen_surface
+functions.
+"""
 
 
-def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
-                     verbose=False):
+def find_1_distance(
+        p0, normal, maxdist, tg_er, poly_er, verbose=False):
+    """
+    Given a point and a normal vector, finds the first intersection point with a
+    membrane surface in the direction of the normal vector and measures
+    the distance.
+
+    Args:
+        p0 (numpy.ndarray): 3D point coordinates
+        normal (numpy.ndarray): 3D normal vector
+        maxdist (int): maximal distance (nm) from p0 the membrane
+        tg_er (TriangleGraph): graph of the target membrane surface
+        poly_er (vtkPolyData): the target membrane surface
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+        the distance and the vertex at the intersection: d1, v1
+        or None, None in case no intersection was found
+    """
+    # Define a cellLocator to be able to compute intersections between lines
+    # and the cER surface:
+    locator = vtk.vtkCellLocator()
+    locator.SetDataSet(poly_er)
+    locator.BuildLocator()
+    tolerance = 0.001
+
+    # functions used in the loop
+    sqrt = math.sqrt
+    dot = np.dot
+
+    # find a point pmax at distance maxdist from p0 in the normal direction
+    pmax = p0 + normal * maxdist
+
+    # find 1st intersection p1 on cER surface with the line from p0 to pmax
+    # and the triangle containing it
+    # Outputs (we need only p1 and cell1_id):
+    t = vtk.mutable(0)
+    p1 = [0.0, 0.0, 0.0]  # x, y, z position of the first intersection
+    pcoords = [0.0, 0.0, 0.0]
+    sub_id = vtk.mutable(0)
+    cell1_id = vtk.mutable(0)  # the triangle id containing p1
+    locator.IntersectWithLine(p0, pmax, tolerance, t, p1, pcoords, sub_id,
+                              cell1_id)
+    # If there is no intersection, p1 stays like initialized:
+    if p1 == [0.0, 0.0, 0.0]:
+        if verbose:
+            print("No intersection point found")
+        return None, None
+
+    # get the vertex (at the triangle center) of cell1 from its id:
+    v1 = tg_er.graph.vertex(cell1_id)
+
+    if verbose:
+        print("First intersection point found: ({}, {}, {})".format(
+            p1[0], p1[1], p1[2]))
+    p1 = np.array(p1)
+
+    # calculate the distance d1 from PM to cER:
+    d1 = sqrt(dot(p1 - p0, p1 - p0))
+    if d1 > maxdist:  # TODO remove if does not occur
+        if verbose:
+            print("d1 = {} > maxdist - discard the point".format(d1))
+        return None, None
+    elif verbose:
+        print("distance from PM to cER d1 = {}".format(d1))
+
+    # Return the distance and the vertex at the intersection point:
+    return d1, v1
+
+
+def find_2_distances(  # TODO simplify using find_1_distance
+        p0, normal, maxdist, maxdist2, tg_er, poly_er, verbose=False):
     """
     Given a point and a normal vector, finds two intersection points with a
     double membrane surface in the direction of the normal vector and measures
@@ -23,11 +104,11 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
 
     Args:
         p0 (numpy.ndarray): 3D point coordinates
-        N_v (numpy.ndarray): 3D normal vector
+        normal (numpy.ndarray): 3D normal vector
         maxdist (int): maximal distance (nm) from p0 to first membrane
         maxdist2 (int): maximal distance (nm) from p0 to second membrane
-        tg_cER (TriangleGraph): graph of the target membrane surface
-        poly_cER (vtkPolyData): the target double membrane surface
+        tg_er (TriangleGraph): graph of the target membrane surface
+        poly_er (vtkPolyData): the target double membrane surface
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -38,7 +119,7 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
     # Define a cellLocator to be able to compute intersections between lines
     # and the cER surface:
     locator = vtk.vtkCellLocator()
-    locator.SetDataSet(poly_cER)
+    locator.SetDataSet(poly_er)
     locator.BuildLocator()
     tolerance = 0.001
 
@@ -47,7 +128,7 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
     dot = np.dot
 
     # find a point pmax at distance maxdist from p0 in the normal direction
-    pmax = p0 + N_v * maxdist
+    pmax = p0 + normal * maxdist
 
     # find 1st intersection p1 on cER surface with the line from p0 to pmax
     # and the triangle containing it
@@ -66,12 +147,12 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
         return None, None, None, None
 
     # get the vertex (at the triangle center) of cell1 from its id:
-    v1 = tg_cER.graph.vertex(cell1_id)
+    v1 = tg_er.graph.vertex(cell1_id)
     # check if p1 is on first cER membrane:
-    # is the angle between the normal from v1 and N_v from v > pi/2?
+    # is the angle between the normal from v1 and normal from v > pi/2?
     # then it's on the second membrane - don't continue looking
-    N1 = tg_cER.graph.vp.N_v[v1]
-    cos_angle1 = np.dot(N_v, N1)
+    N1 = tg_er.graph.vp.N_v[v1]
+    cos_angle1 = np.dot(normal, N1)
     if cos_angle1 < 0:  # angle1 > pi/2
         if verbose:
             print("First intersection point found on second membrane - "
@@ -102,8 +183,8 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
     for minth in range(SAMPLE_DST, maxth, SAMPLE_DST):
         # find two new points: at distance minth and maxth from p1 in the
         # normal direction
-        p0_new = p1 + N_v * minth
-        pmax_new = p1 + N_v * maxth
+        p0_new = p1 + normal * minth
+        pmax_new = p1 + normal * maxth
 
         # find 2nd intersection p2 on cER surface with the line from p0_new
         # to pmax_new and the triangle containing it
@@ -113,11 +194,11 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
             break
         else:
             # get the vertex (at the triangle center) of cell2 from its id:
-            v2 = tg_cER.graph.vertex(cell2_id)
+            v2 = tg_er.graph.vertex(cell2_id)
             # check if p2 is on second cER membrane:
             # is the angle between the normals from v1 and from v2 < pi/2?
             # then we are still on the first membrane - continue looking
-            N2 = tg_cER.graph.vp.N_v[v2]
+            N2 = tg_er.graph.vp.N_v[v2]
             cos_angle2 = np.dot(N1, N2)
             if cos_angle2 > 0:  # angle2 < pi/2
                 # if verbose:
@@ -150,8 +231,86 @@ def find_2_distances(p0, N_v, maxdist, maxdist2, tg_cER, poly_cER,
     return d1, d2, v1, v2
 
 
-def calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, maxdist2,
-                        verbose=False):
+def calculate_distances(
+        tg_pm, tg_er, poly_er, maxdist, verbose=False):
+    """
+    Function to compute shortest distances between two membranes, here a plasma
+    membrane (PM) and cortical ER (cER) using their surfaces.
+    Adds a vertex property to cER graph:
+    "PMdistance" with a distance from PM for the intersected triangles.
+
+    Args:
+        tg_pm (TriangleGraph): graph of PM surface with corrected normals
+        tg_er (TriangleGraph): graph of cER surface
+        poly_er (vtkPolyData): cER surface
+        maxdist (int): maximal distance (nm) from PM to the cER membrane
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+        a lists of distances (nm) from PM to the cER membrane
+    """
+    print("maxdist = {} nm".format(maxdist))
+
+    # Initialize the vertex property in cER graph and distances lists:
+    tg_er.graph.vp.PMdistance = tg_er.graph.new_vertex_property(
+        "float", vals=-1)
+    d1s = []  # distances from PM to cER
+
+    # For each vertex v in PM graph (represents triangle on PM surface):
+    for v in tg_pm.graph.vertices():
+        if verbose:
+            print("I'm at vertex {}".format(int(v)))
+
+        # Get its center coordinate as p0 and corrected normal vector N_v
+        p0 = np.array(tg_pm.graph.vp.xyz[v])
+        N_v = np.array(tg_pm.graph.vp.N_v[v])
+
+        # Look for distances in both directions of the PM normal
+        d1_s, v1_s = find_1_distance(
+            p0, N_v, maxdist, tg_er, poly_er, verbose)  # "sense"
+        d1_si, v1_si = find_1_distance(  # TODO make an option without this
+            p0, N_v * -1, maxdist, tg_er, poly_er, verbose) # "sense inverse"
+
+        # Find orientation
+        d1 = None
+        v1 = None
+        # if first ER membrane in "normal" direction is found
+        if d1_s is not None:
+            # and first ER membrane in opposite direction is not found
+            if d1_si is None:
+                d1 = d1_s
+                v1 = v1_s
+            # or the first distance is smaller in "normal" direction,
+            # take the "normal" direction points and distances
+            elif d1_s < d1_si:
+                d1 = d1_s
+                v1 = v1_s
+            # otherwise take the opposite direction
+            else:
+                d1 = d1_si
+                v1 = v1_si
+        # if first ER membrane in opposite direction is found (but not in
+        # "normal" direction), take the opposite direction points and distances
+        elif d1_si is not None:
+            d1 = d1_si
+            v1 = v1_si
+
+        if d1 is None:
+            continue
+
+        # Add d1 to the list:
+        d1s.append(d1)
+
+        # Fill out the vertex property of cER graph "PMdistance":
+        # d1 for the 1st intersected triangle
+        tg_er.graph.vp.PMdistance[v1] = d1
+
+    return d1s
+
+
+def calculate_distances_and_thicknesses(
+        tg_pm, tg_er, poly_er, maxdist, maxdist2, verbose=False):
     """
     Function to compute shortest distances between two membranes, here a plasma
     membrane (PM) and cortical ER (cER) using their surfaces.
@@ -161,9 +320,9 @@ def calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, maxdist2,
     "cERthickness": d2 for the 2nd intersected triangle
 
     Args:
-        tg_PM (TriangleGraph): graph of PM surface with corrected normals
-        tg_cER (TriangleGraph): graph of cER surface
-        poly_cER (vtkPolyData): cER surface
+        tg_pm (TriangleGraph): graph of PM surface with corrected normals
+        tg_er (TriangleGraph): graph of cER surface
+        poly_er (vtkPolyData): cER surface
         maxdist (int): maximal distance (nm) from PM to first cER membrane
         maxdist2 (int): maximal distance (nm) from PM to second cER membrane
         verbose (boolean, optional): if True (default False), some extra
@@ -178,28 +337,28 @@ def calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, maxdist2,
     print("maxdist2 = {} nm".format(maxdist2))
 
     # Initialize the vertex properties if cER graph and distances lists:
-    tg_cER.graph.vp.cERmembrane = tg_cER.graph.new_vertex_property("int")
-    tg_cER.graph.vp.PMdistance = tg_cER.graph.new_vertex_property(
+    tg_er.graph.vp.cERmembrane = tg_er.graph.new_vertex_property("int")
+    tg_er.graph.vp.PMdistance = tg_er.graph.new_vertex_property(
         "float", vals=-1)
-    tg_cER.graph.vp.cERthickness = tg_cER.graph.new_vertex_property(
+    tg_er.graph.vp.cERthickness = tg_er.graph.new_vertex_property(
         "float", vals=-1)
     d1s = []  # distances from PM to cER
     d2s = []  # distances between both cER membranes (cER thickness)
 
     # For each vertex v in PM graph (represents triangle on PM surface):
-    for v in tg_PM.graph.vertices():
+    for v in tg_pm.graph.vertices():
         if verbose:
             print("I'm at vertex {}".format(int(v)))
 
         # Get its center coordinate as p0 and corrected normal vector N_v
-        p0 = np.array(tg_PM.graph.vp.xyz[v])
-        N_v = np.array(tg_PM.graph.vp.N_v[v])
+        p0 = np.array(tg_pm.graph.vp.xyz[v])
+        N_v = np.array(tg_pm.graph.vp.N_v[v])
 
         # Look for distances in both directions of the PM normal
         d1_s, d2_s, v1_s, v2_s = find_2_distances(
-            p0, N_v, maxdist, maxdist2, tg_cER, poly_cER, verbose)  # "sense"
+            p0, N_v, maxdist, maxdist2, tg_er, poly_er, verbose)  # "sense"
         d1_si, d2_si, v1_si, v2_si = find_2_distances(
-            p0, N_v * -1, maxdist, maxdist2, tg_cER, poly_cER, verbose)
+            p0, N_v * -1, maxdist, maxdist2, tg_er, poly_er, verbose)
         # "sense inverse"
 
         # Find orientation
@@ -235,34 +394,108 @@ def calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, maxdist2,
 
         # Fill out the vertex property of cER graph "cERmembrane":
         # 1 for the 1st intersected triangle and 2 for the 2nd one
-        tg_cER.graph.vp.cERmembrane[v1] = 1
-        tg_cER.graph.vp.cERmembrane[v2] = 2
+        tg_er.graph.vp.cERmembrane[v1] = 1
+        tg_er.graph.vp.cERmembrane[v2] = 2
 
         # Fill out the vertex property of cER graph "PMdistance":
         # d1 for the 1st intersected triangle
-        tg_cER.graph.vp.PMdistance[v1] = d1
+        tg_er.graph.vp.PMdistance[v1] = d1
 
         # fill out the vertex property of cER graph  "cERthickness":
         # d2 for the 2nd intersected triangle
-        tg_cER.graph.vp.cERthickness[v2] = d2
+        tg_er.graph.vp.cERthickness[v2] = d2
 
     return d1s, d2s
 
 
-def run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
-                            cER_surf_outfile, cER_graph_outfile,
-                            distances_outfile, maxdist, maxdist2, verbose):
+def generate_graphs_and_surface(
+        segmentation_mrc_file, scale_factor_to_nm,
+        pm_graph_outfile, er_surf_outfile, er_graph_outfile,
+        lbl_pm=1, lbl_er=2, lbl_between_pm_er=4):
+    # Extract the three masks:
+    segmentation = io.load_tomo(segmentation_mrc_file)
+    # Generate isosurface around the mask in between the membranes,
+    # first applying the PM mask:
+    pm_surface = io.gen_isosurface(segmentation, lbl_between_pm_er, mask=lbl_pm)
+    # second applying the cER mask:
+    er_surface = io.gen_isosurface(segmentation, lbl_between_pm_er, mask=lbl_er)
+    # Generate graphs and remove 3 pixels from borders:
+    pm_tg = TriangleGraph()
+    pm_tg.build_graph_from_vtk_surface(pm_surface, scale_factor_to_nm)
+    pm_tg.find_vertices_near_border(MAX_DIST_SURF * scale_factor_to_nm,
+                                    purge=True)
+    er_tg = TriangleGraph()
+    er_tg.build_graph_from_vtk_surface(er_surface, scale_factor_to_nm)
+    er_tg.find_vertices_near_border(MAX_DIST_SURF * scale_factor_to_nm,
+                                    purge=True)
+    # Save final PM and cER graphs as .gt and cER surface as .vtp files:
+    pm_tg.graph.save(pm_graph_outfile)
+    er_tg.graph.save(er_graph_outfile)
+    er_surf_clean = er_tg.graph_to_triangle_poly()
+    io.save_vtp(er_surf_clean, er_surf_outfile)
+
+
+def run_calculate_distances(
+        pm_graph_file, er_surf_file, er_graph_file, er_surf_outfile,
+        er_graph_outfile, distances_outfile, maxdist, verbose=False):
     """
     A script running calculate_distances with graphs and surface loaded from
     files, transforming the resulting graph to a surface with triangles and
     saving the resulting graph and surface into files.
 
     Args:
-        PM_graph_file (str): .gt input file with the PM TriangleGraph
-        cER_surf_file (str): .vtp input file with the cER vtkPolyData surface
-        cER_graph_file (str): .gt input file with the cER TriangleGraph
-        cER_surf_outfile (str): .vtp output file for the cER vtkPolyData surface
-        cER_graph_outfile (str): .gt output file for the cER TriangleGraph
+        pm_graph_file (str): .gt input file with the PM TriangleGraph with
+            corrected normals
+        er_surf_file (str): .vtp input file with the cER vtkPolyData surface
+        er_graph_file (str): .gt input file with the cER TriangleGraph
+        er_surf_outfile (str): .vtp output file for the cER vtkPolyData surface
+        er_graph_outfile (str): .gt output file for the cER TriangleGraph
+        distances_outfile (str): .csv output file for the two distances lists
+        maxdist (int): maximal distance (nm) from PM to first cER membrane
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+        None
+    """
+    # Load the input files:
+    tg_PM = TriangleGraph()
+    tg_PM.graph = load_graph(pm_graph_file)
+    poly_cER = io.load_poly(er_surf_file)
+    tg_cER = TriangleGraph()
+    tg_cER.graph = load_graph(er_graph_file)
+
+    # Calculate distances:
+    d1s = calculate_distances(
+        tg_PM, tg_cER, poly_cER, maxdist, verbose)
+    print("{} d1s".format(len(d1s)))
+    # Save the distances into distances_outfile:
+    df = pd.DataFrame()
+    df["d1"] = d1s
+    df.to_csv(distances_outfile, sep=';')
+
+    # Transform the resulting graph to a surface with triangles:
+    cER_surf_dist = tg_cER.graph_to_triangle_poly()
+    # Save the resulting graph and surface into files:
+    tg_cER.graph.save(er_graph_outfile)
+    io.save_vtp(cER_surf_dist, er_surf_outfile)
+
+
+def run_calculate_distances_and_thicknesses(
+        pm_graph_file, er_surf_file, er_graph_file, er_surf_outfile,
+        er_graph_outfile, distances_outfile, maxdist, maxdist2, verbose=False):
+    """
+    A script running calculate_distances_and_thicknesses with graphs and surface
+    loaded from files, transforming the resulting graph to a surface with
+    triangles and saving the resulting graph and surface into files.
+
+    Args:
+        pm_graph_file (str): .gt input file with the PM TriangleGraph with
+            corrected normals
+        er_surf_file (str): .vtp input file with the cER vtkPolyData surface
+        er_graph_file (str): .gt input file with the cER TriangleGraph
+        er_surf_outfile (str): .vtp output file for the cER vtkPolyData surface
+        er_graph_outfile (str): .gt output file for the cER TriangleGraph
         distances_outfile (str): .csv output file for the two distances lists
         maxdist (int): maximal distance (nm) from PM to first cER membrane
         maxdist2 (int): maximal distance (nm) from PM to second cER membrane
@@ -270,17 +503,17 @@ def run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
             information will be printed out
 
     Returns:
-
+        None
     """
     # Load the input files:
     tg_PM = TriangleGraph()
-    tg_PM.graph = load_graph(PM_graph_file)
-    poly_cER = io.load_poly(cER_surf_file)
+    tg_PM.graph = load_graph(pm_graph_file)
+    poly_cER = io.load_poly(er_surf_file)
     tg_cER = TriangleGraph()
-    tg_cER.graph = load_graph(cER_graph_file)
+    tg_cER.graph = load_graph(er_graph_file)
 
     # Calculate distances:
-    d1s, d2s = calculate_distances(
+    d1s, d2s = calculate_distances_and_thicknesses(
         tg_PM, tg_cER, poly_cER, maxdist, maxdist2, verbose)
     print("{} d1s".format(len(d1s)))
     print("{} d2s".format(len(d2s)))
@@ -293,12 +526,40 @@ def run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
     # Transform the resulting graph to a surface with triangles:
     cER_surf_dist = tg_cER.graph_to_triangle_poly()
     # Save the resulting graph and surface into files:
-    tg_cER.graph.save(cER_graph_outfile)
-    io.save_vtp(cER_surf_dist, cER_surf_outfile)
+    tg_cER.graph.save(er_graph_outfile)
+    io.save_vtp(cER_surf_dist, er_surf_outfile)
 
-if __name__ == "__main__":
-    t_begin = time.time()
 
+def main_surfaces_normals_and_distances():
+    fold = '/fs/pool/pool-ruben/Maria/4Javier/'
+    segmentation_mrc_file = '{}t1_cropped.labels_thick_MARIA.mrc'.format(fold)
+    pixel_size = 1.368
+    pm_graph_file = '{}t1_cropped.PM.gt'.format(fold)
+    er_surf_file = '{}t1_cropped.cER.vtp'.format(fold)
+    er_graph_file = '{}t1_cropped.cER.gt'.format(fold)
+    radius_hit = 10
+    pm_normals_graph_file = '{}t1_cropped.PM.VVnormals.gt'.format(fold)
+    er_dist_surf_file = '{}t1_cropped.cER.distancesFromPM.vtp'.format(fold)
+    er_dist_graph_file = '{}t1_cropped.cER.distancesFromPM.gt'.format(fold)
+    distances_outfile = '{}t1_cropped.cER.distancesFromPM.csv'.format(fold)
+    maxdist_voxels = 60
+    maxdist_nm = int(maxdist_voxels * pixel_size)
+
+    # print ('Generating PM and cER graphs and cER surface files')
+    # generate_graphs_and_surface(segmentation_mrc_file, pixel_size,
+    #                             pm_graph_file, er_surf_file, er_graph_file)
+    # print('Estimating normals for PM graph')
+    # pm_tg = TriangleGraph()
+    # pm_tg.graph = load_graph(pm_graph_file)
+    # normals_estimation(pm_tg, radius_hit)
+    # pm_tg.graph.save(pm_normals_graph_file)
+    print('Calculating and saving distances between PM and cER')
+    run_calculate_distances(
+        pm_normals_graph_file, er_surf_file, er_graph_file, er_dist_surf_file,
+        er_dist_graph_file, distances_outfile, maxdist_nm)
+
+
+def main_only_distances():
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
     # The "famous" tcb (done cER RH=6 and 10 + PM RH=6):
     # fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
@@ -341,10 +602,16 @@ if __name__ == "__main__":
     distances_outfile = "{}.PMdist_maxdist{}_maxdist2{}.csv".format(
         cER_surf_file[0:-4], maxdist_nm, maxdist2_nm)
 
-    run_calculate_distances(PM_graph_file, cER_surf_file, cER_graph_file,
-                            cER_surf_outfile, cER_graph_outfile,
-                            distances_outfile, maxdist_nm, maxdist2_nm,
-                            verbose=False)
+    run_calculate_distances_and_thicknesses(PM_graph_file, cER_surf_file, cER_graph_file,
+                                            cER_surf_outfile, cER_graph_outfile,
+                                            distances_outfile, maxdist_nm, maxdist2_nm,
+                                            verbose=False)
+
+if __name__ == "__main__":
+    t_begin = time.time()
+
+    # main_only_distances()
+    main_surfaces_normals_and_distances()
 
     t_end = time.time()
     duration = t_end - t_begin
