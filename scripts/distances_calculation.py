@@ -90,7 +90,7 @@ def run_calculate_distances(
 
 def run_calculate_distances_and_thicknesses(
         pm_graph_file, er_surf_file, er_graph_file, er_surf_outfile,
-        er_graph_outfile, distances_outfile, maxdist, maxdist2, verbose=False):
+        er_graph_outfile, distances_outfile, maxdist, maxthick, verbose=False):
     """
     A script running calculate_distances_and_thicknesses with graphs and surface
     loaded from files, transforming the resulting graph to a surface with
@@ -105,7 +105,7 @@ def run_calculate_distances_and_thicknesses(
         er_graph_outfile (str): .gt output file for the cER TriangleGraph
         distances_outfile (str): .csv output file for the two distances lists
         maxdist (int): maximal distance (nm) from PM to first cER membrane
-        maxdist2 (int): maximal distance (nm) from PM to second cER membrane
+        maxthick (int): maximal distance (nm) from first to second cER membrane
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -121,7 +121,7 @@ def run_calculate_distances_and_thicknesses(
 
     # Calculate distances:
     d1s, d2s = calculate_distances_and_thicknesses(
-        tg_PM, tg_cER, poly_cER, maxdist, maxdist2, verbose)
+        tg_PM, tg_cER, poly_cER, maxdist, maxthick, verbose)
     print("{} d1s".format(len(d1s)))
     print("{} d2s".format(len(d2s)))
     # Save the distances into distances_outfile:
@@ -215,29 +215,29 @@ def main_distances_and_thickness():
 
     # Input parameters:
     maxdist_voxels = 60
-    maxdist2_voxels = 60
+    maxthick_voxels = 60
     maxdist_nm = int(maxdist_voxels * pixel_size)
-    maxdist2_nm = int(maxdist2_voxels * pixel_size)
+    maxthick_nm = int(maxthick_voxels * pixel_size)
 
     # Output files:
-    cER_surf_outfile = "{}.PMdist_maxdist{}_maxdist2{}.vtp".format(
-        cER_surf_file[0:-4], maxdist_nm, maxdist2_nm)
-    cER_graph_outfile = "{}.PMdist_maxdist{}_maxdist2{}.gt".format(
-        cER_graph_file[0:-3], maxdist_nm, maxdist2_nm)
-    distances_outfile = "{}.PMdist_maxdist{}_maxdist2{}.csv".format(
-        cER_surf_file[0:-4], maxdist_nm, maxdist2_nm)
+    cER_surf_outfile = "{}.PMdist_maxdist{}_maxthick{}.vtp".format(
+        cER_surf_file[0:-4], maxdist_nm, maxthick_nm)
+    cER_graph_outfile = "{}.PMdist_maxdist{}_maxthick{}.gt".format(
+        cER_graph_file[0:-3], maxdist_nm, maxthick_nm)
+    distances_outfile = "{}.PMdist_maxdist{}_maxthick{}.csv".format(
+        cER_surf_file[0:-4], maxdist_nm, maxthick_nm)
 
     run_calculate_distances_and_thicknesses(
         PM_graph_file, cER_surf_file, cER_graph_file, cER_surf_outfile,
-        cER_graph_outfile, distances_outfile, maxdist_nm, maxdist2_nm,
+        cER_graph_outfile, distances_outfile, maxdist_nm, maxthick_nm,
         verbose=False)
 
 if __name__ == "__main__":
     t_begin = time.time()
 
-    # main_distances_and_thickness()
+    main_distances_and_thickness()
     # main_surfaces_normals_and_distances()
-    main_only_distances()
+    # main_only_distances()
 
     t_end = time.time()
     duration = t_end - t_begin
