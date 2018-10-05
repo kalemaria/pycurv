@@ -9,7 +9,7 @@ __author__ = 'kalemanov'
 
 # CONSTANTS
 SAMPLE_DST = 1
-"""int: sampling distance used in find_2_distances.
+"""int: sampling distance in nm used in find_2_distances.
 """
 
 
@@ -23,7 +23,7 @@ def find_1_distance(
     Args:
         p0 (numpy.ndarray): 3D point coordinates
         normal (numpy.ndarray): 3D normal vector
-        maxdist (int): maximal distance (nm) from p0 the membrane
+        maxdist (float): maximal distance (nm) from p0 the membrane
         tg_er (TriangleGraph): graph of the target membrane surface
         poly_er (vtkPolyData): the target membrane surface
         verbose (boolean, optional): if True (default False), some extra
@@ -90,8 +90,8 @@ def find_2_distances(
     Args:
         p0 (numpy.ndarray): 3D point coordinates
         normal (numpy.ndarray): 3D normal vector
-        maxdist (int): maximal distance (nm) from p0 to first membrane
-        maxthick (int): maximal thickness (nm) from first to second membrane
+        maxdist (float): maximal distance (nm) from p0 to first membrane
+        maxthick (float): maximal thickness (nm) from first to second membrane
         tg_er (TriangleGraph): graph of the target membrane surface
         poly_er (vtkPolyData): the target double membrane surface
         verbose (boolean, optional): if True (default False), some extra
@@ -121,14 +121,13 @@ def find_2_distances(
     d2, v2, p2 = None, None, None
     # look for second intersection within maxthick from p1, starting at a small
     # distance minthick from p1, so do not find the same membrane again
-    for minthick in range(SAMPLE_DST, maxthick, SAMPLE_DST):
+    for minthick in range(SAMPLE_DST, math.ceil(maxthick), SAMPLE_DST):
         p0_new = p1 + normal * minthick
         d2_minus_minthick, v2, p2 = find_1_distance(
             p0_new, normal, maxthick - minthick, tg_er, poly_er, verbose=False)
         if v2 is None:  # no 2nd intersection - stop looking
             break
         else:
-            d2 = d2_minus_minthick + minthick
             # check if p2 is on second cER membrane:
             # is the angle between the normals from v1 and from v2 < pi/2?
             normal2 = tg_er.graph.vp.N_v[v2]
@@ -137,6 +136,7 @@ def find_2_distances(
                 # then we are still on the first membrane - continue looking
                 minthick += SAMPLE_DST
             else:  # otherwise we are on the second membrane - stop looking
+                d2 = d2_minus_minthick + minthick
                 break
 
     if v2 is None:
@@ -160,7 +160,7 @@ def find_2_distances(
 
 
 def calculate_distances(
-        tg_pm, tg_er, poly_er, maxdist, both_directions=False,
+        tg_pm, tg_er, poly_er, maxdist, offset=0, both_directions=False,
         reverse_direction=False, verbose=False):
     """
     Function to compute shortest distances between two membranes, here a plasma
@@ -172,7 +172,10 @@ def calculate_distances(
         tg_pm (TriangleGraph): graph of PM surface with corrected normals
         tg_er (TriangleGraph): graph of cER surface
         poly_er (vtkPolyData): cER surface
-        maxdist (int): maximal distance (nm) from PM to the cER membrane
+        maxdist (float): maximal distance (nm) from PM to the cER membrane
+        offset (float, optional): positive or negative offset (nm, default 0)
+            to add to the distances, depending on how the surfaces where
+            generated and/or in order to account for membrane thickness
         both_directions (boolean, optional): if True, look in both directions of
             each PM normal, otherwise only in the normal direction (default)
         reverse_direction (boolean, optional): if True, look in opposite
@@ -235,6 +238,9 @@ def calculate_distances(
         if d1 is None:
             continue
 
+        # Correct d1 with the specified offset (default 0):
+        d1 += offset
+
         # Add d1 to the list:
         d1s.append(d1)
 
@@ -245,8 +251,8 @@ def calculate_distances(
 
 
 def calculate_distances_and_thicknesses(
-        tg_pm, tg_er, poly_er, maxdist, maxthick, both_directions=True,
-        reverse_direction=False, verbose=False):
+        tg_pm, tg_er, poly_er, maxdist, maxthick, offset=0,
+        both_directions=True, reverse_direction=False, verbose=False):
     """
     Function to compute shortest distances between two membranes, here a plasma
     membrane (PM) and cortical ER (cER) using their surfaces.
@@ -259,8 +265,11 @@ def calculate_distances_and_thicknesses(
         tg_pm (TriangleGraph): graph of PM surface with corrected normals
         tg_er (TriangleGraph): graph of cER surface
         poly_er (vtkPolyData): cER surface
-        maxdist (int): maximal distance (nm) from PM to first cER membrane
-        maxthick (int): maximal thickness (nm) from first to second cER membrane
+        maxdist (float): maximal distance (nm) from PM to first cER membrane
+        maxthick (float): maximal thickness (nm) from first to second cER membrane
+        offset (float, optional): positive or negative offset (nm, default 0)
+            to add to the distances, depending on how the surfaces where
+            generated and/or in order to account for membrane thickness
         both_directions (boolean, optional): if True, look in both directions of
             each PM normal (default), otherwise only in the normal direction
         reverse_direction (boolean, optional): if True, look in opposite
@@ -330,6 +339,10 @@ def calculate_distances_and_thicknesses(
                 p0, normal, maxdist, maxthick, tg_er, poly_er, verbose)
         if d1 is None:
             continue
+
+        # Correct d1 and d2 with the specified offset (default 0):
+        d1 += offset
+        d2 += offset
 
         # Add d1 and d2 to lists:
         d1s.append(d1)
