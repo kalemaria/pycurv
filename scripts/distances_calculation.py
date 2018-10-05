@@ -1,6 +1,8 @@
 import time
 from graph_tool import Graph, load_graph
 import pandas as pd
+from os.path import isfile  # , join
+import click
 
 from pysurf import (pysurf_io as io, TriangleGraph, calculate_distances,
                     calculate_distances_and_thicknesses, normals_estimation)
@@ -21,7 +23,7 @@ def generate_graphs_and_surface(
         pm_graph_outfile, er_surf_outfile, er_graph_outfile,
         pm_surf_outfile=None, lbl_pm=1, lbl_er=2, lbl_between_pm_er=4):
     """
-    Extracts PM and ER membrane surfaces from a segmentations with labels for
+    Extracts PM and cER membrane surfaces from a segmentations with labels for
     both membranes and a space between them.
 
     Args:
@@ -29,12 +31,12 @@ def generate_graphs_and_surface(
         scale_factor_to_nm (float): pixel size in nanometers for scaling the
             surface and the graph
         pm_graph_outfile (string): PM graph '.gt' output file
-        er_surf_outfile (string): ER surface '.vtp' output file
-        er_graph_outfile (string): ER graph '.gt' output file
+        er_surf_outfile (string): cER surface '.vtp' output file
+        er_graph_outfile (string): cER graph '.gt' output file
         pm_surf_outfile (string, optional): PM surface '.vtp' output file,
             if None (default) not generated
         lbl_pm (int, optional): label of PM membrane (default 1)
-        lbl_er (int, optional): label of ER membrane (default 2)
+        lbl_er (int, optional): label of cER membrane (default 2)
         lbl_between_pm_er (int, optional): label of inter-membrane space
             (default 4)
 
@@ -62,11 +64,11 @@ def generate_graphs_and_surface(
 
     er_tg = TriangleGraph()
     er_tg.build_graph_from_vtk_surface(er_surface, scale_factor_to_nm)
-    print('The raw ER graph has {} vertices and {} edges'.format(
+    print('The raw cER graph has {} vertices and {} edges'.format(
             er_tg.graph.num_vertices(), er_tg.graph.num_edges()))
     er_tg.find_vertices_near_border(MAX_DIST_SURF * scale_factor_to_nm,
                                     purge=True)
-    print('The cleaned ER graph has {} vertices and {} edges'.format(
+    print('The cleaned cER graph has {} vertices and {} edges'.format(
             er_tg.graph.num_vertices(), er_tg.graph.num_edges()))
     if pm_tg.graph.num_vertices() == 0:
         raise IOError("Graph does not have vertices")
@@ -179,69 +181,79 @@ def run_calculate_distances_and_thicknesses(
     io.save_vtp(cER_surf_dist, er_surf_outfile)
 
 
-def main_surfaces_normals_and_distances():
-    # should exist:
-    fold = '/fs/pool/pool-ruben/Maria/4Javier/distances_test/'
-    segmentation_mrc_file = '{}t1_cropped.labels_thick_MARIA.mrc'.format(fold)
-    # will be generated:
-    base_filename = 't1_cropped'
+@click.command()
+@click.argument('fold', type=str)
+@click.argument('segmentation_file', type=str)
+@click.argument('base_filename', type=str)
+@click.option('-lbl_pm', type=int, default=1,
+              help="label of PM membrane (default=1)")
+@click.option('-lbl_er', type=int, default=2,
+              help="label of cER membrane (default=2)")
+@click.option('-lbl_between_pm_er', type=int, default=4,
+              help="label of inter-membrane space (default=4)")
+@click.option('-pixel_size_nm', type=float, default=1.368,
+              help="pixel size in nm of the segmentation (default=1.368)")
+@click.option('-radius_hit', type=float, default=10,
+              help="neighborhood parameter for PM normals estimation by VV "
+                   "(default=10)")
+@click.option('-maxdist_nm', type=float, default=80,
+              help="maximal distance in nm, should be bigger than the largest "
+                   "possible distance, for the algorithm to stop searching "
+                   "(default=80)")
+@click.option('-offset_voxels', type=int, default=1,
+              help="offset in voxels, will be added to the distances, "
+                   "(default=1, because surfaces are generated 1/2 voxel off "
+                   "the membrane segmentation boundary towards the "
+                   "inter-membrane space)")
+def distances_calculation(
+        fold, segmentation_file, base_filename,
+        lbl_pm=1, lbl_er=2, lbl_between_pm_er=4,
+        pixel_size_nm=1.368, radius_hit=10, maxdist_nm=80, offset_voxels=1):
+    """Takes input/output folder, input segmentation MRC file and base name for
+    output files and calculates distances between PM and cER membranes."""
+    offset_nm = offset_voxels * pixel_size_nm
+    # segmentation_file = join(fold, segmentation_file)
+    # pm_surf_file = join(fold, '{}.PM.vtp'.format(base_filename))
+    # pm_graph_file = join(fold, '{}.PM.gt'.format(base_filename))
+    # er_surf_file = join(fold, '{}.cER.vtp'.format(base_filename))
+    # er_graph_file = join(fold, '{}.cER.gt'.format(base_filename))
+    # pm_normals_graph_file = join(fold, '{}.PM.NVV_rh{}.gt'.format(
+    #     base_filename, radius_hit))
+    # er_dist_surf_file = join(fold, '{}.cER.distancesFromPM.vtp'.format(
+    #     base_filename))
+    # er_dist_graph_file = join(fold, '{}.cER.distancesFromPM.gt'.format(
+    #     base_filename))
+    # distances_outfile = join(fold, '{}.cER.distancesFromPM.csv'.format(
+    #     base_filename))
+    if not fold.endswith('/'):
+        fold += '/'
+    segmentation_file = '{}{}'.format(fold, segmentation_file)
     pm_surf_file = '{}{}.PM.vtp'.format(fold, base_filename)
     pm_graph_file = '{}{}.PM.gt'.format(fold, base_filename)
     er_surf_file = '{}{}.cER.vtp'.format(fold, base_filename)
     er_graph_file = '{}{}.cER.gt'.format(fold, base_filename)
-    pm_normals_graph_file = '{}{}.PM.VVnormals.gt'.format(fold, base_filename)
+    pm_normals_graph_file = '{}{}.PM.NVV_rh{}.gt'.format(
+        fold, base_filename, radius_hit)
     er_dist_surf_file = '{}{}.cER.distancesFromPM.vtp'.format(fold,
                                                               base_filename)
     er_dist_graph_file = '{}{}.cER.distancesFromPM.gt'.format(fold,
                                                               base_filename)
     distances_outfile = '{}{}.cER.distancesFromPM.csv'.format(fold,
                                                               base_filename)
-    # parameters:
-    pixel_size_nm = 1.368  # of segmentation_mrc_file
-    radius_hit = 10  # for PM normals estimation by VV
-    maxdist_voxels = 60
-    maxdist_nm = maxdist_voxels * pixel_size_nm
-    offset_voxels = 1  # because surfaces are generated 1/2 voxel off the
-    # membrane segmentation boundary towards the inter-membrane space
-    offset_nm = offset_voxels * pixel_size_nm
 
-    print ('Generating PM and cER graphs and cER surface files')
-    generate_graphs_and_surface(
-        segmentation_mrc_file, pixel_size_nm,
-        pm_graph_file, er_surf_file, er_graph_file, pm_surf_file)
-    print('Estimating normals for PM graph')
-    pm_tg = TriangleGraph()
-    pm_tg.graph = load_graph(pm_graph_file)
-    normals_estimation(pm_tg, radius_hit)
-    pm_tg.graph.save(pm_normals_graph_file)
-    print('Calculating and saving distances between PM and cER')
-    run_calculate_distances(
-        pm_normals_graph_file, er_surf_file, er_graph_file, er_dist_surf_file,
-        er_dist_graph_file, distances_outfile, maxdist_nm, offset_nm)
-
-
-def main_only_distances():
-    base_filename = 't1_cropped'
-    # should exist:
-    fold = '/fs/pool/pool-ruben/Maria/4Javier/distances_test/'
-    pm_normals_graph_file = '{}{}.PM.VVnormals.gt'.format(fold, base_filename)
-    er_surf_file = '{}{}.cER.vtp'.format(fold, base_filename)
-    er_graph_file = '{}{}.cER.gt'.format(fold, base_filename)
-    # will be generated:
-    er_dist_surf_file = '{}{}.cER.distancesFromPM.vtp'.format(fold,
-                                                              base_filename)
-    er_dist_graph_file = '{}{}.cER.distancesFromPM.gt'.format(fold,
-                                                              base_filename)
-    distances_outfile = '{}{}.cER.distancesFromPM.csv'.format(fold,
-                                                              base_filename)
-    # parameters:
-    pixel_size_nm = 1.368
-    maxdist_voxels = 60
-    maxdist_nm = maxdist_voxels * pixel_size_nm
-    offset_voxels = 1  # because surfaces are generated 1/2 voxel off the
-    # membrane segmentation boundary towards the inter-membrane space
-    offset_nm = offset_voxels * pixel_size_nm
-
+    if (not isfile(pm_graph_file) or not isfile(er_surf_file) or not
+            isfile(er_graph_file) or not isfile(pm_surf_file)):
+        print ('Generating PM and cER graphs and cER surface files')
+        generate_graphs_and_surface(
+            segmentation_file, pixel_size_nm,
+            pm_graph_file, er_surf_file, er_graph_file, pm_surf_file,
+            lbl_pm, lbl_er, lbl_between_pm_er)
+    if not isfile(pm_normals_graph_file):
+        print('Estimating normals for PM graph')
+        pm_tg = TriangleGraph()
+        pm_tg.graph = load_graph(pm_graph_file)
+        normals_estimation(pm_tg, radius_hit)
+        pm_tg.graph.save(pm_normals_graph_file)
     print('Calculating and saving distances between PM and cER')
     run_calculate_distances(
         pm_normals_graph_file, er_surf_file, er_graph_file, er_dist_surf_file,
@@ -249,14 +261,11 @@ def main_only_distances():
 
 
 def main_distances_and_thickness():
-    # parameters:
+    # Input parameters:
     rh = 10
     pixel_size_nm = 1.368
-    maxdist_voxels = 60
-    maxthick_voxels = 60
-    maxdist_nm = maxdist_voxels * pixel_size_nm
-    maxthick_nm = maxthick_voxels * pixel_size_nm
-    # should exist:
+    maxdist_nm = 80
+    maxthick_nm = 80
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
     # The "famous" tcb (done cER RH=6 and 10 + PM RH=6):
     # fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
@@ -272,6 +281,8 @@ def main_distances_and_thickness():
     # tomo = "scs_171108_l1_t2_ny01"
     # fold = "{}{}/".format(base_fold, tomo)
     # base_filename = "{}_".format(tomo)
+
+    # should exist:
     # File with scaled PM graph with corrected normals:
     PM_graph_file = "{}{}PM.NVV_rh{}_epsilon0_eta0.gt".format(
         fold, base_filename, rh)
@@ -296,9 +307,8 @@ def main_distances_and_thickness():
 if __name__ == "__main__":
     t_begin = time.time()
 
+    distances_calculation()
     # main_distances_and_thickness()
-    main_surfaces_normals_and_distances()
-    # main_only_distances()
 
     t_end = time.time()
     duration = t_end - t_begin

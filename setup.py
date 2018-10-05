@@ -9,9 +9,5 @@ setup(
     author='Maria Kalemanov, Antonio Martinez-Sanchez',
     author_email='',
     description='',
-    install_requires=[
-        "numpy",
-        "scipy",
-        "scikit-image",
-    ],
+    install_requires=["numpy", "scipy", "scikit-image", "pandas", "click"],
 )
