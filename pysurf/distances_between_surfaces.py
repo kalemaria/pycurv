@@ -110,7 +110,7 @@ def find_2_distances(
     # check if v1 is on first cER membrane:
     # is the angle between the normal from v1 and normal from v > pi/2?
     # then it's on the second membrane - don't continue looking
-    normal1 = tg_er.graph.vp.N_v[v1]
+    normal1 = tg_er.graph.vp.normal[v1]
     cos_angle1 = np.dot(normal, normal1)
     if cos_angle1 < 0:  # angle1 > pi/2
         if verbose:
@@ -121,7 +121,7 @@ def find_2_distances(
     d2, v2, p2 = None, None, None
     # look for second intersection within maxthick from p1, starting at a small
     # distance minthick from p1, so do not find the same membrane again
-    for minthick in range(SAMPLE_DST, math.ceil(maxthick), SAMPLE_DST):
+    for minthick in range(SAMPLE_DST, int(math.ceil(maxthick)), SAMPLE_DST):
         p0_new = p1 + normal * minthick
         d2_minus_minthick, v2, p2 = find_1_distance(
             p0_new, normal, maxthick - minthick, tg_er, poly_er, verbose=False)
@@ -130,7 +130,7 @@ def find_2_distances(
         else:
             # check if p2 is on second cER membrane:
             # is the angle between the normals from v1 and from v2 < pi/2?
-            normal2 = tg_er.graph.vp.N_v[v2]
+            normal2 = tg_er.graph.vp.normal[v2]
             cos_angle2 = np.dot(normal1, normal2)
             if cos_angle2 > 0:  # angle2 < pi/2
                 # then we are still on the first membrane - continue looking
@@ -138,6 +138,60 @@ def find_2_distances(
             else:  # otherwise we are on the second membrane - stop looking
                 d2 = d2_minus_minthick + minthick
                 break
+
+    if v2 is None:
+        if verbose:
+            print("No second intersection point found - discard the first")
+        return None, None, None, None
+
+    if verbose:
+        print("Second intersection point found: ({}, {}, {})".format(
+            p2[0], p2[1], p2[2]))
+
+    if d2 > maxthick:
+        if verbose:
+            print("d2 = {} > maxthick - discard the pair".format(d2))
+        return None, None, None, None
+    elif verbose:
+        print("d2 = {}".format(d2))
+
+    # Return the two distances and the vertices at the intersections:
+    return d1, d2, v1, v2
+
+
+def find_2_distances_2_surf(
+        p0, normal, maxdist, maxthick, tg1, poly1, tg2, poly2, verbose=False):
+    """
+    Given a point and a normal vector, finds two intersection points with two
+    membrane surfaces in the direction of the normal vector and measures
+    the two distances (to the first surface and between the two surfaces).
+
+    Args:
+        p0 (numpy.ndarray): 3D point coordinates
+        normal (numpy.ndarray): 3D normal vector
+        maxdist (float): maximal distance (nm) from p0 to first membrane
+        maxthick (float): maximal thickness (nm) from first to second membrane
+        tg1 (TriangleGraph): graph of the first target membrane surface
+        poly1 (vtkPolyData): the first target membrane surface
+        tg2 (TriangleGraph): graph of the second target membrane surface
+        poly2 (vtkPolyData): the second target membrane surface
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+        the two distances and the vertices at the intersections: d1, d2, v1, v2
+        or None, None, None, None in case less than two intersections were found
+    """
+    # look for first intersection within maxdist from p0
+    d1, v1, p1 = find_1_distance(
+        p0, normal, maxdist, tg1, poly1, verbose)
+
+    if v1 is None:  # no first intersection point found - stop looking
+        return None, None, None, None
+
+    # look for second intersection within maxthick from p1
+    d2, v2, p2 = find_1_distance(
+        p1, normal, maxthick, tg2, poly2, verbose)
 
     if v2 is None:
         if verbose:
@@ -362,3 +416,97 @@ def calculate_distances_and_thicknesses(
         tg_er.graph.vp.cERthickness[v2] = d2
 
     return d1s, d2s
+
+
+def calculate_thicknesses(
+        tg_pm, tg_er, poly_er, maxdist, maxthick, offset=0,
+        both_directions=True, reverse_direction=False, verbose=False):
+    """
+    Function to compute cortical ER (cER) thickness, using plasma
+    membrane (PM) surface normals (closer to cER) and two inner cER surfaces.
+    Adds vertex properties to the second cER graph:
+    "cERthickness": d2 for the 2nd intersected triangle
+
+    Args:
+        tg_pm (TriangleGraph): graph of PM surface with corrected normals
+        tg_er (TriangleGraph): graph of inner cER surface
+        poly_er (vtkPolyData): inner cER surface
+        maxdist (float): maximal distance (nm) from PM to first cER membrane
+        maxthick (float): maximal thickness (nm) from first to second cER
+            membrane
+        offset (float, optional): positive or negative offset (nm, default 0)
+            to add to the thicknesses, depending on how the surfaces where
+            generated and/or in order to account for membrane thickness
+        both_directions (boolean, optional): if True, look in both directions of
+            each PM normal (default), otherwise only in the normal direction
+        reverse_direction (boolean, optional): if True, look in opposite
+            direction of each PM normals (if both_directions True, will look
+            in both directions)
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+
+    Returns:
+        a lists of cER thicknesses (nm)
+    """
+    print("maxdist = {} nm".format(maxdist))
+    print("maxthick = {} nm".format(maxthick))
+
+    # Initialize vertex properties of the cER graph and distances lists:
+    tg_er.graph.vp.cERthickness = tg_er.graph.new_vertex_property(
+        "float", vals=-1)
+    d2s = []  # distances between both cER membranes (cER thickness)
+
+    # For each vertex v in PM graph (represents triangle on PM surface):
+    for v in tg_pm.graph.vertices():
+        if verbose:
+            print("I'm at vertex {}".format(int(v)))
+
+        # Get its center coordinate as p0 and corrected normal vector N_v:
+        p0 = np.array(tg_pm.graph.vp.xyz[v])
+        normal = np.array(tg_pm.graph.vp.N_v[v])
+
+        # Look for distance d1, d2 and intersected vertices v1, v2 in cER graph:
+        d1, d2 = None, None
+        v1, v2 = None, None
+        if both_directions:
+            d1_sense, d2_sense, v1_sense, v2_sense = find_2_distances(
+                p0, normal, maxdist, maxthick, tg_er, poly_er, verbose)
+            d1_sense_inverse, d2_sense_inverse, \
+                v1_sense_inverse, v2_sense_inverse = find_2_distances(
+                    p0, normal * -1, maxdist, maxthick, tg_er, poly_er, verbose)
+            # Find orientation:
+            # if first ER membrane in "normal" direction is found
+            if d1_sense is not None:
+                # and first ER membrane in opposite direction is not found
+                # or the first distance is smaller in "normal" direction,
+                # take the "normal" direction points and distances
+                if (d1_sense_inverse is None) or (d1_sense < d1_sense_inverse):
+                    d1, d2 = d1_sense, d2_sense
+                    v1, v2 = v1_sense, v2_sense
+                # otherwise take the opposite direction
+                else:
+                    d1, d2 = d1_sense_inverse, d2_sense_inverse
+                    v1, v2 = v1_sense_inverse, v2_sense_inverse
+            # if first ER membrane in opposite direction is found (but not in
+            # "normal" direction), take the opposite direction data
+            elif d1_sense_inverse is not None:
+                d1, d2 = d1_sense_inverse, d2_sense_inverse
+                v1, v2 = v1_sense_inverse, v2_sense_inverse
+        elif reverse_direction:
+            d1, d2, v1, v2 = find_2_distances(
+                p0, normal * -1, maxdist, maxthick, tg_er, poly_er, verbose)
+        else:
+            d1, d2, v1, v2 = find_2_distances(
+                p0, normal, maxdist, maxthick, tg_er, poly_er, verbose)
+
+        if d2 is not None:
+            # Correct d2 with the specified offset (default 0) and add to the
+            # list:
+            d2 += offset
+            d2s.append(d2)
+
+            # fill out the vertex property of the second cER graph
+            # "cERthickness": d2
+            tg_er.graph.vp.cERthickness[v2] = d2
+
+    return d2s
