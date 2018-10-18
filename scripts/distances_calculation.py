@@ -354,17 +354,17 @@ def distances_and_thicknesses_calculation(
         pm_tg.graph = load_graph(pm_graph_file)
         normals_estimation(pm_tg, radius_hit)
         pm_tg.graph.save(pm_normals_graph_file)
-    if not isfile(distances_outfile):
-        print('Calculating and saving distances between PM and cER')
-        run_calculate_distances(
-            pm_normals_graph_file, er_surf_file, er_graph_file,
-            er_dist_surf_file, er_dist_graph_file, distances_outfile,
-            maxdist_nm, offset_nm)
-    # if not isfile(inner_er_surf_file) or not isfile(inner_er_graph_file):
-    print('Generating PM and cER graphs and cER surface files')
-    generate_er_lumen_graph_and_surface(
-        segmentation_file, pixel_size_nm,
-        inner_er_surf_file, inner_er_graph_file, lbl_er, lbl_er_lumen)
+    # if not isfile(distances_outfile):
+    print('Calculating and saving distances between PM and cER')
+    run_calculate_distances(
+        pm_normals_graph_file, er_surf_file, er_graph_file,
+        er_dist_surf_file, er_dist_graph_file, distances_outfile,
+        maxdist_nm, offset_nm)
+    if not isfile(inner_er_surf_file) or not isfile(inner_er_graph_file):
+        print('Generating PM and cER graphs and cER surface files')
+        generate_er_lumen_graph_and_surface(
+            segmentation_file, pixel_size_nm,
+            inner_er_surf_file, inner_er_graph_file, lbl_er, lbl_er_lumen)
     # if not isfile(thicknesses_outfile):
     print('Calculating and saving cER thicknesses')
     run_calculate_thicknesses(
