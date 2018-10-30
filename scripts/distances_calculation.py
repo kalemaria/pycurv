@@ -299,7 +299,7 @@ def run_calculate_distances_and_thicknesses(
 @click.option('-maxdist_nm', type=float, default=50,
               help="maximal distance in nm, should be bigger than the largest "
                    "possible distance, for the algorithm to stop searching "
-                   "(default=80)")
+                   "(default=50)")
 @click.option('-maxthick_nm', type=float, default=80,
               help="maximal distance between the two cER membrane sides in nm, "
                    "should be bigger than the largest possible distance, for "
