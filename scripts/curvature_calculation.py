@@ -213,7 +213,7 @@ def new_workflow(
         assert(isinstance(seg, np.ndarray))
         data_type = seg.dtype
 
-        if label == 2 and np.max(seg) == 3:  # if cER and filled cER seg. exists
+        if label == 2:  # and np.max(seg) == 4:  if cER (and filled seg. exists)
             # Surface generation with filled segmentation using vtkMarchingCubes
             # and applying the mask of unfilled segmentation
             print("\nMaking filled and unfilled binary segmentations...")

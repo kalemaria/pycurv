@@ -417,6 +417,7 @@ def main_distances_and_thickness():
         cER_graph_outfile, distances_outfile, maxdist_nm, maxthick_nm,
         verbose=False)
 
+
 if __name__ == "__main__":
     t_begin = time.time()
 
