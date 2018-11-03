@@ -40,7 +40,7 @@ def task_correct_normals():
                                 'seg_file': seg_filename,
                                 'label': lbl,
                                 'holes': holes,
-                                'remove_small_components': min_component,
+                                'min_component': min_component,
                                 'only_normals': True
                             })
                         ],

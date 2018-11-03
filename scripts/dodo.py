@@ -7,7 +7,7 @@ RADIUS_HIT = 10
 # For smoothed cER
 def task_calculate_curvatures():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/"
+    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature_ria/"
     pixel_size = 1.368
     radius_hit = RADIUS_HIT
     methods = ["VV"]
@@ -15,7 +15,7 @@ def task_calculate_curvatures():
     holes = 3
     min_component = 100
 
-    for condition in ["TCB", "SCS", "WT", "IST2"]:
+    for condition in ["SCStest"]:  # "TCB", "SCS", "WT", "IST2"
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -29,6 +29,7 @@ def task_calculate_curvatures():
                 tomo = "{}{}{}".format(condition, subfold.split('_')[-2],
                                        subfold.split('_')[-1])
                 base_filename = "{}_cER".format(tomo)
+                subfold += '/'
                 target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                     subfold, base_filename, radius_hit)
                 yield {'name': tomo,
@@ -40,7 +41,8 @@ def task_calculate_curvatures():
                                 'seg_file': seg_filename,
                                 'label': lbl,
                                 'holes': holes,
-                                'remove_small_components': min_component
+                                'min_component': min_component,
+                                'cores': 1
                             })
                         ],
                        'file_dep': [seg_file],
@@ -58,11 +60,11 @@ def task_calculate_curvatures():
 
 def task_extract_curvatures():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/"
+    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature_ria/"
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
-    for condition in ["TCB", "SCS", "WT", "IST2"]:
+    for condition in ["SCStest"]:  # "TCB", "SCS", "WT", "IST2"
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -71,6 +73,7 @@ def task_extract_curvatures():
             tomo = "{}{}{}".format(condition, subfold.split('_')[-2],
                                    subfold.split('_')[-1])
             base_filename = "{}_cER".format(tomo)
+            subfold += '/'
             target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                 subfold, base_filename, radius_hit)
             yield {'name': tomo,

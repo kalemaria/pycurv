@@ -40,7 +40,7 @@ def task_calculate_curvatures():
                                 'seg_file': seg_filename,
                                 'label': lbl,
                                 'holes': holes,
-                                'remove_small_components': min_component
+                                'min_component': min_component
                             })
                         ],
                        'file_dep': [seg_file],
@@ -59,7 +59,6 @@ def task_calculate_curvatures():
 def task_extract_curvatures():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
-    pixel_size = 1.368
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 

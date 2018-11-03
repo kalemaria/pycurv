@@ -58,7 +58,7 @@ def main(tomo):
         fold, base_filename, pixel_size, radius_hit,
         epsilon=0, eta=0, methods=['VV'],
         seg_file=seg_file, label=lbl, holes=cube_size,
-        remove_wrong_borders=True, remove_small_components=min_component)
+        remove_wrong_borders=True, min_component=min_component)
 
     for b in range(0, 2):
         print("\nExtracting curvatures for ER without {} nm from border".format(

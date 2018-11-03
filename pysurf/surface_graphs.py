@@ -1149,49 +1149,49 @@ class TriangleGraph(SurfaceGraph):
         t_begin = time.time()
 
         comp_labels_map, sizes = label_components(self.graph)
-        small_components = []
-        for i, size in enumerate(sizes):
-            comp_label = i
-            if size < threshold:
-                small_components.append(comp_label)
+        small_components = [i for i, size in enumerate(sizes)
+                            if size < threshold]
         print("The graph has {} components, {} of them have size < {}".format(
             len(sizes), len(small_components), threshold))
         if verbose:
             print("Sizes of components:")
             print(sizes)
 
-        # Add a boolean vertex property telling whether a vertex belongs to a
-        # small component with size below the threshold:
-        self.graph.vp.small_component = \
-            self.graph.new_vertex_property("boolean")
-        num_vertices_in_small_components = 0
-        for v in self.graph.vertices():
-            if comp_labels_map[v] in small_components:
-                self.graph.vp.small_component[v] = 1
-                num_vertices_in_small_components += 1
-            else:
-                self.graph.vp.small_component[v] = 0
-        print("{} vertices are in the small components.".format(
-            num_vertices_in_small_components))
+        if len(small_components) > 0:
+            # Add a boolean vertex property telling whether a vertex belongs to
+            # a small component with size below the threshold:
+            self.graph.vp.small_component = \
+                self.graph.new_vertex_property("boolean")
+            num_vertices_in_small_components = 0
+            for v in self.graph.vertices():
+                if comp_labels_map[v] in small_components:
+                    self.graph.vp.small_component[v] = 1
+                    num_vertices_in_small_components += 1
+                else:
+                    self.graph.vp.small_component[v] = 0
+            print("{} vertices are in the small components.".format(
+                num_vertices_in_small_components))
 
-        if len(small_components) > 0 and purge is True:
-            print('Filtering out those vertices and their edges belonging to '
-                  'the small components...')
-            # Set the filter to get only vertices NOT belonging to a small
-            # component.
-            self.graph.set_vertex_filter(self.graph.vp.small_component,
-                                         inverted=True)
-            # Purge filtered out vertices and edges permanently from the graph:
-            self.graph.purge_vertices()
-            # Update graph's dictionary coordinates_to_vertex_index:
-            self.update_coordinates_to_vertex_index()
-        # Remove the properties used for the filtering that are no longer true:
-        del self.graph.vertex_properties["small_component"]
+            if purge is True:
+                print('Filtering out those vertices and their edges belonging '
+                      'to the small components...')
+                # Set the filter to get only vertices NOT belonging to a small
+                # component.
+                self.graph.set_vertex_filter(self.graph.vp.small_component,
+                                             inverted=True)
+                # Purge filtered out vertices and edges from the graph:
+                self.graph.purge_vertices()
+                # Update graph's dictionary coordinates_to_vertex_index:
+                self.update_coordinates_to_vertex_index()
+
+            # Remove the property used for the filtering that is no longer true:
+            del self.graph.vertex_properties["small_component"]
 
         t_end = time.time()
         duration = t_end - t_begin
+        minutes, seconds = divmod(duration, 60)
         print('Finding small components took: {} min {} s'.format(
-            divmod(duration, 60)))
+            minutes, seconds))
 
     def get_areas(self, verbose=False):
         """

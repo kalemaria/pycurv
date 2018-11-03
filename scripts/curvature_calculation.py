@@ -141,10 +141,10 @@ def _vtp_arrays_to_mrc_volumes(
 
 
 def new_workflow(
-        fold, base_filename, scale_factor_to_nm, radius_hit,
+        fold, base_filename, pixel_size_nm, radius_hit,
         epsilon=0, eta=0, methods=['VV'],
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
-        remove_small_components=100, only_normals=False, cores=4,
+        min_component=100, only_normals=False, cores=4,
         runtimes=None):
     """
     A script for running all processing steps to estimate membrane curvature.
@@ -161,7 +161,7 @@ def new_workflow(
         fold (str): path where the input membrane segmentation is and where the
             output will be written
         base_filename (str): base file name for saving the output files
-        scale_factor_to_nm (float): pixel size in nanometer of the membrane mask
+        pixel_size_nm (float): pixel size in nanometer of the membrane mask
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
@@ -181,7 +181,7 @@ def new_workflow(
             estimation (default 0)
         remove_wrong_borders (boolean, optional): if True (default), wrong
             artefact surface borders will be removed
-        remove_small_components (int, optional): if > 0 (default 100), small
+        min_component (int, optional): if > 0 (default 100), small
             disconnected surface components having triangles within this number
             will be removed
         only_normals (boolean, optional): if True (default False), only normals
@@ -194,7 +194,6 @@ def new_workflow(
     Returns:
         None
     """
-
     log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
                 fold, base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
@@ -204,8 +203,7 @@ def new_workflow(
     surf_file = base_filename + ".surface.vtp"
     if not isfile(fold + surf_file):
         if seg_file is None or not isfile(fold + seg_file):
-            text = "The segmentation file {} not given or not found".format(
-                    fold + seg_file)
+            text = "The segmentation file not given or not found"
             raise pexceptions.PySegInputError(
                 expr="new_workflow", msg=eval(text))
 
@@ -260,7 +258,7 @@ def new_workflow(
     if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
         print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
-        tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
+        tg.build_graph_from_vtk_surface(surf, pixel_size_nm)
         print('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
 
@@ -271,17 +269,17 @@ def new_workflow(
         if holes < 0:
             b += abs(holes)
         if b > 0:
-            print('\nFinding triangles that are {} pixels to surface '
-                   'borders...'.format(b))
-            tg.find_vertices_near_border(b * scale_factor_to_nm, purge=True)
+            print('\nFinding triangles that are {} pixels to surface borders...'
+                  .format(b))
+            tg.find_vertices_near_border(b * pixel_size_nm, purge=True)
             print('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
 
         # Filter out possibly occurring small disconnected fragments
-        if remove_small_components > 0:
+        if min_component > 0:
             print('\nFinding small connected components of the graph...')
             tg.find_small_connected_components(
-                threshold=remove_small_components, purge=True, verbose=True)
+                threshold=min_component, purge=True, verbose=True)
             print('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
 
@@ -718,14 +716,14 @@ def main_javier(membrane, radius_hit):
         new_workflow(
             fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=holes,
-            remove_small_components=min_component, only_normals=True)
+            min_component=min_component, only_normals=True)
     elif membrane == "cER":
         lbl = 2
         print("\nCalculating curvatures for {}".format(base_filename))
         new_workflow(
             fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=holes,
-            remove_small_components=min_component)
+            min_component=min_component)
 
         for b in range(0, 2):
             print("\nExtracting curvatures for {} without {} nm from border"
@@ -774,7 +772,7 @@ def main_felix():
     new_workflow(
             fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=0,
-            remove_small_components=min_component, only_normals=False,
+            min_component=min_component, only_normals=False,
             cores=num_cores, runtimes=runtimes_file)
 
     t_end = time.time()
@@ -799,7 +797,7 @@ def main_missing_wedge():
     print("\nNormal sphere (control)")
     base_filename = 'bin_sphere_r20_t1_thresh0.6'
     new_workflow(
-        fold, base_filename, scale_factor_to_nm=1, radius_hit=rh, epsilon=0,
+        fold, base_filename, pixel_size_nm=1, radius_hit=rh, epsilon=0,
         eta=0, methods=['VCTV', 'VV'], remove_wrong_borders=False)
     print("\nExtracting all curvatures")
     extract_curvatures_after_new_workflow(
@@ -808,7 +806,7 @@ def main_missing_wedge():
 
     print("\nSphere with missing wedge")
     base_filename = 'bin_sphere_r20_t1_with_wedge30deg_thresh0.6'
-    new_workflow(fold, base_filename, scale_factor_to_nm=1, radius_hit=rh,
+    new_workflow(fold, base_filename, pixel_size_nm=1, radius_hit=rh,
                  epsilon=0, eta=0, methods=['VCTV', 'VV'],
                  remove_wrong_borders=True)
     for b in range(0, 9):
