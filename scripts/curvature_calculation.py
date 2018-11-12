@@ -834,10 +834,15 @@ def main_anna():
     radius_hit = 15
     annas_workflow(fold, base_filename, radius_hit, seg_file)
 
+
 if __name__ == "__main__":
-    membrane = sys.argv[1]
-    rh = int(sys.argv[2])
-    main_javier(membrane, rh)
+    # membrane = sys.argv[1]
+    # rh = int(sys.argv[2])
+    # main_javier(membrane, rh)
+    for n in range(2):
+        extract_curvatures_after_new_workflow(
+            fold="/fs/pool/pool-ruben/Maria/4Javier/new_curvature_ria/TCB/171213_TITAN_l2_t1/",
+            base_filename="TCBl2t1_cER", radius_hit=10, exclude_borders=n)
 
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
     # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh{}.stats'.format(

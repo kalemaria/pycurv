@@ -17,6 +17,10 @@ MAX_DIST_SURF = 3
 surface from the segmentation mask, used in gen_isosurface and gen_surface
 functions.
 """
+THRESH_SIGMA1 = 0.699471735
+""" float: when convoluting a binary mask with a gaussian kernel with sigma 1,
+values 1 at the boundary with 0's become this value.
+"""
 
 
 def generate_pm_er_graphs_and_surface(
@@ -48,9 +52,11 @@ def generate_pm_er_graphs_and_surface(
     segmentation = io.load_tomo(segmentation_mrc_file)
     # Generate isosurface around the mask in between the membranes,
     # first applying the PM mask:
-    pm_surface = io.gen_isosurface(segmentation, lbl_between_pm_er, mask=lbl_pm)
+    pm_surface = io.gen_isosurface(segmentation, lbl_between_pm_er, mask=lbl_pm,
+                                   sg=1, thr=THRESH_SIGMA1)
     # second applying the cER mask:
-    er_surface = io.gen_isosurface(segmentation, lbl_between_pm_er, mask=lbl_er)
+    er_surface = io.gen_isosurface(segmentation, lbl_between_pm_er, mask=lbl_er,
+                                   sg=1, thr=THRESH_SIGMA1)
     # Generate graphs and remove 3 pixels from borders:
     pm_tg = TriangleGraph()
     pm_tg.build_graph_from_vtk_surface(pm_surface, scale_factor_to_nm)
@@ -106,7 +112,8 @@ def generate_er_lumen_graph_and_surface(
     # Extract the three masks:
     segmentation = io.load_tomo(segmentation_mrc_file)
     # Generate isosurface around the mask of cER lumen:
-    er_surface = io.gen_isosurface(segmentation, lbl_er_lumen, mask=lbl_er)
+    er_surface = io.gen_isosurface(segmentation, lbl_er_lumen, mask=lbl_er,
+                                   sg=1, thr=THRESH_SIGMA1)
     # Generate cER graph and remove 3 pixels from borders:
     er_tg = TriangleGraph()
     er_tg.build_graph_from_vtk_surface(er_surface, scale_factor_to_nm)
@@ -127,7 +134,8 @@ def generate_er_lumen_graph_and_surface(
 
 def run_calculate_distances(
         pm_graph_file, er_surf_file, er_graph_file, er_surf_outfile,
-        er_graph_outfile, distances_outfile, maxdist, offset=0, verbose=False):
+        er_graph_outfile, distances_outfile, maxdist, offset=0,
+        both_directions=True, reverse_direction=False, verbose=False):
     """
     A script running calculate_distances with graphs and surface loaded from
     files, transforming the resulting graph to a surface with triangles and
@@ -147,6 +155,11 @@ def run_calculate_distances(
         offset (float, optional): positive or negative offset (nm, default 0)
             to add to the distances, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
+        both_directions (boolean, optional): if True, look in both directions of
+            each PM normal (default), otherwise only in the normal direction
+        reverse_direction (boolean, optional): if True, look in opposite
+            direction of each PM normals (default=False; if both_directions
+            True, will look in both directions)
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -161,7 +174,8 @@ def run_calculate_distances(
     tg_cER.graph = load_graph(er_graph_file)
 
     # Calculate distances:
-    d1s = calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, offset, verbose)
+    d1s = calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, offset,
+                              both_directions, reverse_direction, verbose)
     print("{} d1s".format(len(d1s)))
     # Save the distances into distances_outfile:
     df = pd.DataFrame()
@@ -178,7 +192,8 @@ def run_calculate_distances(
 def run_calculate_thicknesses(
         pm_graph_file, er_surf_file, er_graph_file,
         er_surf_outfile, er_graph_outfile, thicknesses_outfile,
-        maxdist, maxthick, offset=0.0, verbose=False):
+        maxdist, maxthick, offset=0.0, both_directions=True,
+        reverse_direction=False, verbose=False):
     """
     A script running calculate_thicknesses with graphs and surface loaded from
     files, transforming the resulting graph to a surface with triangles and
@@ -200,6 +215,11 @@ def run_calculate_thicknesses(
         offset (float, optional): positive or negative offset (nm, default 0)
             to add to the distances, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
+        both_directions (boolean, optional): if True, look in both directions of
+            each PM normal (default), otherwise only in the normal direction
+        reverse_direction (boolean, optional): if True, look in opposite
+            direction of each PM normals (default=False; if both_directions
+            True, will look in both directions)
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -214,8 +234,9 @@ def run_calculate_thicknesses(
     tg_cER.graph = load_graph(er_graph_file)
 
     # Calculate distances:
-    d2s = calculate_thicknesses(tg_PM, tg_cER, poly_cER,
-                                maxdist, maxthick, offset, verbose)
+    d2s = calculate_thicknesses(
+        tg_PM, tg_cER, poly_cER, maxdist, maxthick, offset,
+        both_directions, reverse_direction, verbose)
     print("{} d2s".format(len(d2s)))
     # Save the distances into distances_outfile:
     df = pd.DataFrame()
@@ -309,11 +330,18 @@ def run_calculate_distances_and_thicknesses(
                    "(default=1, because surfaces are generated 1/2 voxel off "
                    "the membrane segmentation boundary towards the "
                    "inter-membrane space)")
+@click.option('-both_directions', type=bool, default=True,
+              help="if True, look in both directions of each PM normal "
+                   "(default), otherwise only in the normal direction")
+@click.option('-reverse_direction', type=bool, default=False,
+              help="if True, look in opposite direction of each PM normals "
+                   "(default=False; if both_directions True, will look in both "
+                   "directions)")
 def distances_and_thicknesses_calculation(
         fold, segmentation_file, base_filename,
         lbl_pm=1, lbl_er=2, lbl_between_pm_er=4, lbl_er_lumen=3,
         pixel_size_nm=1.368, radius_hit=10, maxdist_nm=50, maxthick_nm=80,
-        offset_voxels=1):
+        offset_voxels=1, both_directions=True, reverse_direction=False):
     """Takes input/output folder, input segmentation MRC file and base name for
     output files and calculates distances between two cER membrane sides."""
     offset_nm = offset_voxels * pixel_size_nm
@@ -324,6 +352,8 @@ def distances_and_thicknesses_calculation(
     pm_graph_file = '{}{}.PM.gt'.format(fold, base_filename)
     er_surf_file = '{}{}.cER.vtp'.format(fold, base_filename)
     er_graph_file = '{}{}.cER.gt'.format(fold, base_filename)
+    pm_normals_surf_file = '{}{}.PM.NVV_rh{}.vtp'.format(
+        fold, base_filename, radius_hit)
     pm_normals_graph_file = '{}{}.PM.NVV_rh{}.gt'.format(
         fold, base_filename, radius_hit)
     er_dist_surf_file = '{}{}.cER.distancesFromPM.vtp'.format(
@@ -343,7 +373,7 @@ def distances_and_thicknesses_calculation(
 
     if (not isfile(pm_surf_file) or not isfile(pm_graph_file) or not
             isfile(er_surf_file) or not isfile(er_graph_file)):
-        print('Generating PM and cER graphs and cER surface files')
+        print('Generating PM and cER graphs and surface files')
         generate_pm_er_graphs_and_surface(
             segmentation_file, pixel_size_nm,
             pm_graph_file, er_surf_file, er_graph_file, pm_surf_file,
@@ -354,14 +384,16 @@ def distances_and_thicknesses_calculation(
         pm_tg.graph = load_graph(pm_graph_file)
         normals_estimation(pm_tg, radius_hit)
         pm_tg.graph.save(pm_normals_graph_file)
-    # if not isfile(distances_outfile):
-    print('Calculating and saving distances between PM and cER')
-    run_calculate_distances(
-        pm_normals_graph_file, er_surf_file, er_graph_file,
-        er_dist_surf_file, er_dist_graph_file, distances_outfile,
-        maxdist_nm, offset_nm)
+        pm_surf = pm_tg.graph_to_triangle_poly()
+        io.save_vtp(pm_surf, pm_normals_surf_file)
+    if not isfile(distances_outfile):
+        print('Calculating and saving distances between PM and cER')
+        run_calculate_distances(
+            pm_normals_graph_file, er_surf_file, er_graph_file,
+            er_dist_surf_file, er_dist_graph_file, distances_outfile,
+            maxdist_nm, offset_nm, both_directions, reverse_direction)
     if not isfile(inner_er_surf_file) or not isfile(inner_er_graph_file):
-        print('Generating PM and cER graphs and cER surface files')
+        print('Generating inner cER graphs and surface files')
         generate_er_lumen_graph_and_surface(
             segmentation_file, pixel_size_nm,
             inner_er_surf_file, inner_er_graph_file, lbl_er, lbl_er_lumen)
@@ -370,7 +402,8 @@ def distances_and_thicknesses_calculation(
     run_calculate_thicknesses(
         pm_normals_graph_file, inner_er_surf_file, inner_er_graph_file,
         inner_er_thick_surf_file, inner_er_thick_graph_file,
-        thicknesses_outfile, maxdist_nm, maxthick_nm, offset_nm)
+        thicknesses_outfile, maxdist_nm, maxthick_nm, offset_nm,
+        both_directions, reverse_direction)
 
 
 def main_distances_and_thickness():

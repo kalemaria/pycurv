@@ -15,7 +15,7 @@ def task_calculate_curvatures():
     holes = 3
     min_component = 100
 
-    for condition in ["SCStest"]:  # "TCB", "SCS", "WT", "IST2"
+    for condition in ["TCB", "WT", "IST2", "SCS"]:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -42,7 +42,7 @@ def task_calculate_curvatures():
                                 'label': lbl,
                                 'holes': holes,
                                 'min_component': min_component,
-                                'cores': 1
+                                'cores': 4
                             })
                         ],
                        'file_dep': [seg_file],
@@ -64,7 +64,7 @@ def task_extract_curvatures():
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
-    for condition in ["SCStest"]:  # "TCB", "SCS", "WT", "IST2"
+    for condition in ["TCB", "WT", "IST2", "SCS"]:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders

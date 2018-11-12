@@ -108,11 +108,11 @@ def find_2_distances(
         return None, None, None, None
 
     # check if v1 is on first cER membrane:
-    # is the angle between the normal from v1 and normal from v > pi/2?
-    # then it's on the second membrane - don't continue looking
+    # is the angle between the normal from v1 and normal from v > 80 degrees?
+    # then it's on the second membrane or edge - don't continue looking
     normal1 = tg_er.graph.vp.normal[v1]
     cos_angle1 = np.dot(normal, normal1)
-    if cos_angle1 < 0:  # angle1 > pi/2
+    if cos_angle1 < math.cos(math.radians(80)):  # angle1 > 80 degrees
         if verbose:
             print("First intersection point found on second membrane - "
                   "discard it")
@@ -132,8 +132,8 @@ def find_2_distances(
             # is the angle between the normals from v1 and from v2 < pi/2?
             normal2 = tg_er.graph.vp.normal[v2]
             cos_angle2 = np.dot(normal1, normal2)
-            if cos_angle2 > 0:  # angle2 < pi/2
-                # then we are still on the first membrane - continue looking
+            if cos_angle2 > math.cos(math.radians(100)):  # angle2 < 100 degrees
+                # then we are still on the first membrane or edge - keep looking
                 minthick += SAMPLE_DST
             else:  # otherwise we are on the second membrane - stop looking
                 d2 = d2_minus_minthick + minthick
@@ -242,6 +242,7 @@ def calculate_distances(
         a lists of distances (nm) between the two membranes
     """
     print("maxdist = {} nm".format(maxdist))
+    maxdist -= offset  # because add the offset to the distances
 
     # Initialize the vertex property in cER graph and distances lists:
     tg_er.graph.vp.PMdistance = tg_er.graph.new_vertex_property(
@@ -339,6 +340,8 @@ def calculate_distances_and_thicknesses(
     """
     print("maxdist = {} nm".format(maxdist))
     print("maxthick = {} nm".format(maxthick))
+    maxdist -= offset  # because add the offset to the distances
+    maxthick -= offset  # because add the offset to the distances
 
     # Initialize the vertex properties if cER graph and distances lists:
     tg_er.graph.vp.cERmembrane = tg_er.graph.new_vertex_property("int")
@@ -440,8 +443,8 @@ def calculate_thicknesses(
         both_directions (boolean, optional): if True, look in both directions of
             each PM normal (default), otherwise only in the normal direction
         reverse_direction (boolean, optional): if True, look in opposite
-            direction of each PM normals (if both_directions True, will look
-            in both directions)
+            direction of each PM normals (default=False; if both_directions
+            True, will look in both directions)
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -450,8 +453,10 @@ def calculate_thicknesses(
     """
     print("maxdist = {} nm".format(maxdist))
     print("maxthick = {} nm".format(maxthick))
+    maxthick -= offset  # because add the offset to the distances
 
     # Initialize vertex properties of the cER graph and distances lists:
+    tg_er.graph.vp.firstcER = tg_er.graph.new_vertex_property("float", vals=-1)
     tg_er.graph.vp.cERthickness = tg_er.graph.new_vertex_property(
         "float", vals=-1)
     d2s = []  # distances between both cER membranes (cER thickness)
@@ -507,6 +512,7 @@ def calculate_thicknesses(
 
             # fill out the vertex property of the second cER graph
             # "cERthickness": d2
+            tg_er.graph.vp.firstcER[v1] = d2
             tg_er.graph.vp.cERthickness[v2] = d2
 
     return d2s
