@@ -1,14 +1,13 @@
 from pathlib2 import Path, PurePath
-from curvature_calculation import (new_workflow,
+from curvature_calculation import (new_workflow, calculate_PM_curvatures,
                                    extract_curvatures_after_new_workflow)
 from distances_calculation import distances_and_thicknesses_calculation
 RADIUS_HIT = 10
 
 
-# For smoothed cER
-def task_calculate_curvatures():
+def task_calculate_cER_curvatures():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature_ria/"
+    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/"
     pixel_size = 1.368
     radius_hit = RADIUS_HIT
     methods = ["VV"]
@@ -21,19 +20,19 @@ def task_calculate_curvatures():
         fold_p = Path(fold)
         # iterate over all subfolders
         for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
-            subfold = str(subfold_p)
             seg_files = list(subfold_p.glob('**/*.mrc'))
             if len(seg_files) > 0:
                 seg_file_p = seg_files[0]
                 seg_file = str(seg_file_p)
                 seg_filename = str(PurePath(seg_file_p).name)
-                tomo = "{}{}{}".format(condition, subfold.split('_')[-2],
-                                       subfold.split('_')[-1])
-                base_filename = "{}_cER".format(tomo)
-                subfold += '/'
+                subfold_name = subfold_p.name
+                date, _, lamella, tomo = subfold_name.split('_')
+                base_filename = "{}{}{}_{}_cER".format(
+                    condition, lamella, tomo, date)
+                subfold = str(subfold_p) + '/'
                 target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                     subfold, base_filename, radius_hit)
-                yield {'name': tomo,
+                yield {'name': base_filename,
                        # 'verbosity': 2,
                        'actions': [
                            (new_workflow,
@@ -59,9 +58,9 @@ def task_calculate_curvatures():
                 print("No segmentation file was found.")
 
 
-def task_extract_curvatures():
+def task_extract_cER_curvatures():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature_ria/"
+    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/"
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
@@ -70,14 +69,14 @@ def task_extract_curvatures():
         fold_p = Path(fold)
         # iterate over all subfolders
         for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
-            subfold = str(subfold_p)
-            tomo = "{}{}{}".format(condition, subfold.split('_')[-2],
-                                   subfold.split('_')[-1])
-            base_filename = "{}_cER".format(tomo)
-            subfold += '/'
+            subfold_name = subfold_p.name
+            date, _, lamella, tomo = subfold_name.split('_')
+            base_filename = "{}{}{}_{}_cER".format(
+                condition, lamella, tomo, date)
+            subfold = str(subfold_p) + '/'
             target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                 subfold, base_filename, radius_hit)
-            yield {'name': tomo,
+            yield {'name': base_filename,
                    # 'verbosity': 2,
                    'actions': [
                        (extract_curvatures_after_new_workflow,
@@ -109,17 +108,16 @@ def task_calculate_distances():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
 
-    for condition in ["TCB", "WT", "IST2", "SCS"]:
+    for condition in ["WT_cut"]:  # "TCB", "WT", "IST2", "SCS"
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
         for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
-            subfold = str(subfold_p)
-            subfold_name = subfold_p.name  # subfold.split('/')[-1]
+            subfold_name = subfold_p.name
             date, _, lamella, tomo = subfold_name.split('_')
             base_filename = "{}_{}_{}_{}".format(
                 condition, date, lamella, tomo)
-            subfold += '/'
+            subfold = str(subfold_p) + '/'
             segmentation_file_p = list(subfold_p.glob('*.mrc'))[0].name
             segmentation_file = str(segmentation_file_p)
             target_base = "{}{}".format(subfold, base_filename)
@@ -140,5 +138,93 @@ def task_calculate_distances():
                    'uptodate': [True]
                    }
 
+
+def task_calculate_PM_curvatures():
+    """
+    Using lower surface and normals calculated by task_calculate_distances.
+    Returns:
+        None
+    """
+    # constant parameters for all conditions and segmentations:
+    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
+    radius_hit = RADIUS_HIT
+
+    for condition in ["TCB", "WT", "IST2", "SCS"]:
+        fold = "{}{}/".format(base_fold, condition)
+        fold_p = Path(fold)
+        # iterate over all subfolders
+        for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
+            subfold_name = subfold_p.name
+            date, _, lamella, tomo = subfold_name.split('_')
+            base_filename = "{}_{}_{}_{}.PM".format(
+                condition, date, lamella, tomo)
+            subfold = str(subfold_p) + '/'
+            gt_file_normals = "{}{}.NVV_rh{}.gt".format(
+                subfold, base_filename, radius_hit)
+            target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
+                subfold, base_filename, radius_hit)
+            yield {'name': base_filename,
+                   # 'verbosity': 2,
+                   'actions': [
+                       (calculate_PM_curvatures,
+                        [subfold, base_filename, radius_hit], {
+                            'cores': 1
+                        })
+                    ],
+                   'file_dep': [gt_file_normals],
+                   'targets': [
+                       "{}.gt".format(target_base),
+                       "{}.vtp".format(target_base)
+                   ],
+                   # force doit to always mark the task as up-to-date
+                   # (unless target removed)
+                   'uptodate': [True]
+                   }
+
+
+def task_extract_PM_curvatures():
+    # constant parameters for all conditions and segmentations:
+    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
+    radius_hit = RADIUS_HIT
+    methods = ["VV"]
+
+    for condition in ["TCB", "WT", "IST2", "SCS"]:
+        fold = "{}{}/".format(base_fold, condition)
+        fold_p = Path(fold)
+        # iterate over all subfolders
+        for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
+            subfold_name = subfold_p.name
+            date, _, lamella, tomo = subfold_name.split('_')
+            base_filename = "{}_{}_{}_{}.PM".format(
+                condition, date, lamella, tomo)
+            subfold = str(subfold_p) + '/'
+            target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
+                subfold, base_filename, radius_hit)
+            yield {'name': base_filename,
+                   # 'verbosity': 2,
+                   'actions': [
+                       (extract_curvatures_after_new_workflow,
+                        [subfold, base_filename, radius_hit], {
+                            'methods': methods,
+                            'exclude_borders': 0
+                        }),
+                       (extract_curvatures_after_new_workflow,
+                        [subfold, base_filename, radius_hit], {
+                            'methods': methods,
+                            'exclude_borders': 1
+                        })
+                    ],
+                   'file_dep': [
+                       "{}.gt".format(target_base),
+                       "{}.vtp".format(target_base)
+                   ],
+                   'targets': [
+                       "{}.csv".format(target_base),
+                       "{}_excluding1borders.csv".format(target_base)
+                   ],
+                   # force doit to always mark the task as up-to-date (unless
+                   # target removed)
+                   'uptodate': [True]
+                   }
 
 # Note: to run one condition only, e.g. TCB: doit *:TCB*

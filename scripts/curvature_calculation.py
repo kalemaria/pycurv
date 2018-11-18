@@ -12,7 +12,7 @@ import vtk  # for Anna's workflow
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
-    TriangleGraph, curvature_estimation)
+    TriangleGraph, preparation_for_curvature_estimation, curvature_estimation)
 from pysurf import pysurf_io as io
 
 """
@@ -266,8 +266,8 @@ def new_workflow(
         b = 0
         if remove_wrong_borders:
             b += MAX_DIST_SURF  # "padding" from masking in surface generation
-        if holes < 0:
-            b += abs(holes)
+        # if holes < 0:
+        #     b += abs(holes)
         if b > 0:
             print('\nFinding triangles that are {} pixels to surface borders...'
                   .format(b))
@@ -299,52 +299,62 @@ def new_workflow(
     print('Surface and graph generation (and cleaning) took: {} min {} s'
           .format(minutes, seconds))
 
-    gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
-        fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
-    surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
-        fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
-    if not isfile(gt_file) or not isfile(surf_file):
-        # Running the modified Normal Vector Voting algorithms:
-        gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
-                fold, base_filename, radius_hit, epsilon, eta)
-        method_tg_surf_dict = {}
-        if not isfile(gt_file1):
-            if runtimes is not None:
-                with open(runtimes, 'w') as f:
-                    f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-                            "duration1;method;duration2\n")
-            method_tg_surf_dict = normals_directions_and_curvature_estimation(
-                tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
-                methods=methods, full_dist_map=False, graph_file=gt_file1,
-                area2=True, only_normals=only_normals, poly_surf=surf_clean,
-                cores=cores, runtimes=runtimes)
-        elif only_normals is False:
-            if runtimes is not None:
-                with open(runtimes, 'w') as f:
-                    f.write("method;duration2\n")
-            for method in methods:
-                tg_curv, surface_curv = curvature_estimation(
-                    radius_hit, exclude_borders=0, graph_file=gt_file1,
-                    method=method, poly_surf=surf_clean, cores=cores,
-                    runtimes=runtimes)
-                method_tg_surf_dict[method] = (tg_curv, surface_curv)
+    # Running the modified Normal Vector Voting algorithms:
+    gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
+            fold, base_filename, radius_hit, epsilon, eta)
+    method_tg_surf_dict = {}
+    if not isfile(gt_file1):
+        if runtimes is not None:
+            with open(runtimes, 'w') as f:
+                f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+                        "duration1;method;duration2\n")
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
+            methods=methods, full_dist_map=False, graph_file=gt_file1,
+            area2=True, only_normals=only_normals, poly_surf=surf_clean,
+            cores=cores, runtimes=runtimes)
+    elif only_normals is False:
+        if runtimes is not None:
+            with open(runtimes, 'w') as f:
+                f.write("method;duration2\n")
+        for method in methods:
+            tg_curv, surface_curv = curvature_estimation(
+                radius_hit, exclude_borders=0, graph_file=gt_file1,
+                method=method, poly_surf=surf_clean, cores=cores,
+                runtimes=runtimes)
+            method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
-        if only_normals is False:
-            for method in method_tg_surf_dict.keys():
-                # Saving the output (graph and surface object) for later
-                # filtering or inspection in ParaView:
-                (tg, surf) = method_tg_surf_dict[method]
-                if method == 'VV':
-                    method = 'VV_area2'
-                gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
-                    fold, base_filename, method, radius_hit, epsilon, eta)
-                tg.graph.save(gt_file)
-                surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
-                    fold, base_filename, method, radius_hit, epsilon, eta)
-                io.save_vtp(surf, surf_file)
-    else:
-        print("\nOutput files {} and {} are already there.".format(
-            gt_file, surf_file))
+    if only_normals is False:
+        for method in method_tg_surf_dict.keys():
+            # Saving the output (graph and surface object) for later
+            # filtering or inspection in ParaView:
+            (tg, surf) = method_tg_surf_dict[method]
+            if method == 'VV':
+                method = 'VV_area2'
+            gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+                fold, base_filename, method, radius_hit, epsilon, eta)
+            tg.graph.save(gt_file)
+            surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+                fold, base_filename, method, radius_hit, epsilon, eta)
+            io.save_vtp(surf, surf_file)
+
+
+def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=4):
+    gt_file_normals = "{}{}.NVV_rh{}.gt".format(fold, base_filename, radius_hit)
+    tg = TriangleGraph()
+    tg.graph = load_graph(gt_file_normals)
+
+    preparation_for_curvature_estimation(tg, graph_file=gt_file_normals)
+
+    tg_curv, surf_curv = curvature_estimation(
+        radius_hit, graph_file=gt_file_normals, method='VV', cores=cores)
+
+    gt_file_curv = "{}{}.VV_area2_rh{}_epsilon0_eta0.gt".format(
+        fold, base_filename, radius_hit)
+    tg_curv.graph.save(gt_file_curv)
+    surf_file_curv = "{}{}.VV_area2_rh{}_epsilon0_eta0.vtp".format(
+        fold, base_filename, radius_hit)
+    io.save_vtp(surf_curv, surf_file_curv)
 
 
 def extract_curvatures_after_new_workflow(
@@ -839,10 +849,17 @@ if __name__ == "__main__":
     # membrane = sys.argv[1]
     # rh = int(sys.argv[2])
     # main_javier(membrane, rh)
-    for n in range(2):
-        extract_curvatures_after_new_workflow(
-            fold="/fs/pool/pool-ruben/Maria/4Javier/new_curvature_ria/TCB/171213_TITAN_l2_t1/",
-            base_filename="TCBl2t1_cER", radius_hit=10, exclude_borders=n)
+    # for t in [4, 7]:
+    #     for n in range(2):
+    #         extract_curvatures_after_new_workflow(
+    #             fold="/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/WT/"
+    #                  "171002_TITAN_l2_t{}/".format(t),
+    #             base_filename="WT_171002_l2_t{}.PM".format(t), radius_hit=10,
+    #             exclude_borders=n)
+    subfold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/WT/" \
+              "171002_TITAN_l2_t2/"
+    base_filename = "WT_171002_l2_t2.PM"
+    calculate_PM_curvatures(subfold, base_filename, radius_hit=10, cores=4)
 
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
     # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh{}.stats'.format(

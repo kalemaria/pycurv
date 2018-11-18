@@ -1033,7 +1033,7 @@ def preparation_for_curvature_estimation(
 
 
 def curvature_estimation(
-        radius_hit, exclude_borders=0, graph_file='temp.gt', method="VV",
+        radius_hit, exclude_borders=0, graph_file='temp.gt', method='VV',
         page_curvature_formula=False, num_points=None, area2=True,
         poly_surf=None, full_dist_map=False, cores=4, runtimes=None):
     """
@@ -1067,7 +1067,7 @@ def curvature_estimation(
             calculated for the whole graph, otherwise a local distance map is
             calculated later for each vertex (default)
         cores (int): number of cores to run VV (collecting_curvature_votes and
-            estimate_curvature) in parallel (default 8)
+            estimate_curvature) in parallel (default 4)
         runtimes (str): if given, runtimes and some parameters are added to
             this file (default None)
 
@@ -1125,7 +1125,7 @@ def curvature_estimation(
     B_v_list = []  # has same length as good_vertices_ind
     for v in tg.graph.vertices():
         if eval(condition1):
-            good_vertices_ind.append(int(v))  # tg.graph.vertex_index[v]
+            good_vertices_ind.append(int(v))
             # Voting and curvature estimation for VCTV:
             if method == "VCTV":  # sequential processing, edits the graph
                 # None is returned if curvature at v cannot be estimated
