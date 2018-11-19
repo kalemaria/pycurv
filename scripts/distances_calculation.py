@@ -301,6 +301,69 @@ def run_calculate_distances_and_thicknesses(
     io.save_vtp(cER_surf_dist, er_surf_outfile)
 
 
+def extract_distances(
+        fold, base_filename, name, exclude_borders=1):
+    """
+    Extracts distances information from a .gt file into a .csv file. By default,
+    values within 1 nm to surface borders are excluded.
+
+    Args:
+        fold (str): path where the input is and where the output will be written
+        base_filename (str): base file name for input and output files
+        name (str): name of the property to extract ('PMdistance' or
+            'cERthickness')
+        exclude_borders (int, optional): if > 0, triangles within this distance
+            from borders in nm and corresponding values will be excluded from
+            the output files (graph .gt, surface.vtp file and .csv)
+
+    Returns:
+        None
+    """
+    # input graph and surface files
+    gt_infile = '{}{}.gt'.format(fold, base_filename)
+    # output csv, gt and vtp files
+    csv_outfile = '{}{}.csv'.format(fold, base_filename)
+    gt_outfile = None
+    vtp_outfile = None
+    if exclude_borders > 0:
+        eb = "_excluding{}borders".format(exclude_borders)
+        gt_outfile = '{}{}{}.gt'.format(fold, base_filename, eb)
+        csv_outfile = '{}{}{}.csv'.format(fold, base_filename, eb)
+        vtp_outfile = '{}{}{}.vtp'.format(fold, base_filename, eb)
+
+    # Create TriangleGraph object and load the graph file
+    tg = TriangleGraph()
+    tg.graph = load_graph(gt_infile)
+
+    _extract_distances_from_graph(
+        tg, csv_outfile, exclude_borders, name, gt_outfile, vtp_outfile)
+
+
+def _extract_distances_from_graph(
+        tg, csv_file, exclude_borders, name, gt_file=None, vtp_file=None):
+    # If don't want to include curvatures near borders, filter out those
+    if exclude_borders > 0:
+        tg.find_vertices_near_border(exclude_borders, purge=True)
+
+    # Saving the changes into graph and surface files, if specified:
+    if gt_file is not None:
+        tg.graph.save(gt_file)
+    if vtp_file is not None:
+        # Transforming the resulting graph to a surface with triangles:
+        surf = tg.graph_to_triangle_poly()
+        io.save_vtp(surf, vtp_file)
+
+    # Getting estimated principal curvatures from the output graph:
+    distances = tg.get_vertex_property_array(name)
+    triangle_areas = tg.get_vertex_property_array("area")
+
+    # Writing all the curvature values and errors into a csv file:
+    df = pd.DataFrame()
+    df[name] = distances
+    df["triangleAreas"] = triangle_areas
+    df.to_csv(csv_file, sep=';')
+
+
 # @click.command()
 # @click.argument('fold', type=str)
 # @click.argument('segmentation_file', type=str)

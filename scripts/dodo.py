@@ -1,7 +1,8 @@
 from pathlib2 import Path, PurePath
 from curvature_calculation import (new_workflow, calculate_PM_curvatures,
                                    extract_curvatures_after_new_workflow)
-from distances_calculation import distances_and_thicknesses_calculation
+from distances_calculation import (distances_and_thicknesses_calculation,
+                                   extract_distances)
 RADIUS_HIT = 10
 
 
@@ -15,7 +16,7 @@ def task_calculate_cER_curvatures():
     holes = 3
     min_component = 100
 
-    for condition in ["TCB", "WT", "IST2", "SCS"]:
+    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2"]:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -27,8 +28,8 @@ def task_calculate_cER_curvatures():
                 seg_filename = str(PurePath(seg_file_p).name)
                 subfold_name = subfold_p.name
                 date, _, lamella, tomo = subfold_name.split('_')
-                base_filename = "{}{}{}_{}_cER".format(
-                    condition, lamella, tomo, date)
+                base_filename = "{}_{}_{}_{}.cER".format(
+                    condition, date, lamella, tomo)
                 subfold = str(subfold_p) + '/'
                 target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                     subfold, base_filename, radius_hit)
@@ -64,15 +65,15 @@ def task_extract_cER_curvatures():
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
-    for condition in ["TCB", "WT", "IST2", "SCS"]:
+    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2"]:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
         for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
             subfold_name = subfold_p.name
             date, _, lamella, tomo = subfold_name.split('_')
-            base_filename = "{}{}{}_{}_cER".format(
-                condition, lamella, tomo, date)
+            base_filename = "{}_{}_{}_{}.cER".format(
+                condition, date, lamella, tomo)
             subfold = str(subfold_p) + '/'
             target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
                 subfold, base_filename, radius_hit)
@@ -107,8 +108,9 @@ def task_extract_cER_curvatures():
 def task_calculate_distances():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
+    radius_hit = RADIUS_HIT
 
-    for condition in ["WT_cut"]:  # "TCB", "WT", "IST2", "SCS"
+    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2"]:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -130,8 +132,57 @@ def task_calculate_distances():
                         })
                     ],
                    'targets': [
+                       "{}.NVV_rh{}.gt".format(target_base, radius_hit),
                        "{}.cER.distancesFromPM.csv".format(target_base),
                        "{}.innercER.thicknesses.csv".format(target_base)
+                   ],
+                   # force doit to always mark the task as up-to-date (unless
+                   # target removed)
+                   'uptodate': [True]
+                   }
+
+
+def task_extract_distances_without_borders():
+    # constant parameters for all conditions and segmentations:
+    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
+
+    for condition in ["TCB", "WT", "IST2", "SCS"]:  # , "dTCB1", "dTCB2"
+        fold = "{}{}/".format(base_fold, condition)
+        fold_p = Path(fold)
+        # iterate over all subfolders
+        for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
+            subfold_name = subfold_p.name
+            date, _, lamella, tomo = subfold_name.split('_')
+            base_filename = "{}_{}_{}_{}".format(
+                condition, date, lamella, tomo)
+            distances_suffix = ".cER.distancesFromPM"
+            thicknesses_suffix = ".innercER.thicknesses"
+            subfold = str(subfold_p) + '/'
+            target_base = "{}{}".format(
+                subfold, base_filename)
+            yield {'name': base_filename,
+                   # 'verbosity': 2,
+                   'actions': [
+                       (extract_distances,
+                        [subfold, base_filename + distances_suffix], {
+                            'name': 'PMdistance',
+                            'exclude_borders': 1
+                        }),
+                       (extract_distances,
+                        [subfold, base_filename + thicknesses_suffix], {
+                            'name': 'cERthickness',
+                            'exclude_borders': 1
+                        })
+                    ],
+                   'file_dep': [
+                       "{}.gt".format(target_base + distances_suffix),
+                       "{}.gt".format(target_base + thicknesses_suffix)
+                   ],
+                   'targets': [
+                       "{}_excluding1borders.csv".format(
+                           target_base + distances_suffix),
+                       "{}_excluding1borders.csv".format(
+                           target_base + thicknesses_suffix)
                    ],
                    # force doit to always mark the task as up-to-date (unless
                    # target removed)
@@ -149,7 +200,7 @@ def task_calculate_PM_curvatures():
     base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
     radius_hit = RADIUS_HIT
 
-    for condition in ["TCB", "WT", "IST2", "SCS"]:
+    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2"]:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -168,7 +219,7 @@ def task_calculate_PM_curvatures():
                    'actions': [
                        (calculate_PM_curvatures,
                         [subfold, base_filename, radius_hit], {
-                            'cores': 1
+                            'cores': 4
                         })
                     ],
                    'file_dep': [gt_file_normals],
@@ -188,7 +239,7 @@ def task_extract_PM_curvatures():
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
-    for condition in ["TCB", "WT", "IST2", "SCS"]:
+    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2"]:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders

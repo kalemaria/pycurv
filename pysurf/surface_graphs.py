@@ -1555,11 +1555,10 @@ class TriangleGraph(SurfaceGraph):
         try:
             assert(sum_w_i > 0)
         except AssertionError:  # can be 0 if no surface patch neighbors exist
-            print("\nWarning: sum of the weights is not positive, but {}, for "
-                  "the vertex v = {}, index = {}".format(sum_w_i, v, int(v)))
+            # print("\nWarning: sum of the weights is not positive, but {}, for "
+            #       "the vertex v = {}, index = {}".format(sum_w_i, v, int(v)))
             print("{} neighbors in a surface patch with weights w_i:".format(
                 len(surface_neighbors_idx)))
-            print(all_w_i)
             print("The vertex will be ignored.")
             return None
 
