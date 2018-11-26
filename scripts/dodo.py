@@ -123,6 +123,8 @@ def task_calculate_distances():
             segmentation_file_p = list(subfold_p.glob('*.mrc'))[0].name
             segmentation_file = str(segmentation_file_p)
             target_base = "{}{}".format(subfold, base_filename)
+            distances_suffix = ".cER.distancesFromPM"
+            thicknesses_suffix = ".innercER.thicknesses"
             yield {'name': base_filename,
                    # 'verbosity': 2,
                    'actions': [
@@ -133,8 +135,10 @@ def task_calculate_distances():
                     ],
                    'targets': [
                        "{}.PM.NVV_rh{}.gt".format(target_base, radius_hit),
-                       "{}.cER.distancesFromPM.csv".format(target_base),
-                       "{}.innercER.thicknesses.csv".format(target_base)
+                       "{}{}.gt".format(target_base, distances_suffix),
+                       "{}{}.gt".format(target_base, thicknesses_suffix),
+                       "{}{}.csv".format(target_base, distances_suffix),
+                       "{}{}.csv".format(target_base, thicknesses_suffix)
                    ],
                    # force doit to always mark the task as up-to-date (unless
                    # target removed)
@@ -173,10 +177,10 @@ def task_extract_distances_without_borders():
                             'name': 'cERthickness',
                             'exclude_borders': 1
                         })
-                    ],
+                   ],
                    'file_dep': [
-                       "{}.gt".format(target_base + distances_suffix),
-                       "{}.gt".format(target_base + thicknesses_suffix)
+                       "{}{}.gt".format(target_base, distances_suffix),
+                       "{}{}.gt".format(target_base, thicknesses_suffix)
                    ],
                    'targets': [
                        "{}_excluding1borders.csv".format(
