@@ -6,8 +6,7 @@ import click
 import sys
 
 from pysurf import (pysurf_io as io, TriangleGraph, calculate_distances,
-                    calculate_distances_and_thicknesses, calculate_thicknesses,
-                    normals_estimation)
+                    calculate_thicknesses, normals_estimation)
 
 
 __author__ = 'kalemanov'
@@ -269,56 +268,6 @@ def run_calculate_thicknesses(
     io.save_vtp(mem2_surf_thick, mem2_surf_outfile)
 
 
-def run_calculate_distances_and_thicknesses(
-        pm_graph_file, er_surf_file, er_graph_file, er_surf_outfile,
-        er_graph_outfile, distances_outfile, maxdist, maxthick, verbose=False):
-    """
-    A script running calculate_distances_and_thicknesses with graphs and surface
-    loaded from files, transforming the resulting graph to a surface with
-    triangles and saving the resulting graph and surface into files.
-
-    Args:
-        pm_graph_file (str): .gt input file with the PM TriangleGraph with
-            corrected normals
-        er_surf_file (str): .vtp input file with the cER vtkPolyData surface
-        er_graph_file (str): .gt input file with the cER TriangleGraph
-        er_surf_outfile (str): .vtp output file for the cER vtkPolyData surface
-        er_graph_outfile (str): .gt output file for the cER TriangleGraph
-        distances_outfile (str): .csv output file for the two distances lists
-        maxdist (float): maximal distance (nm) from PM to first cER membrane
-        maxthick (float): maximal distance (nm) from first to second cER
-            membrane
-        verbose (boolean, optional): if True (default False), some extra
-            information will be printed out
-
-    Returns:
-        None
-    """
-    # Load the input files:
-    tg_PM = TriangleGraph()
-    tg_PM.graph = load_graph(pm_graph_file)
-    poly_cER = io.load_poly(er_surf_file)
-    tg_cER = TriangleGraph()
-    tg_cER.graph = load_graph(er_graph_file)
-
-    # Calculate distances:
-    d1s, d2s = calculate_distances_and_thicknesses(
-        tg_PM, tg_cER, poly_cER, maxdist, maxthick, verbose)
-    print("{} d1s".format(len(d1s)))
-    print("{} d2s".format(len(d2s)))
-    # Save the distances into distances_outfile:
-    df = pd.DataFrame()
-    df["d1"] = d1s
-    df["d2"] = d2s
-    df.to_csv(distances_outfile, sep=';')
-
-    # Transform the resulting graph to a surface with triangles:
-    cER_surf_dist = tg_cER.graph_to_triangle_poly()
-    # Save the resulting graph and surface into files:
-    tg_cER.graph.save(er_graph_outfile)
-    io.save_vtp(cER_surf_dist, er_surf_outfile)
-
-
 def extract_distances(
         fold, base_filename, name, exclude_borders=1):
     """
@@ -494,56 +443,10 @@ def distances_and_thicknesses_calculation(
         both_directions, reverse_direction)
 
 
-def main_distances_and_thickness():
-    # Input parameters:
-    rh = 10
-    pixel_size_nm = 1.368
-    maxdist_nm = 80
-    maxthick_nm = 80
-    base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
-    # The "famous" tcb (done cER RH=6 and 10 + PM RH=6):
-    # fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
-    # base_filename = "t3_ny01_cropped_"
-    # rh = 6
-    # The new tcb (done cropped cER and PM with RH=15):
-    # tomo = "tcb_170924_l2_t2_ny01"
-    # fold = "{}{}/".format(base_fold, tomo)
-    # base_filename = "{}_cropped_".format(tomo)
-    fold = "{}TCB/170924_TITAN_l1_t1/".format(base_fold)
-    base_filename = "TCBl1t1_"
-    # The good scs (done cER and PM with RH=15):
-    # tomo = "scs_171108_l1_t2_ny01"
-    # fold = "{}{}/".format(base_fold, tomo)
-    # base_filename = "{}_".format(tomo)
-
-    # should exist:
-    # File with scaled PM graph with corrected normals:
-    PM_graph_file = "{}{}PM.NVV_rh{}_epsilon0_eta0.gt".format(
-        fold, base_filename, rh)
-    # Files with scaled cER surface and graph, after curvature calculation:
-    cER_surf_file = "{}{}cER.VV_area2_rh{}_epsilon0_eta0.vtp".format(
-        fold, base_filename, rh)
-    cER_graph_file = "{}{}cER.VV_area2_rh{}_epsilon0_eta0.gt".format(
-        fold, base_filename, rh)
-    # will be generated:
-    cER_surf_outfile = "{}.PMdist_maxdist{}_maxthick{}.vtp".format(
-        cER_surf_file[0:-4], maxdist_nm, maxthick_nm)
-    cER_graph_outfile = "{}.PMdist_maxdist{}_maxthick{}.gt".format(
-        cER_graph_file[0:-3], maxdist_nm, maxthick_nm)
-    distances_outfile = "{}.PMdist_maxdist{}_maxthick{}.csv".format(
-        cER_surf_file[0:-4], maxdist_nm, maxthick_nm)
-
-    run_calculate_distances_and_thicknesses(
-        PM_graph_file, cER_surf_file, cER_graph_file, cER_surf_outfile,
-        cER_graph_outfile, distances_outfile, maxdist_nm, maxthick_nm,
-        verbose=False)
-
-
 if __name__ == "__main__":
     t_begin = time.time()
 
     distances_and_thicknesses_calculation()
-    # main_distances_and_thickness()
 
     t_end = time.time()
     duration = t_end - t_begin
