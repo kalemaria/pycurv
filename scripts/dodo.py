@@ -372,4 +372,82 @@ def task_extract_MitoER_distances_without_borders():
                'uptodate': [True]
                }
 
+
+def task_calculate_VacNuc_distances():
+    # constant parameters for all conditions and segmentations:
+    fold = "/fs/pool/pool-ruben/Maria/4Javier/Vac-Nuc/"
+    radius_hit = RADIUS_HIT
+    mem1 = "Vac"
+    mem2 = "Nuc"
+
+    fold_p = Path(fold)
+    # iterate over all subfolders
+    for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
+        subfold_name = subfold_p.name
+        date, _, lamella, tomo = subfold_name.split('_')
+        base_filename = "{}_{}_{}".format(date, lamella, tomo)
+        subfold = str(subfold_p) + '/'
+        segmentation_file_p = list(subfold_p.glob('*.mrc'))[0].name
+        segmentation_file = str(segmentation_file_p)
+        target_base = "{}{}".format(subfold, base_filename)
+        distances_suffix = ".{}.distancesFrom{}".format(mem2, mem1)
+        yield {'name': base_filename,
+               # 'verbosity': 2,
+               'actions': [
+                   (distances_and_thicknesses_calculation,
+                    [subfold, segmentation_file, base_filename], {
+                        'radius_hit': RADIUS_HIT,
+                        'mem1': mem1,
+                        'mem2': mem2,
+                        'lbl_between_mem1_mem2': 3,
+                        'maxthick_nm': 0
+                    })
+                ],
+               'targets': [
+                   "{}.{}.NVV_rh{}.gt".format(target_base, mem1, radius_hit),
+                   "{}{}.gt".format(target_base, distances_suffix),
+                   "{}{}.csv".format(target_base, distances_suffix),
+               ],
+               # force doit to always mark the task as up-to-date (unless
+               # target removed)
+               'uptodate': [True]
+               }
+
+
+def task_extract_VacNuc_distances_without_borders():
+    # constant parameters for all conditions and segmentations:
+    fold = "/fs/pool/pool-ruben/Maria/4Javier/Vac-Nuc/"
+    mem1 = "Vac"
+    mem2 = "Nuc"
+
+    fold_p = Path(fold)
+    # iterate over all subfolders
+    for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
+        subfold_name = subfold_p.name
+        date, _, lamella, tomo = subfold_name.split('_')
+        base_filename = "{}_{}_{}".format(date, lamella, tomo)
+        distances_suffix = ".{}.distancesFrom{}".format(mem2, mem1)
+        subfold = str(subfold_p) + '/'
+        target_base = "{}{}".format(subfold, base_filename)
+        yield {'name': base_filename,
+               # 'verbosity': 2,
+               'actions': [
+                   (extract_distances,
+                    [subfold, base_filename + distances_suffix], {
+                        'name': '{}distance'.format(mem1),
+                        'exclude_borders': 1
+                    }),
+               ],
+               'file_dep': [
+                   "{}{}.gt".format(target_base, distances_suffix),
+               ],
+               'targets': [
+                   "{}_excluding1borders.csv".format(
+                       target_base + distances_suffix),
+               ],
+               # force doit to always mark the task as up-to-date (unless
+               # target removed)
+               'uptodate': [True]
+               }
+
 # Note: to run one condition only, e.g. TCB: doit *:TCB*

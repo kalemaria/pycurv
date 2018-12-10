@@ -353,7 +353,8 @@ def _extract_distances_from_graph(
 # @click.option('-maxthick_nm', type=float, default=80,
 #               help="maximal distance between the two sides of the second "
 #                    "membrane in nm, should be bigger than the largest possible "
-#                    "distance, for the algorithm to stop searching (default=80)")
+#                    "distance, for the algorithm to stop searching (default=80, "
+#                    "if <=0 thicknesses will not be calculated)")
 # @click.option('-offset_voxels', type=int, default=1,
 #               help="offset in voxels, will be added to the distances, "
 #                    "(default=1, because surfaces are generated 1/2 voxel off "
@@ -398,14 +399,6 @@ def distances_and_thicknesses_calculation(
         fold, base_filename, mem2, mem1)
     distances_outfile = '{}{}.{}.distancesFrom{}.csv'.format(
         fold, base_filename, mem2, mem1)
-    inner_mem2_surf_file = '{}{}.inner{}.vtp'.format(fold, base_filename, mem2)
-    inner_mem2_graph_file = '{}{}.inner{}.gt'.format(fold, base_filename, mem2)
-    inner_mem2_thick_surf_file = '{}{}.inner{}.thicknesses.vtp'.format(
-        fold, base_filename, mem2)
-    inner_mem2_thick_graph_file = '{}{}.inner{}.thicknesses.gt'.format(
-        fold, base_filename, mem2)
-    thicknesses_outfile = '{}{}.inner{}.thicknesses.csv'.format(
-        fold, base_filename, mem2)
 
     if (not isfile(mem1_surf_file) or not isfile(mem1_graph_file) or not
             isfile(mem2_surf_file) or not isfile(mem2_graph_file)):
@@ -429,17 +422,28 @@ def distances_and_thicknesses_calculation(
         mem1_normals_graph_file, mem2_surf_file, mem2_graph_file,
         mem2_dist_surf_file, mem2_dist_graph_file, distances_outfile,
         maxdist_nm, offset_nm, both_directions, reverse_direction, mem1)
-    if not isfile(inner_mem2_surf_file) or not isfile(inner_mem2_graph_file):
-        print('Generating inner {} graphs and surface files'.format(mem2))
-        generate_mem_lumen_graph_and_surface(
-            segmentation_file, pixel_size_nm, inner_mem2_surf_file,
-            inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen, mem2)
-    print('Calculating and saving {} thicknesses'.format(mem2))
-    run_calculate_thicknesses(
-        mem1_normals_graph_file, inner_mem2_surf_file, inner_mem2_graph_file,
-        inner_mem2_thick_surf_file, inner_mem2_thick_graph_file,
-        thicknesses_outfile, maxdist_nm, maxthick_nm, offset_nm,
-        both_directions, reverse_direction, mem2)
+    if maxthick_nm > 0:
+        inner_mem2_surf_file = '{}{}.inner{}.vtp'.format(fold, base_filename,
+                                                         mem2)
+        inner_mem2_graph_file = '{}{}.inner{}.gt'.format(fold, base_filename,
+                                                         mem2)
+        inner_mem2_thick_surf_file = '{}{}.inner{}.thicknesses.vtp'.format(
+            fold, base_filename, mem2)
+        inner_mem2_thick_graph_file = '{}{}.inner{}.thicknesses.gt'.format(
+            fold, base_filename, mem2)
+        thicknesses_outfile = '{}{}.inner{}.thicknesses.csv'.format(
+            fold, base_filename, mem2)
+        if not isfile(inner_mem2_surf_file) or not isfile(inner_mem2_graph_file):
+            print('Generating inner {} graphs and surface files'.format(mem2))
+            generate_mem_lumen_graph_and_surface(
+                segmentation_file, pixel_size_nm, inner_mem2_surf_file,
+                inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen, mem2)
+        print('Calculating and saving {} thicknesses'.format(mem2))
+        run_calculate_thicknesses(
+            mem1_normals_graph_file, inner_mem2_surf_file, inner_mem2_graph_file,
+            inner_mem2_thick_surf_file, inner_mem2_thick_graph_file,
+            thicknesses_outfile, maxdist_nm, maxthick_nm, offset_nm,
+            both_directions, reverse_direction, mem2)
 
 
 if __name__ == "__main__":
