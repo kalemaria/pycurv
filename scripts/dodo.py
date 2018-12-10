@@ -4,6 +4,8 @@ from curvature_calculation import (new_workflow, calculate_PM_curvatures,
 from distances_calculation import (distances_and_thicknesses_calculation,
                                    extract_distances)
 RADIUS_HIT = 10
+CONDITIONS = ["WT", "IST2", "SCS", "TCB", "dTCB1", "dTCB2", "dTCB3",
+              "dTCB1_dTCB2"]
 
 
 def task_calculate_cER_curvatures():
@@ -16,7 +18,7 @@ def task_calculate_cER_curvatures():
     holes = 3
     min_component = 100
 
-    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2", "dTCB3"]:
+    for condition in CONDITIONS:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -65,7 +67,7 @@ def task_extract_cER_curvatures():
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
-    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2", "dTCB3"]:
+    for condition in CONDITIONS:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -110,7 +112,7 @@ def task_calculate_distances():
     base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
     radius_hit = RADIUS_HIT
 
-    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2", "dTCB3"]:
+    for condition in CONDITIONS:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -150,7 +152,7 @@ def task_extract_distances_without_borders():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
 
-    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2", "dTCB3"]:
+    for condition in CONDITIONS:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -204,7 +206,7 @@ def task_calculate_PM_curvatures():
     base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
     radius_hit = RADIUS_HIT
 
-    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2", "dTCB3"]:
+    for condition in CONDITIONS:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
@@ -243,7 +245,7 @@ def task_extract_PM_curvatures():
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
-    for condition in ["TCB", "WT", "IST2", "SCS", "dTCB1", "dTCB2", "dTCB3"]:
+    for condition in CONDITIONS:
         fold = "{}{}/".format(base_fold, condition)
         fold_p = Path(fold)
         # iterate over all subfolders
