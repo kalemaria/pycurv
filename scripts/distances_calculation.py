@@ -277,7 +277,7 @@ def extract_distances(
     Args:
         fold (str): path where the input is and where the output will be written
         base_filename (str): base file name for input and output files
-        name (str): name of the property to extract ('PMdistance' or
+        name (str): name of the property to extract (e.g., 'PMdistance' or
             'cERthickness')
         exclude_borders (int, optional): if > 0, triangles within this distance
             from borders in nm and corresponding values will be excluded from
