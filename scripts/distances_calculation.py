@@ -24,27 +24,29 @@ values 1 at the boundary with 0's become this value.
 """
 
 
-def generate_pm_er_graphs_and_surface(
-        segmentation_mrc_file, scale_factor_to_nm,
-        pm_graph_outfile, er_surf_outfile, er_graph_outfile,
-        pm_surf_outfile=None, lbl_pm=1, lbl_er=2, lbl_between_pm_er=4):
+def generate_mem1_mem2_graphs_and_surface(
+        segmentation_mrc_file, scale_factor_to_nm, mem1_graph_outfile,
+        mem2_surf_outfile, mem2_graph_outfile, mem1_surf_outfile=None,
+        lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, mem1="PM", mem2="cER"):
     """
-    Extracts PM and cER membrane surfaces from a segmentations with labels for
+    Extracts two membrane surfaces from a segmentations with labels for
     both membranes and a space between them.
 
     Args:
         segmentation_mrc_file (string): segmentation '.mrc' file path
         scale_factor_to_nm (float): pixel size in nanometers for scaling the
             surface and the graph
-        pm_graph_outfile (string): PM graph '.gt' output file
-        er_surf_outfile (string): cER surface '.vtp' output file
-        er_graph_outfile (string): cER graph '.gt' output file
-        pm_surf_outfile (string, optional): PM surface '.vtp' output file,
+        mem1_graph_outfile (string): first surface graph '.gt' output file
+        mem2_surf_outfile (string): second surface '.vtp' output file
+        mem2_graph_outfile (string): second surface graph '.gt' output file
+        mem1_surf_outfile (string, optional): first surface '.vtp' output file,
             if None (default) not generated
-        lbl_pm (int, optional): label of PM membrane (default 1)
-        lbl_er (int, optional): label of cER membrane (default 2)
-        lbl_between_pm_er (int, optional): label of inter-membrane space
+        lbl_mem1 (int, optional): label of first membrane (default 1)
+        lbl_mem2 (int, optional): label of second membrane (default 2)
+        lbl_between_mem1_mem2 (int, optional): label of inter-membrane space
             (default 4)
+        mem1 (str, optional): name of the first membrane (default "PM")
+        mem2 (str, optional): name of the second membrane (default "cER")
 
     Returns:
         None
@@ -52,115 +54,125 @@ def generate_pm_er_graphs_and_surface(
     # Extract the three masks:
     segmentation = io.load_tomo(segmentation_mrc_file)
     # Generate isosurface around the mask in between the membranes,
-    # first applying the PM mask:
-    pm_surface = io.gen_isosurface(segmentation, lbl_between_pm_er, mask=lbl_pm,
-                                   sg=1, thr=THRESH_SIGMA1)
-    # second applying the cER mask:
-    er_surface = io.gen_isosurface(segmentation, lbl_between_pm_er, mask=lbl_er,
-                                   sg=1, thr=THRESH_SIGMA1)
+    # first applying the first membrane mask:
+    mem1_surface = io.gen_isosurface(
+        segmentation, lbl_between_mem1_mem2, mask=lbl_mem1, sg=1,
+        thr=THRESH_SIGMA1)
+    # second applying the second membrane mask:
+    mem2_surface = io.gen_isosurface(
+        segmentation, lbl_between_mem1_mem2, mask=lbl_mem2, sg=1,
+        thr=THRESH_SIGMA1)
     # Generate graphs and remove 3 pixels from borders:
-    pm_tg = TriangleGraph()
-    pm_tg.build_graph_from_vtk_surface(pm_surface, scale_factor_to_nm)
-    print('The raw PM graph has {} vertices and {} edges'.format(
-            pm_tg.graph.num_vertices(), pm_tg.graph.num_edges()))
-    pm_tg.find_vertices_near_border(MAX_DIST_SURF * scale_factor_to_nm,
-                                    purge=True)
-    print('The cleaned PM graph has {} vertices and {} edges'.format(
-            pm_tg.graph.num_vertices(), pm_tg.graph.num_edges()))
-    if pm_tg.graph.num_vertices() == 0:
+    mem1_tg = TriangleGraph()
+    mem1_tg.build_graph_from_vtk_surface(mem1_surface, scale_factor_to_nm)
+    print('The raw {} graph has {} vertices and {} edges'.format(
+            mem1, mem1_tg.graph.num_vertices(), mem1_tg.graph.num_edges()))
+    mem1_tg.find_vertices_near_border(
+        MAX_DIST_SURF * scale_factor_to_nm, purge=True)
+    print('The cleaned {} graph has {} vertices and {} edges'.format(
+            mem1, mem1_tg.graph.num_vertices(), mem1_tg.graph.num_edges()))
+    if mem1_tg.graph.num_vertices() == 0:
         raise IOError("Graph does not have vertices")
 
-    er_tg = TriangleGraph()
-    er_tg.build_graph_from_vtk_surface(er_surface, scale_factor_to_nm)
-    print('The raw cER graph has {} vertices and {} edges'.format(
-            er_tg.graph.num_vertices(), er_tg.graph.num_edges()))
-    er_tg.find_vertices_near_border(MAX_DIST_SURF * scale_factor_to_nm,
-                                    purge=True)
-    print('The cleaned cER graph has {} vertices and {} edges'.format(
-            er_tg.graph.num_vertices(), er_tg.graph.num_edges()))
-    if er_tg.graph.num_vertices() == 0:
+    mem2_tg = TriangleGraph()
+    mem2_tg.build_graph_from_vtk_surface(mem2_surface, scale_factor_to_nm)
+    print('The raw {} graph has {} vertices and {} edges'.format(
+            mem2, mem2_tg.graph.num_vertices(), mem2_tg.graph.num_edges()))
+    mem2_tg.find_vertices_near_border(
+        MAX_DIST_SURF * scale_factor_to_nm, purge=True)
+    print('The cleaned {} graph has {} vertices and {} edges'.format(
+            mem2, mem2_tg.graph.num_vertices(), mem2_tg.graph.num_edges()))
+    if mem2_tg.graph.num_vertices() == 0:
         raise IOError("Graph does not have vertices")
 
-    # Save final PM and cER graphs as .gt and PM and cER surface as .vtp files:
-    pm_tg.graph.save(pm_graph_outfile)
-    er_tg.graph.save(er_graph_outfile)
-    if pm_surf_outfile is not None:
-        pm_surf_clean = pm_tg.graph_to_triangle_poly()
-        io.save_vtp(pm_surf_clean, pm_surf_outfile)
-    er_surf_clean = er_tg.graph_to_triangle_poly()
-    io.save_vtp(er_surf_clean, er_surf_outfile)
+    # Save final graphs as .gt and surfaces as .vtp files:
+    mem1_tg.graph.save(mem1_graph_outfile)
+    mem2_tg.graph.save(mem2_graph_outfile)
+    if mem1_surf_outfile is not None:
+        mem1_surf_clean = mem1_tg.graph_to_triangle_poly()
+        io.save_vtp(mem1_surf_clean, mem1_surf_outfile)
+    mem2_surf_clean = mem2_tg.graph_to_triangle_poly()
+    io.save_vtp(mem2_surf_clean, mem2_surf_outfile)
 
 
-def generate_er_lumen_graph_and_surface(
-        segmentation_mrc_file, scale_factor_to_nm,
-        er_surf_outfile, er_graph_outfile, lbl_er=2, lbl_er_lumen=3):
+def generate_mem_lumen_graph_and_surface(
+        segmentation_mrc_file, scale_factor_to_nm, mem_surf_outfile,
+        mem_graph_outfile, lbl_mem=2, lbl_mem_lumen=3, mem="cER"):
     """
-    Extracts inner cER membrane surface from a segmentation with labels for
-    cER membrane and its lumen.
+    Extracts inner membrane surface from a segmentation with labels for
+    the membrane and its lumen.
 
     Args:
         segmentation_mrc_file (string): segmentation '.mrc' file path
         scale_factor_to_nm (float): pixel size in nanometers for scaling the
             surface and the graph
-        er_surf_outfile (string): cER surface '.vtp' output file
-        er_graph_outfile (string): cER graph '.gt' output file
-        lbl_er (int, optional): label of cER membrane (default 2)
-        lbl_er_lumen (int, optional): label of cER lumen (default=3)
+        mem_surf_outfile (string): membrane surface '.vtp' output file
+        mem_graph_outfile (string): membrane graph '.gt' output file
+        lbl_mem (int, optional): label of the membrane (default 2)
+        lbl_mem_lumen (int, optional): label of the membrane lumen (default=3)
+        mem (str, optional): name of the first membrane (default "cER")
 
     Returns:
         None
     """
     # Extract the three masks:
     segmentation = io.load_tomo(segmentation_mrc_file)
-    # Generate isosurface around the mask of cER lumen:
-    er_surface = io.gen_isosurface(segmentation, lbl_er_lumen, mask=lbl_er,
-                                   sg=1, thr=THRESH_SIGMA1)
-    # Generate cER graph and remove 3 pixels from borders:
-    er_tg = TriangleGraph()
-    er_tg.build_graph_from_vtk_surface(er_surface, scale_factor_to_nm)
-    print('The raw cER graph has {} vertices and {} edges'.format(
-            er_tg.graph.num_vertices(), er_tg.graph.num_edges()))
-    er_tg.find_vertices_near_border(MAX_DIST_SURF * scale_factor_to_nm,
-                                    purge=True)
-    print('The cleaned cER graph has {} vertices and {} edges'.format(
-            er_tg.graph.num_vertices(), er_tg.graph.num_edges()))
-    if er_tg.graph.num_vertices() == 0:
+    # Generate isosurface around the mask of membrane lumen:
+    mem_surface = io.gen_isosurface(
+        segmentation, lbl_mem_lumen, mask=lbl_mem, sg=1, thr=THRESH_SIGMA1)
+    # Generate graph and remove 3 pixels from borders:
+    mem_tg = TriangleGraph()
+    mem_tg.build_graph_from_vtk_surface(mem_surface, scale_factor_to_nm)
+    print('The raw {} graph has {} vertices and {} edges'.format(
+            mem, mem_tg.graph.num_vertices(), mem_tg.graph.num_edges()))
+    mem_tg.find_vertices_near_border(
+        MAX_DIST_SURF * scale_factor_to_nm, purge=True)
+    print('The cleaned {} graph has {} vertices and {} edges'.format(
+            mem, mem_tg.graph.num_vertices(), mem_tg.graph.num_edges()))
+    if mem_tg.graph.num_vertices() == 0:
         raise IOError("Graph does not have vertices")
 
-    # Save final cER graph as .gt and cER surface as .vtp files:
-    er_tg.graph.save(er_graph_outfile)
-    er_surf_clean = er_tg.graph_to_triangle_poly()
-    io.save_vtp(er_surf_clean, er_surf_outfile)
+    # Save final graph as .gt and surface as .vtp files:
+    mem_tg.graph.save(mem_graph_outfile)
+    mem_surf_clean = mem_tg.graph_to_triangle_poly()
+    io.save_vtp(mem_surf_clean, mem_surf_outfile)
 
 
 def run_calculate_distances(
-        pm_graph_file, er_surf_file, er_graph_file, er_surf_outfile,
-        er_graph_outfile, distances_outfile, maxdist, offset=0,
-        both_directions=True, reverse_direction=False, verbose=False):
+        mem1_graph_file, mem2_surf_file, mem2_graph_file, mem2_surf_outfile,
+        mem2_graph_outfile, distances_outfile, maxdist, offset=0,
+        both_directions=True, reverse_direction=False, mem1="PM", mem2="cER",
+        verbose=False):
     """
     A script running calculate_distances with graphs and surface loaded from
     files, transforming the resulting graph to a surface with triangles and
     saving the resulting graph and surface into files.
 
     Args:
-        pm_graph_file (str): .gt input file with the PM TriangleGraph with
-            corrected normals
-        er_surf_file (str): .vtp input file with the cER vtkPolyData surface
-        er_graph_file (str): .gt input file with the cER TriangleGraph
-        er_surf_outfile (str): .vtp output file for the cER vtkPolyData surface
-            with distances
-        er_graph_outfile (str): .gt output file for the cER TriangleGraph with
-            distances
+        mem1_graph_file (str): .gt input file with the first membrane's
+            TriangleGraph with corrected normals
+        mem2_surf_file (str): .vtp input file with the second membrane's
+            vtkPolyData surface
+        mem2_graph_file (str): .gt input file with the second membrane's
+            TriangleGraph
+        mem2_surf_outfile (str): .vtp output file for the second membrane's
+            vtkPolyData surface with distances
+        mem2_graph_outfile (str): .gt output file for the second membrane's
+            TriangleGraph with distances
         distances_outfile (str): .csv output file for the distances list
-        maxdist (float): maximal distance (nm) from PM to the cER membrane
+        maxdist (float): maximal distance (nm) from the first to the second
+            membrane
         offset (float, optional): positive or negative offset (nm, default 0)
             to add to the distances, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
         both_directions (boolean, optional): if True, look in both directions of
-            each PM normal (default), otherwise only in the normal direction
+            each first membrane's normal (default), otherwise only in the normal
+            direction
         reverse_direction (boolean, optional): if True, look in opposite
-            direction of each PM normals (default=False; if both_directions
-            True, will look in both directions)
+            direction of each first membrane's normals (default=False;
+            if both_directions True, will look in both directions)
+        mem1 (str, optional): name of the first membrane (default "PM")
+        mem2 (str, optional): name of the second membrane (default "cER")
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -168,15 +180,16 @@ def run_calculate_distances(
         None
     """
     # Load the input files:
-    tg_PM = TriangleGraph()
-    tg_PM.graph = load_graph(pm_graph_file)
-    poly_cER = io.load_poly(er_surf_file)
-    tg_cER = TriangleGraph()
-    tg_cER.graph = load_graph(er_graph_file)
+    tg_mem1 = TriangleGraph()
+    tg_mem1.graph = load_graph(mem1_graph_file)
+    surf_mem2 = io.load_poly(mem2_surf_file)
+    tg_mem2 = TriangleGraph()
+    tg_mem2.graph = load_graph(mem2_graph_file)
 
     # Calculate distances:
-    d1s = calculate_distances(tg_PM, tg_cER, poly_cER, maxdist, offset,
-                              both_directions, reverse_direction, verbose)
+    d1s = calculate_distances(
+        tg_mem1, tg_mem2, surf_mem2, maxdist, offset, both_directions,
+        reverse_direction, mem1, verbose)
     print("{} d1s".format(len(d1s)))
     # Save the distances into distances_outfile:
     df = pd.DataFrame()
@@ -184,43 +197,48 @@ def run_calculate_distances(
     df.to_csv(distances_outfile, sep=';')
 
     # Transform the modified graph to a surface with triangles:
-    cER_surf_dist = tg_cER.graph_to_triangle_poly()
+    mem2_surf_dist = tg_mem2.graph_to_triangle_poly()
     # Save the modified graph and surface into files:
-    tg_cER.graph.save(er_graph_outfile)
-    io.save_vtp(cER_surf_dist, er_surf_outfile)
+    tg_mem2.graph.save(mem2_graph_outfile)
+    io.save_vtp(mem2_surf_dist, mem2_surf_outfile)
 
 
 def run_calculate_thicknesses(
-        pm_graph_file, er_surf_file, er_graph_file,
-        er_surf_outfile, er_graph_outfile, thicknesses_outfile,
+        mem1_graph_file, mem2_surf_file, mem2_graph_file,
+        mem2_surf_outfile, mem2_graph_outfile, thicknesses_outfile,
         maxdist, maxthick, offset=0.0, both_directions=True,
-        reverse_direction=False, verbose=False):
+        reverse_direction=False, mem1="PM", mem2="cER", verbose=False):
     """
     A script running calculate_thicknesses with graphs and surface loaded from
     files, transforming the resulting graph to a surface with triangles and
     saving the resulting graph and surface into files.
 
     Args:
-        pm_graph_file (str): .gt input file with the PM TriangleGraph with
-            corrected normals
-        er_surf_file (str): .vtp input file with the cER vtkPolyData surface
-        er_graph_file (str): .gt input file with the  cER TriangleGraph
-        er_surf_outfile: .vtp output file with the cER vtkPolyData surface
-            with thicknesses
-        er_graph_outfile: .gt output file with the cER TriangleGraph with
-            thicknesses
+        mem1_graph_file (str): .gt input file with the first membrane's
+            TriangleGraph with corrected normals
+        mem2_surf_file (str): .vtp input file with the the second membrane's
+        vtkPolyData surface
+        mem2_graph_file (str): .gt input file with the  the second membrane's
+            TriangleGraph
+        mem2_surf_outfile: .vtp output file with the the second membrane's
+            vtkPolyData surface with thicknesses
+        mem2_graph_outfile: .gt output file with the the second membrane's
+            TriangleGraph with thicknesses
         thicknesses_outfile: .csv output file for the thicknesses list
-        maxdist (float): maximal distance (nm) from PM to the cER membrane
-        maxthick (float): maximal distance (nm) from first to second cER
+        maxdist (float): maximal distance (nm) from the first to the second
             membrane
+        maxthick (float): maximal thickness (nm) of the second organelle
         offset (float, optional): positive or negative offset (nm, default 0)
             to add to the distances, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
         both_directions (boolean, optional): if True, look in both directions of
-            each PM normal (default), otherwise only in the normal direction
+            each first membrane's normal (default), otherwise only in the normal
+            direction
         reverse_direction (boolean, optional): if True, look in opposite
-            direction of each PM normals (default=False; if both_directions
-            True, will look in both directions)
+            direction of each first membrane's normals (default=False;
+            if both_directions True, will look in both directions)
+        mem1 (str, optional): name of the first membrane (default "PM")
+        mem2 (str, optional): name of the second membrane (default "cER")
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -228,16 +246,16 @@ def run_calculate_thicknesses(
         None
     """
     # Load the input files:
-    tg_PM = TriangleGraph()
-    tg_PM.graph = load_graph(pm_graph_file)
-    poly_cER = io.load_poly(er_surf_file)
-    tg_cER = TriangleGraph()
-    tg_cER.graph = load_graph(er_graph_file)
+    tg_mem1 = TriangleGraph()
+    tg_mem1.graph = load_graph(mem1_graph_file)
+    surf_mem2 = io.load_poly(mem2_surf_file)
+    tg_mem2 = TriangleGraph()
+    tg_mem2.graph = load_graph(mem2_graph_file)
 
     # Calculate distances:
     d2s = calculate_thicknesses(
-        tg_PM, tg_cER, poly_cER, maxdist, maxthick, offset,
-        both_directions, reverse_direction, verbose)
+        tg_mem1, tg_mem2, surf_mem2, maxdist, maxthick, offset,
+        both_directions, reverse_direction, mem2, verbose)
     print("{} d2s".format(len(d2s)))
     # Save the distances into distances_outfile:
     df = pd.DataFrame()
@@ -245,10 +263,10 @@ def run_calculate_thicknesses(
     df.to_csv(thicknesses_outfile, sep=';')
 
     # Transform the modified graph to a surface with triangles:
-    poly_cER_thick = tg_cER.graph_to_triangle_poly()
+    mem2_surf_thick = tg_mem2.graph_to_triangle_poly()
     # Save the modified graph and surface into files:
-    tg_cER.graph.save(er_graph_outfile)
-    io.save_vtp(poly_cER_thick, er_surf_outfile)
+    tg_mem2.graph.save(mem2_graph_outfile)
+    io.save_vtp(mem2_surf_thick, mem2_surf_outfile)
 
 
 def run_calculate_distances_and_thicknesses(
@@ -403,11 +421,13 @@ def _extract_distances_from_graph(
 #                    "directions)")
 def distances_and_thicknesses_calculation(
         fold, segmentation_file, base_filename,
-        lbl_pm=1, lbl_er=2, lbl_between_pm_er=4, lbl_er_lumen=3,
+        lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, lbl_mem2_lumen=3,
         pixel_size_nm=1.368, radius_hit=10, maxdist_nm=50, maxthick_nm=80,
-        offset_voxels=1, both_directions=True, reverse_direction=False):
+        offset_voxels=1, both_directions=True, reverse_direction=False,
+        mem1="PM", mem2="cER"):
     """Takes input/output folder, input segmentation MRC file and base name for
-    output files and calculates distances between two cER membrane sides."""
+    output files and calculates distances between the first and the second
+    membrane and thicknesses between two sides of the second membrane."""
     log_file = '{}{}.distances_and_thicknesses_calculation.log'.format(
         fold, base_filename)
     sys.stdout = open(log_file, 'a')
@@ -416,58 +436,60 @@ def distances_and_thicknesses_calculation(
     if not fold.endswith('/'):
         fold += '/'
     segmentation_file = '{}{}'.format(fold, segmentation_file)
-    pm_surf_file = '{}{}.PM.vtp'.format(fold, base_filename)
-    pm_graph_file = '{}{}.PM.gt'.format(fold, base_filename)
-    er_surf_file = '{}{}.cER.vtp'.format(fold, base_filename)
-    er_graph_file = '{}{}.cER.gt'.format(fold, base_filename)
-    pm_normals_surf_file = '{}{}.PM.NVV_rh{}.vtp'.format(
-        fold, base_filename, radius_hit)
-    pm_normals_graph_file = '{}{}.PM.NVV_rh{}.gt'.format(
-        fold, base_filename, radius_hit)
-    er_dist_surf_file = '{}{}.cER.distancesFromPM.vtp'.format(
-        fold, base_filename)
-    er_dist_graph_file = '{}{}.cER.distancesFromPM.gt'.format(
-        fold, base_filename)
-    distances_outfile = '{}{}.cER.distancesFromPM.csv'.format(
-        fold, base_filename)
-    inner_er_surf_file = '{}{}.innercER.vtp'.format(fold, base_filename)
-    inner_er_graph_file = '{}{}.innercER.gt'.format(fold, base_filename)
-    inner_er_thick_surf_file = '{}{}.innercER.thicknesses.vtp'.format(
-        fold, base_filename)
-    inner_er_thick_graph_file = '{}{}.innercER.thicknesses.gt'.format(
-        fold, base_filename)
-    thicknesses_outfile = '{}{}.innercER.thicknesses.csv'.format(
-        fold, base_filename)
+    mem1_surf_file = '{}{}.{}.vtp'.format(fold, base_filename, mem1)
+    mem1_graph_file = '{}{}.{}.gt'.format(fold, base_filename, mem1)
+    mem2_surf_file = '{}{}.{}.vtp'.format(fold, base_filename, mem2)
+    mem2_graph_file = '{}{}.{}.gt'.format(fold, base_filename, mem2)
+    mem1_normals_surf_file = '{}{}.{}.NVV_rh{}.vtp'.format(
+        fold, base_filename, mem1, radius_hit)
+    mem1_normals_graph_file = '{}{}.{}.NVV_rh{}.gt'.format(
+        fold, base_filename, mem1, radius_hit)
+    mem2_dist_surf_file = '{}{}.{}.distancesFrom{}.vtp'.format(
+        fold, base_filename, mem2, mem1)
+    mem2_dist_graph_file = '{}{}.{}.distancesFrom{}.gt'.format(
+        fold, base_filename, mem2, mem1)
+    distances_outfile = '{}{}.{}.distancesFrom{}.csv'.format(
+        fold, base_filename, mem2, mem1)
+    inner_mem2_surf_file = '{}{}.inner{}.vtp'.format(fold, base_filename, mem2)
+    inner_mem2_graph_file = '{}{}.inner{}.gt'.format(fold, base_filename, mem2)
+    inner_mem2_thick_surf_file = '{}{}.inner{}.thicknesses.vtp'.format(
+        fold, base_filename, mem2)
+    inner_mem2_thick_graph_file = '{}{}.inner{}.thicknesses.gt'.format(
+        fold, base_filename, mem2)
+    thicknesses_outfile = '{}{}.inner{}.thicknesses.csv'.format(
+        fold, base_filename, mem2)
 
-    if (not isfile(pm_surf_file) or not isfile(pm_graph_file) or not
-            isfile(er_surf_file) or not isfile(er_graph_file)):
-        print('Generating PM and cER graphs and surface files')
-        generate_pm_er_graphs_and_surface(
+    if (not isfile(mem1_surf_file) or not isfile(mem1_graph_file) or not
+            isfile(mem2_surf_file) or not isfile(mem2_graph_file)):
+        print('Generating {} and {} graphs and surface files'.format(
+            mem1, mem2))
+        generate_mem1_mem2_graphs_and_surface(
             segmentation_file, pixel_size_nm,
-            pm_graph_file, er_surf_file, er_graph_file, pm_surf_file,
-            lbl_pm, lbl_er, lbl_between_pm_er)
-    if not isfile(pm_normals_graph_file):
-        print('Estimating normals for PM graph')
-        pm_tg = TriangleGraph()
-        pm_tg.graph = load_graph(pm_graph_file)
-        normals_estimation(pm_tg, radius_hit)
-        pm_tg.graph.save(pm_normals_graph_file)
-        pm_surf = pm_tg.graph_to_triangle_poly()
-        io.save_vtp(pm_surf, pm_normals_surf_file)
-    print('Calculating and saving distances between PM and cER')
+            mem1_graph_file, mem2_surf_file, mem2_graph_file, mem1_surf_file,
+            lbl_mem1, lbl_mem2, lbl_between_mem1_mem2)
+    if not isfile(mem1_normals_graph_file):
+        print('Estimating normals for {} graph'.format(mem1))
+        mem1_tg = TriangleGraph()
+        mem1_tg.graph = load_graph(mem1_graph_file)
+        normals_estimation(mem1_tg, radius_hit)
+        mem1_tg.graph.save(mem1_normals_graph_file)
+        mem1_surf = mem1_tg.graph_to_triangle_poly()
+        io.save_vtp(mem1_surf, mem1_normals_surf_file)
+    print('Calculating and saving distances between {} and {}'.format(
+        mem1, mem2))
     run_calculate_distances(
-        pm_normals_graph_file, er_surf_file, er_graph_file,
-        er_dist_surf_file, er_dist_graph_file, distances_outfile,
+        mem1_normals_graph_file, mem2_surf_file, mem2_graph_file,
+        mem2_dist_surf_file, mem2_dist_graph_file, distances_outfile,
         maxdist_nm, offset_nm, both_directions, reverse_direction)
-    if not isfile(inner_er_surf_file) or not isfile(inner_er_graph_file):
-        print('Generating inner cER graphs and surface files')
-        generate_er_lumen_graph_and_surface(
-            segmentation_file, pixel_size_nm,
-            inner_er_surf_file, inner_er_graph_file, lbl_er, lbl_er_lumen)
-    print('Calculating and saving cER thicknesses')
+    if not isfile(inner_mem2_surf_file) or not isfile(inner_mem2_graph_file):
+        print('Generating inner {} graphs and surface files'.format(mem2))
+        generate_mem_lumen_graph_and_surface(
+            segmentation_file, pixel_size_nm, inner_mem2_surf_file,
+            inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen)
+    print('Calculating and saving {} thicknesses'.format(mem2))
     run_calculate_thicknesses(
-        pm_normals_graph_file, inner_er_surf_file, inner_er_graph_file,
-        inner_er_thick_surf_file, inner_er_thick_graph_file,
+        mem1_normals_graph_file, inner_mem2_surf_file, inner_mem2_graph_file,
+        inner_mem2_thick_surf_file, inner_mem2_thick_graph_file,
         thicknesses_outfile, maxdist_nm, maxthick_nm, offset_nm,
         both_directions, reverse_direction)
 
