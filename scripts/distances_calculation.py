@@ -140,7 +140,7 @@ def generate_mem_lumen_graph_and_surface(
 def run_calculate_distances(
         mem1_graph_file, mem2_surf_file, mem2_graph_file, mem2_surf_outfile,
         mem2_graph_outfile, distances_outfile, maxdist, offset=0,
-        both_directions=True, reverse_direction=False, mem1="PM", mem2="cER",
+        both_directions=True, reverse_direction=False, mem1="PM",
         verbose=False):
     """
     A script running calculate_distances with graphs and surface loaded from
@@ -171,7 +171,6 @@ def run_calculate_distances(
             direction of each first membrane's normals (default=False;
             if both_directions True, will look in both directions)
         mem1 (str, optional): name of the first membrane (default "PM")
-        mem2 (str, optional): name of the second membrane (default "cER")
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -206,7 +205,7 @@ def run_calculate_thicknesses(
         mem1_graph_file, mem2_surf_file, mem2_graph_file,
         mem2_surf_outfile, mem2_graph_outfile, thicknesses_outfile,
         maxdist, maxthick, offset=0.0, both_directions=True,
-        reverse_direction=False, mem1="PM", mem2="cER", verbose=False):
+        reverse_direction=False, mem2="cER", verbose=False):
     """
     A script running calculate_thicknesses with graphs and surface loaded from
     files, transforming the resulting graph to a surface with triangles and
@@ -236,7 +235,6 @@ def run_calculate_thicknesses(
         reverse_direction (boolean, optional): if True, look in opposite
             direction of each first membrane's normals (default=False;
             if both_directions True, will look in both directions)
-        mem1 (str, optional): name of the first membrane (default "PM")
         mem2 (str, optional): name of the second membrane (default "cER")
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
@@ -416,7 +414,7 @@ def distances_and_thicknesses_calculation(
         generate_mem1_mem2_graphs_and_surface(
             segmentation_file, pixel_size_nm,
             mem1_graph_file, mem2_surf_file, mem2_graph_file, mem1_surf_file,
-            lbl_mem1, lbl_mem2, lbl_between_mem1_mem2)
+            lbl_mem1, lbl_mem2, lbl_between_mem1_mem2, mem1, mem2)
     if not isfile(mem1_normals_graph_file):
         print('Estimating normals for {} graph'.format(mem1))
         mem1_tg = TriangleGraph()
@@ -430,18 +428,18 @@ def distances_and_thicknesses_calculation(
     run_calculate_distances(
         mem1_normals_graph_file, mem2_surf_file, mem2_graph_file,
         mem2_dist_surf_file, mem2_dist_graph_file, distances_outfile,
-        maxdist_nm, offset_nm, both_directions, reverse_direction)
+        maxdist_nm, offset_nm, both_directions, reverse_direction, mem1)
     if not isfile(inner_mem2_surf_file) or not isfile(inner_mem2_graph_file):
         print('Generating inner {} graphs and surface files'.format(mem2))
         generate_mem_lumen_graph_and_surface(
             segmentation_file, pixel_size_nm, inner_mem2_surf_file,
-            inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen)
+            inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen, mem2)
     print('Calculating and saving {} thicknesses'.format(mem2))
     run_calculate_thicknesses(
         mem1_normals_graph_file, inner_mem2_surf_file, inner_mem2_graph_file,
         inner_mem2_thick_surf_file, inner_mem2_thick_graph_file,
         thicknesses_outfile, maxdist_nm, maxthick_nm, offset_nm,
-        both_directions, reverse_direction)
+        both_directions, reverse_direction, mem2)
 
 
 if __name__ == "__main__":
