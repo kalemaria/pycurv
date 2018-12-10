@@ -335,39 +335,40 @@ def _extract_distances_from_graph(
 # @click.argument('fold', type=str)
 # @click.argument('segmentation_file', type=str)
 # @click.argument('base_filename', type=str)
-# @click.option('-lbl_pm', type=int, default=1,
-#               help="label of PM membrane (default=1)")
-# @click.option('-lbl_er', type=int, default=2,
-#               help="label of cER membrane (default=2)")
-# @click.option('-lbl_between_pm_er', type=int, default=4,
+# @click.option('-lbl_mem1', type=int, default=1,
+#               help="label of the first membrane (default=1)")
+# @click.option('-lbl_mem2', type=int, default=2,
+#               help="label of the second membrane (default=2)")
+# @click.option('-lbl_between_mem1_mem2', type=int, default=4,
 #               help="label of inter-membrane space (default=4)")
-# @click.option('-lbl_er_lumen', type=int, default=3,
-#               help="label of cER lumen (default=3)")
+# @click.option('-lbl_mem2_lumen', type=int, default=3,
+#               help="label of the second lumen (default=3)")
 # @click.option('-pixel_size_nm', type=float, default=1.368,
 #               help="pixel size in nm of the segmentation (default=1.368)")
 # @click.option('-radius_hit', type=float, default=10,
-#               help="neighborhood parameter for PM normals estimation by VV "
-#                    "(default=10)")
+#               help="neighborhood parameter for the first membrane's normals "
+#                    "estimation by VV (default=10)")
 # @click.option('-maxdist_nm', type=float, default=50,
 #               help="maximal distance in nm, should be bigger than the largest "
 #                    "possible distance, for the algorithm to stop searching "
 #                    "(default=50)")
 # @click.option('-maxthick_nm', type=float, default=80,
-#               help="maximal distance between the two cER membrane sides in nm, "
-#                    "should be bigger than the largest possible distance, for "
-#                    "the algorithm to stop searching (default=80)")
+#               help="maximal distance between the two sides of the second "
+#                    "membrane in nm, should be bigger than the largest possible "
+#                    "distance, for the algorithm to stop searching (default=80)")
 # @click.option('-offset_voxels', type=int, default=1,
 #               help="offset in voxels, will be added to the distances, "
 #                    "(default=1, because surfaces are generated 1/2 voxel off "
 #                    "the membrane segmentation boundary towards the "
 #                    "inter-membrane space)")
 # @click.option('-both_directions', type=bool, default=True,
-#               help="if True, look in both directions of each PM normal "
-#                    "(default), otherwise only in the normal direction")
+#               help="if True, look in both directions of each the first "
+#                    "membrane's normal (default), otherwise only in the normal "
+#                    "direction")
 # @click.option('-reverse_direction', type=bool, default=False,
-#               help="if True, look in opposite direction of each PM normals "
-#                    "(default=False; if both_directions True, will look in both "
-#                    "directions)")
+#               help="if True, look in opposite direction of each the first "
+#                    "membrane's normals (default=False; if both_directions "
+#                    "True, will look in both directions)")
 def distances_and_thicknesses_calculation(
         fold, segmentation_file, base_filename,
         lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, lbl_mem2_lumen=3,
