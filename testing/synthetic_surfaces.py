@@ -519,7 +519,7 @@ class ConeGenerator(object):
                 information will be printed out
 
         Returns:
-            a cylinder surface (vtk.vtkPolyData)
+            a cone surface (vtk.vtkPolyData)
         """
         if verbose:
             print("Generating a cone surface...")
