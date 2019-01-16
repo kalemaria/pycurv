@@ -1,4 +1,3 @@
-import unittest
 import numpy as np
 import pandas as pd
 
@@ -56,64 +55,56 @@ def generate_pm_er_lumen_segmentation(
     return segmentation
 
 
-class DistancesCalculationTestCase(unittest.TestCase):
+def test_distances_and_thicknesses_calculation():
     """
     Tests for run_calculate_distances.py, assuming that other used functions are
     correct.
     """
+    # should exist:
+    fold = '/fs/pool/pool-ruben/Maria/4Javier/old_and_test/distances_phantom_test/'
+    # will be generated:
+    segmentation_file = 'phantom_segmentation.mrc'
+    base_filename = "phantom"
+    distances_outfile = '{}.cER.distancesFromPM.csv'.format(base_filename)
+    thicknesses_outfile = '{}.innercER.thicknesses.csv'.format(
+        base_filename)
 
-    def test_distances_and_thicknesses_calculation(self):
-        # should exist:
-        fold = '/fs/pool/pool-ruben/Maria/4Javier/distances_phantom_test/'
-        # will be generated:
-        segmentation_file = 'phantom_segmentation.mrc'
-        base_filename = "phantom"
-        distances_outfile = '{}.cER.distancesFromPM.csv'.format(base_filename)
-        thicknesses_outfile = '{}.innercER.thicknesses.csv'.format(
-            base_filename)
+    # parameters:
+    true_dist_pixels = 5
+    true_thick_pixels = 10
+    pixel_size_nm = 1.368
+    true_dist_nm = true_dist_pixels * pixel_size_nm
+    true_thick_nm = true_thick_pixels * pixel_size_nm
+    radius_hit = 5  # for PM normals estimation by VV (have a perfect plane)
+    maxdist_voxels = true_dist_pixels * 2
+    maxdist_nm = maxdist_voxels * pixel_size_nm
+    maxthick_voxels = true_thick_pixels * 2
+    maxthick_nm = maxthick_voxels * pixel_size_nm
+    offset_voxels = 1  # because surfaces are generated 1/2 voxel off the
+    # membrane segmentation boundary towards the inter-membrane space
 
-        # parameters:
-        true_dist_pixels = 5
-        true_thick_pixels = 10
-        pixel_size_nm = 1.368
-        true_dist_nm = true_dist_pixels * pixel_size_nm
-        true_thick_nm = true_thick_pixels * pixel_size_nm
-        radius_hit = 5  # for PM normals estimation by VV (have a perfect plane)
-        maxdist_voxels = true_dist_pixels * 2
-        maxdist_nm = maxdist_voxels * pixel_size_nm
-        maxthick_voxels = true_thick_pixels * 2
-        maxthick_nm = maxthick_voxels * pixel_size_nm
-        offset_voxels = 1  # because surfaces are generated 1/2 voxel off the
-        # membrane segmentation boundary towards the inter-membrane space
+    print ('Generating a phantom segmentation')
+    print("True distance = {}".format(true_dist_pixels))
+    print("True thickness = {}".format(true_thick_pixels))
+    segmentation = generate_pm_er_lumen_segmentation(
+        true_dist_pixels, true_thick_pixels)
+    io.save_numpy(segmentation, fold+segmentation_file)
 
-        print ('Generating a phantom segmentation')
-        print("True distance = {}".format(true_dist_pixels))
-        print("True thickness = {}".format(true_thick_pixels))
-        segmentation = generate_pm_er_lumen_segmentation(
-            true_dist_pixels, true_thick_pixels)
-        io.save_numpy(segmentation, fold+segmentation_file)
+    print("Applying the script distances_and_thicknesses_calculation")
+    distances_and_thicknesses_calculation(
+        fold, segmentation_file, base_filename,
+        pixel_size_nm=pixel_size_nm, radius_hit=radius_hit,
+        maxdist_nm=maxdist_nm, maxthick_nm=maxthick_nm,
+        offset_voxels=offset_voxels)
 
-        print("Applying the script distances_and_thicknesses_calculation")
-        distances_and_thicknesses_calculation(
-            fold, segmentation_file, base_filename,
-            pixel_size_nm=pixel_size_nm, radius_hit=radius_hit,
-            maxdist_nm=maxdist_nm, maxthick_nm=maxthick_nm,
-            offset_voxels=offset_voxels)
+    print('Reading in and checking distances between PM and cER')
+    df = pd.read_csv(fold+distances_outfile, sep=';', index_col=0)
+    distances = df['d1']
+    for distance in distances:
+        assert round(distance, 3) == round(true_dist_nm, 3)
 
-        print('Reading in and checking distances between PM and cER')
-        df = pd.read_csv(fold+distances_outfile, sep=';', index_col=0)
-        distances = df['d1']
-        for distance in distances:
-            msg = "distance == {} != {}".format(distance, true_dist_nm)
-            self.assertEqual(round(distance, 3), round(true_dist_nm, 3), msg)
-
-        print('Reading in and checking cER thicknesses')
-        df = pd.read_csv(fold+thicknesses_outfile, sep=';', index_col=0)
-        thicknesses = df['d2']
-        for thickness in thicknesses:
-            msg = "thicknesses == {} != {}".format(thickness, true_thick_nm)
-            self.assertEqual(round(thickness, 3), round(true_thick_nm, 3), msg)
-
-
-if __name__ == '__main__':
-    unittest.main()
+    print('Reading in and checking cER thicknesses')
+    df = pd.read_csv(fold+thicknesses_outfile, sep=';', index_col=0)
+    thicknesses = df['d2']
+    for thickness in thicknesses:
+        assert round(thickness, 3) == round(true_thick_nm, 3)

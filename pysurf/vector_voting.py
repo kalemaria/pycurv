@@ -1103,7 +1103,7 @@ def curvature_estimation(
     estimate_directions_and_fit_curves = tg.estimate_directions_and_fit_curves
     orientation_class = tg.graph.vp.orientation_class
     condition1 = "orientation_class[v] == 1"
-    condition2 = "orientation_class[v] != 1 or B_v_list[i] is None"
+    condition2 = "orientation_class[v] != 1"
     if exclude_borders > 0:
         is_near_border = tg.graph.vp.is_near_border
         condition1 += " and is_near_border[v] == 0"
@@ -1256,10 +1256,7 @@ def curvature_estimation(
     # vertices lacking neighbors, add placeholders to the corresponding
     # vertex properties
     for v in tg.graph.vertices():
-        v_ind = int(v)  # index of v in the graph
-        if v_ind in good_vertices_ind:
-            i = good_vertices_ind.index(v_ind)  # index of v in B_v_list
-        if eval(condition2):  # i used here
+        if eval(condition2):
             tg.graph.vp.T_1[v] = np.zeros(shape=3)
             tg.graph.vp.T_2[v] = np.zeros(shape=3)
             tg.graph.vp.kappa_1[v] = 0
