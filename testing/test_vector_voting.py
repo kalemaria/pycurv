@@ -1,3 +1,4 @@
+import pytest
 import time
 import os.path
 import numpy as np
@@ -183,21 +184,23 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 """
 
 
-def parametric_test_plane_normals(half_size, radius_hit, res=30,
-                                  noise=10):
+@pytest.mark.parametrize("half_size, radius_hit, res, noise", [
+    (20, 8, 20, 10)
+])
+def test_plane_normals(half_size, radius_hit, res, noise):
     """
     Tests whether normals are correctly estimated for a plane surface with
     known orientation (parallel to to X and Y axes).
+    Allowing error of 30%.
 
     Args:
         half_size (int): half size of the plane (from center to an edge)
         radius_hit (float): radius in length unit of the graph, here voxels;
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
-        res (int, optional): resolution (number of divisions) in X and Y
-            axes (default 30)
-        noise (int, optional): determines variance of the Gaussian noise in
-            percents of average triangle edge length (default 10), the noise
+        res (int): resolution (number of divisions) in X and Y axes
+        noise (int): determines variance of the Gaussian noise in
+            percents of average triangle edge length, the noise
             is added on triangle vertex coordinates in its normal direction
 
     Returns:
@@ -306,10 +309,14 @@ def parametric_test_plane_normals(half_size, radius_hit, res=30,
         assert error <= 0.3
 
 
-def parametric_test_cylinder_directions_curvatures(
-        r, radius_hit, eb, inverse=False, res=0, h=0, noise=0,
-        methods=['VV'], page_curvature_formula=False, num_points=None,
-        full_dist_map=False, area2=False):
+@pytest.mark.parametrize("radius,radius_hit,eb,inverse,methods", [
+    (10, 8, 5, False, ['VV']),
+    (10, 8, 5, True, ['VV']),
+])
+def test_cylinder_directions_curvatures(
+        radius, radius_hit, eb, inverse, methods,
+        res=0, h=0, noise=0, page_curvature_formula=False, num_points=None,
+        full_dist_map=False, area2=True, cores=4):
     """
     Tests whether minimal principal directions (T_2), as well as minimal and
     maximal principal curvatures are correctly estimated for an opened
@@ -317,17 +324,22 @@ def parametric_test_cylinder_directions_curvatures(
     orientation (height, i.e. T_2, parallel to the Z axis) using normal
     vector voting (VV), VV combined with curve fitting (VVCF) or with
     curvature tensor voting (VCTV).
+    Allowing error of +-30% of the maximal absolute true value.
 
     Args:
-        r (int): cylinder radius in voxels
+        radius (int): cylinder radius in voxels
         radius_hit (float): radius in length unit of the graph, here voxels;
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
         eb (float): distance from borders to exclude in length unit of the
             graph, here voxels
-        inverse (boolean, optional): if True (default False), the sphere
-            will have normals pointing outwards (negative curvature), else
-            the other way around
+        inverse (boolean): if True, the cylinder will have normals pointing
+            outwards (negative curvature), else the other way around
+        methods (list): tells which method(s) should be used: 'VV'
+            for normal vector voting, 'VVCF' for curve fitting in
+            the two principal directions estimated by VV to estimate the
+            principal curvatures or 'VCTV' for vector and curvature tensor
+            voting to estimate the principal directions and curvatures
         res (int, optional): if > 0 determines how many stripes around both
             approximate circles (and then triangles) the cylinder has, the
             surface is generated using vtkCylinderSource; If 0 (default)
@@ -340,11 +352,6 @@ def parametric_test_cylinder_directions_curvatures(
         noise (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 0), the noise
             is added on triangle vertex coordinates in its normal direction
-        methods (list, optional): tells which method(s) should be used: 'VV'
-            for normal vector voting (default), 'VVCF' for curve fitting in
-            the two principal directions estimated by VV to estimate the
-            principal curvatures or 'VCTV' for vector and curvature tensor
-            voting to estimate the principal directions and curvatures
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page at al. is used for VV or VVCF
             (see collecting_curvature_votes)
@@ -354,9 +361,10 @@ def parametric_test_cylinder_directions_curvatures(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        area2 (boolean, optional): if True (default False), votes are
+        area2 (boolean, optional): if True (default), votes are
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
+        cores (int): number of cores to run VV in parallel (default 4)
 
     Returns:
         None
@@ -374,9 +382,9 @@ def parametric_test_cylinder_directions_curvatures(
     if res == 0 and h != 0:
         h = 0  # h has to be also 0 if res is 0
     if h == 0:
-        h = int(math.ceil(r * 2.5))  # set h to 2.5 * radius, if not given
+        h = int(math.ceil(radius * 2.5))  # set h to 2.5 * radius, if not given
 
-    surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
+    surf_filebase = '{}cylinder_r{}_h{}'.format(fold, radius, h)
     surf_file = '{}.surface.vtp'.format(surf_filebase)
     scale_factor_to_nm = 1.0  # assume it's already in nm
     # Actually can just give in any number for the scales, because they are
@@ -390,24 +398,24 @@ def parametric_test_cylinder_directions_curvatures(
     else:
         inverse_str = ""
     base_filename = "{}{}cylinder_r{}_h{}_eb{}".format(
-        files_fold, inverse_str, r, h, eb)
+        files_fold, inverse_str, radius, h, eb)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
 
     if inverse:
         print("\n*** Generating a surface and a graph for an inverse "
               "cylinder with radius {}, height {} and {}% noise ***".format(
-            r, h, noise))
+            radius, h, noise))
     else:
         print("\n*** Generating a surface and a graph for a cylinder with "
-              "radius {}, height {} and {}% noise ***".format(r, h, noise))
+              "radius {}, height {} and {}% noise ***".format(radius, h, noise))
     # If the .vtp file with the test surface does not exist, create it:
     if not os.path.isfile(surf_file):
         cg = CylinderGenerator()
         if res == 0:  # generate surface from a gaussian mask
-            cylinder = cg.generate_gauss_cylinder_surface(r)
+            cylinder = cg.generate_gauss_cylinder_surface(radius)
         else:  # generate surface directly with VTK
             print("Warning: cylinder contains planes!")
-            cylinder = cg.generate_cylinder_surface(r, h, res=50)
+            cylinder = cg.generate_cylinder_surface(radius, h, res=50)
         if noise > 0:
             cylinder = add_gaussian_noise_to_surface(cylinder,
                                                      percent=noise)
@@ -446,7 +454,7 @@ def parametric_test_cylinder_directions_curvatures(
         tg, radius_hit, exclude_borders=eb, methods=methods,
         page_curvature_formula=page_curvature_formula,
         num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-        poly_surf=surf)
+        poly_surf=surf, cores=cores)
 
     # Ground-truth T_h vector is parallel to Z axis
     true_T_h = np.array([0, 0, 1])
@@ -454,9 +462,9 @@ def parametric_test_cylinder_directions_curvatures(
     # Ground-truth principal curvatures
     if inverse:
         true_kappa_1 = 0.0
-        true_kappa_2 = - 1.0 / r
+        true_kappa_2 = - 1.0 / radius
     else:
-        true_kappa_1 = 1.0 / r
+        true_kappa_1 = 1.0 / radius
         true_kappa_2 = 0.0
 
     for method in method_tg_surf_dict.keys():
@@ -583,47 +591,61 @@ def parametric_test_cylinder_directions_curvatures(
                 assert error <= allowed_error
 
 
-def parametric_test_sphere_curvatures(
-        radius, radius_hit, inverse=False, binary=False, res=0,
-        ico=0, noise=0, save_areas=False, methods=['VV'],
+# TODO make a fixture to be run when the option is set: runtimes=runtimes_csv
+# use runtimes_csv as input parameter?
+# runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+#                "sphere/binary/files4plotting/bin_spheres_runtimes.csv"
+# runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
+#                "torus/files4plotting/torus_rr25_csr10_runtimes_VCTV.csv"
+# with open(runtimes_csv, 'w') as f:
+#     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+#             "duration1;method;duration2\n")
+
+@pytest.mark.parametrize(
+    "radius,radius_hit,inverse,binary,ico,methods", [
+        (10, 3.5, False, False, 1280, ['VV']),  # icosahedron
+        (10, 9, False, True, 0, ['VV']),  # binary
+        (10, 9, False, False, 0, ['VV', 'VCTV']),  # gaussian
+        (10, 8, True, False, 0, ['VV', 'VCTV']),  # gaussian inverse
+    ])
+def test_sphere_curvatures(
+        radius, radius_hit, inverse, methods, binary, ico,
+        res=0, noise=0, save_areas=False,
         page_curvature_formula=False, num_points=None,
-        full_dist_map=False, area2=False, cores=8, runtimes=None):
+        full_dist_map=False, area2=True, cores=4, runtimes=None):
     """
     Runs all the steps needed to calculate curvatures for a test sphere
     with a given radius. Tests whether the curvatures are correctly
     estimated using normal vector voting (VV), VV combined with curve
-    fitting (VVCF) or with curvature tensor voting (VCTV):
-
-    kappa_1 = kappa_2 = 1/r; allowing some error.
+    fitting (VVCF) or with curvature tensor voting (VCTV).
+    kappa_1 = kappa_2 = 1/r; allowing error of +-30%.
 
     Args:
         radius (int): radius of the sphere
         radius_hit (float): radius in length unit of the graph, here voxels;
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
-        inverse (boolean, optional): if True (default False), the sphere
-            will have normals pointing outwards (negative curvature), else
-            the other way around
-        binary (boolean, optional): if True (default False), a binary sphere
-            is generated (ignoring the next three options)
+        inverse (boolean): if True, the sphere will have normals pointing
+            outwards (negative curvature), else the other way around
+        methods (list): tells which method(s) should be used: 'VV'
+            for normal vector voting, 'VVCF' for curve fitting in
+            the two principal directions estimated by VV to estimate the
+            principal curvatures or 'VCTV' for vector and curvature tensor
+            voting to estimate the principal directions and curvatures
+        binary (boolean): if True, a binary sphere is generated (ignoring the
+            next three options)
+        ico (int): if > 0 and res=0, an icosahedron with so many faces is used
+            (1280 faces with radius 1 or 10 are available so far)
         res (int, optional): if > 0 determines how many longitude and
             latitude stripes the UV sphere from vtkSphereSource has, the
             surface is triangulated; If 0 (default) and ico=0, first a
             gaussian sphere mask is generated and then surface using
             vtkMarchingCubes
-        ico (int, optional): if > 0 (default 0) and res=0, an icosahedron
-            with so many faces is used (1280 faces with radius 1 or 10 are
-            available so far)
         noise (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 10), the noise
             is added on triangle vertex coordinates in its normal direction
         save_areas (boolean, optional): if True (default False), also mesh
             triangle ares will be saved to a file
-        methods (list, optional): tells which method(s) should be used: 'VV'
-            for normal vector voting (default), 'VVCF' for curve fitting in
-            the two principal directions estimated by VV to estimate the
-            principal curvatures or 'VCTV' for vector and curvature tensor
-            voting to estimate the principal directions and curvatures
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV or VVCF
             (see collecting_curvature_votes)
@@ -633,10 +655,10 @@ def parametric_test_sphere_curvatures(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        area2 (boolean, optional): if True (default False), votes are
+        area2 (boolean, optional): if True (default), votes are
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
-        cores (int): number of cores to run VV in parallel (default 8)
+        cores (int): number of cores to run VV in parallel (default 4)
         runtimes (str): if given, runtimes and some parameters are added to
             this file (default None)
 
@@ -840,14 +862,18 @@ def parametric_test_sphere_curvatures(
             assert error <= allowed_error
 
 
-def parametric_test_torus_directions_curvatures(
-        rr, csr, radius_hit, methods=['VV'],
+@pytest.mark.parametrize("rr,csr,radius_hit,methods", [
+    (25, 10, 8, ['VV', 'VCTV']),
+])
+def test_torus_directions_curvatures(
+        rr, csr, radius_hit, methods,
         page_curvature_formula=False, num_points=None, full_dist_map=False,
-        area2=False, cores=8, runtimes=None):
+        area2=True, cores=4, runtimes=None):
     """
     Runs all the steps needed to calculate curvatures for a test torus
     with given radii using normal vector voting (VV), VV combined with curve
     fitting (VVCF) or with curvature tensor voting (VCTV).
+    Allowing error of +-30%.
 
     Args:
         rr (int): ring radius of the torus
@@ -855,8 +881,8 @@ def parametric_test_torus_directions_curvatures(
         radius_hit (float): radius in length unit of the graph, here voxels;
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
-        methods (list, optional): tells which method(s) should be used: 'VV'
-            for normal vector voting (default), 'VVCF' for curve fitting in
+        methods (list): tells which method(s) should be used: 'VV'
+            for normal vector voting, 'VVCF' for curve fitting in
             the two principal directions estimated by VV to estimate the
             principal curvatures or 'VCTV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
@@ -869,10 +895,10 @@ def parametric_test_torus_directions_curvatures(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        area2 (boolean, optional): if True (default False), votes are
+        area2 (boolean, optional): if True (default), votes are
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
-        cores (int): number of cores to run VV in parallel (default 8)
+        cores (int): number of cores to run VV in parallel (default 4)
         runtimes (str): if given, runtimes and some parameters are added to
             this file (default None)
 
@@ -989,10 +1015,8 @@ def parametric_test_torus_directions_curvatures(
         # Getting the estimated and true principal directions:
         # The shape is (3, <num_vertices>) - have to transpose to group the
         # respective x, y, z components to sub-arrays
-        T_1 = np.transpose(tg.graph.vertex_properties["T_1"].get_2d_array(
-            pos))
-        T_2 = np.transpose(tg.graph.vertex_properties["T_2"].get_2d_array(
-            pos))
+        T_1 = np.transpose(tg.graph.vertex_properties["T_1"].get_2d_array(pos))
+        T_2 = np.transpose(tg.graph.vertex_properties["T_2"].get_2d_array(pos))
 
         # Computing errors of the estimated directions wrt the true ones:
         T_1_errors = np.array(map(
@@ -1086,10 +1110,13 @@ def parametric_test_torus_directions_curvatures(
             assert error <= allowed_error
 
 
-def parametric_test_cone(
-        r, h, radius_hit, res=0, noise=0, methods=['VV'],
-        page_curvature_formula=False, num_points=None, full_dist_map=False,
-        area2=False):
+@pytest.mark.parametrize("r,h,radius_hit,res,methods", [
+    (6, 6, 5, 38, ['VV', 'VCTV']),  # smooth
+])
+def run_cone(  # does not include assert for true curvature!
+        r, h, radius_hit, methods,
+        res=0, noise=0, page_curvature_formula=False, num_points=None,
+        full_dist_map=False, area2=True, cores=4):
     """
     Runs all the steps needed to calculate curvatures for a test cone
     with given radius and height using normal vector voting (VV), VV
@@ -1102,6 +1129,11 @@ def parametric_test_cone(
         radius_hit (float): radius in length unit of the graph, here voxels;
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
+        methods (list): tells which method(s) should be used: 'VV'
+            for normal vector voting, 'VVCF' for curve fitting in
+            the two principal directions estimated by VV to estimate the
+            principal curvatures or 'VCTV' for vector and curvature tensor
+            voting to estimate the principal directions and curvatures
         res (int, optional): if > 0 determines how many triangles around the
             circular base the cone has, is subdivided and smoothed, the base
             disappears; If 0 (default) a binary cone with the circular base
@@ -1110,11 +1142,6 @@ def parametric_test_cone(
             percents of average triangle edge length (default 0), the noise
             is added on triangle vertex coordinates in its normal direction
             - only for a smoothed cone, res > 0!
-        methods (list, optional): tells which method(s) should be used: 'VV'
-            for normal vector voting (default), 'VVCF' for curve fitting in
-            the two principal directions estimated by VV to estimate the
-            principal curvatures or 'VCTV' for vector and curvature tensor
-            voting to estimate the principal directions and curvatures
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV or VVCF
             (see collecting_curvature_votes)
@@ -1124,9 +1151,10 @@ def parametric_test_cone(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        area2 (boolean, optional): if True (default False), votes are
+        area2 (boolean, optional): if True (default), votes are
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
+        cores (int): number of cores to run VV in parallel (default 4)
 
     Returns:
         None
@@ -1194,7 +1222,7 @@ def parametric_test_cone(
         tg, radius_hit, exclude_borders=1, methods=methods,
         page_curvature_formula=page_curvature_formula,
         num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-        poly_surf=surf)
+        poly_surf=surf, cores=cores)
 
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
@@ -1228,123 +1256,4 @@ def parametric_test_cone(
         df.to_csv(csv_file, sep=';')
 
 
-# *** The following tests will be run by pytest ***
-
-
-def test_plane_normals():
-    """
-    Tests whether normals are correctly estimated for a plane surface with
-    known orientation (parallel to to X and Y axes), certain size,
-    resolution and noise level.
-    """
-    for n in [10]:
-        for rh in [8]:
-            parametric_test_plane_normals(
-                20, rh, res=20, noise=n)
-
-
-def test_cylinder_directions_curvatures():
-    """
-    Tests whether minimal principal directions (T_2) and curvatures are
-    correctly estimated for an opened cylinder surface (without the
-    circular planes) with known orientation (height, i.e. T_2, parallel to
-    the Z axis), certain radius and noise level.
-    """
-    for rh in [8]:  # 6, 7, 8, 9
-        parametric_test_cylinder_directions_curvatures(
-            10, rh, eb=5, noise=0, methods=['VV'],  # , 'VCTV'
-            page_curvature_formula=False, area2=True)
-
-
-def test_inverse_cylinder_directions_curvatures():
-    """
-    Tests whether maximal principal directions (T_1) and curvatures are
-    correctly estimated for an inverse opened cylinder surface (without the
-    circular planes) with known orientation (height, i.e. T_1, parallel to
-    the Z axis), certain radius and noise level.
-    """
-    for rh in [8]:
-        parametric_test_cylinder_directions_curvatures(
-            10, rh, eb=5, noise=0, methods=['VV'],  # , 'VCTV'
-            page_curvature_formula=False, area2=True, inverse=True)
-
-
-def test_sphere_curvatures():
-    """
-    Tests whether curvatures are correctly estimated for a sphere with a
-    certain radius and noise level:
-
-    kappa1 = kappa2 = 1/r; 30% of difference is allowed
-    """
-    # # Icosahedron sphere with 1280 faces:
-    # for rh in [3.5]:  # 1, 2, 3, 3.5, 4, 5, 6, 7, 8, 9
-    #     parametric_test_sphere_curvatures(
-    #         10, rh, ico=1280, noise=n, methods=['VV', 'VCTV'],
-    #         page_curvature_formula=False)
-    # Binary sphere with different radii:
-# runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-#                "sphere/binary/files4plotting/bin_spheres_runtimes.csv"
-# with open(runtimes_csv, 'w') as f:
-#     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-#             "duration1;method;duration2\n")
-    for r in [10]:  # , 20, 30
-        for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
-            for cores in [4]:  # range(1, 9):
-                parametric_test_sphere_curvatures(
-                    r, rh, binary=True, methods=['VV'],  # , 'VCTV'
-                    full_dist_map=False, area2=True,
-                    cores=cores)  # , runtimes=runtimes_csv
-    # Gaussian sphere with different radii:
-    for r in [10]:  # 20, 30
-        for rh in [9]:  # 5, 6, 7, 8, 9, 10; 18; 28
-            parametric_test_sphere_curvatures(
-                r, rh, methods=['VV', 'VCTV'],
-                full_dist_map=True,  area2=True,
-                page_curvature_formula=True)
-
-
-def test_inverse_sphere_curvatures():
-    """
-    Tests whether curvatures are correctly estimated for an inverse sphere
-    with a certain radius and noise level:
-
-    kappa1 = kappa2 = -1/r; 30% of difference is allowed
-    """
-    # Gaussian sphere
-    for rh in [8]:  # 9
-        parametric_test_sphere_curvatures(
-            10, rh, ico=0, noise=0, inverse=True,
-            methods=['VV', 'VCTV'],
-            page_curvature_formula=False, area2=True)
-
-
-def test_torus_curvatures():
-    """
-    Runs parametric_test_torus_directions_curvatures with certain
-    parameters.
-    """
-    # runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-    #                "torus/files4plotting/torus_rr25_csr10_runtimes_VCTV.csv"
-    # with open(runtimes_csv, 'w') as f:
-    #     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-    #             "duration1;method;duration2\n")
-    for rh in [8]:
-        for cores in [4]:  # range((1, 9)
-            parametric_test_torus_directions_curvatures(
-                25, 10, rh, methods=['VV', 'VCTV'],
-                page_curvature_formula=False, full_dist_map=False,
-                area2=True, cores=cores)  # , runtimes=runtimes_csv
-
-
-# def test_cone():
-#     """
-#     Runs test_cone with certain parameters.
-#     """
-#     p = 50
-#     n = 0  # 10
-#     res = 38  # 0
-#     for rh in [5]:  # 1, 2, 3, 4, 5, 6
-#         parametric_test_cone(
-#             6, 6, radius_hit=rh, res=res, noise=n, num_points=p,
-#             methods=['VV', 'VCTV', 'VVCF'],
-#             page_curvature_formula=False, area2=True)
+# py.test -n 4   # test on multiple CPUs
