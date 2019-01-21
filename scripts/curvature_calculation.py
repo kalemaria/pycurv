@@ -171,8 +171,8 @@ def new_workflow(
         eta (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2) and "no preferred orientation" (class 3), default 0
-        methods (list, optional): all methods to run in the second pass ('VV',
-            'VVCF' and 'VCTV' are possible, default is 'VV')
+        methods (list, optional): all methods to run in the second pass ('VV'
+            and 'VCTV' are possible, default is 'VV')
         seg_file (str, optional): membrane segmentation mask
         label (int, optional): label to be considered in the membrane mask
             (default 1)
@@ -378,8 +378,8 @@ def extract_curvatures_after_new_workflow(
         eta (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2) and "no preferred orientation" (class 3), default 0
-        methods (list, optional): all methods to run in the second pass ('VV',
-            'VVCF' and 'VCTV' are possible, default is 'VV')
+        methods (list, optional): all methods to run in the second pass ('VV'
+            and 'VCTV' are possible, default is 'VV')
         exclude_borders (int, optional): if > 0, triangles within this distance
             from borders in nm and corresponding values will be excluded from
             the output files (graph .gt, surface.vtp file and .csv)
@@ -543,8 +543,8 @@ def annas_workflow(
         eta (int, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2) and "no preferred orientation" (class 3), default 0
-        methods (list, optional): all methods to run in the second pass ('VV',
-            'VVCF' and 'VCTV' are possible, default is 'VV')
+        methods (list, optional): all methods to run in the second pass ('VV'
+            and 'VCTV' are possible, default is 'VV')
         thr (float, optional): value threshold in the input segmentation where
             to generate the isosurface (default 0.4)
         cores (int, optional): number of cores to run VV in parallel (default 4)

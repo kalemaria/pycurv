@@ -184,6 +184,7 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 """
 
 
+
 @pytest.mark.parametrize("half_size, radius_hit, res, noise", [
     (20, 8, 20, 10)
 ])
@@ -315,15 +316,14 @@ def test_plane_normals(half_size, radius_hit, res, noise):
 ])
 def test_cylinder_directions_curvatures(
         radius, radius_hit, eb, inverse, methods,
-        res=0, h=0, noise=0, page_curvature_formula=False, num_points=None,
-        full_dist_map=False, area2=True, cores=4):
+        res=0, h=0, noise=0, page_curvature_formula=False, full_dist_map=False,
+        area2=True, cores=4):
     """
     Tests whether minimal principal directions (T_2), as well as minimal and
     maximal principal curvatures are correctly estimated for an opened
     cylinder surface (without the circular planes) with known
     orientation (height, i.e. T_2, parallel to the Z axis) using normal
-    vector voting (VV), VV combined with curve fitting (VVCF) or with
-    curvature tensor voting (VCTV).
+    vector voting (VV) or VV combined with curvature tensor voting (VCTV).
     Allowing error of +-30% of the maximal absolute true value.
 
     Args:
@@ -336,9 +336,7 @@ def test_cylinder_directions_curvatures(
         inverse (boolean): if True, the cylinder will have normals pointing
             outwards (negative curvature), else the other way around
         methods (list): tells which method(s) should be used: 'VV'
-            for normal vector voting, 'VVCF' for curve fitting in
-            the two principal directions estimated by VV to estimate the
-            principal curvatures or 'VCTV' for vector and curvature tensor
+            for normal vector voting or 'VCTV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
         res (int, optional): if > 0 determines how many stripes around both
             approximate circles (and then triangles) the cylinder has, the
@@ -353,11 +351,8 @@ def test_cylinder_directions_curvatures(
             percents of average triangle edge length (default 0), the noise
             is added on triangle vertex coordinates in its normal direction
         page_curvature_formula (boolean, optional): if True (default False)
-            normal curvature formula from Page at al. is used for VV or VVCF
-            (see collecting_curvature_votes)
-        num_points (int): for VVCF, number of points to sample in each
-            estimated principal direction in order to fit parabola and
-            estimate curvature
+            normal curvature formula from Page at al. is used for VV (see
+            collecting_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
@@ -417,8 +412,7 @@ def test_cylinder_directions_curvatures(
             print("Warning: cylinder contains planes!")
             cylinder = cg.generate_cylinder_surface(radius, h, res=50)
         if noise > 0:
-            cylinder = add_gaussian_noise_to_surface(cylinder,
-                                                     percent=noise)
+            cylinder = add_gaussian_noise_to_surface(cylinder, percent=noise)
         io.save_vtp(cylinder, surf_file)
 
     # Reading in the .vtp file with the test triangle mesh and transforming
@@ -453,8 +447,7 @@ def test_cylinder_directions_curvatures(
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=eb, methods=methods,
         page_curvature_formula=page_curvature_formula,
-        num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-        poly_surf=surf, cores=cores)
+        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores)
 
     # Ground-truth T_h vector is parallel to Z axis
     true_T_h = np.array([0, 0, 1])
@@ -476,11 +469,6 @@ def test_cylinder_directions_curvatures(
         if ((method == 'VV' or method == 'VV_page_curvature_formula') and
                 area2):
             method = '{}_area2'.format(method)
-        elif method == 'VVCF' and page_curvature_formula:
-            method = 'VVCF_page_curvature_formula_{}points'.format(
-                num_points)
-        elif method == 'VVCF':
-            method = 'VVCF_{}points'.format(num_points)
         surf_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
@@ -610,14 +598,13 @@ def test_cylinder_directions_curvatures(
     ])
 def test_sphere_curvatures(
         radius, radius_hit, inverse, methods, binary, ico,
-        res=0, noise=0, save_areas=False,
-        page_curvature_formula=False, num_points=None,
+        res=0, noise=0, save_areas=False, page_curvature_formula=False,
         full_dist_map=False, area2=True, cores=4, runtimes=None):
     """
     Runs all the steps needed to calculate curvatures for a test sphere
     with a given radius. Tests whether the curvatures are correctly
-    estimated using normal vector voting (VV), VV combined with curve
-    fitting (VVCF) or with curvature tensor voting (VCTV).
+    estimated using normal vector voting (VV), VV combined with curvature tensor
+    voting (VCTV).
     kappa_1 = kappa_2 = 1/r; allowing error of +-30%.
 
     Args:
@@ -628,9 +615,7 @@ def test_sphere_curvatures(
         inverse (boolean): if True, the sphere will have normals pointing
             outwards (negative curvature), else the other way around
         methods (list): tells which method(s) should be used: 'VV'
-            for normal vector voting, 'VVCF' for curve fitting in
-            the two principal directions estimated by VV to estimate the
-            principal curvatures or 'VCTV' for vector and curvature tensor
+            for normal vector voting or 'VCTV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
         binary (boolean): if True, a binary sphere is generated (ignoring the
             next three options)
@@ -647,11 +632,8 @@ def test_sphere_curvatures(
         save_areas (boolean, optional): if True (default False), also mesh
             triangle ares will be saved to a file
         page_curvature_formula (boolean, optional): if True (default False)
-            normal curvature formula from Page et al. is used for VV or VVCF
-            (see collecting_curvature_votes)
-        num_points (int): for VVCF, number of points to sample in each
-            estimated principal direction in order to fit parabola and
-            estimate curvature
+            normal curvature formula from Page et al. is used for VV (see
+            collecting_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
@@ -766,8 +748,8 @@ def test_sphere_curvatures(
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=0, methods=methods,
         page_curvature_formula=page_curvature_formula,
-        num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-        poly_surf=surf, cores=cores, runtimes=runtimes)
+        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
+        runtimes=runtimes)
 
     # Ground truth principal curvatures
     true_curvature = 1.0 / radius
@@ -783,11 +765,6 @@ def test_sphere_curvatures(
         if ((method == 'VV' or method == 'VV_page_curvature_formula') and
                 area2):
             method = '{}_area2'.format(method)
-        elif method == 'VVCF' and page_curvature_formula:
-            method = 'VVCF_page_curvature_formula_{}points'.format(
-                num_points)
-        elif method == 'VVCF':
-            method = 'VVCF_{}points'.format(num_points)
         surf_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
@@ -867,12 +844,12 @@ def test_sphere_curvatures(
 ])
 def test_torus_directions_curvatures(
         rr, csr, radius_hit, methods,
-        page_curvature_formula=False, num_points=None, full_dist_map=False,
-        area2=True, cores=4, runtimes=None):
+        page_curvature_formula=False, full_dist_map=False, area2=True, cores=4,
+        runtimes=None):
     """
     Runs all the steps needed to calculate curvatures for a test torus
-    with given radii using normal vector voting (VV), VV combined with curve
-    fitting (VVCF) or with curvature tensor voting (VCTV).
+    with given radii using normal vector voting (VV) or VV combined with
+    curvature tensor voting (VCTV).
     Allowing error of +-30%.
 
     Args:
@@ -882,16 +859,11 @@ def test_torus_directions_curvatures(
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
         methods (list): tells which method(s) should be used: 'VV'
-            for normal vector voting, 'VVCF' for curve fitting in
-            the two principal directions estimated by VV to estimate the
-            principal curvatures or 'VCTV' for vector and curvature tensor
+            for normal vector voting or 'VCTV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
         page_curvature_formula (boolean, optional): if True (default False)
-            normal curvature formula from Page et al. is used for VV or VVCF
-            (see collecting_curvature_votes)
-        num_points (int): for VVCF, number of points to sample in each
-            estimated principal direction in order to fit parabola and
-            estimate curvature
+            normal curvature formula from Page et al. is used for VV (see
+            collecting_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
@@ -986,8 +958,8 @@ def test_torus_directions_curvatures(
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=0, methods=methods,
         page_curvature_formula=page_curvature_formula,
-        num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-        poly_surf=surf, cores=cores, runtimes=runtimes)
+        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
+        runtimes=runtimes)
 
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
@@ -998,11 +970,6 @@ def test_torus_directions_curvatures(
         if ((method == 'VV' or method == 'VV_page_curvature_formula') and
                 area2):
             method = '{}_area2'.format(method)
-        elif method == 'VVCF' and page_curvature_formula:
-            method = 'VVCF_page_curvature_formula_{}points'.format(
-                num_points)
-        elif method == 'VVCF':
-            method = 'VVCF_{}points'.format(num_points)
         surf_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
@@ -1115,13 +1082,13 @@ def test_torus_directions_curvatures(
 ])
 def run_cone(  # does not include assert for true curvature!
         r, h, radius_hit, methods,
-        res=0, noise=0, page_curvature_formula=False, num_points=None,
-        full_dist_map=False, area2=True, cores=4):
+        res=0, noise=0, page_curvature_formula=False, full_dist_map=False,
+        area2=True, cores=4):
     """
-    Runs all the steps needed to calculate curvatures for a test cone
-    with given radius and height using normal vector voting (VV), VV
-    combined with curve fitting (VVCF) or with curvature tensor voting
-    (VCTV). Writes out kappa_1 and kappa_2 values to a CSV file.
+    Runs all the steps needed to calculate curvatures for a test cone with given
+    radius and height using normal vector voting (VV) or VV combined with
+    curvature tensor voting (VCTV).
+    Writes out kappa_1 and kappa_2 values to a CSV file.
 
     Args:
         r (int): cone base radius in voxels
@@ -1130,9 +1097,7 @@ def run_cone(  # does not include assert for true curvature!
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
         methods (list): tells which method(s) should be used: 'VV'
-            for normal vector voting, 'VVCF' for curve fitting in
-            the two principal directions estimated by VV to estimate the
-            principal curvatures or 'VCTV' for vector and curvature tensor
+            for normal vector voting or 'VCTV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
         res (int, optional): if > 0 determines how many triangles around the
             circular base the cone has, is subdivided and smoothed, the base
@@ -1143,11 +1108,8 @@ def run_cone(  # does not include assert for true curvature!
             is added on triangle vertex coordinates in its normal direction
             - only for a smoothed cone, res > 0!
         page_curvature_formula (boolean, optional): if True (default False)
-            normal curvature formula from Page et al. is used for VV or VVCF
-            (see collecting_curvature_votes)
-        num_points (int): for VVCF, number of points to sample in each
-            estimated principal direction in order to fit parabola and
-            estimate curvature
+            normal curvature formula from Page et al. is used for VV (see
+            collecting_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
@@ -1221,8 +1183,7 @@ def run_cone(  # does not include assert for true curvature!
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=1, methods=methods,
         page_curvature_formula=page_curvature_formula,
-        num_points=num_points, full_dist_map=full_dist_map, area2=area2,
-        poly_surf=surf, cores=cores)
+        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores)
 
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
@@ -1233,11 +1194,6 @@ def run_cone(  # does not include assert for true curvature!
         if ((method == 'VV' or method == 'VV_page_curvature_formula') and
                 area2):
             method = '{}_area2'.format(method)
-        elif method == 'VVCF' and page_curvature_formula:
-            method = 'VVCF_page_curvature_formula_{}points'.format(
-                num_points)
-        elif method == 'VVCF':
-            method = 'VVCF_{}points'.format(num_points)
         surf_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
