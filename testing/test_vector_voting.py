@@ -113,6 +113,50 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
     return kappa_2, T_1, T_2
 
 
+def surface_to_graph(surf_file, scale_factor_to_nm=1, inverse=False):
+    """
+    Reads in the .vtp file with the triangle mesh surface and transforms it
+    into a triangle graph.
+
+    Args:
+        surf_file (str): .vtp file with the triangle mesh surface
+        scale_factor_to_nm (float, optional): pixel size in nanometers for
+            scaling the surface and the graph (default 1)
+        inverse (boolean, optional): if True, the graph will have normals
+            pointing outwards (negative curvature), if False (default), the
+            other way around
+
+    Returns:
+        surface (vtk.vtkPolyData) and triangle graph(TriangleGraph)
+    """
+    t_begin = time.time()
+
+    print('\nReading in the surface file to get a vtkPolyData surface...')
+    surf = io.load_poly(surf_file)
+    print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+          'curvatures...')
+    tg = TriangleGraph()
+    # VTK has opposite surface normals convention than we use
+    # a graph with normals pointing outwards is generated (normal case
+    # for this method; negative curvatures)
+    if inverse:
+        reverse_normals = False
+    # a graph with normals pointing inwards is generated (positive
+    # curvatures)
+    else:
+        reverse_normals = True
+    tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm, verbose=False,
+                                    reverse_normals=reverse_normals)
+    print(tg.graph)
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    minutes, seconds = divmod(duration, 60)
+    print('Graph construction from surface took: {} min {} s'.format(
+        minutes, seconds))
+    return surf, tg
+
+
 """
 Tests for vector_voting.py, assuming that other used functions are correct.
 """
@@ -141,23 +185,16 @@ def test_plane_normals(half_size, radius_hit, res, noise):
         None
     """
     base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
-    if res == 0:
-        fold = '{}synthetic_volumes/plane/noise{}/'.format(base_fold, noise)
-    else:
-        fold = '{}synthetic_surfaces/plane/res{}_noise{}/'.format(
-            base_fold, res, noise)
+    fold = '{}synthetic_surfaces/plane/res{}_noise{}/'.format(
+        base_fold, res, noise)
     if not os.path.exists(fold):
         os.makedirs(fold)
     surf_file = '{}plane_half_size{}.surface.vtp'.format(fold, half_size)
-    scale_factor_to_nm = 1.0  # assume it's already in nm
-    # Actually can just give in any number for the scales, because they are
-    # only used for ribosome density calculation or volumes / .mrc files
-    # creation.
     files_fold = '{}files4plotting/'.format(fold)
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
     base_filename = "{}plane_half_size{}".format(files_fold, half_size)
-    surf_vv_file = '{}.VCTV_rh{}.vtp'.format(base_filename, radius_hit)
+    vv_surf_file = '{}.VCTV_rh{}.vtp'.format(base_filename, radius_hit)
     vv_eval_file = '{}.VCTV_rh{}.csv'.format(base_filename, radius_hit)
     vtk_eval_file = '{}.VTK.csv'.format(base_filename)
 
@@ -165,43 +202,23 @@ def test_plane_normals(half_size, radius_hit, res, noise):
           "half-size {} and {}% noise ***".format(half_size, noise))
     # If the .vtp file with the test surface does not exist, create it:
     if not os.path.isfile(surf_file):
-        if res == 0:  # generate surface from a mask with gen_surface
-            print("Sorry, not implemented yet")
-            exit(0)
-        else:  # generate surface directly with VTK
-            pg = PlaneGenerator()
-            plane = pg.generate_plane_surface(half_size, res)
-            if noise > 0:
-                plane = add_gaussian_noise_to_surface(plane, percent=noise)
-            io.save_vtp(plane, surf_file)
+        # generate surface directly with VTK
+        pg = PlaneGenerator()
+        plane = pg.generate_plane_surface(half_size, res)
+        if noise > 0:
+            plane = add_gaussian_noise_to_surface(plane, percent=noise)
+        io.save_vtp(plane, surf_file)
 
-    # Reading in the .vtp file with the test triangle mesh and transforming
-    # it into a triangle graph:
-    t_begin = time.time()
-
-    print('\nReading in the surface file to get a vtkPolyData surface...')
-    surf = io.load_poly(surf_file)
-    print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-          'curvatures...')
-    tg = TriangleGraph()
-    tg.build_graph_from_vtk_surface(
-        surf, scale_factor_to_nm, verbose=False, reverse_normals=False)
-    print(tg.graph)
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    minutes, seconds = divmod(duration, 60)
-    print('Graph construction from surface took: {} min {} s'.format(
-        minutes, seconds))
+    # Reading in the surface and transforming it into a triangle graph
+    surf, tg = surface_to_graph(surf_file)
 
     # Running the modified Normal Vector Voting algorithm (with curvature
     # tensor voting, because its second pass is the fastest):
     results = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=0, methods=['VCTV'], poly_surf=surf)
     surf_vv = results['VCTV'][1]
-    # Saving the output (TriangleGraph object) for later inspection in
-    # ParaView:
-    io.save_vtp(surf_vv, surf_vv_file)
+    # Saving the output (TriangleGraph object) for later inspection in ParaView:
+    io.save_vtp(surf_vv, vv_surf_file)
 
     # Getting the initial and the estimated normals
     pos = [0, 1, 2]  # vector-property value positions
@@ -314,10 +331,6 @@ def test_cylinder_directions_curvatures(
 
     surf_filebase = '{}cylinder_r{}_h{}'.format(fold, radius, h)
     surf_file = '{}.surface.vtp'.format(surf_filebase)
-    scale_factor_to_nm = 1.0  # assume it's already in nm
-    # Actually can just give in any number for the scales, because they are
-    # only used for ribosome density calculation or volumes / .mrc files
-    # creation.
     files_fold = '{}files4plotting/'.format(fold)
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
@@ -348,33 +361,8 @@ def test_cylinder_directions_curvatures(
             cylinder = add_gaussian_noise_to_surface(cylinder, percent=noise)
         io.save_vtp(cylinder, surf_file)
 
-    # Reading in the .vtp file with the test triangle mesh and transforming
-    # it into a triangle graph:
-    t_begin = time.time()
-
-    print('\nReading in the surface file to get a vtkPolyData surface...')
-    surf = io.load_poly(surf_file)
-    print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-          'curvatures...')
-    tg = TriangleGraph()
-    # VTK has opposite surface normals convention than we use
-    # a graph with normals pointing outwards is generated (normal case
-    # for this method; negative curvatures)
-    if inverse:
-        reverse_normals = False
-    # a graph with normals pointing inwards is generated (positive
-    # curvatures)
-    else:
-        reverse_normals = True
-    tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm, verbose=False,
-                                    reverse_normals=reverse_normals)
-    print(tg.graph)
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    minutes, seconds = divmod(duration, 60)
-    print('Graph construction from surface took: {} min {} s'.format(
-        minutes, seconds))
+    # Reading in the surface and transforming it into a triangle graph
+    surf, tg = surface_to_graph(surf_file, inverse=inverse)
 
     # Running the modified Normal Vector Voting algorithm:
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
@@ -588,10 +576,6 @@ def test_sphere_curvatures(
         os.makedirs(fold)
     surf_filebase = '{}sphere_r{}'.format(fold, radius)
     surf_file = '{}.surface.vtp'.format(surf_filebase)
-    scale_factor_to_nm = 1.0  # assume it's already in nm
-    # Actually can just give in any number for the scales, because they are
-    # only used for ribosome density calculation or volumes / .mrc files
-    # creation.
     files_fold = '{}files4plotting/'.format(fold)
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
@@ -639,33 +623,8 @@ def test_sphere_curvatures(
                                                            percent=noise)
                 io.save_vtp(sphere, surf_file)
 
-    # Reading in the .vtp file with the test triangle mesh and transforming
-    # it into a triangle graph:
-    t_begin = time.time()
-
-    print('\nReading in the surface file to get a vtkPolyData surface...')
-    surf = io.load_poly(surf_file)
-    print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-          'curvatures...')
-    tg = TriangleGraph()
-    # VTK has opposite surface normals convention than we use
-    # a graph with normals pointing outwards is generated (normal case
-    # for VTK; negative curvatures)
-    if inverse:
-        reverse_normals = False
-    # a graph with normals pointing inwards is generated (VTK normals have
-    # to be flipped, positive curvatures)
-    else:
-        reverse_normals = True
-    tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm, verbose=False,
-                                    reverse_normals=reverse_normals)
-    print(tg.graph)
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    minutes, seconds = divmod(duration, 60)
-    print('Graph construction from surface took: {} min {} s'.format(
-        minutes, seconds))
+    # Reading in the surface and transforming it into a triangle graph
+    surf, tg = surface_to_graph(surf_file, inverse=inverse)
 
     # Running the modified Normal Vector Voting algorithm:
     if runtimes is not None and not os.path.isfile(runtimes):
@@ -812,10 +771,6 @@ def test_torus_directions_curvatures(
         os.makedirs(fold)
     surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)
     surf_file = '{}.surface.vtp'.format(surf_filebase)
-    scale_factor_to_nm = 1.0  # assume it's already in nm
-    # Actually can just give in any number for the scales, because they are
-    # only used for ribosome density calculation or volumes / .mrc files
-    # creation.
     files_fold = '{}files4plotting/'.format(fold)
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
@@ -829,27 +784,8 @@ def test_torus_directions_curvatures(
         torus = sg.generate_parametric_torus(rr, csr)
         io.save_vtp(torus, surf_file)
 
-    # Reading in the .vtp file with the test triangle mesh and transforming
-    # it into a triangle graph:
-    t_begin = time.time()
-
-    print('\nReading in the surface file to get a vtkPolyData surface...')
-    surf = io.load_poly(surf_file)
-    print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-          'curvatures...')
-    tg = TriangleGraph()
-    # VTK has opposite surface normals convention than we use,
-    # a graph with normals pointing inwards is generated (VTK normals have
-    # to be flipped)
-    tg.build_graph_from_vtk_surface(
-        surf, scale_factor_to_nm, verbose=False, reverse_normals=True)
-    print(tg.graph)
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    minutes, seconds = divmod(duration, 60)
-    print('Graph construction from surface took: {} min {} s'.format(
-        minutes, seconds))
+    # Reading in the surface and transforming it into a triangle graph
+    surf, tg = surface_to_graph(surf_file, inverse=False)
 
     # Ground-truth principal curvatures and directions
     # Vertex properties for storing the true maximal and minimal curvatures
@@ -1087,27 +1023,8 @@ def run_cone(  # does not include assert for true curvature!
                 cone = add_gaussian_noise_to_surface(cone, percent=noise)
         io.save_vtp(cone, surf_file)
 
-    # Reading in the .vtp file with the test triangle mesh and transforming
-    # it into a triangle graph:
-    t_begin = time.time()
-
-    print('\nReading in the surface file to get a vtkPolyData surface...')
-    surf = io.load_poly(surf_file)
-    print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-          'curvatures...')
-    tg = TriangleGraph()
-    # VTK has opposite surface normals convention than we use
-    # a graph with normals pointing inwards is generated (positive
-    # curvatures)
-    tg.build_graph_from_vtk_surface(
-        surf, scale_factor_to_nm, verbose=False, reverse_normals=True)
-    print(tg.graph)
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    minutes, seconds = divmod(duration, 60)
-    print('Graph construction from surface took: {} min {} s'.format(
-        minutes, seconds))
+    # Reading in the surface and transforming it into a triangle graph
+    surf, tg = surface_to_graph(surf_file, inverse=False)
 
     # Running the modified Normal Vector Voting algorithm:
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
