@@ -1,7 +1,6 @@
 import pytest
 import time
 import os.path
-import numpy as np
 import math
 import pandas as pd
 
@@ -11,6 +10,7 @@ from pysurf import (
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     ConeGenerator, add_gaussian_noise_to_surface)
+from errors_calculation import *
 
 """
 Scripts for testing of validity of curvature estimation methods using
@@ -20,72 +20,6 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 """
 
 __author__ = 'kalemanov'
-
-
-def absolute_error_scalar(true_value, estimated_value):
-    """
-    Calculates the "absolute error" as measure of accuracy for scalars.
-
-    Args:
-        true_value: true / accepted scalar value
-        estimated_value: estimated / measured / experimental scalar value
-
-    Returns:
-        abs(true_value - estimated_value)
-        the lower the error, the more accurate the estimated value
-    """
-    return abs(true_value - estimated_value)
-
-
-def relative_error_scalar(true_value, estimated_value):
-    """
-    Calculates the "relative error" as measure of accuracy for scalars.
-
-    Args:
-        true_value: true / accepted scalar value
-        estimated_value: estimated / measured / experimental scalar value
-
-    Returns:
-        abs((true_value - estimated_value) / true_value)
-        if true_value = 0, just abs(true_value - estimated_value)
-        the lower the error, the more accurate the estimated value
-    """
-    if true_value == 0:
-        return abs(true_value - estimated_value)
-    else:
-        return abs((true_value - estimated_value) / true_value)
-
-
-def error_vector(true_vector, estimated_vector):
-    """
-    Calculates the error for 3D vectors.
-
-    Args:
-        true_vector (numpy.ndarray): true / accepted 3D vector
-        estimated_vector (numpy.ndarray): estimated / measured / experimental 3D
-            vector
-
-    Returns:
-        1 - abs(np.dot(true_vector, estimated_vector))
-        0 if the vectors are parallel, 1 if they are perpendicular
-    """
-    return 1 - abs(np.dot(true_vector, estimated_vector))
-
-
-def angular_error_vector(true_vector, estimated_vector):
-    """
-    Calculates the "angular error" for 3D vectors.
-
-    Args:
-        true_vector (numpy.ndarray): true / accepted 3D vector
-        estimated_vector (numpy.ndarray): estimated / measured / experimental 3D
-            vector
-
-    Returns:
-        acos(abs(np.dot(true_vector, estimated_vector)))
-        angle in radians between two vectors
-    """
-    return math.acos(abs(np.dot(true_vector, estimated_vector)))
 
 
 def beautify_number(number, precision=15):
@@ -182,7 +116,6 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
 """
 Tests for vector_voting.py, assuming that other used functions are correct.
 """
-
 
 
 @pytest.mark.parametrize("half_size, radius_hit, res, noise", [
@@ -579,27 +512,17 @@ def test_cylinder_directions_curvatures(
                 assert error <= allowed_error
 
 
-# TODO make a fixture to be run when the option is set: runtimes=runtimes_csv
-# use runtimes_csv as input parameter?
-# runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-#                "sphere/binary/files4plotting/bin_spheres_runtimes.csv"
-# runtimes_csv = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/" \
-#                "torus/files4plotting/torus_rr25_csr10_runtimes_VCTV.csv"
-# with open(runtimes_csv, 'w') as f:
-#     f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-#             "duration1;method;duration2\n")
-
 @pytest.mark.parametrize(
-    "radius,radius_hit,inverse,binary,ico,methods", [
-        (10, 3.5, False, False, 1280, ['VV']),  # icosahedron
-        (10, 9, False, True, 0, ['VV']),  # binary
-        (10, 9, False, False, 0, ['VV', 'VCTV']),  # gaussian
-        (10, 8, True, False, 0, ['VV', 'VCTV']),  # gaussian inverse
+    "radius,radius_hit,inverse,binary,ico,methods, runtimes", [
+        (10, 3.5, False, False, 1280, ['VV'], None),  # icosahedron
+        (10, 9, False, True, 0, ['VV'], "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/sphere/binary/files4plotting/bin_spheres_runtimes.csv"),  # binary
+        (10, 9, False, False, 0, ['VV', 'VCTV'], None),  # gaussian
+        (10, 8, True, False, 0, ['VV', 'VCTV'], None),  # gaussian inverse
     ])
 def test_sphere_curvatures(
-        radius, radius_hit, inverse, methods, binary, ico,
+        radius, radius_hit, inverse, methods, binary, ico, runtimes,
         res=0, noise=0, save_areas=False, page_curvature_formula=False,
-        full_dist_map=False, area2=True, cores=4, runtimes=None):
+        full_dist_map=False, area2=True, cores=4):
     """
     Runs all the steps needed to calculate curvatures for a test sphere
     with a given radius. Tests whether the curvatures are correctly
@@ -621,6 +544,8 @@ def test_sphere_curvatures(
             next three options)
         ico (int): if > 0 and res=0, an icosahedron with so many faces is used
             (1280 faces with radius 1 or 10 are available so far)
+        runtimes (str): if given, runtimes and some parameters are added to
+            this file (otherwise None)
         res (int, optional): if > 0 determines how many longitude and
             latitude stripes the UV sphere from vtkSphereSource has, the
             surface is triangulated; If 0 (default) and ico=0, first a
@@ -641,8 +566,6 @@ def test_sphere_curvatures(
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
         cores (int): number of cores to run VV in parallel (default 4)
-        runtimes (str): if given, runtimes and some parameters are added to
-            this file (default None)
 
     Returns:
         None
@@ -745,6 +668,10 @@ def test_sphere_curvatures(
         minutes, seconds))
 
     # Running the modified Normal Vector Voting algorithm:
+    if runtimes is not None and not os.path.isfile(runtimes):
+        with open(runtimes, 'w') as f:
+            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+                    "duration1;method;duration2\n")
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=0, methods=methods,
         page_curvature_formula=page_curvature_formula,
@@ -839,13 +766,12 @@ def test_sphere_curvatures(
             assert error <= allowed_error
 
 
-@pytest.mark.parametrize("rr,csr,radius_hit,methods", [
-    (25, 10, 8, ['VV', 'VCTV']),
+@pytest.mark.parametrize("rr,csr,radius_hit,methods,runtimes", [
+    (25, 10, 8, ['VV', 'VCTV'], "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/files4plotting/torus_rr25_csr10_runtimes.csv"),
 ])
 def test_torus_directions_curvatures(
-        rr, csr, radius_hit, methods,
-        page_curvature_formula=False, full_dist_map=False, area2=True, cores=4,
-        runtimes=None):
+        rr, csr, radius_hit, methods, runtimes,
+        page_curvature_formula=False, full_dist_map=False, area2=True, cores=4,):
     """
     Runs all the steps needed to calculate curvatures for a test torus
     with given radii using normal vector voting (VV) or VV combined with
@@ -861,6 +787,8 @@ def test_torus_directions_curvatures(
         methods (list): tells which method(s) should be used: 'VV'
             for normal vector voting or 'VCTV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
+        runtimes (str): if given, runtimes and some parameters are added to
+            this file (otherwise None)
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV (see
             collecting_curvature_votes)
@@ -871,8 +799,6 @@ def test_torus_directions_curvatures(
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
         cores (int): number of cores to run VV in parallel (default 4)
-        runtimes (str): if given, runtimes and some parameters are added to
-            this file (default None)
 
     Notes:
         * csr should be much smaller than rr (csr < rr - csr).
@@ -955,6 +881,10 @@ def test_torus_directions_curvatures(
     true_kappa_2 = tg.get_vertex_property_array("true_kappa_2")
 
     # Running the modified Normal Vector Voting algorithm:
+    if runtimes is not None and not os.path.isfile(runtimes):
+        with open(runtimes, 'w') as f:
+            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
+                    "duration1;method;duration2\n")
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=0, methods=methods,
         page_curvature_formula=page_curvature_formula,

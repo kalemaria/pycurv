@@ -8,3 +8,4 @@ synthetic_surfaces (only the function add_gaussian_noise_to_surface)
 
 from synthetic_surfaces import add_gaussian_noise_to_surface
 from memory_profiling import dump_heap
+from errors_calculation import *

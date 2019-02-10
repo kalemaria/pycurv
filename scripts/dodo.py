@@ -5,7 +5,7 @@ from distances_calculation import (distances_and_thicknesses_calculation,
                                    extract_distances)
 RADIUS_HIT = 10
 CONDITIONS = ["WT", "IST2", "SCS", "TCB", "dTCB1", "dTCB2", "dTCB3",
-              "dTCB1_dTCB2", "WT_HS", "dTCB123_HS"]
+              "dTCB1_dTCB2", "WT_HS", "dTCB123", "dTCB123_HS"]
 
 
 def task_calculate_cER_curvatures():
