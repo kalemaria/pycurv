@@ -21,6 +21,8 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 
 __author__ = 'kalemanov'
 
+FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/'
+
 
 def beautify_number(number, precision=15):
     """
@@ -184,9 +186,7 @@ def test_plane_normals(half_size, radius_hit, res, noise):
     Returns:
         None
     """
-    base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
-    fold = '{}synthetic_surfaces/plane/res{}_noise{}/'.format(
-        base_fold, res, noise)
+    fold = '{}plane/res{}_noise{}/'.format(FOLD, res, noise)
     if not os.path.exists(fold):
         os.makedirs(fold)
     surf_file = '{}plane_half_size{}.surface.vtp'.format(fold, half_size)
@@ -314,13 +314,10 @@ def test_cylinder_directions_curvatures(
     Returns:
         None
     """
-    base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
     if res == 0:
-        fold = '{}synthetic_surfaces/cylinder/noise{}/'.format(
-            base_fold, noise)
+        fold = '{}cylinder/noise{}/'.format(FOLD, noise)
     else:
-        fold = '{}synthetic_surfaces/cylinder/res{}_noise{}/'.format(
-            base_fold, res, noise)
+        fold = '{}cylinder/res{}_noise{}/'.format(FOLD, res, noise)
     if not os.path.exists(fold):
         os.makedirs(fold)
 
@@ -345,7 +342,7 @@ def test_cylinder_directions_curvatures(
     if inverse:
         print("\n*** Generating a surface and a graph for an inverse "
               "cylinder with radius {}, height {} and {}% noise ***".format(
-            radius, h, noise))
+                radius, h, noise))
     else:
         print("\n*** Generating a surface and a graph for a cylinder with "
               "radius {}, height {} and {}% noise ***".format(radius, h, noise))
@@ -356,7 +353,7 @@ def test_cylinder_directions_curvatures(
             cylinder = cg.generate_gauss_cylinder_surface(radius)
         else:  # generate surface directly with VTK
             print("Warning: cylinder contains planes!")
-            cylinder = cg.generate_cylinder_surface(radius, h, res=50)
+            cylinder = cg.generate_cylinder_surface(radius, h, res)
         if noise > 0:
             cylinder = add_gaussian_noise_to_surface(cylinder, percent=noise)
         io.save_vtp(cylinder, surf_file)
@@ -387,8 +384,7 @@ def test_cylinder_directions_curvatures(
         (tg, surf) = method_tg_surf_dict[method]
         if method == 'VV' and page_curvature_formula:
             method = 'VV_page_curvature_formula'
-        if ((method == 'VV' or method == 'VV_page_curvature_formula') and
-                area2):
+        if (method == 'VV' or method == 'VV_page_curvature_formula') and area2:
             method = '{}_area2'.format(method)
         surf_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
@@ -410,8 +406,7 @@ def test_cylinder_directions_curvatures(
         T_h = np.transpose(T_h)  # shape (<num_vertices>, 3)
 
         # Computing errors of the estimated T_h vectors wrt the true one:
-        T_h_errors = np.array(map(
-            lambda x: error_vector(true_T_h, x), T_h))
+        T_h_errors = np.array(map(lambda x: error_vector(true_T_h, x), T_h))
         T_h_angular_errors = np.array(map(
             lambda x: angular_error_vector(true_T_h, x), T_h))
 
@@ -423,32 +418,24 @@ def test_cylinder_directions_curvatures(
         vtk_kappa_2 = tg.get_vertex_property_array("min_curvature")
 
         # Calculating errors of the principal curvatures:
-        if true_kappa_1 != 0:  # not inverse
+        if not inverse:
             abs_kappa_1_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_1, x),
-                kappa_1))
+                lambda x: absolute_error_scalar(true_kappa_1, x), kappa_1))
             rel_kappa_1_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_1, x),
-                kappa_1))
+                lambda x: relative_error_scalar(true_kappa_1, x), kappa_1))
             vtk_abs_kappa_1_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_1, x),
-                vtk_kappa_1))
+                lambda x: absolute_error_scalar(true_kappa_1, x), vtk_kappa_1))
             vtk_rel_kappa_1_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_1, x),
-                vtk_kappa_1))
+                lambda x: relative_error_scalar(true_kappa_1, x), vtk_kappa_1))
         else:  # inverse
             abs_kappa_2_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_2, x),
-                kappa_2))
+                lambda x: absolute_error_scalar(true_kappa_2, x), kappa_2))
             rel_kappa_2_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_2, x),
-                kappa_2))
+                lambda x: relative_error_scalar(true_kappa_2, x), kappa_2))
             vtk_abs_kappa_2_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_2, x),
-                vtk_kappa_2))
+                lambda x: absolute_error_scalar(true_kappa_2, x), vtk_kappa_2))
             vtk_rel_kappa_2_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_2, x),
-                vtk_kappa_2))
+                lambda x: relative_error_scalar(true_kappa_2, x), vtk_kappa_2))
 
         # Writing all the curvature values and errors into a csv file:
         df = pd.DataFrame()
@@ -470,7 +457,7 @@ def test_cylinder_directions_curvatures(
             df = pd.DataFrame()
             df['kappa1'] = vtk_kappa_1
             df['kappa2'] = vtk_kappa_2
-            if true_kappa_1 != 0:  # not inverse
+            if not inverse:
                 df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
                 df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
             else:  # inverse
@@ -490,7 +477,7 @@ def test_cylinder_directions_curvatures(
         # Asserting that all principal curvatures are close to the correct
         # ones allowing error of +-30% of the maximal absolute true value
         allowed_error = 0.3 * max(abs(true_kappa_1), abs(true_kappa_2))
-        if true_kappa_1 != 0:  # not inverse
+        if not inverse:
             print("Testing the maximal principal curvature (kappa_1)...")
             for error in abs_kappa_1_errors:
                 assert error <= allowed_error
@@ -503,7 +490,9 @@ def test_cylinder_directions_curvatures(
 @pytest.mark.parametrize(
     "radius,radius_hit,inverse,binary,ico,methods, runtimes", [
         (10, 3.5, False, False, 1280, ['VV'], None),  # icosahedron
-        (10, 9, False, True, 0, ['VV'], "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/sphere/binary/files4plotting/bin_spheres_runtimes.csv"),  # binary
+        (10, 9, False, True, 0, ['VV'],
+            "{}sphere/binary/files4plotting/bin_spheres_runtimes.csv".format(
+             FOLD)),  # binary
         (10, 9, False, False, 0, ['VV', 'VCTV'], None),  # gaussian
         (10, 8, True, False, 0, ['VV', 'VCTV'], None),  # gaussian inverse
     ])
@@ -529,7 +518,7 @@ def test_sphere_curvatures(
             for normal vector voting or 'VCTV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
         binary (boolean): if True, a binary sphere is generated (ignoring the
-            next three options)
+            options ico, res and noise)
         ico (int): if > 0 and res=0, an icosahedron with so many faces is used
             (1280 faces with radius 1 or 10 are available so far)
         runtimes (str): if given, runtimes and some parameters are added to
@@ -558,19 +547,15 @@ def test_sphere_curvatures(
     Returns:
         None
     """
-    base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
     if binary:
-        fold = '{}synthetic_surfaces/sphere/binary/'.format(base_fold)
+        fold = '{}sphere/binary/'.format(FOLD)
     else:
-        if res > 0:  # UV sphere is used
-            fold = '{}synthetic_surfaces/sphere/res{}_noise{}/'.format(
-                base_fold, res, noise)
+        if res > 0:  # UV sphere with this longitude and latitude res. is used
+            fold = '{}sphere/res{}_noise{}/'.format(FOLD, res, noise)
         elif ico > 0:  # icosahedron sphere with so many faces is used
-            fold = '{}synthetic_surfaces/sphere/ico{}_noise{}/'.format(
-                base_fold, ico, noise)
-        else:  # a "disco" sphere from gaussian mask is used
-            fold = '{}synthetic_surfaces/sphere/noise{}/'.format(
-                base_fold, noise)
+            fold = '{}sphere/ico{}_noise{}/'.format(FOLD, ico, noise)
+        else:  # a sphere generated by a gaussian mask is used
+            fold = '{}sphere/noise{}/'.format(FOLD, noise)
 
     if not os.path.exists(fold):
         os.makedirs(fold)
@@ -588,8 +573,7 @@ def test_sphere_curvatures(
 
     if inverse:
         print("\n*** Generating a surface and a graph for an inverse "
-              "sphere with radius {} and {}% noise***".format(
-            radius, noise))
+              "sphere with radius {} and {}% noise***".format(radius, noise))
     else:
         print("\n*** Generating a surface and a graph for a sphere with "
               "radius {} and {}% noise***".format(radius, noise))
@@ -648,11 +632,9 @@ def test_sphere_curvatures(
         (tg, surf) = method_tg_surf_dict[method]
         if method == 'VV' and page_curvature_formula:
             method = 'VV_page_curvature_formula'
-        if ((method == 'VV' or method == 'VV_page_curvature_formula') and
-                area2):
+        if (method == 'VV' or method == 'VV_page_curvature_formula') and area2:
             method = '{}_area2'.format(method)
-        surf_file = '{}.{}_rh{}.vtp'.format(
-            base_filename, method, radius_hit)
+        surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
 
         # Evaluating each method:
@@ -689,10 +671,8 @@ def test_sphere_curvatures(
 
         # The same steps for VTK, if the file does not exist yet:
         if not os.path.isfile(VTK_eval_file):
-            vtk_kappa_1_values = tg.get_vertex_property_array(
-                "max_curvature")
-            vtk_kappa_2_values = tg.get_vertex_property_array(
-                "min_curvature")
+            vtk_kappa_1_values = tg.get_vertex_property_array("max_curvature")
+            vtk_kappa_2_values = tg.get_vertex_property_array("min_curvature")
             vtk_abs_kappa_1_errors = np.array(map(
                 lambda x: absolute_error_scalar(true_curvature, x),
                 vtk_kappa_1_values))
@@ -726,7 +706,10 @@ def test_sphere_curvatures(
 
 
 @pytest.mark.parametrize("rr,csr,radius_hit,methods,runtimes", [
-    (25, 10, 8, ['VV', 'VCTV'], "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/files4plotting/torus_rr25_csr10_runtimes.csv"),
+    (25, 10, 8, ['VV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD)),
+(25, 10, 8, ['VCTV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD)),
 ])
 def test_torus_directions_curvatures(
         rr, csr, radius_hit, methods, runtimes,
@@ -765,8 +748,7 @@ def test_torus_directions_curvatures(
     Returns:
         None
     """
-    fold = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/torus/'
-
+    fold = '{}torus/'.format(FOLD)
     if not os.path.exists(fold):
         os.makedirs(fold)
     surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)
@@ -809,6 +791,8 @@ def test_torus_directions_curvatures(
 
     # Getting the true principal directions and principal curvatures:
     pos = [0, 1, 2]  # vector-property value positions
+    # The shape is (3, <num_vertices>) - have to transpose to group the
+    # respective x, y, z components to sub-arrays
     true_T_1 = np.transpose(
         tg.graph.vertex_properties["true_T_1"].get_2d_array(pos))
     true_T_2 = np.transpose(
@@ -833,21 +817,16 @@ def test_torus_directions_curvatures(
         (tg, surf) = method_tg_surf_dict[method]
         if method == 'VV' and page_curvature_formula:
             method = 'VV_page_curvature_formula'
-        if ((method == 'VV' or method == 'VV_page_curvature_formula') and
-                area2):
+        if (method == 'VV' or method == 'VV_page_curvature_formula') and area2:
             method = '{}_area2'.format(method)
-        surf_file = '{}.{}_rh{}.vtp'.format(
-            base_filename, method, radius_hit)
+        surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
 
         # Evaluating each method:
         print("\nEvaluating {}...".format(method))
-        eval_file = '{}.{}_rh{}.csv'.format(
-            base_filename, method, radius_hit)
+        eval_file = '{}.{}_rh{}.csv'.format(base_filename, method, radius_hit)
 
         # Getting the estimated and true principal directions:
-        # The shape is (3, <num_vertices>) - have to transpose to group the
-        # respective x, y, z components to sub-arrays
         T_1 = np.transpose(tg.graph.vertex_properties["T_1"].get_2d_array(pos))
         T_2 = np.transpose(tg.graph.vertex_properties["T_2"].get_2d_array(pos))
 
@@ -870,26 +849,18 @@ def test_torus_directions_curvatures(
         # Computing errors of the estimated curvatures wrt the true ones:
         abs_kappa_1_errors = np.array(map(
             lambda x, y: absolute_error_scalar(x, y), true_kappa_1, kappa_1))
-        # abs_kappa_1_errors = []  # the same as map
-        # for x, y in zip(true_kappa_1, kappa_1):
-        #     abs_kappa_1_error = absolute_error_scalar(x, y)
-        #     abs_kappa_1_errors.append(abs_kappa_1_error)
-        # abs_kappa_1_errors = np.array(abs_kappa_1_errors)
         rel_kappa_1_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y),
-            true_kappa_1, kappa_1))
+            lambda x, y: relative_error_scalar(x, y), true_kappa_1, kappa_1))
+        abs_kappa_2_errors = np.array(map(
+            lambda x, y: absolute_error_scalar(x, y), true_kappa_2, kappa_2))
+        rel_kappa_2_errors = np.array(map(
+            lambda x, y: relative_error_scalar(x, y), true_kappa_2, kappa_2))
         vtk_abs_kappa_1_errors = np.array(map(
             lambda x, y: absolute_error_scalar(x, y),
             true_kappa_1, vtk_kappa_1))
         vtk_rel_kappa_1_errors = np.array(map(
             lambda x, y: relative_error_scalar(x, y),
             true_kappa_1, vtk_kappa_1))
-        abs_kappa_2_errors = np.array(map(
-            lambda x, y: absolute_error_scalar(x, y),
-            true_kappa_2, kappa_2))
-        rel_kappa_2_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y),
-            true_kappa_2, kappa_2))
         vtk_abs_kappa_2_errors = np.array(map(
             lambda x, y: absolute_error_scalar(x, y),
             true_kappa_2, vtk_kappa_2))
@@ -947,9 +918,8 @@ def test_torus_directions_curvatures(
     (6, 6, 5, 38, ['VV', 'VCTV']),  # smooth
 ])
 def run_cone(  # does not include assert for true curvature!
-        r, h, radius_hit, methods,
-        res=0, noise=0, page_curvature_formula=False, full_dist_map=False,
-        area2=True, cores=4):
+        r, h, radius_hit, methods, res=0, noise=0, page_curvature_formula=False,
+        full_dist_map=False, area2=True, cores=4):
     """
     Runs all the steps needed to calculate curvatures for a test cone with given
     radius and height using normal vector voting (VV) or VV combined with
@@ -987,22 +957,16 @@ def run_cone(  # does not include assert for true curvature!
     Returns:
         None
     """
-    base_fold = '/fs/pool/pool-ruben/Maria/curvature/'
     if res == 0:
         noise = 0
-        fold = '{}synthetic_surfaces/cone/binary/'.format(base_fold)
+        fold = '{}cone/binary/'.format(FOLD)
     else:
-        fold = '{}synthetic_surfaces/cone/res{}_noise{}/'.format(
-            base_fold, res, noise)
+        fold = '{}cone/res{}_noise{}/'.format(FOLD, res, noise)
     if not os.path.exists(fold):
         os.makedirs(fold)
 
     surf_filebase = '{}cone_r{}_h{}'.format(fold, r, h)
     surf_file = '{}.surface.vtp'.format(surf_filebase)
-    scale_factor_to_nm = 1.0  # assume it's already in nm
-    # Actually can just give in any number for the scales, because they are
-    # only used for ribosome density calculation or volumes / .mrc files
-    # creation.
     files_fold = '{}files4plotting/'.format(fold)
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
@@ -1038,11 +1002,9 @@ def run_cone(  # does not include assert for true curvature!
         (tg, surf) = method_tg_surf_dict[method]
         if method == 'VV' and page_curvature_formula:
             method = 'VV_page_curvature_formula'
-        if ((method == 'VV' or method == 'VV_page_curvature_formula') and
-                area2):
+        if (method == 'VV' or method == 'VV_page_curvature_formula') and area2:
             method = '{}_area2'.format(method)
-        surf_file = '{}.{}_rh{}.vtp'.format(
-            base_filename, method, radius_hit)
+        surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
 
         # Getting the estimated principal curvatures:
