@@ -1177,8 +1177,8 @@ class TriangleGraph(SurfaceGraph):
     # * The following TriangleGraph methods are implementing with adaptations
     # the normal vector voting algorithm of Page et al., 2002. *
 
-    def collecting_normal_votes(self, vertex_v_ind, g_max, A_max, sigma,
-                                full_dist_map=None, verbose=False):
+    def collecting_normal_votes(self, vertex_v_ind, g_max, A_max, sigma,  # TODO remove sigma, calculate it as g_max/3
+                                full_dist_map=None, verbose=False):  # TODO remove verbosity
         """
         For a vertex v, collects the normal votes of all triangles within its
         geodesic neighborhood and calculates the weighted covariance matrix sum
@@ -1304,7 +1304,7 @@ class TriangleGraph(SurfaceGraph):
         # return V_v  # if don't want to calculate average number of neighbors
 
     def classifying_orientation(self, vertex_v_ind, V_v, epsilon=2, eta=2,
-                                verbose=False):
+                                verbose=False):  # TODO remove epsilon, eta, classification and verbosity!
         """
         For a vertex v, its calculated matrix V_v (output of collecting_votes)
         and the parameters epsilon and eta (default 2 each), classifies its
@@ -1357,7 +1357,7 @@ class TriangleGraph(SurfaceGraph):
         E_1 = eigenvectors[:, 2]
         E_2 = eigenvectors[:, 1]
         E_3 = eigenvectors[:, 0]
-        # Saliency maps:
+        # Saliency maps:  # TODO remove
         S_s = lambda_1 - lambda_2  # surface patch
         S_c = lambda_2 - lambda_3  # crease junction
         S_n = lambda_3  # no preferred orientation
@@ -1379,7 +1379,7 @@ class TriangleGraph(SurfaceGraph):
         # the graph (add a placeholder [0, 0, 0] to each property, where it does
         # not apply):
         max_saliency = max(S_s, epsilon * S_c, epsilon * eta * S_n)
-        if max_saliency == S_s:
+        if max_saliency == S_s:  # TODO remove, always this case
             # Eventually have to flip (negate) the estimated normal, because its
             # direction is lost during the matrix generation!
             # Take the one for which the angle to the original normal is smaller
@@ -1396,18 +1396,18 @@ class TriangleGraph(SurfaceGraph):
             if verbose is True:
                 print("surface patch with normal N_v = {}".format(N_v))
             return 1, N_v, np.zeros(shape=3)
-        elif max_saliency == (epsilon * S_c):
+        elif max_saliency == (epsilon * S_c):  # TODO remove
             if verbose is True:
                 print("crease junction with tangent T_v = {}".format(E_3))
             return 2, np.zeros(shape=3), E_3
-        else:
+        else:  # TODO remove
             if verbose is True:
                 print("no preferred orientation")
             return 3, np.zeros(shape=3), np.zeros(shape=3)
 
     def collecting_curvature_votes(
             self, vertex_v_ind, g_max, sigma, full_dist_map=None, verbose=False,
-            page_curvature_formula=False, A_max=0.0):
+            page_curvature_formula=False, A_max=0.0):  # TODO remove verbosity
         """
         For a vertex v, collects the curvature and tangent votes of all
         triangles within its geodesic neighborhood belonging to a surface patch
@@ -1452,7 +1452,7 @@ class TriangleGraph(SurfaceGraph):
                 by v, N_v and v_i) divided by the arc length (geodesic distance
                 between v and v_i).
             A_max (float, optional): if given (default 0.0), votes are
-                weighted by triangle area like in the first step (normals
+                weighted by triangle area like in the first pass (normals
                 estimation)
         Returns:
             the 3x3 symmetric matrix B_v (numpy.ndarray)
@@ -1487,15 +1487,15 @@ class TriangleGraph(SurfaceGraph):
         # First, calculate the weights w_i of the neighboring triangles
         # belonging to a surface patch, because they have to be normalized to
         # sum up to 2 * pi:
-        surface_neighbors_idx = []
+        surface_neighbors_idx = []  # TODO remove!
         all_w_i = []
-        for idx_v_i in neighbor_idx_to_dist.keys():
+        for idx_v_i in neighbor_idx_to_dist.keys():  # TODO try to combine with the second loop
             # Get the neighboring vertex v_i:
             vertex_v_i = vertex(idx_v_i)
 
             # Check if the neighboring vertex v_i belongs to a surface patch
             # (otherwise don't consider it):
-            if orientation_class[vertex_v_i] == 1:
+            if orientation_class[vertex_v_i] == 1:  # TODO remove!
                 surface_neighbors_idx.append(idx_v_i)
                 # Weight depending on the geodesic distance to the neighboring
                 # vertex v_i from the vertex v, g_i:
@@ -1513,8 +1513,8 @@ class TriangleGraph(SurfaceGraph):
         try:
             assert(sum_w_i > 0)
         except AssertionError:  # can be 0 if no surface patch neighbors exist
-            # print("\nWarning: sum of the weights is not positive, but {}, for "
-            #       "the vertex v = {}, index = {}".format(sum_w_i, v, int(v)))
+            print("\nWarning: sum of the weights is not positive, but {}, for "
+                  "the vertex number {}".format(sum_w_i, int(v)))
             print("{} neighbors in a surface patch with weights w_i:".format(
                 len(surface_neighbors_idx)))
             print("The vertex will be ignored.")
@@ -1537,7 +1537,7 @@ class TriangleGraph(SurfaceGraph):
 
         # Let each of the neighboring triangles belonging to a surface patch
         # (as checked before) to cast a vote on vertex v:
-        for i, idx_v_i in enumerate(surface_neighbors_idx):
+        for i, idx_v_i in enumerate(surface_neighbors_idx):  # TODO use neighbor_idx_to_dist.keys()
             # Get the neighboring vertex v_i:
             vertex_v_i = vertex(idx_v_i)
 
@@ -1608,7 +1608,7 @@ class TriangleGraph(SurfaceGraph):
 
         return B_v
 
-    def estimate_curvature(self, vertex_v_ind, B_v, verbose=False):
+    def estimate_curvature(self, vertex_v_ind, B_v, verbose=False):  # TODO remove verbosity
         """
         For a vertex v and its calculated matrix B_v (output of
         collecting_votes2), calculates the principal directions (T_1 and T_2)
@@ -1721,7 +1721,7 @@ class TriangleGraph(SurfaceGraph):
         return (T_1, T_2, kappa_1, kappa_2,
                 gauss_curvature, mean_curvature, shape_index, curvedness)
 
-    def gen_curv_vote(self, poly_surf, vertex_r, radius_hit, verbose=False):
+    def gen_curv_vote(self, poly_surf, vertex_r, radius_hit, verbose=False):  # TODO remove verbosity
         """
         Implements the third pass of the method of Tong & Tang et al., 2005,
         "Algorithm 5. GenCurvVote". Estimates principal curvatures and
@@ -1877,7 +1877,7 @@ class TriangleGraph(SurfaceGraph):
                 if verbose:
                     print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
             else:
-                # print("Error: no eigenvector which equals to the normal found")
+                print("Error: no eigenvector which equals to the normal found")
                 return None
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2

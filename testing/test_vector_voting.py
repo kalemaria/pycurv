@@ -3,6 +3,8 @@ import time
 import os.path
 import math
 import pandas as pd
+import cProfile
+import pstats
 
 from pysurf import pysurf_io as io
 from pysurf import (
@@ -1022,3 +1024,16 @@ def run_cone(  # does not include assert for true curvature!
 
 
 # py.test -n 4   # test on multiple CPUs
+
+if __name__ == "__main__":
+    fold = '{}sphere/binary/'.format(FOLD)
+    stats_file = '{}sphere_r10.VV_rh9.stats'.format(fold)
+    cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
+                 'inverse=False, binary=True, ico=0, methods=[\'VV\'], '
+                 'runtimes=None, cores=1)', stats_file)
+
+    p = pstats.Stats(stats_file)
+    # what algorithms are taking time:
+    p.strip_dirs().sort_stats('cumulative').print_stats(10)
+    # what functions were looping a lot, and taking a lot of time:
+    p.strip_dirs().sort_stats('time').print_stats(10)

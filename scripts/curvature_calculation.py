@@ -849,13 +849,6 @@ if __name__ == "__main__":
     # membrane = sys.argv[1]
     # rh = int(sys.argv[2])
     # main_javier(membrane, rh)
-    # for t in [4, 7]:
-    #     for n in range(2):
-    #         extract_curvatures_after_new_workflow(
-    #             fold="/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/WT/"
-    #                  "171002_TITAN_l2_t{}/".format(t),
-    #             base_filename="WT_171002_l2_t{}.PM".format(t), radius_hit=10,
-    #             exclude_borders=n)
     subfold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/WT/" \
               "171002_TITAN_l2_t2/"
     base_filename = "WT_171002_l2_t2.PM"
