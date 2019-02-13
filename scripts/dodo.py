@@ -33,7 +33,7 @@ def task_calculate_cER_curvatures():
                 base_filename = "{}_{}_{}_{}.cER".format(
                     condition, date, lamella, tomo)
                 subfold = str(subfold_p) + '/'
-                target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
+                target_base = "{}{}.VV_area2_rh{}".format(
                     subfold, base_filename, radius_hit)
                 yield {'name': base_filename,
                        # 'verbosity': 2,
@@ -77,7 +77,7 @@ def task_extract_cER_curvatures():
             base_filename = "{}_{}_{}_{}.cER".format(
                 condition, date, lamella, tomo)
             subfold = str(subfold_p) + '/'
-            target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
+            target_base = "{}{}.VV_area2_rh{}".format(
                 subfold, base_filename, radius_hit)
             yield {'name': base_filename,
                    # 'verbosity': 2,
@@ -218,7 +218,7 @@ def task_calculate_PM_curvatures():
             subfold = str(subfold_p) + '/'
             gt_file_normals = "{}{}.NVV_rh{}.gt".format(
                 subfold, base_filename, radius_hit)
-            target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
+            target_base = "{}{}.VV_area2_rh{}".format(
                 subfold, base_filename, radius_hit)
             yield {'name': base_filename,
                    # 'verbosity': 2,
@@ -255,7 +255,7 @@ def task_extract_PM_curvatures():
             base_filename = "{}_{}_{}_{}.PM".format(
                 condition, date, lamella, tomo)
             subfold = str(subfold_p) + '/'
-            target_base = "{}{}.VV_area2_rh{}_epsilon0_eta0".format(
+            target_base = "{}{}.VV_area2_rh{}".format(
                 subfold, base_filename, radius_hit)
             yield {'name': base_filename,
                    # 'verbosity': 2,

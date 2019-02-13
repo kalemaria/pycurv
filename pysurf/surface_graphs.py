@@ -1,17 +1,17 @@
 import vtk
 import numpy as np
 import time
-from scipy import ndimage, optimize
+from scipy import ndimage
 from scipy.linalg import expm3
 import math
 from graph_tool import Graph, GraphView, incident_edges_op
 from graph_tool.topology import (shortest_distance, label_largest_component,
                                  label_components)
-import matplotlib.pyplot as plt
 
 import graphs
 import pexceptions
-from pysurf_io import TypesConverter, save_vtp
+from pysurf_io import TypesConverter
+from curvature_definitions import *
 
 """
 Set of functions and classes (abstract SurfaceGraph and derived TriangleGraph)
@@ -118,7 +118,7 @@ def signum(number):
         return 0
 
 
-def perpendicular_vector(iv, debug=False):
+def perpendicular_vector(iv):
     """
     Finds a unit vector perpendicular to a given vector.
     Implementation of algorithm of Ahmed Fasih https://math.stackexchange.com/
@@ -126,8 +126,6 @@ def perpendicular_vector(iv, debug=False):
 
     Args:
         iv (numpy.ndarray): input 3D vector
-        debug (boolean): if True (default False), an assertion is done to assure
-            that the vectors are perpendicular
 
     Returns:
         3D vector perpendicular to the input vector (np.ndarray)
@@ -151,14 +149,6 @@ def perpendicular_vector(iv, debug=False):
         n = m + 1
     ov[n] = iv[m]
     ov[m] = -iv[n]
-    if debug:
-        try:
-            assert np.dot(iv, ov) == 0
-        except AssertionError:
-            print("Failed to find a perpendicular vector to the given one")
-            print("given vector: ({}, {}, {})".format(iv[0], iv[1], iv[2]))
-            print("resulting vector: ({}, {}, {})".format(ov[0], ov[1], ov[2]))
-            return None
     len_outv = math.sqrt(np.dot(ov, ov))
     if len_outv == 0:
         print("Resulting vector has length 0")
@@ -451,7 +441,7 @@ class TriangleGraph(SurfaceGraph):
             surface = rescale_surface(surface, scale_factor_to_nm)
 
         # Adding curvatures to the vtkPolyData surface
-        # TODO remove if not testing
+        # TODO remove if not testing?
         # because VTK and we (gen_surface) have the opposite normal
         # convention: VTK outwards pointing normals, we: inwards pointing
         if reverse_normals:
@@ -1177,8 +1167,8 @@ class TriangleGraph(SurfaceGraph):
     # * The following TriangleGraph methods are implementing with adaptations
     # the normal vector voting algorithm of Page et al., 2002. *
 
-    def collecting_normal_votes(self, vertex_v_ind, g_max, A_max, sigma,  # TODO remove sigma, calculate it as g_max/3
-                                full_dist_map=None, verbose=False):  # TODO remove verbosity
+    def collect_normal_votes(self, vertex_v_ind, g_max, A_max, sigma,
+                             full_dist_map=None):
         """
         For a vertex v, collects the normal votes of all triangles within its
         geodesic neighborhood and calculates the weighted covariance matrix sum
@@ -1209,8 +1199,6 @@ class TriangleGraph(SurfaceGraph):
             full_dist_map (graph_tool.PropertyMap, optional): the full distance
                 map for the whole graph; if None, a local distance map is
                 calculated for this vertex (default)
-            verbose (boolean, optional): if True (default False), some extra
-                information will be printed out
 
         Returns:
             - number of geodesic neighbors of vertex v
@@ -1244,10 +1232,6 @@ class TriangleGraph(SurfaceGraph):
             return 0, np.zeros(shape=(3, 3))
             # if don't want to calculate average number of neighbors:
             # return np.zeros(shape=(3, 3))
-
-        if verbose:
-            print("\nv = {}".format(v))
-            print("{} neighbors".format(len(neighbor_idx_to_dist)))
 
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated and returned:
@@ -1283,131 +1267,57 @@ class TriangleGraph(SurfaceGraph):
             g_i = neighbor_idx_to_dist[idx_c_i]
             w_i = A_i / A_max * exp(- g_i / sigma)
 
-            if verbose:
-                print("\nc_i = {}".format(c_i))
-                print("N = {}".format(N))
-                print("vc_i = {}".format(vc_i))
-                print("||vc_i|| = {}".format(vc_i_len))
-                print("cos(theta_i) = {}".format(cos_theta_i))
-                print("N_i = {}".format(N_i))
-                print("V_i = {}".format(V_i))
-                print("A_i = {}".format(A_i))
-                print("g_i = {}".format(g_i))
-                print("w_i = {}".format(w_i))
-
             # Weigh V_i and add it to the weighted matrix sum:
             V_v += w_i * V_i
 
-        if verbose:
-            print("\nV_v: {}".format(V_v))
         return len(neighbor_idx_to_dist), V_v
         # return V_v  # if don't want to calculate average number of neighbors
 
-    def classifying_orientation(self, vertex_v_ind, V_v, epsilon=2, eta=2,
-                                verbose=False):  # TODO remove epsilon, eta, classification and verbosity!
+    def estimate_normal(self, vertex_v_ind, V_v):
         """
-        For a vertex v, its calculated matrix V_v (output of collecting_votes)
-        and the parameters epsilon and eta (default 2 each), classifies its
-        orientation.
+        For a vertex v, its calculated matrix V_v (output of collecting_votes),
+        estimates its true normal N_v.
 
-        The output classes are 1 if it belongs to a surface patch, 2 if it
-        belongs to a crease junction or 3 if it doesn't have a preferred
-        orientation.
-
-        This is done using eigen-decomposition of V_v and equations (9) and (10)
-        from the paper of Page et al., 2002. Equations (11) and (12) may help to
-        choose epsilon and eta.
+        This is done using eigen-decomposition of V_v, N_v equals to the highest
+        eigenvector E_1 (Page et al., 2002).
 
         Args:
             vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph whose orientation is classified
             V_v (numpy.ndarray): the 3x3 symmetric matrix V_v
-            epsilon (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2), default 2
-            eta (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2) and "no preferred orientation" (class 3, see
-                Notes), default 2
-            verbose (boolean, optional): if True (default False), some extra
-                information will be printed out
 
         Returns:
-            - orientation of vertex v (int): 1 if it belongs to a surface patch,
-              2 if it belongs to a crease junction or 3 if it doesn't have a
-              preferred orientation
-            - estimated normal "N_v" (3x1 array) if class is 1, otherwise zeros
-            - the estimated_tangent "T_v" (3x1 array) if class is 2, otherwise
-              zeros
+            estimated normal "N_v" (3x1 array)
 
         Notes:
-            If epsilon = 0 and eta = 0, all triangles will be classified as
-            "surface patch" (class 1).
+            We assume that all triangles belong to a surface patch without
+            crease junctions or noise.
         """
         vertex_v = self.graph.vertex(vertex_v_ind)
         # Decompose the symmetric semidefinite matrix V_v:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix
         eigenvalues, eigenvectors = np.linalg.eigh(V_v)
-        # Eigenvalues from highest to lowest:
-        lambda_1 = eigenvalues[2]
-        lambda_2 = eigenvalues[1]
-        lambda_3 = eigenvalues[0]
-        # Eigenvectors, corresponding to the eigenvalues:
+        # The normal vector is oriented like the highest eigenvector:
         E_1 = eigenvectors[:, 2]
-        E_2 = eigenvectors[:, 1]
-        E_3 = eigenvectors[:, 0]
-        # Saliency maps:  # TODO remove
-        S_s = lambda_1 - lambda_2  # surface patch
-        S_c = lambda_2 - lambda_3  # crease junction
-        S_n = lambda_3  # no preferred orientation
 
-        if verbose is True:
-            print("\nlambda_1 = {}".format(lambda_1))
-            print("lambda_2 = {}".format(lambda_2))
-            print("lambda_3 = {}".format(lambda_3))
-            print("E_1 = {}".format(E_1))
-            print("E_2 = {}".format(E_2))
-            print("E_3 = {}".format(E_3))
-            print("S_s = {}".format(S_s))
-            print("S_c = {}".format(S_c))
-            print("epsilon * S_c = {}".format(str(epsilon * S_c)))
-            print("S_n = {}".format(S_n))
-            print("epsilon * eta * S_n = {}".format(str(epsilon * eta * S_n)))
+        # Eventually have to flip (negate) the normal, because its direction is
+        # lost during the matrix generation! Take the one for which the angle to
+        # the original normal is smaller (or cosine of the angle is higher):
+        normal1 = E_1
+        normal2 = -E_1
+        orig_normal = self.graph.vp.normal[vertex_v]
+        cos_angle1 = np.dot(orig_normal, normal1)
+        cos_angle2 = np.dot(orig_normal, normal2)
+        if cos_angle1 > cos_angle2:
+            N_v = normal1
+        else:
+            N_v = normal2
+        return N_v
 
-        # Make decision and add the estimated normal or tangent as properties to
-        # the graph (add a placeholder [0, 0, 0] to each property, where it does
-        # not apply):
-        max_saliency = max(S_s, epsilon * S_c, epsilon * eta * S_n)
-        if max_saliency == S_s:  # TODO remove, always this case
-            # Eventually have to flip (negate) the estimated normal, because its
-            # direction is lost during the matrix generation!
-            # Take the one for which the angle to the original normal is smaller
-            # (or cosine of the angle is higher):
-            normal1 = E_1
-            normal2 = -E_1
-            orig_normal = self.graph.vp.normal[vertex_v]
-            cos_angle1 = np.dot(orig_normal, normal1)
-            cos_angle2 = np.dot(orig_normal, normal2)
-            if cos_angle1 > cos_angle2:
-                N_v = normal1
-            else:
-                N_v = normal2
-            if verbose is True:
-                print("surface patch with normal N_v = {}".format(N_v))
-            return 1, N_v, np.zeros(shape=3)
-        elif max_saliency == (epsilon * S_c):  # TODO remove
-            if verbose is True:
-                print("crease junction with tangent T_v = {}".format(E_3))
-            return 2, np.zeros(shape=3), E_3
-        else:  # TODO remove
-            if verbose is True:
-                print("no preferred orientation")
-            return 3, np.zeros(shape=3), np.zeros(shape=3)
-
-    def collecting_curvature_votes(
-            self, vertex_v_ind, g_max, sigma, full_dist_map=None, verbose=False,
-            page_curvature_formula=False, A_max=0.0):  # TODO remove verbosity
+    def collect_curvature_votes(
+            self, vertex_v_ind, g_max, sigma, full_dist_map=None,
+            page_curvature_formula=False, A_max=0.0):
         """
         For a vertex v, collects the curvature and tangent votes of all
         triangles within its geodesic neighborhood belonging to a surface patch
@@ -1443,8 +1353,6 @@ class TriangleGraph(SurfaceGraph):
             full_dist_map (graph_tool.PropertyMap, optional): the full distance
                 map for the whole graph; if None, a local distance map is
                 calculated for this vertex (default)
-            verbose (boolean, optional): if True (default False), some extra
-                information will be printed out
             page_curvature_formula (boolean, optional): if True (default False)
                 normal curvature definition from Page et al. is used:
                 the turning angle theta between N_v and the projection n_i of
@@ -1462,7 +1370,6 @@ class TriangleGraph(SurfaceGraph):
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         vp_N_v = self.graph.vp.N_v
-        orientation_class = self.graph.vp.orientation_class
         exp = math.exp
         xyz = self.graph.vp.xyz
         array = np.array
@@ -1478,34 +1385,28 @@ class TriangleGraph(SurfaceGraph):
         # Find the neighboring vertices of vertex v to be returned:
         neighbor_idx_to_dist = self.find_geodesic_neighbors(
             vertex_v, g_max, full_dist_map=full_dist_map)
+        # Doing it again, because saving in first pass caused memory problems
 
         # Get the coordinates of vertex v and its estimated normal N_v (as numpy
         # array):
         v = array(xyz[vertex_v])
         N_v = array(vp_N_v[vertex_v])
 
-        # First, calculate the weights w_i of the neighboring triangles
-        # belonging to a surface patch, because they have to be normalized to
-        # sum up to 2 * pi:
-        surface_neighbors_idx = []  # TODO remove!
+        # First, calculate the weights w_i of the neighboring triangles because
+        # they have to be normalized to sum up to 2 * pi:
         all_w_i = []
         for idx_v_i in neighbor_idx_to_dist.keys():  # TODO try to combine with the second loop
             # Get the neighboring vertex v_i:
             vertex_v_i = vertex(idx_v_i)
 
-            # Check if the neighboring vertex v_i belongs to a surface patch
-            # (otherwise don't consider it):
-            if orientation_class[vertex_v_i] == 1:  # TODO remove!
-                surface_neighbors_idx.append(idx_v_i)
-                # Weight depending on the geodesic distance to the neighboring
-                # vertex v_i from the vertex v, g_i:
-                g_i = neighbor_idx_to_dist[idx_v_i]
-                if A_max == 0.0:
-                    w_i = exp(- g_i / sigma)
-                else:
-                    A_i = area[vertex_v_i]
-                    w_i = A_i / A_max * exp(- g_i / sigma)
-                all_w_i.append(w_i)
+            # Weight depending on the geodesic distance to the neighboring
+            # vertex v_i from the vertex v, g_i:
+            g_i = neighbor_idx_to_dist[idx_v_i]
+            w_i = exp(- g_i / sigma)
+            if A_max > 0:
+                A_i = area[vertex_v_i]
+                w_i *= A_i / A_max
+            all_w_i.append(w_i)
 
         all_w_i = array(all_w_i)
         sum_w_i = np.sum(all_w_i)
@@ -1516,7 +1417,7 @@ class TriangleGraph(SurfaceGraph):
             print("\nWarning: sum of the weights is not positive, but {}, for "
                   "the vertex number {}".format(sum_w_i, int(v)))
             print("{} neighbors in a surface patch with weights w_i:".format(
-                len(surface_neighbors_idx)))
+                len(neighbor_idx_to_dist)))
             print("The vertex will be ignored.")
             return None
 
@@ -1524,20 +1425,13 @@ class TriangleGraph(SurfaceGraph):
         factor = wanted_sum_w_i / sum_w_i
         all_w_i = factor * all_w_i  # normalized weights!
 
-        if verbose:
-            print("\nv = {}".format(v))
-            print("N_v = {}".format(N_v))
-            print("{} neighbors in a surface patch with normalized weights w_i:"
-                  .format(len(surface_neighbors_idx)))
-            print(all_w_i)
-
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated:
         B_v = np.zeros(shape=(3, 3))
 
         # Let each of the neighboring triangles belonging to a surface patch
         # (as checked before) to cast a vote on vertex v:
-        for i, idx_v_i in enumerate(surface_neighbors_idx):  # TODO use neighbor_idx_to_dist.keys()
+        for i, idx_v_i in enumerate(neighbor_idx_to_dist.keys()):
             # Get the neighboring vertex v_i:
             vertex_v_i = vertex(idx_v_i)
 
@@ -1584,31 +1478,13 @@ class TriangleGraph(SurfaceGraph):
             # normalized before:
             w_i = all_w_i[i]
 
-            if verbose:
-                print("\nv_i = {}".format(v_i))
-                print("vv_i = {}".format(vv_i))
-                print("t_i = {}".format(t_i))
-                print("||t_i|| = {}".format(t_i_len))
-                print("T_i = {}".format(T_i))
-                print("P_i = {}".format(P_i))
-                print("N_v_i = {}".format(N_v_i))
-                print("n_i = {}".format(n_i))
-                print("||n_i|| = {}".format(n_i_len))
-                print("theta = {}".format(theta))
-                print("kappa_i = {}".format(kappa_i))
-                print("w_i = {}".format(w_i))
-
             # Finally, sum up the components of B_v:
             B_v += w_i * kappa_i * outer(T_i, T_i)
         # and normalize it by 2 * pi:
         B_v /= (2 * pi)
-
-        if verbose:
-            print("\nB_v = {}".format(B_v))
-
         return B_v
 
-    def estimate_curvature(self, vertex_v_ind, B_v, verbose=False):  # TODO remove verbosity
+    def estimate_curvature(self, vertex_v_ind, B_v):
         """
         For a vertex v and its calculated matrix B_v (output of
         collecting_votes2), calculates the principal directions (T_1 and T_2)
@@ -1625,8 +1501,6 @@ class TriangleGraph(SurfaceGraph):
                 are estimated
             B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
                 collecting_votes2)
-            verbose (boolean, optional): if True (default False), some extra
-                information will be printed out
 
         Returns:
             T_1, T_2, kappa_1, kappa_2, gauss_curvature, mean_curvature,
@@ -1634,9 +1508,8 @@ class TriangleGraph(SurfaceGraph):
             if B_v is None or the decomposition does not work, a list of None
         """
         if B_v is None:
-            if verbose:
-                print("B_v is None, nothing to decompose - done")
             return None, None, None, None, None, None, None, None
+
         vertex_v = self.graph.vertex(vertex_v_ind)
 
         # Decompose the symmetric matrix B_v:
@@ -1658,29 +1531,16 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            if verbose:
-                print("T_3 has to be equal to the normal |N_v|, but:")
-                print("T_1 = {}".format(T_1))
-                print("T_2 = {}".format(T_2))
-                print("T_3 = {}".format(T_3))
-                print("N_v = {}".format(N_v))
-                print("lambda_1 = {}".format(b_1))
-                print("lambda_2 = {}".format(b_2))
-                print("lambda_3 = {}".format(b_3))
             if (round(abs(T_1[0]), 7) == round(abs(N_v[0]), 7) and
                     round(abs(T_1[1]), 7) == round(abs(N_v[1]), 7) and
                     round(abs(T_1[2]), 7) == round(abs(N_v[2]), 7)):
                 T_1 = T_3  # T_3 = N_v
                 b_1 = b_3  # b_3 = 0
-                if verbose:
-                    print("Exchanged T_1 with T_3 and b_1 with b_3")
             elif (round(abs(T_2[0]), 7) == round(abs(N_v[0]), 7) and
                     round(abs(T_2[1]), 7) == round(abs(N_v[1]), 7) and
                     round(abs(T_2[2]), 7) == round(abs(N_v[2]), 7)):
                 T_2 = T_3  # T_3 = N_v
                 b_2 = b_3  # b_3 = 0
-                if verbose:
-                    print("Exchanged T_2 with T_3 and b_2 with b_3")
             else:
                 print("Error: no eigenvector which equals to the normal found")
                 print("T_1 = {}".format(T_1))
@@ -1699,29 +1559,16 @@ class TriangleGraph(SurfaceGraph):
             T_1, T_2 = T_2, T_1
             kappa_1, kappa_2 = kappa_2, kappa_1
 
-        if verbose:
-            print("\nb_1 = {}".format(b_1))
-            print("b_2 = {}".format(b_2))
-            print("T_1 = {}".format(T_1))
-            print("T_2 = {}".format(T_2))
-            print("kappa_1 = {}".format(kappa_1))
-            print("kappa_2 = {}".format(kappa_2))
-
         # return T_1, T_2, kappa_1, kappa_2, Gaussian, mean curvature,
         # shape index and curvedness of vertex v:
-        gauss_curvature = kappa_1 * kappa_2
-        mean_curvature = (kappa_1 + kappa_2) / 2
-        if kappa_1 == 0 and kappa_2 == 0:
-            shape_index = 0
-        else:
-            shape_index = 2 / math.pi * math.atan(
-                (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
-        curvedness = math.sqrt((kappa_1 ** 2 + kappa_2 ** 2) / 2)
-
+        gauss_curvature = calculate_gauss_curvature(kappa_1, kappa_2)
+        mean_curvature = calculate_mean_curvature(kappa_1, kappa_2)
+        shape_index = calculate_shape_index(kappa_1, kappa_2)
+        curvedness = calculate_curvedness(kappa_1, kappa_2)
         return (T_1, T_2, kappa_1, kappa_2,
                 gauss_curvature, mean_curvature, shape_index, curvedness)
 
-    def gen_curv_vote(self, poly_surf, vertex_r, radius_hit, verbose=False):  # TODO remove verbosity
+    def gen_curv_vote(self, poly_surf, vertex_r, radius_hit):
         """
         Implements the third pass of the method of Tong & Tang et al., 2005,
         "Algorithm 5. GenCurvVote". Estimates principal curvatures and
@@ -1738,22 +1585,11 @@ class TriangleGraph(SurfaceGraph):
                 are estimated
             radius_hit (float): radius in length unit of the graph, e.g.
                 nanometers, for sampling surface points in tangent directions
-            verbose (boolean, optional): if True (default False), some extra
-                information will be printed out
-
-        Returns:
-            kappa_1 (float): maximal principal curvature
-            kappa_2 (float): minimal principal curvature
-            T_1 (3D vector of floats): maximal principal direction
-            T_2 (3D vector of floats): minimal principal direction
         """
         # Get the coordinates of vertex r and its estimated normal N_r (as numpy
         # array, input of the original method):
         r = np.array(self.graph.vp.xyz[vertex_r])
         N_r = np.array(self.graph.vp.N_v[vertex_r])
-        if verbose:
-            print("\nr = ({}, {}, {})".format(r[0], r[1], r[2]))
-            print("N_r = ({}, {}, {})".format(N_r[0], N_r[1], N_r[2]))
 
         # Define a cellLocator to be able to compute intersections between lines
         # and the surface:
@@ -1770,17 +1606,16 @@ class TriangleGraph(SurfaceGraph):
         pi = math.pi
 
         # a vector on tangent plane T_r(S)
-        votedir = perpendicular_vector(N_r, debug=verbose)
+        votedir = perpendicular_vector(N_r)
         if votedir is None:
             print("Error: calculation of a perpendicular vector failed")
             exit(0)
         # M_r = np.zeros(shape=(2, 2))  # when transform votedir to 2D
         M_r = np.zeros(shape=(3, 3))
         R = rotation_matrix(N_r, pi/4)
-        # num_valid_votes = 0
         for i in range(8):
             # rotate the vector by 45 degrees (pi/4 radians) around N_r axis
-            votedir = rotate_vector(votedir, pi/4, matrix=R, debug=verbose)
+            votedir = rotate_vector(votedir, pi/4, matrix=R)
             r_t = r + votedir * radius_hit
 
             # Find intersection point c between the surface and line segment l
@@ -1800,17 +1635,12 @@ class TriangleGraph(SurfaceGraph):
                                       sub_id, cell_id)
             # If there is no intersection, c stays like initialized:
             if c == [0.0, 0.0, 0.0]:
-                if verbose:
-                    print("No intersection point found")
                 continue  # in paper "return None", but I think if does not make
                 # sense to give up if there is no continuation of the surface at
                 # radius_hit distance just in one or some of the 8 directions
 
             b = sqrt(dot(r_t - c, r_t - c))
             if b > radius_hit:
-                if verbose:
-                    print("b = {}, higher than RadiusHit = {}".format(
-                        b, radius_hit))
                 continue  # in paper "return None" ...
             k_rc = 2 * b / (b ** 2 + radius_hit ** 2)
             # sign(c) = 1 if c is above the tangent plane T_r(S)
@@ -1821,16 +1651,6 @@ class TriangleGraph(SurfaceGraph):
             outer_product = outer(votedir, votedir)
             multiplicator = sign_c * k_rc
             M_r += multiply(outer_product, multiplicator)
-            # num_valid_votes += 1
-
-            if verbose:
-                print("\nvotedir = ({}, {}, {})".format(
-                    votedir[0], votedir[1], votedir[2]))
-                print("r_t = ({}, {}, {})".format(r_t[0], r_t[1], r_t[2]))
-                print("c = ({}, {}, {})".format(c[0], c[1], c[2]))
-                print("b = {}".format(b))
-                print("k_rc = {}".format(k_rc))
-                print("sign_c = {}".format(sign_c))
 
         M_r /= 8
         # Decompose the symmetric matrix M_r:
@@ -1851,31 +1671,26 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_r[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_r[2]), 7))
         except AssertionError:
-            if verbose:
-                print("T_3 has to be equal to the normal |N_r|, but:")
-                print("T_1 = {}".format(T_1))
-                print("T_2 = {}".format(T_2))
-                print("T_3 = {}".format(T_3))
-                print("N_r = {}".format(N_r))
-                print("lambda_1 = {}".format(lambda_1))
-                print("lambda_2 = {}".format(lambda_2))
-                print("lambda_3 = {}".format(lambda_3))
+            print("T_3 has to be equal to the normal |N_r|, but:")
+            print("T_1 = {}".format(T_1))
+            print("T_2 = {}".format(T_2))
+            print("T_3 = {}".format(T_3))
+            print("N_r = {}".format(N_r))
+            print("lambda_1 = {}".format(lambda_1))
+            print("lambda_2 = {}".format(lambda_2))
+            print("lambda_3 = {}".format(lambda_3))
             if (round(abs(T_1[0]), 7) == round(abs(N_r[0]), 7) and
                     round(abs(T_1[1]), 7) == round(abs(N_r[1]), 7) and
                     round(abs(T_1[2]), 7) == round(abs(N_r[2]), 7)):
                 T_1 = T_3
                 lambda_1 = lambda_3
                 # T_3 = N_r; lambda_3 = 0
-                if verbose:
-                    print("Exchanged T_1 with T_3 and lambda_1 with lambda_3")
             elif (round(abs(T_2[0]), 7) == round(abs(N_r[0]), 7) and
                     round(abs(T_2[1]), 7) == round(abs(N_r[1]), 7) and
                     round(abs(T_2[2]), 7) == round(abs(N_r[2]), 7)):
                 T_2 = T_3
                 lambda_2 = lambda_3
                 # T_3 = N_r; lambda_3 = 0
-                if verbose:
-                    print("Exchanged T_2 with T_3 and lambda_2 with lambda_3")
             else:
                 print("Error: no eigenvector which equals to the normal found")
                 return None
@@ -1886,26 +1701,18 @@ class TriangleGraph(SurfaceGraph):
         if kappa_1 < kappa_2:
             T_1, T_2 = T_2, T_1
             kappa_1, kappa_2 = kappa_2, kappa_1
-        if verbose:
-            # print("\nNumber valid votes = {}".format(num_valid_votes))
-            print("\nT_1 = {}".format(T_1))
-            print("T_2 = {}".format(T_2))
-            print("kappa_1 = {}".format(kappa_1))
-            print("kappa_2 = {}".format(kappa_2))
 
         # Add T_1, T_2, kappa_1, kappa_2, derived Gaussian and mean curvatures
         # as well as shape index and curvedness as properties to the graph:
+        gauss_curvature = calculate_gauss_curvature(kappa_1, kappa_2)
+        mean_curvature = calculate_mean_curvature(kappa_1, kappa_2)
+        shape_index = calculate_shape_index(kappa_1, kappa_2)
+        curvedness = calculate_curvedness(kappa_1, kappa_2)
         self.graph.vp.T_1[vertex_r] = T_1
         self.graph.vp.T_2[vertex_r] = T_2
         self.graph.vp.kappa_1[vertex_r] = kappa_1
         self.graph.vp.kappa_2[vertex_r] = kappa_2
-        self.graph.vp.gauss_curvature_VV[vertex_r] = kappa_1 * kappa_2
-        self.graph.vp.mean_curvature_VV[vertex_r] = (kappa_1 + kappa_2) / 2
-        if kappa_1 == 0 and kappa_2 == 0:
-            self.graph.vp.shape_index_VV[vertex_r] = 0
-        else:
-            self.graph.vp.shape_index_VV[vertex_r] = 2 / pi * math.atan(
-                (kappa_1 + kappa_2) / (kappa_1 - kappa_2))
-        self.graph.vp.curvedness_VV[vertex_r] = sqrt(
-            (kappa_1 ** 2 + kappa_2 ** 2) / 2)
-        return kappa_1, kappa_2, T_1, T_2
+        self.graph.vp.gauss_curvature_VV[vertex_r] = gauss_curvature
+        self.graph.vp.mean_curvature_VV[vertex_r] = mean_curvature
+        self.graph.vp.shape_index_VV[vertex_r] = shape_index
+        self.graph.vp.curvedness_VV[vertex_r] = curvedness

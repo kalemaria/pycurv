@@ -141,8 +141,7 @@ def _vtp_arrays_to_mrc_volumes(
 
 
 def new_workflow(
-        fold, base_filename, pixel_size_nm, radius_hit,
-        epsilon=0, eta=0, methods=['VV'],
+        fold, base_filename, pixel_size_nm, radius_hit, methods=['VV'],
         seg_file=None, label=1, holes=0, remove_wrong_borders=True,
         min_component=100, only_normals=False, cores=4,
         runtimes=None):
@@ -165,12 +164,6 @@ def new_workflow(
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
-        epsilon (int, optional): parameter of Normal Vector Voting algorithm
-            influencing the number of triangles classified as "crease junction"
-            (class 2), default 0
-        eta (int, optional): parameter of Normal Vector Voting algorithm
-            influencing the number of triangles classified as "crease junction"
-            (class 2) and "no preferred orientation" (class 3), default 0
         methods (list, optional): all methods to run in the second pass ('VV'
             and 'VCTV' are possible, default is 'VV')
         seg_file (str, optional): membrane segmentation mask
@@ -194,8 +187,8 @@ def new_workflow(
     Returns:
         None
     """
-    log_file = '{}{}.{}_rh{}_epsilon{}_eta{}.log'.format(
-                fold, base_filename, methods[0], radius_hit, epsilon, eta)
+    log_file = '{}{}.{}_rh{}.log'.format(
+                fold, base_filename, methods[0], radius_hit)
     sys.stdout = open(log_file, 'a')
 
     t_begin = time.time()
@@ -300,8 +293,8 @@ def new_workflow(
           .format(minutes, seconds))
 
     # Running the modified Normal Vector Voting algorithms:
-    gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
-            fold, base_filename, radius_hit, epsilon, eta)
+    gt_file1 = '{}{}.NVV_rh{}.gt'.format(
+            fold, base_filename, radius_hit)
     method_tg_surf_dict = {}
     if not isfile(gt_file1):
         if runtimes is not None:
@@ -309,7 +302,7 @@ def new_workflow(
                 f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
                         "duration1;method;duration2\n")
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
+            tg, radius_hit, exclude_borders=0,
             methods=methods, full_dist_map=False, graph_file=gt_file1,
             area2=True, only_normals=only_normals, poly_surf=surf_clean,
             cores=cores, runtimes=runtimes)
@@ -331,11 +324,11 @@ def new_workflow(
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV':
                 method = 'VV_area2'
-            gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
-                fold, base_filename, method, radius_hit, epsilon, eta)
+            gt_file = '{}{}.{}_rh{}.gt'.format(
+                fold, base_filename, method, radius_hit)
             tg.graph.save(gt_file)
-            surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
-                fold, base_filename, method, radius_hit, epsilon, eta)
+            surf_file = '{}{}.{}_rh{}.vtp'.format(
+                fold, base_filename, method, radius_hit)
             io.save_vtp(surf, surf_file)
 
 
@@ -516,7 +509,7 @@ def _shape_index_classifier(x):
 
 def annas_workflow(
         fold, base_filename, radius_hit, seg_file=None, scale_factor_to_nm=1.368,
-        epsilon=0, eta=0, methods=['VV'], thr=0.4, cores=4):
+        methods=['VV'], thr=0.4, cores=4):
     """
     A script for running all processing steps to estimate membrane curvature.
 
@@ -537,12 +530,6 @@ def annas_workflow(
         seg_file (str, optional): membrane segmentation mask
         scale_factor_to_nm (float, optional): pixel size in nanometer of the
             membrane mask (default 1.368)
-        epsilon (int, optional): parameter of Normal Vector Voting algorithm
-            influencing the number of triangles classified as "crease junction"
-            (class 2), default 0
-        eta (int, optional): parameter of Normal Vector Voting algorithm
-            influencing the number of triangles classified as "crease junction"
-            (class 2) and "no preferred orientation" (class 3), default 0
         methods (list, optional): all methods to run in the second pass ('VV'
             and 'VCTV' are possible, default is 'VV')
         thr (float, optional): value threshold in the input segmentation where
@@ -619,18 +606,18 @@ def annas_workflow(
     print('Surface and graph generation (and cleaning) took: {} min {} s'
           .format(minutes, seconds))
 
-    gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
-        fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
-    surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
-        fold, base_filename, 'VV_area2', radius_hit, epsilon, eta)
+    gt_file = '{}{}.{}_rh{}.gt'.format(
+        fold, base_filename, 'VV_area2', radius_hit)
+    surf_file = '{}{}.{}_rh{}.vtp'.format(
+        fold, base_filename, 'VV_area2', radius_hit)
     if not isfile(gt_file) or not isfile(surf_file):
         # Running the modified Normal Vector Voting algorithms:
-        gt_file1 = '{}{}.NVV_rh{}_epsilon{}_eta{}.gt'.format(
-                fold, base_filename, radius_hit, epsilon, eta)
+        gt_file1 = '{}{}.NVV_rh{}.gt'.format(
+                fold, base_filename, radius_hit)
         method_tg_surf_dict = {}
         if not isfile(gt_file1):
             method_tg_surf_dict = normals_directions_and_curvature_estimation(
-                tg, radius_hit, epsilon=epsilon, eta=eta, exclude_borders=0,
+                tg, radius_hit, exclude_borders=0,
                 methods=methods, full_dist_map=False, graph_file=gt_file1,
                 area2=True, poly_surf=surf_clean, cores=cores)
 
@@ -640,11 +627,11 @@ def annas_workflow(
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV':
                 method = 'VV_area2'
-            gt_file = '{}{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
-                fold, base_filename, method, radius_hit, epsilon, eta)
+            gt_file = '{}{}.{}_rh{}.gt'.format(
+                fold, base_filename, method, radius_hit)
             tg.graph.save(gt_file)
-            surf_file = '{}{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
-                fold, base_filename, method, radius_hit, epsilon, eta)
+            surf_file = '{}{}.{}_rh{}.vtp'.format(
+                fold, base_filename, method, radius_hit)
             io.save_vtp(surf, surf_file)
     else:
         print("\nOutput files {} and {} are already there.".format(

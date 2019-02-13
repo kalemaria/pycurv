@@ -199,6 +199,7 @@ def test_plane_normals(half_size, radius_hit, res, noise):
     vv_surf_file = '{}.VCTV_rh{}.vtp'.format(base_filename, radius_hit)
     vv_eval_file = '{}.VCTV_rh{}.csv'.format(base_filename, radius_hit)
     vtk_eval_file = '{}.VTK.csv'.format(base_filename)
+    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
 
     print("\n*** Generating a surface and a graph for a plane with "
           "half-size {} and {}% noise ***".format(half_size, noise))
@@ -217,7 +218,8 @@ def test_plane_normals(half_size, radius_hit, res, noise):
     # Running the modified Normal Vector Voting algorithm (with curvature
     # tensor voting, because its second pass is the fastest):
     results = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=0, methods=['VCTV'], poly_surf=surf)
+        tg, radius_hit, exclude_borders=0, methods=['VCTV'], poly_surf=surf,
+        graph_file=temp_normals_graph_file)
     surf_vv = results['VCTV'][1]
     # Saving the output (TriangleGraph object) for later inspection in ParaView:
     io.save_vtp(surf_vv, vv_surf_file)
@@ -304,7 +306,7 @@ def test_cylinder_directions_curvatures(
             is added on triangle vertex coordinates in its normal direction
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page at al. is used for VV (see
-            collecting_curvature_votes)
+            collect_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
@@ -340,6 +342,7 @@ def test_cylinder_directions_curvatures(
     base_filename = "{}{}cylinder_r{}_h{}_eb{}".format(
         files_fold, inverse_str, radius, h, eb)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
+    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
 
     if inverse:
         print("\n*** Generating a surface and a graph for an inverse "
@@ -367,7 +370,8 @@ def test_cylinder_directions_curvatures(
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=eb, methods=methods,
         page_curvature_formula=page_curvature_formula,
-        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores)
+        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
+        graph_file=temp_normals_graph_file)
 
     # Ground-truth T_h vector is parallel to Z axis
     true_T_h = np.array([0, 0, 1])
@@ -537,7 +541,7 @@ def test_sphere_curvatures(
             triangle ares will be saved to a file
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV (see
-            collecting_curvature_votes)
+            collect_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
@@ -572,6 +576,7 @@ def test_sphere_curvatures(
         inverse_str = ""
     base_filename = "{}{}sphere_r{}".format(files_fold, inverse_str, radius)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
+    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
 
     if inverse:
         print("\n*** Generating a surface and a graph for an inverse "
@@ -621,7 +626,7 @@ def test_sphere_curvatures(
         tg, radius_hit, exclude_borders=0, methods=methods,
         page_curvature_formula=page_curvature_formula,
         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        runtimes=runtimes)
+        runtimes=runtimes, graph_file=temp_normals_graph_file)
 
     # Ground truth principal curvatures
     true_curvature = 1.0 / radius
@@ -735,7 +740,7 @@ def test_torus_directions_curvatures(
             this file (otherwise None)
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV (see
-            collecting_curvature_votes)
+            collect_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
@@ -760,6 +765,8 @@ def test_torus_directions_curvatures(
         os.makedirs(files_fold)
     base_filename = "{}torus_rr{}_csr{}".format(files_fold, rr, csr)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
+    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+
     print("\n*** Generating a surface and a graph for a torus with ring "
           "radius {} and cross-section radius {}***".format(rr, csr))
     # If the .vtp file with the test surface does not exist, create it:
@@ -811,7 +818,7 @@ def test_torus_directions_curvatures(
         tg, radius_hit, exclude_borders=0, methods=methods,
         page_curvature_formula=page_curvature_formula,
         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        runtimes=runtimes)
+        runtimes=runtimes, graph_file=temp_normals_graph_file)
 
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
@@ -947,7 +954,7 @@ def run_cone(  # does not include assert for true curvature!
             - only for a smoothed cone, res > 0!
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV (see
-            collecting_curvature_votes)
+            collect_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
@@ -974,6 +981,7 @@ def run_cone(  # does not include assert for true curvature!
         os.makedirs(files_fold)
     base_filename = "{}cone_r{}_h{}".format(files_fold, r, h)
     # VTK_eval_file = '{}.VTK.csv'.format(base_filename)
+    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
 
     print("\n*** Generating a surface and a graph for a cone with radius "
           "{}, height {} and {}% noise ***".format(r, h, noise))
@@ -996,7 +1004,8 @@ def run_cone(  # does not include assert for true curvature!
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=1, methods=methods,
         page_curvature_formula=page_curvature_formula,
-        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores)
+        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
+        graph_file=temp_normals_graph_file)
 
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
