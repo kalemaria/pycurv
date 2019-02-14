@@ -1386,54 +1386,41 @@ class TriangleGraph(SurfaceGraph):
         neighbor_idx_to_dist = self.find_geodesic_neighbors(
             vertex_v, g_max, full_dist_map=full_dist_map)
         # Doing it again, because saving in first pass caused memory problems
+        try:
+            assert(len(neighbor_idx_to_dist) > 0)
+        except AssertionError:
+            print("{} neighbors in a surface patch with weights w_i:".format(
+                len(neighbor_idx_to_dist)))
+            print("The vertex will be ignored.")
+            return None
 
         # Get the coordinates of vertex v and its estimated normal N_v (as numpy
         # array):
         v = array(xyz[vertex_v])
         N_v = array(vp_N_v[vertex_v])
 
-        # First, calculate the weights w_i of the neighboring triangles because
-        # they have to be normalized to sum up to 2 * pi:
-        all_w_i = []
-        for idx_v_i in neighbor_idx_to_dist.keys():  # TODO try to combine with the second loop
-            # Get the neighboring vertex v_i:
-            vertex_v_i = vertex(idx_v_i)
-
-            # Weight depending on the geodesic distance to the neighboring
-            # vertex v_i from the vertex v, g_i:
-            g_i = neighbor_idx_to_dist[idx_v_i]
-            w_i = exp(- g_i / sigma)
-            if A_max > 0:
-                A_i = area[vertex_v_i]
-                w_i *= A_i / A_max
-            all_w_i.append(w_i)
-
-        all_w_i = array(all_w_i)
-        sum_w_i = np.sum(all_w_i)
-
-        try:
-            assert(sum_w_i > 0)
-        except AssertionError:  # can be 0 if no surface patch neighbors exist
-            print("\nWarning: sum of the weights is not positive, but {}, for "
-                  "the vertex number {}".format(sum_w_i, int(v)))
-            print("{} neighbors in a surface patch with weights w_i:".format(
-                len(neighbor_idx_to_dist)))
-            print("The vertex will be ignored.")
-            return None
-
-        wanted_sum_w_i = 2 * pi
-        factor = wanted_sum_w_i / sum_w_i
-        all_w_i = factor * all_w_i  # normalized weights!
-
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated:
         B_v = np.zeros(shape=(3, 3))
+
+        # Store all the weights w_i of the neighboring triangles because
+        # they will have to be normalized to sum up to 2 * pi:
+        all_w_i = []
 
         # Let each of the neighboring triangles belonging to a surface patch
         # (as checked before) to cast a vote on vertex v:
         for i, idx_v_i in enumerate(neighbor_idx_to_dist.keys()):
             # Get the neighboring vertex v_i:
             vertex_v_i = vertex(idx_v_i)
+
+            # First, calculate the weight depending on the geodesic distance to
+            # the neighboring vertex v_i from the vertex v, g_i:
+            g_i = neighbor_idx_to_dist[idx_v_i]
+            w_i = exp(- g_i / sigma)
+            if A_max > 0:
+                A_i = area[vertex_v_i]
+                w_i *= A_i / A_max
+            all_w_i.append(w_i)
 
             # Second, calculate tangent directions T_i of each vote:
             v_i = array(xyz[vertex_v_i])
@@ -1474,14 +1461,18 @@ class TriangleGraph(SurfaceGraph):
                 kappa_i = abs(2 * cos((pi - theta) / 2) / sqrt(dot(vv_i, vv_i)))
                 kappa_i *= kappa_i_sign
 
-            # Recover the corresponding weight, which was calculated and
-            # normalized before:
-            w_i = all_w_i[i]
-
             # Finally, sum up the components of B_v:
             B_v += w_i * kappa_i * outer(T_i, T_i)
-        # and normalize it by 2 * pi:
-        B_v /= (2 * pi)
+
+        # Calculate the factor the weights have to be multiplied with in order
+        # to sum up to 2 * pi
+        all_w_i = array(all_w_i)
+        sum_w_i = np.sum(all_w_i)
+        wanted_sum_w_i = 2 * pi
+        factor = wanted_sum_w_i / sum_w_i
+
+        # Normalize B_v by factor / (2 * pi):
+        B_v *= factor / (2 * pi)
         return B_v
 
     def estimate_curvature(self, vertex_v_ind, B_v):
