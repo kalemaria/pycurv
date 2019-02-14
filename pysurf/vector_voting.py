@@ -59,7 +59,8 @@ def normals_directions_and_curvature_estimation(
             curvatures estimation)
         only_normals (boolean, optional): if True (default False), only normals
             are estimated, without principal directions and curvatures, only the
-            graph with the orientations clanum_pointsss, normals or tangents is returned.
+            graph with the orientations clanum_pointsss, normals or tangents is
+            returned.
         poly_surf (vtkPolyData, optional): surface from which the graph was
             generated, scaled to nm (required only for VCTV, default None)
         cores (int, optional): number of cores to run VV in parallel (default 4)

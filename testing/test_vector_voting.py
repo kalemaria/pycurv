@@ -712,15 +712,29 @@ def test_sphere_curvatures(
             assert error <= allowed_error
 
 
-@pytest.mark.parametrize("rr,csr,radius_hit,methods,runtimes", [
+@pytest.mark.parametrize("rr,csr,radius_hit,methods,runtimes,cores", [
     (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD)),
-(25, 10, 8, ['VCTV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD)),
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 1),
+    (25, 10, 8, ['VV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 2),
+    (25, 10, 8, ['VV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 3),
+    (25, 10, 8, ['VV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 4),
+    (25, 10, 8, ['VV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 5),
+    (25, 10, 8, ['VV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 6),
+    (25, 10, 8, ['VV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 7),
+    (25, 10, 8, ['VV'],
+        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 8),
+# (25, 10, 8, ['VCTV'],
+#         "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD)),
 ])
 def test_torus_directions_curvatures(
-        rr, csr, radius_hit, methods, runtimes,
-        page_curvature_formula=False, full_dist_map=False, area2=True, cores=4,):
+        rr, csr, radius_hit, methods, runtimes, cores,
+        page_curvature_formula=False, full_dist_map=False, area2=True):
     """
     Runs all the steps needed to calculate curvatures for a test torus
     with given radii using normal vector voting (VV) or VV combined with
@@ -738,6 +752,7 @@ def test_torus_directions_curvatures(
             voting to estimate the principal directions and curvatures
         runtimes (str): if given, runtimes and some parameters are added to
             this file (otherwise None)
+        cores (int): number of cores to run VV in parallel
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV (see
             collect_curvature_votes)
@@ -747,7 +762,6 @@ def test_torus_directions_curvatures(
         area2 (boolean, optional): if True (default), votes are
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
-        cores (int): number of cores to run VV in parallel (default 4)
 
     Notes:
         * csr should be much smaller than rr (csr < rr - csr).
@@ -1043,6 +1057,6 @@ if __name__ == "__main__":
 
     p = pstats.Stats(stats_file)
     # what algorithms are taking time:
-    p.strip_dirs().sort_stats('cumulative').print_stats(10)
+    # p.strip_dirs().sort_stats('cumulative').print_stats(10)
     # what functions were looping a lot, and taking a lot of time:
     p.strip_dirs().sort_stats('time').print_stats(10)
