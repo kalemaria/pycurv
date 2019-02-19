@@ -1046,4 +1046,4 @@ if __name__ == "__main__":
     # what algorithms are taking time:
     # p.strip_dirs().sort_stats('cumulative').print_stats(10)
     # what functions were looping a lot, and taking a lot of time:
-    p.strip_dirs().sort_stats('time').print_stats(10)
+    p.strip_dirs().sort_stats('time').print_stats(20)

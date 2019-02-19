@@ -101,8 +101,8 @@ class SegmentationGraph(object):
             self.coordinates_to_vertex_index[
                 (x, y, z)] = self.graph.vertex_index[vd]
 
-    def calculate_density(self, scale_x, scale_y, scale_z, mask=None,
-                          target_coordinates=None, verbose=False):
+    def calculate_density(self, scale_x, scale_y, scale_z, scale_factor_to_nm,
+                          mask=None, target_coordinates=None, verbose=False):
         """
         Calculates ribosome density for each membrane graph vertex.
 
@@ -120,6 +120,8 @@ class SegmentationGraph(object):
             scale_x (int): scale X in voxels of the original segmentation
             scale_y (int): scale Y in voxels of the original segmentation
             scale_z (int): scale Z in voxels of the original segmentation
+            scale_factor_to_nm (float): pixel size in nanometers of the original
+                segmentation
             mask (numpy.ndarray, optional): a binary mask of the ribosome
                 centers as 3D array where indices are coordinates in pixels
                 (default None)
@@ -154,7 +156,7 @@ class SegmentationGraph(object):
             )
             # rescale to nm, output an ndarray [[x1,y1,z1], [x2,y2,z2], ...]
             target_ndarray_coordinates = (target_ndarray_voxels *
-                                          self.scale_factor_to_nm)
+                                          scale_factor_to_nm)
             # convert to a list of tuples, which are in nm now
             target_coordinates = rd.ndarray_voxels_to_tupel_list(
                 target_ndarray_coordinates
@@ -210,8 +212,8 @@ class SegmentationGraph(object):
             # Get its coordinates:
             membrane_xyz = self.graph.vp.xyz[v_membrane]
             if verbose:
-                print('Membrane vertex ({}, {}, {})'.format((
-                    membrane_xyz[0], membrane_xyz[1], membrane_xyz[2])))
+                print('Membrane vertex ({}, {}, {})'.format(
+                    membrane_xyz[0], membrane_xyz[1], membrane_xyz[2]))
             # Get a distance map with all pairs of distances between current
             # graph vertex (membrane_xyz) and target vertices (ribosome
             # coordinates):
@@ -248,9 +250,9 @@ class SegmentationGraph(object):
             # density to the list keyed by the voxel in the dictionary:
             # Scaling the coordinates back from nm to voxels. (Without round
             # float coordinates are truncated to the next lowest integer.)
-            voxel_x = int(round(membrane_xyz[0] / self.scale_factor_to_nm))
-            voxel_y = int(round(membrane_xyz[1] / self.scale_factor_to_nm))
-            voxel_z = int(round(membrane_xyz[2] / self.scale_factor_to_nm))
+            voxel_x = int(round(membrane_xyz[0] / scale_factor_to_nm))
+            voxel_y = int(round(membrane_xyz[1] / scale_factor_to_nm))
+            voxel_z = int(round(membrane_xyz[2] / scale_factor_to_nm))
             voxel = (voxel_x, voxel_y, voxel_z)
             if voxel in voxel_to_densities:
                 voxel_to_densities[voxel].append(density)
@@ -520,7 +522,7 @@ class SegmentationGraph(object):
                 average_edge_length = total_edge_length / num_special_edges
             else:
                 print("There are no edges with the property {} equaling value "
-                      "{}!".format((prop_e, value)))
+                      "{}!".format(prop_e, value))
         if verbose:
             print("Average length: {}".format(average_edge_length))
         return average_edge_length

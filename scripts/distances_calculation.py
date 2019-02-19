@@ -1,12 +1,10 @@
-import time
-from graph_tool import Graph, load_graph
+from graph_tool import load_graph
 import pandas as pd
 from os.path import isfile
-import click
 import sys
 
 from pysurf import (pysurf_io as io, TriangleGraph, calculate_distances,
-                    calculate_thicknesses, normals_estimation)
+                    calculate_thicknesses, normals_estimation, surface)
 
 
 __author__ = 'kalemanov'
@@ -54,11 +52,11 @@ def generate_mem1_mem2_graphs_and_surface(
     segmentation = io.load_tomo(segmentation_mrc_file)
     # Generate isosurface around the mask in between the membranes,
     # first applying the first membrane mask:
-    mem1_surface = io.gen_isosurface(
+    mem1_surface = surface.gen_isosurface(
         segmentation, lbl_between_mem1_mem2, mask=lbl_mem1, sg=1,
         thr=THRESH_SIGMA1)
     # second applying the second membrane mask:
-    mem2_surface = io.gen_isosurface(
+    mem2_surface = surface.gen_isosurface(
         segmentation, lbl_between_mem1_mem2, mask=lbl_mem2, sg=1,
         thr=THRESH_SIGMA1)
     # Generate graphs and remove 3 pixels from borders:
@@ -117,7 +115,7 @@ def generate_mem_lumen_graph_and_surface(
     # Extract the three masks:
     segmentation = io.load_tomo(segmentation_mrc_file)
     # Generate isosurface around the mask of membrane lumen:
-    mem_surface = io.gen_isosurface(
+    mem_surface = surface.gen_isosurface(
         segmentation, lbl_mem_lumen, mask=lbl_mem, sg=1, thr=THRESH_SIGMA1)
     # Generate graph and remove 3 pixels from borders:
     mem_tg = TriangleGraph()
@@ -329,45 +327,6 @@ def _extract_distances_from_graph(
     df.to_csv(csv_file, sep=';')
 
 
-# @click.command()
-# @click.argument('fold', type=str)
-# @click.argument('segmentation_file', type=str)
-# @click.argument('base_filename', type=str)
-# @click.option('-lbl_mem1', type=int, default=1,
-#               help="label of the first membrane (default=1)")
-# @click.option('-lbl_mem2', type=int, default=2,
-#               help="label of the second membrane (default=2)")
-# @click.option('-lbl_between_mem1_mem2', type=int, default=4,
-#               help="label of inter-membrane space (default=4)")
-# @click.option('-lbl_mem2_lumen', type=int, default=3,
-#               help="label of the second lumen (default=3)")
-# @click.option('-pixel_size_nm', type=float, default=1.368,
-#               help="pixel size in nm of the segmentation (default=1.368)")
-# @click.option('-radius_hit', type=float, default=10,
-#               help="neighborhood parameter for the first membrane's normals "
-#                    "estimation by VV (default=10)")
-# @click.option('-maxdist_nm', type=float, default=50,
-#               help="maximal distance in nm, should be bigger than the largest "
-#                    "possible distance, for the algorithm to stop searching "
-#                    "(default=50)")
-# @click.option('-maxthick_nm', type=float, default=80,
-#               help="maximal distance between the two sides of the second "
-#                    "membrane in nm, should be bigger than the largest possible "
-#                    "distance, for the algorithm to stop searching (default=80, "
-#                    "if <=0 thicknesses will not be calculated)")
-# @click.option('-offset_voxels', type=int, default=1,
-#               help="offset in voxels, will be added to the distances, "
-#                    "(default=1, because surfaces are generated 1/2 voxel off "
-#                    "the membrane segmentation boundary towards the "
-#                    "inter-membrane space)")
-# @click.option('-both_directions', type=bool, default=True,
-#               help="if True, look in both directions of each the first "
-#                    "membrane's normal (default), otherwise only in the normal "
-#                    "direction")
-# @click.option('-reverse_direction', type=bool, default=False,
-#               help="if True, look in opposite direction of each the first "
-#                    "membrane's normals (default=False; if both_directions "
-#                    "True, will look in both directions)")
 def distances_and_thicknesses_calculation(
         fold, segmentation_file, base_filename,
         lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, lbl_mem2_lumen=3,
@@ -444,14 +403,3 @@ def distances_and_thicknesses_calculation(
             inner_mem2_thick_surf_file, inner_mem2_thick_graph_file,
             thicknesses_outfile, maxdist_nm, maxthick_nm, offset_nm,
             both_directions, reverse_direction, mem2)
-
-
-if __name__ == "__main__":
-    t_begin = time.time()
-
-    distances_and_thicknesses_calculation()
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    minutes, seconds = divmod(duration, 60)
-    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))

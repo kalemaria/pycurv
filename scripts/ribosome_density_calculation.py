@@ -16,8 +16,7 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 __author__ = 'kalemanov'
 
 
-def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1,
-                                    verbose=False):
+def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, verbose=False):
     """
     Builds a graph from a membrane mask and writes the graph to a file.
 
@@ -27,8 +26,6 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1,
             1) and background (voxels with value 0)
         mem_graph_file (str): name for the output membrane graph file
             (preferably with '.gt' or '.graphml' extension)
-        pixel_size_nm (float, optional): pixel size in nanometers, default 1
-            (if no scaling to nanometers is desired)
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -41,7 +38,7 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1,
     now = datetime.now()
     print('\nStarting building the membrane graph on: {}-{}-{} {}:{}:{}'.format(
         now.year, now.month, now.day, now.hour, now.minute, now.second))
-    vg = VoxelGraph(pixel_size_nm)
+    vg = VoxelGraph()
     vg.build_graph_from_np_ndarray(mem_mask, verbose)
     now = datetime.now()
     print('\nFinished building the graph on: {}-{}-{} {}:{}:{}'.format(
@@ -58,7 +55,7 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, pixel_size_nm=1,
     print('Elapsed time: {} s'.format(duration))
 
 
-def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
+def run_calculate_density(mem_graph_file, ribo_mask, scale_factor_to_nm=1,
                           vtp_files_base=None, verbose=False):
     """
     Reads in the membrane graph from a file and calculates ribosome density for
@@ -70,8 +67,8 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
         ribo_mask (numpy ndarray): binary mask of ribosomes centers on membrane
             in form of 3D array, where a voxel with value 1 means a particle is
             present at that membrane coordinate
-        pixel_size_nm (float, optional): pixel size in nanometers, default 1
-            (if the graph was not scaled to nanometers)
+        scale_factor_to_nm (float, optional): pixel size in nanometers, default
+            1 (if the graph was not scaled to nanometers)
         vtp_files_base (str, optional): If not None (default None), the
             VoxelGraph is converted to VTK PolyData points and lines objects and
             written to '<vtp_files_base>.vertices.vtp' and
@@ -86,7 +83,7 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
 
     # Read in the graph from the file:
     print('\nReading in the graph from the file {}'.format(mem_graph_file))
-    vg = VoxelGraph(pixel_size_nm)
+    vg = VoxelGraph()
     vg.graph = load_graph(mem_graph_file)
     print(vg.graph)
     vg.graph.list_properties()
@@ -106,7 +103,7 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
            now.year, now.month, now.day, now.hour, now.minute, now.second))
     densities = vg.calculate_density(
         ribo_mask.shape[0], ribo_mask.shape[1], ribo_mask.shape[2],
-        mask=ribo_mask, verbose=verbose)
+        scale_factor_to_nm, mask=ribo_mask, verbose=verbose)
     now = datetime.now()
     print('\nFinished calculating the shortest distances and density on: '
           '{}-{}-{} {}:{}:{}'.format(
@@ -128,7 +125,7 @@ def run_calculate_density(mem_graph_file, ribo_mask, pixel_size_nm=1,
 
 
 def run_build_graph_from_np_ndarray_and_calculate_density(
-        mem_mask, ribo_mask, pixel_size_nm=1, vtp_files_base=None,
+        mem_mask, ribo_mask, scale_factor_to_nm=1, vtp_files_base=None,
         verbose=False):
     """
     Builds a graph from a membrane mask and calculates ribosome density for each
@@ -141,8 +138,8 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
         ribo_mask (numpy ndarray): binary mask of ribosomes centers on membrane
             in form of 3D array, where a voxel with value 1 means a particle is
             present at that membrane coordinate
-        pixel_size_nm (float, optional): pixel size in nanometers, default 1 (if
-            no scaling to nanometers is desired)
+        scale_factor_to_nm (float, optional): pixel size in nanometers, default
+            1 (if no scaling to nanometers is desired)
         vtp_files_base (str, optional): If not None (default None), the
             VoxelGraph is converted to VTK PolyData points and lines objects and
             written to '<vtp_files_base>.vertices.vtp' and
@@ -163,7 +160,7 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
     now = datetime.now()
     print('\nStarting building the VoxelGraph on: {}-{}-{} {}:{}:{}'.format(
         now.year, now.month, now.day, now.hour, now.minute, now.second))
-    vg = VoxelGraph(pixel_size_nm)
+    vg = VoxelGraph()
     vg.build_graph_from_np_ndarray(mem_mask, verbose)
     now = datetime.now()
     print('\nFinished building the graph on: {}-{}-{} {}:{}:{}'.format(
@@ -181,7 +178,7 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
            now.year, now.month, now.day, now.hour, now.minute, now.second))
     densities = vg.calculate_density(
         mem_mask.shape[0], mem_mask.shape[1], mem_mask.shape[2],
-        mask=ribo_mask, verbose=verbose)
+        scale_factor_to_nm, mask=ribo_mask, verbose=verbose)
     now = datetime.now()
     print('\nFinished calculating the shortest distances and density on: '
           '{}-{}-{} {}:{}:{}'.format(now.year, now.month, now.day,

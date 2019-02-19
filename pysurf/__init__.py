@@ -22,3 +22,4 @@ from surface_graphs import *
 from vector_voting import *
 from tomogram_batch_processing import split_segmentation
 from distances_between_surfaces import *
+from surface import *

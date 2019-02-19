@@ -5,6 +5,7 @@ import time
 
 import pexceptions
 import pysurf_io as io
+from surface import gen_surface, gen_isosurface
 
 """
 Set of functions for running single-layer, signed surface generation from a
@@ -48,8 +49,8 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
                     save_input_as_vti=False, verbose=False, isosurface=False,
                     grow=0, sg=0, thr=1.0):
     """
-    Runs pysurf_io.gen_surface function, which generates a VTK PolyData triangle
-    surface for objects in a segmented volume with a given label.
+    Generates a VTK PolyData triangle surface for objects in a segmented volume
+    with a given label.
 
     Removes triangles with zero area, if any are present, from the resulting
     surface.
@@ -87,9 +88,9 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
 
     # Generating the surface (vtkPolyData object)
     if isosurface:
-        surface = io.gen_isosurface(tomo, lbl, grow, sg, thr, mask=other_mask)
+        surface = gen_isosurface(tomo, lbl, grow, sg, thr, mask=other_mask)
     else:
-        surface = io.gen_surface(tomo, lbl, mask, other_mask, verbose=verbose)
+        surface = gen_surface(tomo, lbl, mask, other_mask, verbose=verbose)
 
     t_end = time.time()
     duration = t_end - t_begin
