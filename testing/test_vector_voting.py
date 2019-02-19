@@ -712,25 +712,12 @@ def test_sphere_curvatures(
             assert error <= allowed_error
 
 
-@pytest.mark.parametrize("rr,csr,radius_hit,methods,runtimes,cores", [
-    (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 1),
-    (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 2),
-    (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 3),
-    (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 4),
-    (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 5),
-    (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 6),
-    (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 7),
-    (25, 10, 8, ['VV'],
-        "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD), 8),
-# (25, 10, 8, ['VCTV'],
-#         "{}torus/files4plotting/torus_rr25_csr10_runtimes.csv".format(FOLD)),
+@pytest.mark.parametrize("radius_hit", [10, 12])
+@pytest.mark.parametrize("cores", range(1, 9))
+@pytest.mark.parametrize("rr,csr,methods,runtimes", [
+    (25, 10, ['VV'],
+     "{}torus/files4plotting/torus_rr25_csr10_runtimes_VV2_cores.csv".format(
+         FOLD)),
 ])
 def test_torus_directions_curvatures(
         rr, csr, radius_hit, methods, runtimes, cores,
