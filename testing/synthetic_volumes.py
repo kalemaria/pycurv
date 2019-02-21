@@ -23,7 +23,7 @@ class SphereMask(object):
     @staticmethod
     def generate_sphere_mask(r=10, box=23, t=0):
         """
-        Generates a 3D volume with a binary sphere mask.
+        Generates a 3D volume with a sphere mask.
 
         Args:
             r (int): radius in voxels difference (default 10)
@@ -52,8 +52,7 @@ class SphereMask(object):
 
         if t > 0:  # Generate a hollow sphere with thickness t
             # Generate an inner sphere with radius smaller by t
-            inner_sphere = SphereMask.generate_sphere_mask(
-                r=r-t, box=box)
+            inner_sphere = SphereMask.generate_sphere_mask(r=r-t, box=box)
 
             # Subtract it from the bigger sphere
             sphere = sphere - inner_sphere
@@ -63,7 +62,7 @@ class SphereMask(object):
     @staticmethod
     def generate_gauss_sphere_mask(sg, box):
         """
-        Generates a 3D volume with a gaussian sphere mask.
+        Generates a 3D volume with a smooth sphere mask.
 
         Args:
             sg (float): sigma of the gaussian formula
@@ -91,7 +90,7 @@ class CylinderMask(object):
     @staticmethod
     def generate_cylinder_mask(r=10, h=20, box=23, t=0, opened=False):
         """
-        Generates a 3D volume with a cylinder binary mask.
+        Generates a 3D volume with a cylinder mask.
 
         Args:
             r (int): radius in voxels difference (default 10)
@@ -152,7 +151,7 @@ class CylinderMask(object):
     @staticmethod
     def generate_gauss_cylinder_mask(sg, box):
         """
-        Generates a 3D volume with a cylinder binary mask.
+        Generates a 3D volume with a smooth cylinder mask.
 
         Args:
             sg (float): sigma of the gaussian formula

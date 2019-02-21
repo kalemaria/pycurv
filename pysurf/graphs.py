@@ -48,7 +48,7 @@ class SegmentationGraph(object):
         self.graph.ep.distance = self.graph.new_edge_property("float")
 
         self.coordinates_to_vertex_index = {}
-        """dist: a dictionary mapping the vertex coordinates in nanometers
+        """dict: a dictionary mapping the vertex coordinates in nanometers
         (x, y, z) to the vertex index.
         """
         self.coordinates_pair_connected = {}

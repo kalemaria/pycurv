@@ -7,9 +7,11 @@ from scipy.ndimage import binary_dilation
 from scipy.ndimage.morphology import distance_transform_edt
 from scipy.ndimage.filters import gaussian_filter
 from linalg import dot_norm
+import time
 
 """
-Set of surface manipulating functions, using the VTK library.
+Set of functions for generating a single-layer, signed surface from a
+membrane segmentation and postprocessing the surface, using the VTK library.
 
 Authors: Maria Kalemanov and Antonio Martinez-Sanchez (Max Planck Institute for
 Biochemistry)
@@ -25,81 +27,10 @@ surface from the segmentation mask, used in gen_isosurface and gen_surface
 functions.
 """
 
-
-def add_curvature_to_vtk_surface(surface, curvature_type, invert=False):
-    """
-    Adds curvatures (Gaussian, mean, maximum or minimum) to each triangle vertex
-    of a vtkPolyData surface calculated by VTK.
-
-    Args:
-        surface (vtk.vtkPolyData): a surface of triangles
-        curvature_type (str): type of curvature to add: 'Gaussian', 'Mean',
-            'Maximum' or 'Minimum'
-        invert (boolean, optional): if True (default False), VTK will calculate
-            curvatures as for meshes with inward pointing normals (their
-            convention is outwards pointing normals, opposite from ours)
-
-    Returns:
-        the vtkPolyData surface with '<type>_Curvature' property added to each
-        triangle vertex
-    """
-    if isinstance(surface, vtk.vtkPolyData):
-        curvature_filter = vtk.vtkCurvatures()
-        curvature_filter.SetInputData(surface)
-        if curvature_type == "Gaussian":
-            curvature_filter.SetCurvatureTypeToGaussian()
-        elif curvature_type == "Mean":
-            curvature_filter.SetCurvatureTypeToMean()
-        elif curvature_type == "Maximum":
-            curvature_filter.SetCurvatureTypeToMaximum()
-        elif curvature_type == "Minimum":
-            curvature_filter.SetCurvatureTypeToMinimum()
-        else:
-            raise pexceptions.PySegInputError(
-                expr='add_curvature_to_vtk_surface',
-                msg=("One of the following strings required as the second "
-                     "input: 'Gaussian', 'Mean', 'Maximum' or 'Minimum'."))
-        if invert:
-            curvature_filter.InvertMeanCurvatureOn()  # default Off
-        curvature_filter.Update()
-        surface_curvature = curvature_filter.GetOutput()
-        return surface_curvature
-    else:
-        raise pexceptions.PySegInputError(
-            expr='add_curvature_to_vtk_surface',
-            msg="A vtkPolyData object required as the first input.")
-    # How to get the curvatures later, e.g. for point with ID 0:
-    # point_data = surface_curvature.GetPointData()
-    # curvatures = point_data.GetArray(n)
-    # where n = 2 for Gaussian, 3 for Mean, 4 for Maximum or Minimum
-    # curvature_point0 = curvatures.GetTuple1(0)
-
-
-def rescale_surface(surface, scale):
-    """
-    Rescales the given vtkPolyData surface with a given scaling factor in each
-    of the three dimensions.
-
-    Args:
-        surface (vtk.vtkPolyData): a surface of triangles
-        scale (float): a scaling factor
-
-    Returns:
-        rescaled surface (vtk.vtkPolyData)
-    """
-    if isinstance(surface, vtk.vtkPolyData):
-        transf = vtk.vtkTransform()
-        transf.Scale(scale, scale, scale)
-        tpd = vtk.vtkTransformPolyDataFilter()
-        tpd.SetInputData(surface)
-        tpd.SetTransform(transf)
-        tpd.Update()
-        scaled_surface = tpd.GetOutput()
-        return scaled_surface
-    else:
-        raise pexceptions.PySegInputError(
-            expr='rescale_surface',
-            msg="A vtkPolyData object required as the first input.")
+THRESH_SIGMA1 = 0.699471735
+"""float: when convolving a binary mask with a gaussian kernel with sigma 1,
+values at the boundary with 0's become this value
+"""
 
 
 def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
@@ -420,3 +351,151 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
         surf.RemoveDeletedCells()
 
     return surf
+
+
+def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
+                    save_input_as_vti=False, verbose=False, isosurface=False,
+                    grow=0, sg=0, thr=1.0):
+    """
+    Generates a VTK PolyData triangle surface for objects in a segmented volume
+    with a given label.
+
+    Removes triangles with zero area, if any are present, from the resulting
+    surface.
+
+    Args:
+        tomo (str or numpy.ndarray): segmentation input file in one of the
+            formats: '.mrc', '.em' or '.vti', or 3D array containing the
+            segmentation
+        outfile_base (str): the path and filename without the ending for saving
+            the surface (ending '.surface.vtp' will be added automatically)
+        lbl (int, optional): the label to be considered, 0 will be ignored,
+            default 1
+        mask (boolean, optional): if True (default), a mask of the binary
+            objects is applied on the resulting surface to reduce artifacts
+            (in case isosurface=False)
+        other_mask (numpy.ndarray, optional): if given (default None), this
+            segmentation is used as mask for the surface
+        save_input_as_vti (boolean, optional): if True (default False), the
+            input is saved as a '.vti' file ('<outfile_base>.vti')
+        verbose (boolean, optional): if True (default False), some extra
+            information will be printed out
+        isosurface (boolean, optional): if True (default False), generate
+            isosurface (good for filled segmentations) - last three parameters
+            are used in this case
+        grow (int, optional): if > 0 the surface is grown by so many voxels
+            (default 0 - no growing)
+        sg (int, optional): sigma for gaussian smoothing in voxels (default 0 -
+            no smoothing)
+        thr (optional, float): thr for isosurface (default 1.0)
+
+    Returns:
+        the triangle surface (vtk.PolyData)
+    """
+    t_begin = time.time()
+
+    # Generating the surface (vtkPolyData object)
+    if isosurface:
+        surface = gen_isosurface(tomo, lbl, grow, sg, thr, mask=other_mask)
+    else:
+        surface = gen_surface(tomo, lbl, mask, other_mask, verbose=verbose)
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    minutes, seconds = divmod(duration, 60)
+    print('Surface generation took: {} min {} s'.format(minutes, seconds))
+
+    # Writing the vtkPolyData surface into a VTP file
+    io.save_vtp(surface, outfile_base + '.surface.vtp')
+    print('Surface was written to the file {}.surface.vtp'.format(outfile_base))
+
+    if save_input_as_vti is True:
+        # If input is a file name, read in the segmentation array from the file:
+        if isinstance(tomo, str):
+            tomo = io.load_tomo(tomo)
+        elif not isinstance(tomo, np.ndarray):
+            raise pexceptions.PySegInputError(
+                expr='run_gen_surface',
+                msg='Input must be either a file name or a ndarray.')
+
+        # Save the segmentation as VTI for opening it in ParaView:
+        io.save_numpy(tomo, outfile_base + '.vti')
+        print('Input was saved as the file {}.vti'.format(outfile_base))
+
+    return surface
+
+
+def add_curvature_to_vtk_surface(surface, curvature_type, invert=False):
+    """
+    Adds curvatures (Gaussian, mean, maximum or minimum) to each triangle vertex
+    of a vtkPolyData surface calculated by VTK.
+
+    Args:
+        surface (vtk.vtkPolyData): a surface of triangles
+        curvature_type (str): type of curvature to add: 'Gaussian', 'Mean',
+            'Maximum' or 'Minimum'
+        invert (boolean, optional): if True (default False), VTK will calculate
+            curvatures as for meshes with inward pointing normals (their
+            convention is outwards pointing normals, opposite from ours)
+
+    Returns:
+        the vtkPolyData surface with '<type>_Curvature' property added to each
+        triangle vertex
+    """
+    if isinstance(surface, vtk.vtkPolyData):
+        curvature_filter = vtk.vtkCurvatures()
+        curvature_filter.SetInputData(surface)
+        if curvature_type == "Gaussian":
+            curvature_filter.SetCurvatureTypeToGaussian()
+        elif curvature_type == "Mean":
+            curvature_filter.SetCurvatureTypeToMean()
+        elif curvature_type == "Maximum":
+            curvature_filter.SetCurvatureTypeToMaximum()
+        elif curvature_type == "Minimum":
+            curvature_filter.SetCurvatureTypeToMinimum()
+        else:
+            raise pexceptions.PySegInputError(
+                expr='add_curvature_to_vtk_surface',
+                msg=("One of the following strings required as the second "
+                     "input: 'Gaussian', 'Mean', 'Maximum' or 'Minimum'."))
+        if invert:
+            curvature_filter.InvertMeanCurvatureOn()  # default Off
+        curvature_filter.Update()
+        surface_curvature = curvature_filter.GetOutput()
+        return surface_curvature
+    else:
+        raise pexceptions.PySegInputError(
+            expr='add_curvature_to_vtk_surface',
+            msg="A vtkPolyData object required as the first input.")
+    # How to get the curvatures later, e.g. for point with ID 0:
+    # point_data = surface_curvature.GetPointData()
+    # curvatures = point_data.GetArray(n)
+    # where n = 2 for Gaussian, 3 for Mean, 4 for Maximum or Minimum
+    # curvature_point0 = curvatures.GetTuple1(0)
+
+
+def rescale_surface(surface, scale):
+    """
+    Rescales the given vtkPolyData surface with a given scaling factor in each
+    of the three dimensions.
+
+    Args:
+        surface (vtk.vtkPolyData): a surface of triangles
+        scale (float): a scaling factor
+
+    Returns:
+        rescaled surface (vtk.vtkPolyData)
+    """
+    if isinstance(surface, vtk.vtkPolyData):
+        transf = vtk.vtkTransform()
+        transf.Scale(scale, scale, scale)
+        tpd = vtk.vtkTransformPolyDataFilter()
+        tpd.SetInputData(surface)
+        tpd.SetTransform(transf)
+        tpd.Update()
+        scaled_surface = tpd.GetOutput()
+        return scaled_surface
+    else:
+        raise pexceptions.PySegInputError(
+            expr='rescale_surface',
+            msg="A vtkPolyData object required as the first input.")
