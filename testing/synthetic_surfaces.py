@@ -165,7 +165,7 @@ def isosurface_from_mask(mask_np, threshold=1.0):
     Generates a isosurface using the Marching Cubes method.
 
     Args:
-        mask_np (numpy.ndarray): a 3D binary mask
+        mask_np (numpy.ndarray): a 3D voxel mask
         threshold (optional, float): threshold for isosurface (default 1.0)
 
     Returns:
@@ -328,9 +328,9 @@ class SphereGenerator(object):
         return sphere_surface
 
     @staticmethod
-    def generate_binary_sphere_surface(r):
+    def generate_voxel_sphere_surface(r):
         """
-        Generates a sphere surface with a given radius using a filled binary
+        Generates a sphere surface with a given radius using a filled voxel
         sphere mask and the Marching Cubes method. The resulting surface tends
         to follow the sharp voxels outline.
 
@@ -581,10 +581,10 @@ class ConeGenerator(object):
         return cone_surface
 
     @staticmethod
-    def generate_binary_cone_surface(r, h):
+    def generate_voxel_cone_surface(r, h):
         """
         Generates a cone surface with a given radius and height using a filled
-        binary cone mask and the Marching Cubes method. The resulting surface
+        voxel cone mask and the Marching Cubes method. The resulting surface
         tends to follow the sharp voxels outline.
 
         Args:
@@ -646,7 +646,7 @@ def main():
     #     r=10, mask=sphere_wedge_30deg_mask)
     # io.save_vtp(sphere_wedge_30deg_surf, surf_vtp)
 
-    # Sphere from smoothed binary mask without missing wedge
+    # Sphere from smoothed voxel mask without missing wedge
     r = 20
     box = int(2.5 * r)
     thresh = 0.6  # 0.3 for r=50, 0.45 for r=10, 0.4 for r=20 first
@@ -657,7 +657,7 @@ def main():
     isosurf_vtp = "{}smooth_sphere_r{}_t1_isosurf_thresh{}.vtp".format(
         fold, r, thresh)
     io.save_vtp(isosurf, isosurf_vtp)
-    # Turn to a binary mask:
+    # Turn to a voxel mask:
     bin_mask = (mask > thresh).astype(int)
     bin_mask_mrc = "{}bin_sphere_r{}_t1_box{}_thresh{}.mrc".format(
         fold, r, box, thresh)
@@ -667,7 +667,7 @@ def main():
     run_gen_surface(bin_mask, surf_base, lbl=1, mask=True)  # r=10: 1856 cells
     # r= 20: 8134 cells
 
-    # Sphere from smoothed binary mask with missing wedge
+    # Sphere from smoothed voxel mask with missing wedge
     mask_mrc = "{}smooth_sphere_r{}_t1_box{}_with_wedge30deg.mrc".format(
         fold, r, box)
     mask = io.load_tomo(mask_mrc)
@@ -676,7 +676,7 @@ def main():
     isosurf_vtp = ("{}smooth_sphere_r{}_t1_with_wedge30deg_isosurf_thresh{}.vtp"
                    .format(fold, r, thresh))
     io.save_vtp(isosurf, isosurf_vtp)
-    # Turn to a binary mask:
+    # Turn to a voxel mask:
     bin_mask = (mask > thresh).astype(int)
     bin_mask_mrc = ("{}bin_sphere_r{}_t1_box{}_with_wedge30deg_thresh{}.mrc"
                     .format(fold, r, box, thresh))
@@ -727,8 +727,8 @@ def main():
 
     # r = 6
     # h = 6
-    # cone_binary = pg.generate_binary_cone_surface(r, h)
-    # io.save_vtp(cone_binary, "{}cone/cone_r{}_h{}.vtp".format(fold, r, h))
+    # cone_voxel = pg.generate_voxel_cone_surface(r, h)
+    # io.save_vtp(cone_voxel, "{}cone/cone_r{}_h{}.vtp".format(fold, r, h))
 
 
 if __name__ == "__main__":

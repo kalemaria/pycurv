@@ -179,7 +179,7 @@ class ConeMask(object):
     @staticmethod
     def generate_cone_mask(r=10, h=20, box=23, t=0, opened=False):
         """
-        Generates a 3D volume with a cone binary mask.
+        Generates a 3D volume with a cone voxel mask.
 
         Args:
             r (int): radius in voxels difference (default 10)

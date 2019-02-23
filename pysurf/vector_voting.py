@@ -45,7 +45,7 @@ def normals_directions_and_curvature_estimation(
             directions are not estimated for triangles within this distance to
             surface borders (default 0)
         methods (list, optional): all methods to run in the second pass ('VV'
-            and 'VCTV' are possible, default is 'VV')
+            and 'SSVV' are possible, default is 'VV')
         page_curvature_formula (boolean, optional): if True (default False),
             normal curvature formula from Page et al. is used in VV (see
             collect_curvature_votes)
@@ -62,12 +62,12 @@ def normals_directions_and_curvature_estimation(
             graph with the orientations clanum_pointsss, normals or tangents is
             returned.
         poly_surf (vtkPolyData, optional): surface from which the graph was
-            generated, scaled to nm (required only for VCTV, default None)
+            generated, scaled to nm (required only for SSVV, default None)
         cores (int, optional): number of cores to run VV in parallel (default 4)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default None)
     Returns:
-        a dictionary mapping the method name ('VV' and 'VCTV') to the
+        a dictionary mapping the method name ('VV' and 'SSVV') to the
         tuple of two elements: TriangleGraph graph and vtkPolyData surface of
         triangles with classified orientation and estimated normals or tangents,
         principle curvatures and directions (if only_normals is False)
@@ -329,14 +329,14 @@ def curvature_estimation(
         graph_file (string, optional): name for a graph file after the first run
             of the algorithm (default 'temp.gt' will be removed after loading)
         method (str, optional): a method to run in the second pass ('VV' and
-            'VCTV' are possible, default is 'VV')
+            'SSVV' are possible, default is 'VV')
         page_curvature_formula (boolean, optional): if True (default False),
             normal curvature formula from Page et al. is used in VV (see
             collect_curvature_votes)
         area2 (boolean, optional): if True (default False), votes are
             weighted by triangle area also in the second pass
         poly_surf (vtkPolyData): surface from which the graph was generated,
-            scaled to nm (required only if method="VCTV", default None)
+            scaled to nm (required only if method="SSVV", default None)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map is
             calculated later for each vertex (default)
@@ -393,8 +393,8 @@ def curvature_estimation(
     for v in tg.graph.vertices():
         if exclude_borders == 0 or is_near_border[v] == 0:
             good_vertices_ind.append(int(v))
-            # Voting and curvature estimation for VCTV:
-            if method == "VCTV":  # sequential processing, edits the graph
+            # Voting and curvature estimation for SSVV:
+            if method == "SSVV":  # sequential processing, edits the graph
                 # None is returned if curvature at v cannot be estimated
                 gen_curv_vote(poly_surf, v, radius_hit)
     print("{} vertices to estimate curvature".format(len(good_vertices_ind)))

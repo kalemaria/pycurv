@@ -23,7 +23,7 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 
 __author__ = 'kalemanov'
 
-FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/'
+FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
 
 
 def beautify_number(number, precision=15):
@@ -166,9 +166,8 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 """
 
 
-@pytest.mark.parametrize("half_size, radius_hit, res, noise", [
-    (20, 8, 20, 10)
-])
+@pytest.mark.parametrize("radius_hit", range(4, 10))
+@pytest.mark.parametrize("half_size, res, noise", [(20, 20, 10)])
 def test_plane_normals(half_size, radius_hit, res, noise):
     """
     Tests whether normals are correctly estimated for a plane surface with
@@ -196,8 +195,8 @@ def test_plane_normals(half_size, radius_hit, res, noise):
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
     base_filename = "{}plane_half_size{}".format(files_fold, half_size)
-    vv_surf_file = '{}.VCTV_rh{}.vtp'.format(base_filename, radius_hit)
-    vv_eval_file = '{}.VCTV_rh{}.csv'.format(base_filename, radius_hit)
+    vv_surf_file = '{}.SSVV_rh{}.vtp'.format(base_filename, radius_hit)
+    vv_eval_file = '{}.SSVV_rh{}.csv'.format(base_filename, radius_hit)
     vtk_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
 
@@ -218,9 +217,9 @@ def test_plane_normals(half_size, radius_hit, res, noise):
     # Running the modified Normal Vector Voting algorithm (with curvature
     # tensor voting, because its second pass is the fastest):
     results = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=0, methods=['VCTV'], poly_surf=surf,
+        tg, radius_hit, exclude_borders=0, methods=['SSVV'], poly_surf=surf,
         graph_file=temp_normals_graph_file)
-    surf_vv = results['VCTV'][1]
+    surf_vv = results['SSVV'][1]
     # Saving the output (TriangleGraph object) for later inspection in ParaView:
     io.save_vtp(surf_vv, vv_surf_file)
 
@@ -264,9 +263,12 @@ def test_plane_normals(half_size, radius_hit, res, noise):
         assert error <= 0.3
 
 
-@pytest.mark.parametrize("radius,radius_hit,eb,inverse,methods", [
-    (10, 8, 5, False, ['VV']),
-    (10, 8, 5, True, ['VV']),
+@pytest.mark.parametrize("radius_hit", range(5, 10))
+@pytest.mark.parametrize("radius,eb,inverse,methods", [
+    # (10, 5, False, ['VV']),
+    # (10, 5, False, ['SSVV']),
+    (10, 0, False, ['VV']),  # TODO ok to fail
+    (10, 0, False, ['SSVV']),  # TODO ok to fail
 ])
 def test_cylinder_directions_curvatures(
         radius, radius_hit, eb, inverse, methods,
@@ -277,7 +279,7 @@ def test_cylinder_directions_curvatures(
     maximal principal curvatures are correctly estimated for an opened
     cylinder surface (without the circular planes) with known
     orientation (height, i.e. T_2, parallel to the Z axis) using normal
-    vector voting (VV) or VV combined with curvature tensor voting (VCTV).
+    vector voting (VV) or VV combined with curvature tensor voting (SSVV).
     Allowing error of +-30% of the maximal absolute true value.
 
     Args:
@@ -290,12 +292,12 @@ def test_cylinder_directions_curvatures(
         inverse (boolean): if True, the cylinder will have normals pointing
             outwards (negative curvature), else the other way around
         methods (list): tells which method(s) should be used: 'VV'
-            for normal vector voting or 'VCTV' for vector and curvature tensor
+            for normal vector voting or 'SSVV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
         res (int, optional): if > 0 determines how many stripes around both
             approximate circles (and then triangles) the cylinder has, the
             surface is generated using vtkCylinderSource; If 0 (default)
-            first a gaussian cylinder mask is generated and then surface
+            first a smooth cylinder mask is generated and then surface
             using vtkMarchingCubes, in the latter case the cylinder is as
             high as the used mask box (2.5 * r) and is open at both sides
         h (int, optional): cylinder height in voxels, only needed if res > 0
@@ -354,7 +356,7 @@ def test_cylinder_directions_curvatures(
     # If the .vtp file with the test surface does not exist, create it:
     if not os.path.isfile(surf_file):
         cg = CylinderGenerator()
-        if res == 0:  # generate surface from a gaussian mask
+        if res == 0:  # generate surface from a smooth mask
             cylinder = cg.generate_gauss_cylinder_surface(radius)
         else:  # generate surface directly with VTK
             print("Warning: cylinder contains planes!")
@@ -388,10 +390,13 @@ def test_cylinder_directions_curvatures(
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (tg, surf) = method_tg_surf_dict[method]
-        if method == 'VV' and page_curvature_formula:
-            method = 'VV_page_curvature_formula'
-        if (method == 'VV' or method == 'VV_page_curvature_formula') and area2:
-            method = '{}_area2'.format(method)
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
         surf_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
@@ -493,24 +498,44 @@ def test_cylinder_directions_curvatures(
                 assert error <= allowed_error
 
 
+@pytest.mark.parametrize("radius_hit", range(5, 10))
 @pytest.mark.parametrize(
-    "radius,radius_hit,inverse,binary,ico,methods, runtimes", [
-        (10, 3.5, False, False, 1280, ['VV'], None),  # icosahedron
-        (10, 9, False, True, 0, ['VV'],
-            "{}sphere/binary/files4plotting/bin_spheres_runtimes.csv".format(
-             FOLD)),  # binary
-        (10, 9, False, False, 0, ['VV', 'VCTV'], None),  # gaussian
-        (10, 8, True, False, 0, ['VV', 'VCTV'], None),  # gaussian inverse
+    "radius,inverse,voxel,ico,methods,area2,runtimes", [
+#         # (10, False, False, 1280, ['VV'], True, None),  # icosahedron
+        (10, False, True, 0, ['VV'], False, None),  # voxel, RVV
+        (10, False, True, 0, ['VV', 'SSVV'], True, None),  # voxel
+#         #"{}sphere/voxel/files4plotting/bin_spheres_runtimes.csv".format(FOLD)
+        (10, False, False, 0, ['VV'], False, None),  # smooth, RVV
+        (10, False, False, 0, ['VV', 'SSVV'], True, None),  # smooth
+#         # (10, True, False, 0, ['VV', 'SSVV'], False, None),  # smooth inverse
     ])
+# @pytest.mark.parametrize(
+#     "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes", [
+#         # smooth, radius=20, radius_hit=9, SSVV & AVV:
+#         (20, 9, False, False, 0, ['SSVV', 'VV'], True, None),
+#         # smooth, radius=20, radius_hit=9, RVV:
+#         (20, 9, False, False, 0, ['VV'], False, None),
+#         # voxel, radius=20, SSVV & radius_hit=8:
+#         (20, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+#         # voxel, radius=20, AVV & radius_hit=9:
+#         (20, 9, False, True, 0, ['VV'], True, None),
+#         # voxel, radius=20, radius_hit=18, SSVV & AVV:
+#         (20, 18, False, True, 0, ['SSVV', 'VV'], True, None),
+#         # voxel, radius=30, SSVV & radius_hit=8:
+#         (30, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+#         # voxel, radius=30, AVV & radius_hit=9:
+#         (30, 9, False, True, 0, ['VV'], True, None),  # TODO ok to fail
+#         # voxel, radius=30, radius_hit=18, SSVV & AVV:
+#         (30, 28, False, True, 0, ['SSVV', 'VV'], True, None),
+#     ])
 def test_sphere_curvatures(
-        radius, radius_hit, inverse, methods, binary, ico, runtimes,
+        radius, radius_hit, inverse, methods, area2, voxel, ico, runtimes,
         res=0, noise=0, save_areas=False, page_curvature_formula=False,
-        full_dist_map=False, area2=True, cores=4):
+        full_dist_map=False, cores=4):
     """
-    Runs all the steps needed to calculate curvatures for a test sphere
-    with a given radius. Tests whether the curvatures are correctly
-    estimated using normal vector voting (VV), VV combined with curvature tensor
-    voting (VCTV).
+    Runs all the steps needed to calculate curvatures for a test sphere with a
+    given radius. Tests whether the curvatures are correctly estimated using
+    normal vector voting (VV), VV combined with curvature tensor voting (SSVV).
     kappa_1 = kappa_2 = 1/r; allowing error of +-30%.
 
     Args:
@@ -521,9 +546,12 @@ def test_sphere_curvatures(
         inverse (boolean): if True, the sphere will have normals pointing
             outwards (negative curvature), else the other way around
         methods (list): tells which method(s) should be used: 'VV'
-            for normal vector voting or 'VCTV' for vector and curvature tensor
+            for normal vector voting or 'SSVV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
-        binary (boolean): if True, a binary sphere is generated (ignoring the
+        area2 (boolean): if True (default), votes are weighted by triangle area
+            also in the second step (principle directions and curvatures
+            estimation)
+        voxel (boolean): if True, a voxel sphere is generated (ignoring the
             options ico, res and noise)
         ico (int): if > 0 and res=0, an icosahedron with so many faces is used
             (1280 faces with radius 1 or 10 are available so far)
@@ -532,7 +560,7 @@ def test_sphere_curvatures(
         res (int, optional): if > 0 determines how many longitude and
             latitude stripes the UV sphere from vtkSphereSource has, the
             surface is triangulated; If 0 (default) and ico=0, first a
-            gaussian sphere mask is generated and then surface using
+            smooth sphere mask is generated and then surface using
             vtkMarchingCubes
         noise (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 10), the noise
@@ -545,22 +573,19 @@ def test_sphere_curvatures(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        area2 (boolean, optional): if True (default), votes are
-            weighted by triangle area also in the second step (principle
-            directions and curvatures estimation)
         cores (int): number of cores to run VV in parallel (default 4)
 
     Returns:
         None
     """
-    if binary:
-        fold = '{}sphere/binary/'.format(FOLD)
+    if voxel:
+        fold = '{}sphere/voxel/'.format(FOLD)
     else:
         if res > 0:  # UV sphere with this longitude and latitude res. is used
             fold = '{}sphere/res{}_noise{}/'.format(FOLD, res, noise)
         elif ico > 0:  # icosahedron sphere with so many faces is used
             fold = '{}sphere/ico{}_noise{}/'.format(FOLD, ico, noise)
-        else:  # a sphere generated by a gaussian mask is used
+        else:  # a sphere generated by a smooth mask is used
             fold = '{}sphere/noise{}/'.format(FOLD, noise)
 
     if not os.path.exists(fold):
@@ -587,8 +612,8 @@ def test_sphere_curvatures(
     # If the .vtp file with the test surface does not exist, create it:
     if not os.path.isfile(surf_file):
         sg = SphereGenerator()
-        if binary:
-            sphere = sg.generate_binary_sphere_surface(radius)
+        if voxel:
+            sphere = sg.generate_voxel_sphere_surface(radius)
             io.save_vtp(sphere, surf_file)
         else:
             if res > 0:  # generate a UV sphere surface directly with VTK
@@ -607,7 +632,7 @@ def test_sphere_curvatures(
                       "add_gaussian_noise_to_surface and save it as\n{}"
                       .format(surf_file))
                 exit(0)
-            else:  # generate a sphere surface from a gaussian mask
+            else:  # generate a sphere surface from a smooth mask
                 sphere = sg.generate_gauss_sphere_surface(radius)
                 if noise > 0:
                     sphere = add_gaussian_noise_to_surface(sphere,
@@ -637,10 +662,13 @@ def test_sphere_curvatures(
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (tg, surf) = method_tg_surf_dict[method]
-        if method == 'VV' and page_curvature_formula:
-            method = 'VV_page_curvature_formula'
-        if (method == 'VV' or method == 'VV_page_curvature_formula') and area2:
-            method = '{}_area2'.format(method)
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
         surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
 
@@ -712,20 +740,25 @@ def test_sphere_curvatures(
             assert error <= allowed_error
 
 
-@pytest.mark.parametrize("radius_hit", [10, 12])
-@pytest.mark.parametrize("cores", range(1, 9))
-@pytest.mark.parametrize("rr,csr,methods,runtimes", [
-    (25, 10, ['VV'],
-     "{}torus/files4plotting/torus_rr25_csr10_runtimes_VV2_cores.csv".format(
-         FOLD)),
-])
+# @pytest.mark.parametrize("radius_hit", [10, 12])
+# @pytest.mark.parametrize("cores", range(1, 9))
+# @pytest.mark.parametrize("rr,csr,methods,area2,runtimes", [
+#     (25, 10, ['VV'], True,
+#      "{}torus/files4plotting/torus_rr25_csr10_runtimes_VV2_cores.csv".format(
+#          FOLD)),
+# ])
+@pytest.mark.parametrize("radius_hit", range(5, 10))
+@pytest.mark.parametrize("rr,csr,methods,area2,runtimes, cores", [
+        (25, 10, ['VV'], False, None, 4),  # RVV
+        (25, 10, ['VV', 'SSVV'], True, None, 4),
+    ])
 def test_torus_directions_curvatures(
-        rr, csr, radius_hit, methods, runtimes, cores,
-        page_curvature_formula=False, full_dist_map=False, area2=True):
+        rr, csr, radius_hit, methods, area2, runtimes, cores,
+        page_curvature_formula=False, full_dist_map=False):
     """
     Runs all the steps needed to calculate curvatures for a test torus
     with given radii using normal vector voting (VV) or VV combined with
-    curvature tensor voting (VCTV).
+    curvature tensor voting (SSVV).
     Allowing error of +-30%.
 
     Args:
@@ -735,8 +768,11 @@ def test_torus_directions_curvatures(
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
         methods (list): tells which method(s) should be used: 'VV'
-            for normal vector voting or 'VCTV' for vector and curvature tensor
+            for normal vector voting or 'SSVV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
+        area2 (boolean): if True (default), votes are weighted by triangle area
+            also in the second step (principle directions and curvatures
+            estimation)
         runtimes (str): if given, runtimes and some parameters are added to
             this file (otherwise None)
         cores (int): number of cores to run VV in parallel
@@ -746,9 +782,6 @@ def test_torus_directions_curvatures(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        area2 (boolean, optional): if True (default), votes are
-            weighted by triangle area also in the second step (principle
-            directions and curvatures estimation)
 
     Notes:
         * csr should be much smaller than rr (csr < rr - csr).
@@ -825,10 +858,13 @@ def test_torus_directions_curvatures(
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (tg, surf) = method_tg_surf_dict[method]
-        if method == 'VV' and page_curvature_formula:
-            method = 'VV_page_curvature_formula'
-        if (method == 'VV' or method == 'VV_page_curvature_formula') and area2:
-            method = '{}_area2'.format(method)
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
         surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
 
@@ -924,122 +960,125 @@ def test_torus_directions_curvatures(
             assert error <= allowed_error
 
 
-@pytest.mark.parametrize("r,h,radius_hit,res,methods", [
-    (6, 6, 5, 38, ['VV', 'VCTV']),  # smooth
-])
-def run_cone(  # does not include assert for true curvature!
-        r, h, radius_hit, methods, res=0, noise=0, page_curvature_formula=False,
-        full_dist_map=False, area2=True, cores=4):
-    """
-    Runs all the steps needed to calculate curvatures for a test cone with given
-    radius and height using normal vector voting (VV) or VV combined with
-    curvature tensor voting (VCTV).
-    Writes out kappa_1 and kappa_2 values to a CSV file.
-
-    Args:
-        r (int): cone base radius in voxels
-        h (int): cone height in voxels
-        radius_hit (float): radius in length unit of the graph, here voxels;
-            it should be chosen to correspond to radius of smallest features
-            of interest on the surface
-        methods (list): tells which method(s) should be used: 'VV'
-            for normal vector voting or 'VCTV' for vector and curvature tensor
-            voting to estimate the principal directions and curvatures
-        res (int, optional): if > 0 determines how many triangles around the
-            circular base the cone has, is subdivided and smoothed, the base
-            disappears; If 0 (default) a binary cone with the circular base
-            is generated
-        noise (int, optional): determines variance of the Gaussian noise in
-            percents of average triangle edge length (default 0), the noise
-            is added on triangle vertex coordinates in its normal direction
-            - only for a smoothed cone, res > 0!
-        page_curvature_formula (boolean, optional): if True (default False)
-            normal curvature formula from Page et al. is used for VV (see
-            collect_curvature_votes)
-        full_dist_map (boolean, optional): if True, a full distance map is
-            calculated for the whole graph, otherwise a local distance map
-            is calculated for each vertex (default)
-        area2 (boolean, optional): if True (default), votes are
-            weighted by triangle area also in the second step (principle
-            directions and curvatures estimation)
-        cores (int): number of cores to run VV in parallel (default 4)
-
-    Returns:
-        None
-    """
-    if res == 0:
-        noise = 0
-        fold = '{}cone/binary/'.format(FOLD)
-    else:
-        fold = '{}cone/res{}_noise{}/'.format(FOLD, res, noise)
-    if not os.path.exists(fold):
-        os.makedirs(fold)
-
-    surf_filebase = '{}cone_r{}_h{}'.format(fold, r, h)
-    surf_file = '{}.surface.vtp'.format(surf_filebase)
-    files_fold = '{}files4plotting/'.format(fold)
-    if not os.path.exists(files_fold):
-        os.makedirs(files_fold)
-    base_filename = "{}cone_r{}_h{}".format(files_fold, r, h)
-    # VTK_eval_file = '{}.VTK.csv'.format(base_filename)
-    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
-
-    print("\n*** Generating a surface and a graph for a cone with radius "
-          "{}, height {} and {}% noise ***".format(r, h, noise))
-    # If the .vtp file with the test surface does not exist, create it:
-    if not os.path.isfile(surf_file):
-        cg = ConeGenerator()
-        if res == 0:  # generate surface from a binary mask
-            print("Warning: cone contains a plane!")
-            cone = cg.generate_binary_cone_surface(r, h)
-        else:  # generate surface directly with VTK
-            cone = cg.generate_cone(r, h, res, subdivisions=3, decimate=0.8)
-            if noise > 0:
-                cone = add_gaussian_noise_to_surface(cone, percent=noise)
-        io.save_vtp(cone, surf_file)
-
-    # Reading in the surface and transforming it into a triangle graph
-    surf, tg = surface_to_graph(surf_file, inverse=False)
-
-    # Running the modified Normal Vector Voting algorithm:
-    method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=1, methods=methods,
-        page_curvature_formula=page_curvature_formula,
-        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        graph_file=temp_normals_graph_file)
-
-    for method in method_tg_surf_dict.keys():
-        # Saving the output (TriangleGraph object) for later inspection in
-        # ParaView:
-        (tg, surf) = method_tg_surf_dict[method]
-        if method == 'VV' and page_curvature_formula:
-            method = 'VV_page_curvature_formula'
-        if (method == 'VV' or method == 'VV_page_curvature_formula') and area2:
-            method = '{}_area2'.format(method)
-        surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
-        io.save_vtp(surf, surf_file)
-
-        # Getting the estimated principal curvatures:
-        kappa_1 = tg.get_vertex_property_array("kappa_1")
-        kappa_2 = tg.get_vertex_property_array("kappa_2")
-
-        # Writing all the VV curvature values and errors into a csv file:
-        df = pd.DataFrame()
-        df['kappa1'] = kappa_1
-        df['kappa2'] = kappa_2
-
-        csv_file = '{}.{}_rh{}.csv'.format(
-            base_filename, method, radius_hit)
-        df.to_csv(csv_file, sep=';')
+# @pytest.mark.parametrize("r,h,radius_hit,res,methods", [
+#     (6, 6, 5, 38, ['VV', 'SSVV']),  # smooth
+# ])
+# def run_cone(  # does not include assert for true curvature!
+#         r, h, radius_hit, methods, res=0, noise=0, page_curvature_formula=False,
+#         full_dist_map=False, area2=True, cores=4):
+#     """
+#     Runs all the steps needed to calculate curvatures for a test cone with given
+#     radius and height using normal vector voting (VV) or VV combined with
+#     curvature tensor voting (SSVV).
+#     Writes out kappa_1 and kappa_2 values to a CSV file.
+#
+#     Args:
+#         r (int): cone base radius in voxels
+#         h (int): cone height in voxels
+#         radius_hit (float): radius in length unit of the graph, here voxels;
+#             it should be chosen to correspond to radius of smallest features
+#             of interest on the surface
+#         methods (list): tells which method(s) should be used: 'VV'
+#             for normal vector voting or 'SSVV' for vector and curvature tensor
+#             voting to estimate the principal directions and curvatures
+#         res (int, optional): if > 0 determines how many triangles around the
+#             circular base the cone has, is subdivided and smoothed, the base
+#             disappears; If 0 (default) a voxel cone with the circular base
+#             is generated
+#         noise (int, optional): determines variance of the Gaussian noise in
+#             percents of average triangle edge length (default 0), the noise
+#             is added on triangle vertex coordinates in its normal direction
+#             - only for a smoothed cone, res > 0!
+#         page_curvature_formula (boolean, optional): if True (default False)
+#             normal curvature formula from Page et al. is used for VV (see
+#             collect_curvature_votes)
+#         full_dist_map (boolean, optional): if True, a full distance map is
+#             calculated for the whole graph, otherwise a local distance map
+#             is calculated for each vertex (default)
+#         area2 (boolean, optional): if True (default), votes are
+#             weighted by triangle area also in the second step (principle
+#             directions and curvatures estimation)
+#         cores (int): number of cores to run VV in parallel (default 4)
+#
+#     Returns:
+#         None
+#     """
+#     if res == 0:
+#         noise = 0
+#         fold = '{}cone/voxel/'.format(FOLD)
+#     else:
+#         fold = '{}cone/res{}_noise{}/'.format(FOLD, res, noise)
+#     if not os.path.exists(fold):
+#         os.makedirs(fold)
+#
+#     surf_filebase = '{}cone_r{}_h{}'.format(fold, r, h)
+#     surf_file = '{}.surface.vtp'.format(surf_filebase)
+#     files_fold = '{}files4plotting/'.format(fold)
+#     if not os.path.exists(files_fold):
+#         os.makedirs(files_fold)
+#     base_filename = "{}cone_r{}_h{}".format(files_fold, r, h)
+#     # VTK_eval_file = '{}.VTK.csv'.format(base_filename)
+#     temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+#
+#     print("\n*** Generating a surface and a graph for a cone with radius "
+#           "{}, height {} and {}% noise ***".format(r, h, noise))
+#     # If the .vtp file with the test surface does not exist, create it:
+#     if not os.path.isfile(surf_file):
+#         cg = ConeGenerator()
+#         if res == 0:  # generate surface from a voxel mask
+#             print("Warning: cone contains a plane!")
+#             cone = cg.generate_voxel_cone_surface(r, h)
+#         else:  # generate surface directly with VTK
+#             cone = cg.generate_cone(r, h, res, subdivisions=3, decimate=0.8)
+#             if noise > 0:
+#                 cone = add_gaussian_noise_to_surface(cone, percent=noise)
+#         io.save_vtp(cone, surf_file)
+#
+#     # Reading in the surface and transforming it into a triangle graph
+#     surf, tg = surface_to_graph(surf_file, inverse=False)
+#
+#     # Running the modified Normal Vector Voting algorithm:
+#     method_tg_surf_dict = normals_directions_and_curvature_estimation(
+#         tg, radius_hit, exclude_borders=1, methods=methods,
+#         page_curvature_formula=page_curvature_formula,
+#         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
+#         graph_file=temp_normals_graph_file)
+#
+#     for method in method_tg_surf_dict.keys():
+#         # Saving the output (TriangleGraph object) for later inspection in
+#         # ParaView:
+#         (tg, surf) = method_tg_surf_dict[method]
+#         if method == 'VV':
+#             if page_curvature_formula:
+#                 method = 'NVV'
+#             elif area2:
+#                 method = 'AVV'
+#             else:
+#                 method = 'RVV'
+#         surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
+#         io.save_vtp(surf, surf_file)
+#
+#         # Getting the estimated principal curvatures:
+#         kappa_1 = tg.get_vertex_property_array("kappa_1")
+#         kappa_2 = tg.get_vertex_property_array("kappa_2")
+#
+#         # Writing all the VV curvature values and errors into a csv file:
+#         df = pd.DataFrame()
+#         df['kappa1'] = kappa_1
+#         df['kappa2'] = kappa_2
+#
+#         csv_file = '{}.{}_rh{}.csv'.format(
+#             base_filename, method, radius_hit)
+#         df.to_csv(csv_file, sep=';')
 
 
 # py.test -n 4   # test on multiple CPUs
 
 if __name__ == "__main__":
-    fold = '{}sphere/binary/'.format(FOLD)
-    stats_file = '{}sphere_r10.VV_rh9.stats'.format(fold)
+    fold = '{}sphere/voxel/'.format(FOLD)
+    stats_file = '{}sphere_r10.AVV_rh9.stats'.format(fold)
     cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
-                 'inverse=False, binary=True, ico=0, methods=[\'VV\'], '
+                 'inverse=False, voxel=True, ico=0, methods=[\'VV\'], '
                  'runtimes=None, cores=1)', stats_file)
 
     p = pstats.Stats(stats_file)
