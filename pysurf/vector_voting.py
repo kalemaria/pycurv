@@ -395,7 +395,7 @@ def curvature_estimation(
             good_vertices_ind.append(int(v))
             # Voting and curvature estimation for SSVV:
             if method == "SSVV":  # sequential processing, edits the graph
-                # None is returned if curvature at v cannot be estimated
+                # curvatures saved in the graph, placeholders where error
                 gen_curv_vote(poly_surf, v, radius_hit)
     print("{} vertices to estimate curvature".format(len(good_vertices_ind)))
 
@@ -429,20 +429,15 @@ def curvature_estimation(
             mean_curvature_array = results_array[:, 5]
             shape_index_array = results_array[:, 6]
             curvedness_array = results_array[:, 7]
-            # Add T_1, T_2, kappa_1, kappa_2, Gaussian and mean curvatures,
-            # shape index and curvedness as properties to the graph:
+            # Add the curvature descriptors as properties to the graph:
             # (v_ind is vertex v index, i is v_ind index in results arrays)
             for i, v_ind in enumerate(good_vertices_ind):
                 v = tg.graph.vertex(v_ind)
-                if T_1_array[i] is not None:
-                    tg.graph.vp.T_1[v] = T_1_array[i]
-                    tg.graph.vp.T_2[v] = T_2_array[i]
-                    tg.graph.vp.kappa_1[v] = kappa_1_array[i]
-                    tg.graph.vp.kappa_2[v] = kappa_2_array[i]
-                    tg.graph.vp.gauss_curvature_VV[v] = gauss_curvature_array[i]
-                    tg.graph.vp.mean_curvature_VV[v] = mean_curvature_array[i]
-                    tg.graph.vp.shape_index_VV[v] = shape_index_array[i]
-                    tg.graph.vp.curvedness_VV[v] = curvedness_array[i]
+                tg._add_curvature_descriptors_to_vertex(
+                    v, T_1_array[i], T_2_array[i], kappa_1_array[i],
+                    kappa_2_array[i], gauss_curvature_array[i],
+                    mean_curvature_array[i], shape_index_array[i],
+                    curvedness_array[i])
 
         else:  # cores == 1, sequential processing
             # Curvature votes collection and estimation for VV:
@@ -452,39 +447,9 @@ def curvature_estimation(
                     page_curvature_formula=page_curvature_formula,
                     A_max=A_max, full_dist_map=full_dist_map)
                 results = estimate_curvature(v_ind, B_v)
-                T_1 = results[0]
-                T_2 = results[1]
-                kappa_1 = results[2]
-                kappa_2 = results[3]
-                gauss_curvature = results[4]
-                mean_curvature = results[5]
-                shape_index = results[6]
-                curvedness = results[7]
                 # Add the properties to the graph:
                 v = tg.graph.vertex(v_ind)
-                if T_1 is not None:
-                    tg.graph.vp.T_1[v] = T_1
-                    tg.graph.vp.T_2[v] = T_2
-                    tg.graph.vp.kappa_1[v] = kappa_1
-                    tg.graph.vp.kappa_2[v] = kappa_2
-                    tg.graph.vp.gauss_curvature_VV[v] = gauss_curvature
-                    tg.graph.vp.mean_curvature_VV[v] = mean_curvature
-                    tg.graph.vp.shape_index_VV[v] = shape_index
-                    tg.graph.vp.curvedness_VV[v] = curvedness
-
-    # For all methods:
-    # For vertices on border (if wanted), add placeholders to the corresponding
-    # vertex properties
-    for v in tg.graph.vertices():
-        if exclude_borders == 1 and is_near_border[v] == 1:
-            tg.graph.vp.T_1[v] = np.zeros(shape=3)
-            tg.graph.vp.T_2[v] = np.zeros(shape=3)
-            tg.graph.vp.kappa_1[v] = 0
-            tg.graph.vp.kappa_2[v] = 0
-            tg.graph.vp.gauss_curvature_VV[v] = 0
-            tg.graph.vp.mean_curvature_VV[v] = 0
-            tg.graph.vp.shape_index_VV[v] = 0
-            tg.graph.vp.curvedness_VV[v] = 0
+                tg._add_curvature_descriptors_to_vertex(v, *results)
 
     if exclude_borders > 0:
         tg.find_vertices_near_border(exclude_borders, purge=True)

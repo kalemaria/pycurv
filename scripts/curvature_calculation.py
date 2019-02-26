@@ -142,9 +142,9 @@ def _vtp_arrays_to_mrc_volumes(
 
 def new_workflow(
         fold, base_filename, pixel_size_nm, radius_hit, methods=['VV'],
-        seg_file=None, label=1, holes=0, remove_wrong_borders=True,
-        min_component=100, only_normals=False, cores=4,
-        runtimes=None):
+        seg_file=None, label=1, filled_label=None, holes=0,
+        remove_wrong_borders=True, min_component=100, only_normals=False,
+        cores=4, runtimes=None):
     """
     A script for running all processing steps to estimate membrane curvature.
 
@@ -153,8 +153,8 @@ def new_workflow(
     surface.
 
     It was written for Javier's data. Segmentation is not split into regions.
-    Step 3. of VV, consisting of normals and curvature calculations, can run in
-    parallel on multiple cores.
+    Second pass, consisting of normals and curvature calculations, can run in
+    parallel on multiple cores (for RVV and AVV, but not for SSVV).
 
     Args:
         fold (str): path where the input membrane segmentation is and where the
@@ -165,10 +165,13 @@ def new_workflow(
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         methods (list, optional): all methods to run in the second pass ('VV'
-            and 'VCTV' are possible, default is 'VV')
+            and 'SSVV' are possible, default is 'VV')
         seg_file (str, optional): membrane segmentation mask
         label (int, optional): label to be considered in the membrane mask
             (default 1)
+        filled_label (int, optional): if the membrane mask was filled with this
+            label (default None), a better surface generation will be used (with
+            a slight smoothing; holes are closed automatically by the filling.)
         holes (int, optional): if > 0, small holes in the segmentation are
             closed with a cube of that size in pixels before curvature
             estimation (default 0)
@@ -204,14 +207,18 @@ def new_workflow(
         assert(isinstance(seg, np.ndarray))
         data_type = seg.dtype
 
-        if label == 2:  # and np.max(seg) == 4:  if cER (and filled seg. exists)
+        if filled_label is not None:  # if filled seg. given
             # Surface generation with filled segmentation using vtkMarchingCubes
             # and applying the mask of unfilled segmentation
             print("\nMaking filled and unfilled binary segmentations...")
+            binary_seg = (seg == label).astype(data_type)
+            if not np.any(binary_seg):
+                raise pexceptions.PySegInputError(
+                    expr="new_workflow",
+                    msg="Label not found in the segmentation!")
             # have to combine the outer and inner seg. for the filled one:
-            filled_binary_seg = np.logical_or(seg == 2, seg == 3).astype(
-                data_type)
-            binary_seg = (seg == 2).astype(data_type)
+            filled_binary_seg = np.logical_or(
+                seg == label, seg == filled_label).astype(data_type)
             print("\nGenerating a surface...")
             surf = run_gen_surface(
                 filled_binary_seg, fold + base_filename, lbl=1,
@@ -228,18 +235,20 @@ def new_workflow(
             # requested labels as 1 and the background as 0:
             print("\nMaking the segmentation binary...")
             binary_seg = (seg == label).astype(data_type)
-            if holes != 0:  # reduce / increase holes in the segmentation
+            if not np.any(binary_seg):
+                raise pexceptions.PySegInputError(
+                    expr="new_workflow",
+                    msg="Label not found in the segmentation!")
+            if holes > 0:  # close (reduce) holes in the segmentation
                 cube_size = abs(holes)
                 cube = np.ones((cube_size, cube_size, cube_size))
-                if holes > 0:  # close (reduce) holes
-                    print("\nReducing holes in the segmentation...")
-                    binary_seg = ndimage.binary_closing(
-                        binary_seg, structure=cube, iterations=1).astype(
-                        data_type)
-                    # Write the resulting binary segmentation into a file:
-                    binary_seg_file = "{}{}.binary_seg.mrc".format(
-                        fold, base_filename)
-                    io.save_numpy(binary_seg, binary_seg_file)
+                print("\nReducing holes in the segmentation...")
+                binary_seg = ndimage.binary_closing(
+                    binary_seg, structure=cube, iterations=1).astype(data_type)
+                # Write the resulting binary segmentation into a file:
+                binary_seg_file = "{}{}.binary_seg.mrc".format(
+                    fold, base_filename)
+                io.save_numpy(binary_seg, binary_seg_file)
             print("\nGenerating a surface from the binary segmentation...")
             surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
     else:
@@ -252,6 +261,9 @@ def new_workflow(
         print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
         tg.build_graph_from_vtk_surface(surf, pixel_size_nm)
+        if tg.graph.num_vertices() == 0:
+            raise pexceptions.PySegInputError(
+                expr="new_workflow", msg="The graph is empty!")
         print('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
 
@@ -313,7 +325,7 @@ def new_workflow(
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
                 radius_hit, exclude_borders=0, graph_file=gt_file1,
-                method=method, poly_surf=surf_clean, cores=cores,
+                method=method, area2=True, poly_surf=surf_clean, cores=cores,
                 runtimes=runtimes)
             method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
@@ -323,7 +335,7 @@ def new_workflow(
             # filtering or inspection in ParaView:
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV':
-                method = 'VV_area2'
+                method = 'AVV'
             gt_file = '{}{}.{}_rh{}.gt'.format(
                 fold, base_filename, method, radius_hit)
             tg.graph.save(gt_file)
@@ -342,10 +354,10 @@ def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=4):
     tg_curv, surf_curv = curvature_estimation(
         radius_hit, graph_file=gt_file_normals, method='VV', cores=cores)
 
-    gt_file_curv = "{}{}.VV_area2_rh{}.gt".format(
+    gt_file_curv = "{}{}.AVV_rh{}.gt".format(
         fold, base_filename, radius_hit)
     tg_curv.graph.save(gt_file_curv)
-    surf_file_curv = "{}{}.VV_area2_rh{}.vtp".format(
+    surf_file_curv = "{}{}.AVV_rh{}.vtp".format(
         fold, base_filename, radius_hit)
     io.save_vtp(surf_curv, surf_file_curv)
 
@@ -366,7 +378,7 @@ def extract_curvatures_after_new_workflow(
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         methods (list, optional): all methods to run in the second pass ('VV'
-            and 'VCTV' are possible, default is 'VV')
+            and 'SSVV' are possible, default is 'VV')
         exclude_borders (int, optional): if > 0, triangles within this distance
             from borders in nm and corresponding values will be excluded from
             the output files (graph .gt, surface.vtp file and .csv)
@@ -383,7 +395,7 @@ def extract_curvatures_after_new_workflow(
 
     for method in methods:
         if method == 'VV':
-            method = 'VV_area2'
+            method = 'AVV'
         print("Method: {}".format(method))
         # input graph and surface files
         gt_infile = '{}{}.{}_rh{}.gt'.format(
@@ -525,7 +537,7 @@ def annas_workflow(
         scale_factor_to_nm (float, optional): pixel size in nanometer of the
             membrane mask (default 1.368)
         methods (list, optional): all methods to run in the second pass ('VV'
-            and 'VCTV' are possible, default is 'VV')
+            and 'SSVV' are possible, default is 'VV')
         thr (float, optional): value threshold in the input segmentation where
             to generate the isosurface (default 0.4)
         cores (int, optional): number of cores to run VV in parallel (default 4)
@@ -601,9 +613,9 @@ def annas_workflow(
           .format(minutes, seconds))
 
     gt_file = '{}{}.{}_rh{}.gt'.format(
-        fold, base_filename, 'VV_area2', radius_hit)
+        fold, base_filename, 'AVV', radius_hit)
     surf_file = '{}{}.{}_rh{}.vtp'.format(
-        fold, base_filename, 'VV_area2', radius_hit)
+        fold, base_filename, 'AVV', radius_hit)
     if not isfile(gt_file) or not isfile(surf_file):
         # Running the modified Normal Vector Voting algorithms:
         gt_file1 = '{}{}.NVV_rh{}.gt'.format(
@@ -620,7 +632,7 @@ def annas_workflow(
             # filtering or inspection in ParaView:
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV':
-                method = 'VV_area2'
+                method = 'AVV'
             gt_file = '{}{}.{}_rh{}.gt'.format(
                 fold, base_filename, method, radius_hit)
             tg.graph.save(gt_file)
@@ -724,9 +736,9 @@ def main_javier(membrane, radius_hit):
                 exclude_borders=b, categorize_shape_index=True)
 
         surf_vtp_file = '{}{}.{}_rh{}.vtp'.format(
-            fold, base_filename, 'VV_area2', radius_hit)
+            fold, base_filename, 'AVV', radius_hit)
         outfile_base = '{}{}.{}_rh{}'.format(
-            fold, base_filename, 'VV_area2', radius_hit)
+            fold, base_filename, 'AVV', radius_hit)
         convert_vtp_to_stl_surface_and_mrc_curvatures(
             surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z)
     else:
@@ -789,20 +801,20 @@ def main_missing_wedge():
     base_filename = 'bin_sphere_r20_t1_thresh0.6'
     new_workflow(
         fold, base_filename, pixel_size_nm=1, radius_hit=rh,
-        methods=['VCTV', 'VV'], remove_wrong_borders=False)
+        methods=['SSVV', 'VV'], remove_wrong_borders=False)
     print("\nExtracting all curvatures")
     extract_curvatures_after_new_workflow(
-        fold, base_filename, radius_hit=rh, methods=['VCTV', 'VV'],
+        fold, base_filename, radius_hit=rh, methods=['SSVV', 'VV'],
         exclude_borders=0)
 
     print("\nSphere with missing wedge")
     base_filename = 'bin_sphere_r20_t1_with_wedge30deg_thresh0.6'
     new_workflow(fold, base_filename, pixel_size_nm=1, radius_hit=rh,
-                 methods=['VCTV', 'VV'], remove_wrong_borders=True)
+                 methods=['SSVV', 'VV'], remove_wrong_borders=True)
     for b in range(0, 9):
         print("\nExtracting curvatures without {} nm from border".format(b))
         extract_curvatures_after_new_workflow(
-            fold, base_filename, radius_hit=rh, methods=['VCTV', 'VV'],
+            fold, base_filename, radius_hit=rh, methods=['SSVV', 'VV'],
             exclude_borders=b)
 
     t_end = time.time()
@@ -826,16 +838,28 @@ def main_anna():
 
 
 if __name__ == "__main__":
+    subsubfold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/180830_TITAN_l2_t2peak/filled/"
+    base_filename = "TCB_180830_l2_t2peak.cER"
+    pixel_size = 1.368
+    radius_hit = 2
+    seg_filename = "t2_ny01_lbl.labels_FILLEDpeak.mrc"
+    lbl = 2
+    filled_lbl = 3
+    min_component = 50
+    new_workflow(subsubfold, base_filename, pixel_size, radius_hit,
+                 methods=['SSVV'], seg_file=seg_filename,
+                 label=lbl, filled_label=filled_lbl,
+                 min_component=min_component, cores=4)
     # membrane = sys.argv[1]
     # rh = int(sys.argv[2])
     # main_javier(membrane, rh)
-    subfold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/WT/" \
-              "171002_TITAN_l2_t2/"
-    base_filename = "WT_171002_l2_t2.PM"
-    calculate_PM_curvatures(subfold, base_filename, radius_hit=10, cores=1)
+    # subfold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/WT/" \
+    #           "171002_TITAN_l2_t2/"
+    # base_filename = "WT_171002_l2_t2.PM"
+    # calculate_PM_curvatures(subfold, base_filename, radius_hit=10, cores=1)
 
     # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
-    # stats_file = '{}t3_ny01_cropped_{}.VCTV_VV_area2_rh{}.stats'.format(
+    # stats_file = '{}t3_ny01_cropped_{}.SSVV_AVV_rh{}.stats'.format(
     #     fold, membrane, rh)
     # cProfile.run('main_javier(membrane, rh)', stats_file)
 

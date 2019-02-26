@@ -10,5 +10,5 @@ setup(
     author_email='',
     description='',
     install_requires=["numpy", "scipy", "scikit-image", "pandas", "pytest",
-                      "matplotlib"],
+                      "matplotlib", "pathlib2"]
 )

@@ -1462,14 +1462,6 @@ class TriangleGraph(SurfaceGraph):
                    round(abs(T_3[1]), 7) == round(abs(N_r[1]), 7) and
                    round(abs(T_3[2]), 7) == round(abs(N_r[2]), 7))
         except AssertionError:
-            print("T_3 has to be equal to the normal |N_r|, but:")
-            print("T_1 = {}".format(T_1))
-            print("T_2 = {}".format(T_2))
-            print("T_3 = {}".format(T_3))
-            print("N_r = {}".format(N_r))
-            print("lambda_1 = {}".format(lambda_1))
-            print("lambda_2 = {}".format(lambda_2))
-            print("lambda_3 = {}".format(lambda_3))
             if (round(abs(T_1[0]), 7) == round(abs(N_r[0]), 7) and
                     round(abs(T_1[1]), 7) == round(abs(N_r[1]), 7) and
                     round(abs(T_1[2]), 7) == round(abs(N_r[2]), 7)):
@@ -1484,7 +1476,16 @@ class TriangleGraph(SurfaceGraph):
                 # T_3 = N_r; lambda_3 = 0
             else:
                 print("Error: no eigenvector which equals to the normal found")
-                return None
+                print("T_1 = {}".format(T_1))
+                print("T_2 = {}".format(T_2))
+                print("T_3 = {}".format(T_3))
+                print("N_r = {}".format(N_r))
+                print("lambda_1 = {}".format(lambda_1))
+                print("lambda_2 = {}".format(lambda_2))
+                print("lambda_3 = {}".format(lambda_3))
+                # add placeholders to the graph
+                self._add_curvature_descriptors_to_vertex(
+                    vertex_r, None, None, None, None, None, None, None, None)
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2
         kappa_2 = 3 * lambda_2 - lambda_1
@@ -1499,11 +1500,41 @@ class TriangleGraph(SurfaceGraph):
         mean_curvature = calculate_mean_curvature(kappa_1, kappa_2)
         shape_index = calculate_shape_index(kappa_1, kappa_2)
         curvedness = calculate_curvedness(kappa_1, kappa_2)
-        self.graph.vp.T_1[vertex_r] = T_1
-        self.graph.vp.T_2[vertex_r] = T_2
-        self.graph.vp.kappa_1[vertex_r] = kappa_1
-        self.graph.vp.kappa_2[vertex_r] = kappa_2
-        self.graph.vp.gauss_curvature_VV[vertex_r] = gauss_curvature
-        self.graph.vp.mean_curvature_VV[vertex_r] = mean_curvature
-        self.graph.vp.shape_index_VV[vertex_r] = shape_index
-        self.graph.vp.curvedness_VV[vertex_r] = curvedness
+        self._add_curvature_descriptors_to_vertex(
+            vertex_r, T_1, T_2, kappa_1, kappa_2, gauss_curvature,
+            mean_curvature, shape_index, curvedness)
+
+    def _add_curvature_descriptors_to_vertex(
+            self, vertex, T_1, T_2, kappa_1, kappa_2, gauss_curvature,
+            mean_curvature, shape_index, curvedness):
+        """
+        Add the given curvature descriptors as vertex properties to the given
+        vertex in the graph. If A property is None, a 0 value or vector is added.
+
+        Args:
+            vertex (graph_tool.Vertex): vertex where the properties should be
+                added
+            T_1 (ndarray): principal maximal direction vector of length 3
+            T_2 (ndarray): principal minimal direction vector of length 3
+            kappa_1 (float): principal maximal curvature
+            kappa_2 (float): principal minimal curvature
+            gauss_curvature (float): Gaussian curvature
+            mean_curvature (float): mean curvature
+            shape_index (float): shape index
+            curvedness (float): curvedness
+
+        Returns:
+            None
+        """
+        self.graph.vp.T_1[vertex] = np.zeros(shape=3) if T_1 is None else T_1
+        self.graph.vp.T_2[vertex] = np.zeros(shape=3) if T_2 is None else T_2
+        self.graph.vp.kappa_1[vertex] = 0 if kappa_1 is None else kappa_1
+        self.graph.vp.kappa_2[vertex] = 0 if kappa_2 is None else kappa_2
+        self.graph.vp.gauss_curvature_VV[vertex] = (0 if gauss_curvature is None
+                                                    else gauss_curvature)
+        self.graph.vp.mean_curvature_VV[vertex] = (0 if mean_curvature is None
+                                                   else mean_curvature)
+        self.graph.vp.shape_index_VV[vertex] = (0 if shape_index is None
+                                                else shape_index)
+        self.graph.vp.curvedness_VV[vertex] = (0 if curvedness is None
+                                               else curvedness)

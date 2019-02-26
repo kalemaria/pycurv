@@ -3,6 +3,11 @@ from curvature_calculation import (new_workflow, calculate_PM_curvatures,
                                    extract_curvatures_after_new_workflow)
 from distances_calculation import (distances_and_thicknesses_calculation,
                                    extract_distances)
+
+"""
+Runs for MCS paper.
+"""
+
 RADIUS_HIT = 10
 CONDITIONS = ["WT", "IST2", "SCS", "TCB", "dTCB1", "dTCB2", "dTCB3",
               "dTCB1_dTCB2", "WT_HS", "dTCB123", "dTCB123_HS"]
@@ -15,6 +20,7 @@ def task_calculate_cER_curvatures():
     radius_hit = RADIUS_HIT
     methods = ["VV"]
     lbl = 2  # cER
+    filled_lbl = 3  # cER lumen
     holes = 3
     min_component = 100
 
@@ -33,7 +39,7 @@ def task_calculate_cER_curvatures():
                 base_filename = "{}_{}_{}_{}.cER".format(
                     condition, date, lamella, tomo)
                 subfold = str(subfold_p) + '/'
-                target_base = "{}{}.VV_area2_rh{}".format(
+                target_base = "{}{}.AVV_rh{}".format(
                     subfold, base_filename, radius_hit)
                 yield {'name': base_filename,
                        # 'verbosity': 2,
@@ -43,6 +49,7 @@ def task_calculate_cER_curvatures():
                                 'methods': methods,
                                 'seg_file': seg_filename,
                                 'label': lbl,
+                                'filled_label': filled_lbl,
                                 'holes': holes,
                                 'min_component': min_component,
                                 'cores': 4
@@ -77,7 +84,7 @@ def task_extract_cER_curvatures():
             base_filename = "{}_{}_{}_{}.cER".format(
                 condition, date, lamella, tomo)
             subfold = str(subfold_p) + '/'
-            target_base = "{}{}.VV_area2_rh{}".format(
+            target_base = "{}{}.AVV_rh{}".format(
                 subfold, base_filename, radius_hit)
             yield {'name': base_filename,
                    # 'verbosity': 2,
@@ -218,7 +225,7 @@ def task_calculate_PM_curvatures():
             subfold = str(subfold_p) + '/'
             gt_file_normals = "{}{}.NVV_rh{}.gt".format(
                 subfold, base_filename, radius_hit)
-            target_base = "{}{}.VV_area2_rh{}".format(
+            target_base = "{}{}.AVV_rh{}".format(
                 subfold, base_filename, radius_hit)
             yield {'name': base_filename,
                    # 'verbosity': 2,
@@ -255,7 +262,7 @@ def task_extract_PM_curvatures():
             base_filename = "{}_{}_{}_{}.PM".format(
                 condition, date, lamella, tomo)
             subfold = str(subfold_p) + '/'
-            target_base = "{}{}.VV_area2_rh{}".format(
+            target_base = "{}{}.AVV_rh{}".format(
                 subfold, base_filename, radius_hit)
             yield {'name': base_filename,
                    # 'verbosity': 2,
