@@ -13,17 +13,17 @@ METHODS = ["VV", "SSVV"]
 RADIUS_HIT = [2, 5, 10, 15, 20]
 BASE_FOLD = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/"
 CONDITION = "TCB"
-SUBFOLD = "180830_TITAN_l2_t2peak"
+SUBFOLD = "180830_TITAN_l2_t2peakplus"
 SUBSUBFOLDS = ["unfilled", "filled"]
 
 
 def task_calculate_cER_curvatures():
     # constant parameters for all subtasks:
-    seg_filename = "t2_ny01_lbl.labels_FILLEDpeak.mrc"
+    seg_filename = "t2_ny01_lbl.labels_FILLEDpeakplus.mrc"
     pixel_size = 1.368
     lbl = 2  # cER
     filled_lbl = [None, 3]  # not using or using the filled cER lumen
-    holes = 3
+    holes = 0
     min_component = 50
 
     for i, subsubfold_name in enumerate(SUBSUBFOLDS):

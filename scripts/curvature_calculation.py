@@ -199,9 +199,9 @@ def new_workflow(
     surf_file = base_filename + ".surface.vtp"
     if not isfile(fold + surf_file):
         if seg_file is None or not isfile(fold + seg_file):
-            text = "The segmentation file not given or not found"
             raise pexceptions.PySegInputError(
-                expr="new_workflow", msg=eval(text))
+                expr="new_workflow",
+                msg="The segmentation file not given or not found")
 
         seg = io.load_tomo(fold + seg_file)
         assert(isinstance(seg, np.ndarray))
@@ -245,10 +245,10 @@ def new_workflow(
                 print("\nReducing holes in the segmentation...")
                 binary_seg = ndimage.binary_closing(
                     binary_seg, structure=cube, iterations=1).astype(data_type)
-                # Write the resulting binary segmentation into a file:
-                binary_seg_file = "{}{}.binary_seg.mrc".format(
-                    fold, base_filename)
-                io.save_numpy(binary_seg, binary_seg_file)
+            # Write the resulting binary segmentation into a file:
+            binary_seg_file = "{}{}.binary_seg.mrc".format(
+                fold, base_filename)
+            io.save_numpy(binary_seg, binary_seg_file)
             print("\nGenerating a surface from the binary segmentation...")
             surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
     else:
@@ -477,6 +477,29 @@ def _extract_curvatures_from_graph(
     df.to_csv(csv_file, sep=';')
 
 
+def extract_areas_from_graph(
+        tg, csv_file, exclude_borders, gt_file=None, vtp_file=None):
+    # If don't want to include triangles near borders, filter out those
+    if exclude_borders > 0:
+        tg.find_vertices_near_border(exclude_borders, purge=True)
+
+    # Saving the changes into graph and surface files, if specified:
+    if gt_file is not None:
+        tg.graph.save(gt_file)
+    if vtp_file is not None:
+        # Transforming the resulting graph to a surface with triangles:
+        surf = tg.graph_to_triangle_poly()
+        io.save_vtp(surf, vtp_file)
+
+    # Getting areas from the graph:
+    triangle_areas = tg.get_vertex_property_array("area")
+
+    # Writing all the curvature values and errors into a csv file:
+    df = pd.DataFrame()
+    df["triangleAreas"] = triangle_areas
+    df.to_csv(csv_file, sep=';')
+
+
 def _shape_index_classifier(x):
     """
     Maps shape index value to the representative (middle) value of each shape
@@ -551,10 +574,10 @@ def annas_workflow(
     surf_file = base_filename + ".surface.vtp"
     if not isfile(fold + surf_file):
         if seg_file is None or not isfile(fold + seg_file):
-            text = "The segmentation file {} not given or not found".format(
-                    fold + seg_file)
             raise pexceptions.PySegInputError(
-                expr="new_workflow", msg=eval(text))
+                expr="new_workflow",
+                msg="The segmentation file {} not given or not found".format(
+                    fold + seg_file))
 
         seg = io.load_tomo(fold + seg_file)
         assert(isinstance(seg, np.ndarray))
@@ -838,18 +861,32 @@ def main_anna():
 
 
 if __name__ == "__main__":
-    subsubfold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/180830_TITAN_l2_t2peak/filled/"
-    base_filename = "TCB_180830_l2_t2peak.cER"
-    pixel_size = 1.368
-    radius_hit = 2
-    seg_filename = "t2_ny01_lbl.labels_FILLEDpeak.mrc"
-    lbl = 2
-    filled_lbl = 3
-    min_component = 50
-    new_workflow(subsubfold, base_filename, pixel_size, radius_hit,
-                 methods=['SSVV'], seg_file=seg_filename,
-                 label=lbl, filled_label=filled_lbl,
-                 min_component=min_component, cores=4)
+
+    # Get triangle areas from a scaled cleaned graph, excluding 1 nm from border
+    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/" \
+             "WT_HS/181127_TITAN_l1_t2/"
+    graph_file = "{}WT_HS_181127_l1_t2.cER.scaled_cleaned.gt".format(folder)
+    csv_file = "{}WT_HS_181127_l1_t2.cER.areas_excluding1borders.csv".format(
+        folder)
+    tg = TriangleGraph()
+    tg.graph = load_graph(graph_file)
+    extract_areas_from_graph(tg, csv_file, exclude_borders=1)
+
+    # One test peak run:
+    # subsubfold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/" \
+    #              "TCB/180830_TITAN_l2_t2peak/filled/"
+    # base_filename = "TCB_180830_l2_t2peak.cER"
+    # pixel_size = 1.368
+    # radius_hit = 2
+    # seg_filename = "t2_ny01_lbl.labels_FILLEDpeak.mrc"
+    # lbl = 2
+    # filled_lbl = 3
+    # min_component = 50
+    # new_workflow(subsubfold, base_filename, pixel_size, radius_hit,
+    #              methods=['SSVV'], seg_file=seg_filename,
+    #              label=lbl, filled_label=filled_lbl,
+    #              min_component=min_component, cores=4)
+
     # membrane = sys.argv[1]
     # rh = int(sys.argv[2])
     # main_javier(membrane, rh)
