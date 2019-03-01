@@ -142,7 +142,7 @@ def _vtp_arrays_to_mrc_volumes(
 
 def new_workflow(
         fold, base_filename, pixel_size_nm, radius_hit, methods=['VV'],
-        seg_file=None, label=1, filled_label=None, holes=0,
+        seg_file=None, label=1, filled_label=None, unfilled_mask=None, holes=0,
         remove_wrong_borders=True, min_component=100, only_normals=False,
         cores=4, runtimes=None):
     """
@@ -172,9 +172,13 @@ def new_workflow(
         filled_label (int, optional): if the membrane mask was filled with this
             label (default None), a better surface generation will be used (with
             a slight smoothing; holes are closed automatically by the filling.)
-        holes (int, optional): if > 0, small holes in the segmentation are
-            closed with a cube of that size in pixels before curvature
-            estimation (default 0)
+        unfilled_mask (numpy.ndarray, optional): if given (default None), apply
+            this mask on the extracted surface from an unfilled segmentation,
+            instead of the segmentation itself; not used if filled_label is
+            given
+        holes (int, optional): if > 0, small holes in the unfilled segmentation
+            are closed with a cube of that size in pixels before curvature
+            estimation (default 0); not used if filled_label is given
         remove_wrong_borders (boolean, optional): if True (default), wrong
             artefact surface borders will be removed
         min_component (int, optional): if > 0 (default 100), small
@@ -250,7 +254,8 @@ def new_workflow(
                 fold, base_filename)
             io.save_numpy(binary_seg, binary_seg_file)
             print("\nGenerating a surface from the binary segmentation...")
-            surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
+            surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1,
+                                   other_mask=unfilled_mask)
     else:
         print('\nReading in the surface from file...')
         surf = io.load_poly(fold + surf_file)
