@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import pandas as pd
+from numpy.core.multiarray import ndarray
 from pathlib2 import PurePath
 
 from pysurf import pexceptions
@@ -124,7 +125,7 @@ def plot_line_hist(values, num_bins, title, xlabel="Value", ylabel="Frequency",
         fig.savefig(outfile)
 
 
-def add_line_hist(values, num_bins=20, x_range=None, max_val=None,
+def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
                   label=None, ls='-', marker='^', c='b', normalize=False,
                   cumulative=False):
     """
@@ -132,7 +133,8 @@ def add_line_hist(values, num_bins=20, x_range=None, max_val=None,
     title.
 
     Args:
-        values: a list of numerical values
+        values (numpy.ndarray): a list of numerical values
+        weights (numpy.ndarray, optional): if given, values will be weighted
         num_bins (int, optional): number of bins for the histogram (default 20)
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
@@ -152,21 +154,26 @@ def add_line_hist(values, num_bins=20, x_range=None, max_val=None,
     """
     if max_val is not None:
         values = [max_val if val > max_val else val for val in values]
-    if x_range is None:
-        counts, bin_edges = np.histogram(values, bins=num_bins)
-    elif isinstance(x_range, tuple) and len(x_range) == 2:
-        counts, bin_edges = np.histogram(values, bins=num_bins,
-                                         range=x_range)
+
+    params = {}
+    if x_range is not None and isinstance(x_range, tuple) and len(x_range) == 2:
+        params["range"] = x_range
     else:
         raise pexceptions.PySegInputError(
             expr='plot_hist',
             msg="Range has to be a tuple of two numbers (min, max).")
-    bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
-    if cumulative is True:
-        # counts = np.array([np.sum(counts[0:i+1]) for i in range(len(counts))])
-        counts = np.cumsum(counts)
+    if weights is not None:
+        params["weights"] = weights
+    counts, bin_edges = np.histogram(values, bins=num_bins, **params)
+
     if normalize is True:
-        counts = counts / float(len(values))  # normalized to max 1
+        if weights is None:
+            counts = counts / float(len(values))  # normalized to max 1
+        else:
+            counts = counts / sum(weights)
+    if cumulative is True:
+        counts = np.cumsum(counts)
+    bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
     plt.plot(bincenters, counts, ls=ls, marker=marker, c=c, label=label,
              linewidth=LINEWIDTH, clip_on=False)
 
@@ -174,7 +181,7 @@ def add_line_hist(values, num_bins=20, x_range=None, max_val=None,
 def plot_composite_line_hist(
         labels, line_styles, markers, colors,
         xlabel, ylabel, title=None,
-        data_arrays=None, data_files=None,
+        data_arrays=None, data_files=None, weights_arrays=None,
         num_bins=20, x_range=None, y_range=None, max_val=None,
         normalize=False, cumulative=False, outfile=None):
     """
@@ -189,6 +196,8 @@ def plot_composite_line_hist(
         title (str, optional): title of the plot
         data_arrays (list, optional): list of data arrays
         data_files (list, optional): list of data file names (str)
+        weights_arrays (list, optional): if given, data will be weighted,
+            should be in the same format as the data arrays (default None)
         num_bins (int, optional): number of bins for the histogram (default 20)
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
@@ -219,14 +228,24 @@ def plot_composite_line_hist(
                 print("File {} not found!".format(data_file))
                 exit(0)
             errors = np.loadtxt(data_file)
+            if weights_arrays is None:
+                weights_array = None
+            else:
+                weights_array = weights_arrays[i]
             add_line_hist(
-                errors, num_bins, x_range=x_range, max_val=max_val,
+                errors, num_bins=num_bins, weights=weights_array,
+                x_range=x_range, max_val=max_val,
                 label=labels[i], ls=line_styles[i], marker=markers[i],
                 c=colors[i], normalize=normalize, cumulative=cumulative)
     elif data_arrays is not None:
         for i, data_array in enumerate(data_arrays):
+            if weights_arrays is None:
+                weights_array = None
+            else:
+                weights_array = weights_arrays[i]
             add_line_hist(
-                data_array, num_bins, x_range=x_range, max_val=max_val,
+                data_array, num_bins=num_bins, weights=weights_array,
+                x_range=x_range, max_val=max_val,
                 label=labels[i], ls=line_styles[i], marker=markers[i],
                 c=colors[i], normalize=normalize, cumulative=cumulative)
     if title is not None:
@@ -1150,8 +1169,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
 
 def plot_peak_curvature_diff_rh(
         df, segmentation="filled", method="AVV", curvature="kappa1",
-        x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=None, num_bins=20,
-        title=None, plot_fold=None):
+        weight=None, x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=None,
+        num_bins=20, title=None, plot_fold=None):
     """
     Plots curvature data of a cER sub-surface with a peak, generated
     using a regular or compartment segmentation, estimated by AVV or SSVV and
@@ -1164,6 +1183,8 @@ def plot_peak_curvature_diff_rh(
             default "filled"
         method (str, optional): curvature method used, default "AVV"
         curvature (str, optional): curvature to be plotted, default "kappa1"
+        weight (str, optional): if given, curvatures will be weighted by this
+            column from the DataFrame (default None)
         x_label (str, optional): X-label, default r"$\kappa_{1}\ (nm^{-1})$"
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
@@ -1181,10 +1202,16 @@ def plot_peak_curvature_diff_rh(
         if x_range is not None:
             plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0],
                                                              x_range[1])
+        if weight is not None:
+            plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weight)
     else:
         plot_file = None
     curvatures_arrays = []
     labels = []
+    if weight is not None:
+        weights_arrays = []
+    else:
+        weights_arrays = None
     for radius_hit in [2, 5, 10, 15, 20]:
         selection = df.query('(segmentation==@segmentation) & (method==@method)'
                              '& (radius_hit==@radius_hit)')
@@ -1193,6 +1220,10 @@ def plot_peak_curvature_diff_rh(
         curvatures_arrays.append(curvatures_array)
         label = "RadiusHit={}".format(radius_hit)
         labels.append(label)
+        if weight is not None:
+            weights = selection[weight].values[0]
+            weights_array = np.array(weights).astype(np.float)
+            weights_arrays.append(weights_array)
 
     if x_range is None:
         # Find minimal and maximal value to set the X-range:
@@ -1200,19 +1231,24 @@ def plot_peak_curvature_diff_rh(
         max_value = max([max(d) for d in curvatures_arrays])
         x_range = (min_value, max_value)
 
+    y_label = "Frequency"
+    if weight is not None:
+        y_label += " weighted by area"
+
     plot_composite_line_hist(
         data_arrays=curvatures_arrays, labels=labels,
         line_styles=[':', '-.', '--', '-', ':'],
         markers=['x', 'v', '^', 's', 'o'],
         colors=['b', 'c', 'g', 'y', 'r'],
         xlabel=x_label, x_range=x_range,
-        ylabel="Frequency", normalize=False,
+        ylabel=y_label, normalize=False,
         num_bins=num_bins,
-        title=title, outfile=plot_file
+        title=title, outfile=plot_file,
+        weights_arrays=weights_arrays
     )
 
 
-def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20):
+def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weight=None):
     """
     Reads in curvature data of a cER sub-surface with a peak, generated
     using a regular or compartment segmentation, estimated by AVV or SSVV and
@@ -1222,6 +1258,8 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20):
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
         num_bins (int, optional): number of bins for the histogram (default 20)
+        weight (str, optional): if given, curvatures will be weighted by this
+            property (default None)
 
     Returns:
         None
@@ -1263,11 +1301,13 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20):
             plot_peak_curvature_diff_rh(
                 super_df, segmentation, method, curvature="kappa1",
                 x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=x_range,
-                num_bins=num_bins, title=title, plot_fold=plot_fold)
+                num_bins=num_bins, title=title, plot_fold=plot_fold,
+                weight=weight)
 
 
 if __name__ == "__main__":
-    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), num_bins=25)
+    read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), num_bins=25,
+                                     weight="triangleAreas")
     # plot_plane_normals()
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
     # plot_cylinder_kappa_1_diff_rh()
@@ -1276,7 +1316,7 @@ if __name__ == "__main__":
     # plot_cylinder_T_2_and_kappa_1_errors(
     #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0)
     # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
-    plot_torus_kappa_1_and_2_diff_rh()
+    # plot_torus_kappa_1_and_2_diff_rh()
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV()
 
     # smooth sphere
