@@ -517,18 +517,16 @@ def test_cylinder_directions_curvatures(
         # (20, 9, False, False, 0, ['SSVV', 'VV'], True, None),
         # smooth, radius=20, radius_hit=9, RVV:
         # (20, 9, False, False, 0, ['VV'], False, None),
-        # voxel, radius=10, SSVV & radius_hit=8:
-        (10, 8, False, True, 0, ['SSVV'], True, None),
-        # voxel, radius=10, AVV & radius_hit=9:
-        (10, 9, False, True, 0, ['VV'], True, None),
-        # voxel, radius=20, SSVV & radius_hit=8:
-        # (20, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+        # voxel, radius=10, radius_hit=9, AVV & SSVV:
+        (10, 9, False, True, 0, ['SSVV', 'VV'], True, None),
+        # voxel, radius=20, SSVV & radius_hit=9:
+        # (20, 9, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
         # voxel, radius=20, AVV & radius_hit=9:
         # (20, 9, False, True, 0, ['VV'], True, None),
         # voxel, radius=20, radius_hit=18, SSVV & AVV:
         # (20, 18, False, True, 0, ['SSVV', 'VV'], True, None),
         # voxel, radius=30, SSVV & radius_hit=8:
-        # (30, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+        # (30, 9, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
         # voxel, radius=30, AVV & radius_hit=9:
         # (30, 9, False, True, 0, ['VV'], True, None),  # TODO ok to fail
         # voxel, radius=30, radius_hit=18, SSVV & AVV:
