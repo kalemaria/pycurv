@@ -76,23 +76,33 @@ def plot_hist(values, num_bins, title, xlabel="Value", ylabel="Frequency",
         fig.savefig(outfile)
 
 
-def plot_line_hist(values, num_bins, title, xlabel="Value", ylabel="Frequency",
-                   x_range=None, label=None, max_val=None, outfile=None):
+def plot_line_hist(values, weights=None, num_bins=20, title=None,
+                   xlabel="Value", ylabel="Frequency", x_range=None,
+                   label=None, ls='-', marker='^', c='b', max_val=None,
+                   normalize=False, cumulative=False, outfile=None):
     """
     Plots a line histogram of the values with the given number of bins and plot
     title.
 
     Args:
         values: a list of numerical values
-        num_bins (int): number of bins for the histogram
-        title (str): title of the plot
+        weights (numpy.ndarray, optional): if given, values will be weighted
+        num_bins (int): number of bins for the histogram (default 10)
+        title (str, optional): title of the plot
         xlabel (str, optional): X axis label (default "Value")
         ylabel (str, optional): Y axis label (default "Frequency")
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
         label (str, optional): legend label for the value list (default None)
+        ls (str, optional): line style (default '-')
+        marker (str, optional): plotting character (default '^')
+        c (str, optional): color (default 'b' for blue)
         max_val (float, optional): if given (default None), values higher than
             this value will be set to this value
+        normalize (boolean, optional): if True (default False), relative
+            frequencies instead of frequencies will be plotted
+        cumulative (boolean, optional): if True (default False), cumulative
+            counts or frequencies will be plotted
         outfile (str, optional): if given (default None), the plot will be saved
             as a file under this path
 
@@ -103,26 +113,44 @@ def plot_line_hist(values, num_bins, title, xlabel="Value", ylabel="Frequency",
     fig = plt.figure()
     if max_val is not None:
         values = [max_val if val > max_val else val for val in values]
-    if x_range is None:
-        counts, bin_edges = np.histogram(values, bins=num_bins)
-    elif isinstance(x_range, tuple) and len(x_range) == 2:
-        counts, bin_edges = np.histogram(values, bins=num_bins,
-                                         range=x_range)
-    else:
-        raise pexceptions.PySegInputError(
-            expr='plot_hist',
-            msg="Range has to be a tuple of two numbers (min, max).")
+
+    params = {}
+    if x_range is not None:
+        if isinstance(x_range, tuple) and len(x_range) == 2:
+            params["range"] = x_range
+        else:
+            raise pexceptions.PySegInputError(
+                expr='plot_hist',
+                msg="Range has to be a tuple of two numbers (min, max).")
+    if weights is not None:
+        params["weights"] = weights
+    counts, bin_edges = np.histogram(values, bins=num_bins, **params)
+
+    if normalize is True:
+        if weights is None:
+            counts = counts / float(len(values))  # normalized to max 1
+        else:
+            counts = counts / sum(weights)
+    if cumulative is True:
+        counts = np.cumsum(counts)
     bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
-    plt.plot(bincenters, counts, ls='-', marker='^', c="b", label=label,
+    plt.plot(bincenters, counts, ls=ls, marker=marker, c=c, label=label,
              linewidth=LINEWIDTH, clip_on=False)
-    plt.title(title)
+    if title is not None:
+        plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    if label is not None:
+        plt.legend(loc='best', fancybox=True, framealpha=0.5)  # frameon=False
+    plt.grid(True)
     plt.tight_layout()
+    plt.tick_params(top='off', right='off', which='both')  # sns.despine()
+    plt.tick_params(direction='in')
     if outfile is None:
         plt.show()
     elif isinstance(outfile, str):
         fig.savefig(outfile)
+        print("The plot was saved as {}".format(outfile))
 
 
 def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
@@ -156,12 +184,13 @@ def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
         values = [max_val if val > max_val else val for val in values]
 
     params = {}
-    if x_range is not None and isinstance(x_range, tuple) and len(x_range) == 2:
-        params["range"] = x_range
-    else:
-        raise pexceptions.PySegInputError(
-            expr='plot_hist',
-            msg="Range has to be a tuple of two numbers (min, max).")
+    if x_range is not None:
+        if isinstance(x_range, tuple) and len(x_range) == 2:
+            params["range"] = x_range
+        else:
+            raise pexceptions.PySegInputError(
+                expr='plot_hist',
+                msg="Range has to be a tuple of two numbers (min, max).")
     if weights is not None:
         params["weights"] = weights
     counts, bin_edges = np.histogram(values, bins=num_bins, **params)
@@ -233,7 +262,7 @@ def plot_composite_line_hist(
             else:
                 weights_array = weights_arrays[i]
             add_line_hist(
-                errors, num_bins=num_bins, weights=weights_array,
+                errors, weights=weights_array, num_bins=num_bins,
                 x_range=x_range, max_val=max_val,
                 label=labels[i], ls=line_styles[i], marker=markers[i],
                 c=colors[i], normalize=normalize, cumulative=cumulative)
@@ -244,7 +273,7 @@ def plot_composite_line_hist(
             else:
                 weights_array = weights_arrays[i]
             add_line_hist(
-                data_array, num_bins=num_bins, weights=weights_array,
+                data_array, weights=weights_array, num_bins=num_bins,
                 x_range=x_range, max_val=max_val,
                 label=labels[i], ls=line_styles[i], marker=markers[i],
                 c=colors[i], normalize=normalize, cumulative=cumulative)
@@ -1169,7 +1198,7 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
 
 def plot_peak_curvature_diff_rh(
         df, segmentation="filled", method="AVV", curvature="kappa1",
-        weight=None, x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=None,
+        weights=None, x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=None,
         num_bins=20, title=None, plot_fold=None):
     """
     Plots curvature data of a cER sub-surface with a peak, generated
@@ -1183,7 +1212,7 @@ def plot_peak_curvature_diff_rh(
             default "filled"
         method (str, optional): curvature method used, default "AVV"
         curvature (str, optional): curvature to be plotted, default "kappa1"
-        weight (str, optional): if given, curvatures will be weighted by this
+        weights (str, optional): if given, curvatures will be weighted by this
             column from the DataFrame (default None)
         x_label (str, optional): X-label, default r"$\kappa_{1}\ (nm^{-1})$"
         x_range (tuple, optional): a tuple of two values to limit the range
@@ -1202,13 +1231,13 @@ def plot_peak_curvature_diff_rh(
         if x_range is not None:
             plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0],
                                                              x_range[1])
-        if weight is not None:
-            plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weight)
+        if weights is not None:
+            plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weights)
     else:
         plot_file = None
     curvatures_arrays = []
     labels = []
-    if weight is not None:
+    if weights is not None:
         weights_arrays = []
     else:
         weights_arrays = None
@@ -1220,8 +1249,8 @@ def plot_peak_curvature_diff_rh(
         curvatures_arrays.append(curvatures_array)
         label = "RadiusHit={}".format(radius_hit)
         labels.append(label)
-        if weight is not None:
-            weights = selection[weight].values[0]
+        if weights is not None:
+            weights = selection[weights].values[0]
             weights_array = np.array(weights).astype(np.float)
             weights_arrays.append(weights_array)
 
@@ -1232,7 +1261,7 @@ def plot_peak_curvature_diff_rh(
         x_range = (min_value, max_value)
 
     y_label = "Frequency"
-    if weight is not None:
+    if weights is not None:
         y_label += " weighted by area"
 
     plot_composite_line_hist(
@@ -1248,7 +1277,7 @@ def plot_peak_curvature_diff_rh(
     )
 
 
-def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weight=None):
+def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weights=None):
     """
     Reads in curvature data of a cER sub-surface with a peak, generated
     using a regular or compartment segmentation, estimated by AVV or SSVV and
@@ -1258,7 +1287,7 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weight=None):
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
         num_bins (int, optional): number of bins for the histogram (default 20)
-        weight (str, optional): if given, curvatures will be weighted by this
+        weights (str, optional): if given, curvatures will be weighted by this
             property (default None)
 
     Returns:
@@ -1302,12 +1331,58 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weight=None):
                 super_df, segmentation, method, curvature="kappa1",
                 x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=x_range,
                 num_bins=num_bins, title=title, plot_fold=plot_fold,
-                weight=weight)
+                weights=weights)
+
+
+def read_in_and_plot_surface_curvatures(
+        num_bins=20, weights=None, curvature="kappa1",
+        x_label=r"$\kappa_{1}\ (nm^{-1})$"):
+    """
+    Reads in curvature data of a cER surface, generated using a compartment
+    segmentation, estimated by AVV and RadiusHit=10 and plots the curvatures.
+
+    Args:
+        num_bins (int, optional): number of bins for the histogram (default 20)
+        weights (str, optional): if given, curvatures will be weighted by this
+            column of the DataFrame (default None)
+        curvature (str, optional): curvature to be plotted, default "kappa1"
+        x_label (str, optional): X-label, default r"$\kappa_{1}\ (nm^{-1})$"
+
+    Returns:
+        None
+    """
+    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
+             "180830_TITAN_l2_t2half/"
+    plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
+    method = "AVV"
+    radius_hit = 10
+    csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding1borders.csv".format(
+        folder, method, radius_hit)
+    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_{}.png".format(
+        plot_fold, method, radius_hit, curvature)
+    y_label = "Frequency"
+
+    df = pd.read_csv(csv, sep=";", index_col=0)
+    curvatures = df[curvature]
+
+    if weights is not None:
+        plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weights)
+        y_label += " weighted by area"
+        weights = df[weights]
+
+    plot_line_hist(
+        curvatures, weights=weights, num_bins=num_bins, title=None,
+        xlabel=x_label, ylabel=y_label,
+        x_range=None, label=None, ls='--', marker='^', c='g',
+        normalize=False, cumulative=False, outfile=plot_file)
 
 
 if __name__ == "__main__":
-    read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), num_bins=25,
-                                     weight="triangleAreas")
+    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), num_bins=25,
+    #                                  weights="triangleAreas")
+    read_in_and_plot_surface_curvatures(num_bins=25, weights="triangleAreas",
+                                        curvature="kappa2",
+                                        x_label=r"$\kappa_{2}\ (nm^{-1})$")
     # plot_plane_normals()
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
     # plot_cylinder_kappa_1_diff_rh()
