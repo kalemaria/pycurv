@@ -36,7 +36,7 @@ FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 LINEWIDTH = 4
 
 
-def plot_hist(values, num_bins, title, xlabel="Value", ylabel="Frequency",
+def plot_hist(values, num_bins, title, x_label="Value", y_label="Frequency",
               x_range=None, outfile=None):
     """
     Plots a histogram of the values with the given number of bins and plot
@@ -46,8 +46,8 @@ def plot_hist(values, num_bins, title, xlabel="Value", ylabel="Frequency",
         values: a list of numerical values
         num_bins (int): number of bins for the histogram
         title (str): title of the plot
-        xlabel (str, optional): X axis label (default "Value")
-        ylabel (str, optional): Y axis label (default "Frequency")
+        x_label (str, optional): X axis label (default "Value")
+        y_label (str, optional): Y axis label (default "Frequency")
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
         outfile (str, optional): if given (default None), the plot will be saved
@@ -67,8 +67,8 @@ def plot_hist(values, num_bins, title, xlabel="Value", ylabel="Frequency",
             expr='plot_hist',
             msg="Range has to be a tuple of two numbers (min, max).")
     plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     plt.tight_layout()
     if outfile is None:
         plt.show()
@@ -77,7 +77,7 @@ def plot_hist(values, num_bins, title, xlabel="Value", ylabel="Frequency",
 
 
 def plot_line_hist(values, weights=None, num_bins=20, title=None,
-                   xlabel="Value", ylabel="Frequency", x_range=None,
+                   x_label="Value", y_label="Frequency", x_range=None,
                    label=None, ls='-', marker='^', c='b', max_val=None,
                    normalize=False, cumulative=False, outfile=None):
     """
@@ -89,8 +89,8 @@ def plot_line_hist(values, weights=None, num_bins=20, title=None,
         weights (numpy.ndarray, optional): if given, values will be weighted
         num_bins (int): number of bins for the histogram (default 10)
         title (str, optional): title of the plot
-        xlabel (str, optional): X axis label (default "Value")
-        ylabel (str, optional): Y axis label (default "Frequency")
+        x_label (str, optional): X axis label (default "Value")
+        y_label (str, optional): Y axis label (default "Frequency")
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
         label (str, optional): legend label for the value list (default None)
@@ -138,8 +138,8 @@ def plot_line_hist(values, weights=None, num_bins=20, title=None,
              linewidth=LINEWIDTH, clip_on=False)
     if title is not None:
         plt.title(title)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     if label is not None:
         plt.legend(loc='best', fancybox=True, framealpha=0.5)  # frameon=False
     plt.grid(True)
@@ -209,7 +209,7 @@ def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
 
 def plot_composite_line_hist(
         labels, line_styles, markers, colors,
-        xlabel, ylabel, title=None,
+        x_label, y_label, title=None,
         data_arrays=None, data_files=None, weights_arrays=None,
         num_bins=20, x_range=None, y_range=None, max_val=None,
         normalize=False, cumulative=False, outfile=None):
@@ -220,8 +220,8 @@ def plot_composite_line_hist(
         line_styles: list of line styles (str)
         markers: list of plotting characters (str)
         colors: list of colors (str)
-        xlabel (str): X axis label
-        ylabel (str): Y axis label
+        x_label (str): X axis label
+        y_label (str): Y axis label
         title (str, optional): title of the plot
         data_arrays (list, optional): list of data arrays
         data_files (list, optional): list of data file names (str)
@@ -281,8 +281,8 @@ def plot_composite_line_hist(
         ax.set_title(title)
         ttl = ax.title
         ttl.set_position([.5, 1.05])
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
     if y_range is not None:
         plt.ylim(y_range)
     plt.legend(loc='best', fancybox=True, framealpha=0.5)  # frameon=False
@@ -329,8 +329,8 @@ def plot_plane_normals(n=10, y_range=(0, 1), res=20):
         line_styles=['-', '--', ':'], markers=['^', 'v', 's'],
         colors=['b', 'c', 'r'],
         title="Plane ({}% noise)".format(n),
-        xlabel="Normal orientation error",
-        ylabel="Cumulative relative frequency",
+        x_label="Normal orientation error",
+        y_label="Cumulative relative frequency",
         outfile="{}plane_res{}_noise{}.VV_vs_VTK.normal_errors.png".format(
             plot_fold, res, n),
         num_bins=20, normalize=True, cumulative=True,
@@ -378,8 +378,8 @@ def plot_cylinder_kappa_1_diff_rh(n=0, x_range=None, num_bins=20):
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
             title="{} on cylinder ({}% noise)".format(method, n),
-            xlabel=r"$\kappa_1$", x_range=x_range_1,
-            ylabel="Frequency",
+            x_label=r"$\kappa_1$", x_range=x_range_1,
+            y_label="Frequency",
             num_bins=num_bins, normalize=False, outfile=plot_file
         )
 
@@ -437,8 +437,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         labels=["SSVV RadiusHit=7", "{} RadiusHit=5".format(RorAVV)],
         line_styles=line_styles, markers=markers, colors=colors,
         title="Cylinder ({}% noise)".format(n),
-        xlabel=r"$T_2\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$T_2\ error$",
+        y_label="Cumulative relative frequency",
         outfile="{}{}_noise{}.{}_rh5_SSVV_rh7.T_2_errors.png".format(
             plot_fold, basename, n, RorAVV),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
@@ -457,8 +457,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         labels=["SSVV RadiusHit=7", "{} RadiusHit=5".format(RorAVV), "VTK"],
         line_styles=line_styles, markers=markers, colors=colors,
         title="Cylinder ({}% noise)".format(n),
-        xlabel=r"$\kappa_1\ relative\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$\kappa_1\ relative\ error$",
+        y_label="Cumulative relative frequency",
         outfile=("{}{}_noise{}.{}_rh5_SSVV_rh7_vs_VTK.kappa_1_errors.png"
                  .format(plot_fold, basename, n, RorAVV)),
         num_bins=20, normalize=True, cumulative=True,
@@ -505,8 +505,8 @@ def plot_cylinder_T_2_and_kappa_1_errors_allVV(n=0, y_range=(0, 1),
         line_styles=['-', '--', '-.'], markers=['^', 'v', 'o'],
         colors=['b', 'c', 'g'],
         title="Cylinder ({}% noise)".format(n),
-        xlabel=r"$T_2\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$T_2\ error$",
+        y_label="Cumulative relative frequency",
         outfile="{}{}_noise{}.RVV_AVV_rh5_SSVV_rh7.T_2_errors.png".format(
             plot_fold, basename, n),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
@@ -521,8 +521,8 @@ def plot_cylinder_T_2_and_kappa_1_errors_allVV(n=0, y_range=(0, 1),
         line_styles=['-', '--', '-.', ':'], markers=['^', 'v', 'o', 's'],
         colors=['b', 'c', 'g', 'r'],
         title="Cylinder ({}% noise)".format(n),
-        xlabel=r"$\kappa_1\ relative\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$\kappa_1\ relative\ error$",
+        y_label="Cumulative relative frequency",
         outfile=("{}{}_noise{}.RVV_AVV_rh5_SSVV_rh7_vs_VTK.kappa_1_errors.png"
                  .format(plot_fold, basename, n)),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
@@ -559,8 +559,8 @@ def plot_inverse_cylinder_T_1_and_kappa_2_errors(n=0):
         line_styles=['-', '--'], markers=['^', 'v'],
         colors=['b', 'c'],
         title="Inverse cylinder ({}% noise)".format(n),
-        xlabel="T_1\ error",
-        ylabel="Cumulative relative frequency",
+        x_label="T_1\ error",
+        y_label="Cumulative relative frequency",
         outfile="{}{}_noise{}.RVV_SSVV_rh8.T_1_errors.png".format(
             plot_fold, basename, n),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
@@ -575,8 +575,8 @@ def plot_inverse_cylinder_T_1_and_kappa_2_errors(n=0):
         line_styles=['-', '--', ':'], markers=['^', 'v', 's'],
         colors=['b', 'c', 'r'],
         title="Inverse cylinder ({}% noise)".format(n),
-        xlabel=r"$\kappa_2\ relative\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$\kappa_2\ relative\ error$",
+        y_label="Cumulative relative frequency",
         outfile=("{}{}_noise{}.RVV_SSVV_rh8_vs_VTK.kappa_2_errors.png".format(
             plot_fold, basename, n)),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
@@ -654,8 +654,8 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
             title="{} on {}".format(method, type),
-            xlabel=r"$\kappa_1$",
-            ylabel="Frequency",
+            x_label=r"$\kappa_1$",
+            y_label="Frequency",
             outfile=plot_file,
             num_bins=num_bins, x_range=x_range_1, max_val=None, normalize=False
         )
@@ -673,8 +673,8 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
             title="{} on {}".format(method, type),
-            xlabel=r"$\kappa_2$",
-            ylabel="Frequency",
+            x_label=r"$\kappa_2$",
+            y_label="Frequency",
             outfile=("{}{}.{}_rh{}-{}.kappa_2.png".format(
                 plot_fold, basename, method, rhs[0], rhs[-1])),
             num_bins=num_bins, x_range=x_range_2, max_val=None, normalize=False
@@ -693,8 +693,8 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
             title="{} on {}".format(method, type),
-            xlabel=r"$\kappa_1\ and\ \kappa_2$",
-            ylabel="Frequency",
+            x_label=r"$\kappa_1\ and\ \kappa_2$",
+            y_label="Frequency",
             outfile=("{}{}.{}_rh{}-{}.kappa_1_and_2.png".format(
                 plot_fold, basename, method, rhs[0], rhs[-1])),
             num_bins=num_bins, x_range=x_range_1_2, max_val=None,
@@ -768,8 +768,8 @@ def plot_sphere_kappa_1_and_2_errors(
         markers=['^', 'o', 'v', 's'],
         colors=['b', 'orange', 'c', 'r'],
         title=type,
-        xlabel=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
+        y_label="Cumulative relative frequency",
         outfile=("{}{}.RVV_AVVrh{}_SSVVrh{}_vs_VTK."
                  "kappa_1_and_2_errors.png".format(
                     plot_fold, basename, rhVV, rhSSVV)),
@@ -846,8 +846,8 @@ def plot_sphere_kappa_1_and_2_errors_noVTK(
                 "{} RadiusHit={}".format(RorAVV, rhVV)],
         line_styles=line_styles, markers=markers, colors=colors,
         title=type,
-        xlabel=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
+        y_label="Cumulative relative frequency",
         outfile=("{}{}.{}rh{}_vs_SSVVrh{}.kappa_1_and_2_errors_range{}.png".
                  format(plot_fold, basename, RorAVV, rhVV, rhSSVV, x_range[1])),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
@@ -921,8 +921,8 @@ def plot_sphere_kappa_1_and_2_errors_noVTK_allVV(
         markers=['^', 'o', 'v'],
         colors=['b', 'orange', 'c'],
         title=type,
-        xlabel=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
+        y_label="Cumulative relative frequency",
         outfile=("{}{}.RVV_AVVrh{}_vs_SSVVrh{}.kappa_1_and_2_errors_range{}.png"
                  .format(plot_fold, basename, rhVV, rhSSVV, value_range[1])),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
@@ -965,8 +965,8 @@ def plot_inverse_sphere_kappa_1_and_2_errors(n=0):
         markers=['^', 'v', 's'],
         colors=['b', 'c', 'r'],
         title="Inverse sphere (icosahedron 1280, {}% noise)".format(n),
-        xlabel=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
-        ylabel="Cumulative relative frequency",
+        x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
+        y_label="Cumulative relative frequency",
         outfile=("{}inverse_icosphere_r10_noise{}.RVV_SSVV_vs_VTK."
                  "kappa_1_and_2_errors.png".format(plot_fold, n)),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
@@ -1026,8 +1026,8 @@ def plot_torus_kappa_1_and_2_diff_rh(
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
             title="{} on {}".format(method, type),
-            xlabel=r"$\kappa_1$",
-            ylabel="Frequency",
+            x_label=r"$\kappa_1$",
+            y_label="Frequency",
             outfile=plot_file,
             num_bins=num_bins, x_range=x_range_1, max_val=None, normalize=False
         )
@@ -1083,9 +1083,9 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
             line_styles=['-', '--'], markers=['^', 'v'],
             colors=['b', 'c'],
             title="Torus (major radius=25, minor radius=10)",
-            xlabel="{} principal direction error".format(
+            x_label="{} principal direction error".format(
                 principal_components[i]),
-            ylabel="Cumulative relative frequency",
+            y_label="Cumulative relative frequency",
             outfile="{}{}.{}rh{}_vs_SSVVrh{}.T_{}_errors.png"
                 .format(plot_fold, basename, RorAVV, rhVV, rhSSVV, i),
             num_bins=20, normalize=True, cumulative=True,
@@ -1102,9 +1102,9 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
             line_styles=['-', '--', ':'], markers=['^', 'v', 's'],
             colors=['b', 'c', 'r'],
             title="Torus (major radius=25, minor radius=10)",
-            xlabel="{} principal curvature relative error".format(
+            x_label="{} principal curvature relative error".format(
                 principal_components[i]),
-            ylabel="Cumulative relative frequency",
+            y_label="Cumulative relative frequency",
             outfile=("{}{}.{}rh{}_SSVVrh{}_vs_VTK.kappa_{}_errors.png".format(
                         plot_fold, basename, RorAVV, rhVV, rhSSVV, i)),
             num_bins=20, normalize=True, cumulative=True,
@@ -1166,8 +1166,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
             line_styles=['-', '-.', '--'], markers=['^', 'o', 'v'],
             colors=['b', 'orange', 'c'],
             title="Torus (major radius=25, minor radius=10)",
-            xlabel=r"$T_{}\ error$".format(i),
-            ylabel="Cumulative relative frequency",
+            x_label=r"$T_{}\ error$".format(i),
+            y_label="Cumulative relative frequency",
             outfile="{}{}.RVV_AVVrh{}_vs_SSVVrh{}.T_{}_errors.png".format(
                 plot_fold, basename, rhVV, rhSSVV, i),
             num_bins=20, normalize=True, cumulative=True,
@@ -1186,8 +1186,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
             line_styles=[':', '-', '-.', '--'], markers=['s', '^', 'o', 'v'],
             colors=['r', 'b', 'orange', 'c'],
             title="Torus (major radius=25, minor radius=10)",
-            xlabel=r"$\kappa_{}\ relative\ error$".format(i),
-            ylabel="Cumulative relative frequency",
+            x_label=r"$\kappa_{}\ relative\ error$".format(i),
+            y_label="Cumulative relative frequency",
             outfile=("{}{}.RVV_AVVrh{}_SSVVrh{}_vs_VTK.kappa_{}_errors.png"
                      .format(plot_fold, basename, rhVV, rhSSVV, i)),
             num_bins=20, normalize=True, cumulative=True,
@@ -1269,10 +1269,8 @@ def plot_peak_curvature_diff_rh(
         line_styles=[':', '-.', '--', '-', ':'],
         markers=['x', 'v', '^', 's', 'o'],
         colors=['b', 'c', 'g', 'y', 'r'],
-        xlabel=x_label, x_range=x_range,
-        ylabel=y_label, normalize=False,
-        num_bins=num_bins,
-        title=title, outfile=plot_file,
+        x_label=x_label, x_range=x_range, y_label=y_label, normalize=False,
+        num_bins=num_bins, title=title, outfile=plot_file,
         weights_arrays=weights_arrays
     )
 
@@ -1334,12 +1332,12 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weights=None):
                 weights=weights)
 
 
-def read_in_and_plot_surface_curvatures(
+def read_in_and_plot_surface_curvature(
         num_bins=20, weights=None, curvature="kappa1",
         x_label=r"$\kappa_{1}\ (nm^{-1})$"):
     """
     Reads in curvature data of a cER surface, generated using a compartment
-    segmentation, estimated by AVV and RadiusHit=10 and plots the curvatures.
+    segmentation, estimated by AVV and RadiusHit=10 and plots the curvature.
 
     Args:
         num_bins (int, optional): number of bins for the histogram (default 20)
@@ -1372,17 +1370,78 @@ def read_in_and_plot_surface_curvatures(
 
     plot_line_hist(
         curvatures, weights=weights, num_bins=num_bins, title=None,
-        xlabel=x_label, ylabel=y_label,
+        x_label=x_label, y_label=y_label,
         x_range=None, label=None, ls='--', marker='^', c='g',
+        normalize=False, cumulative=False, outfile=plot_file)
+
+
+def read_in_and_plot_surface_curvatures(x_range=None, num_bins=20, weights=None):
+    """
+    Reads in curvature data of a cER surface, generated using a compartment
+    segmentation, estimated by AVV and RadiusHit=10 and plots the curvature.
+
+    Args:
+        x_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        num_bins (int, optional): number of bins for the histogram (default 20)
+        weights (str, optional): if given, curvatures will be weighted by this
+            column of the DataFrame (default None)
+
+    Returns:
+        None
+    """
+    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
+             "180830_TITAN_l2_t2half/"
+    plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
+    method = "AVV"
+    radius_hit = 10
+    csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding1borders.csv".format(
+        folder, method, radius_hit)
+    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_curvatures.png".format(
+        plot_fold, method, radius_hit)
+    if x_range is not None:
+        plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0], x_range[1])
+    y_label = "Frequency"
+
+    df = pd.read_csv(csv, sep=";", index_col=0)
+    if weights is not None:
+        plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weights)
+        y_label += " weighted by area"
+        weights = df[weights]
+    curvatures_arrays = []
+    weights_arrays = []
+    for curvature in ["kappa1", "kappa2", "curvedness"]:
+        curvatures = df[curvature]
+        curvatures_arrays.append(curvatures)
+        weights_arrays.append(weights)
+
+    labels = [r"$\kappa_{1}$", r"$\kappa_{2}$", "curvedness"]
+    x_label = r"$Curvature\ (nm^{-1})$"
+    if x_range is None:
+        # Find minimal and maximal value to set the X-range:
+        min_value = min([min(d) for d in curvatures_arrays])
+        max_value = max([max(d) for d in curvatures_arrays])
+        x_range = (min_value, max_value)
+
+    plot_composite_line_hist(
+        labels,
+        line_styles=['--', '-', ':'],
+        markers=['^', 's', 'o'],
+        colors=['g', 'y', 'r'],
+        x_label=x_label, y_label=y_label, title=None,
+        data_arrays=curvatures_arrays, weights_arrays=weights_arrays,
+        num_bins=num_bins, x_range=x_range, y_range=None,
         normalize=False, cumulative=False, outfile=plot_file)
 
 
 if __name__ == "__main__":
     # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), num_bins=25,
     #                                  weights="triangleAreas")
-    read_in_and_plot_surface_curvatures(num_bins=25, weights="triangleAreas",
-                                        curvature="kappa2",
-                                        x_label=r"$\kappa_{2}\ (nm^{-1})$")
+    # read_in_and_plot_surface_curvature(num_bins=25, weights="triangleAreas",
+    #                                    curvature="kappa2",
+    #                                    x_label=r"$\kappa_{2}\ (nm^{-1})$")
+    read_in_and_plot_surface_curvatures(
+        x_range=(-0.1, 0.15), num_bins=25, weights=None)
     # plot_plane_normals()
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
     # plot_cylinder_kappa_1_diff_rh()
