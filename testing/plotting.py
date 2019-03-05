@@ -1260,7 +1260,7 @@ def plot_peak_curvature_diff_rh(
         max_value = max([max(d) for d in curvatures_arrays])
         x_range = (min_value, max_value)
 
-    y_label = "Frequency"
+    y_label = "Relative frequency"
     if weights is not None:
         y_label += " weighted by area"
 
@@ -1269,7 +1269,7 @@ def plot_peak_curvature_diff_rh(
         line_styles=[':', '-.', '--', '-', ':'],
         markers=['x', 'v', '^', 's', 'o'],
         colors=['b', 'c', 'g', 'y', 'r'],
-        x_label=x_label, x_range=x_range, y_label=y_label, normalize=False,
+        x_label=x_label, x_range=x_range, y_label=y_label, normalize=True,
         num_bins=num_bins, title=title, outfile=plot_file,
         weights_arrays=weights_arrays
     )
@@ -1295,7 +1295,6 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weights=None):
              "180830_TITAN_l2_t2peak/"
     plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
     segmentations = ["unfilled_using_peakplus", "filled"]
-    segmentation_names = ["Regular segmentation", "Compartment segmentation"]
     methods = ["AVV", "SSVV"]
     radius_hits = [2, 5, 10, 15, 20]
 
@@ -1322,13 +1321,11 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weights=None):
 
     # Plot the peak curvatures
     for i, segmentation in enumerate(segmentations):
-        segmentation_name = segmentation_names[i]
         for method in methods:
-            title = "{}, {}".format(segmentation_name, method)
             plot_peak_curvature_diff_rh(
                 super_df, segmentation, method, curvature="kappa1",
                 x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=x_range,
-                num_bins=num_bins, title=title, plot_fold=plot_fold,
+                num_bins=num_bins, title=None, plot_fold=plot_fold,
                 weights=weights)
 
 
@@ -1395,13 +1392,13 @@ def read_in_and_plot_surface_curvatures(x_range=None, num_bins=20, weights=None)
     plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
     method = "AVV"
     radius_hit = 10
-    csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding1borders.csv".format(
+    csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding5borders.csv".format(
         folder, method, radius_hit)
-    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_curvatures.png".format(
-        plot_fold, method, radius_hit)
+    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding5borders" \
+                "_curvatures.png".format(plot_fold, method, radius_hit)
     if x_range is not None:
         plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0], x_range[1])
-    y_label = "Frequency"
+    y_label = "Relative frequency"
 
     df = pd.read_csv(csv, sep=";", index_col=0)
     if weights is not None:
@@ -1431,7 +1428,7 @@ def read_in_and_plot_surface_curvatures(x_range=None, num_bins=20, weights=None)
         x_label=x_label, y_label=y_label, title=None,
         data_arrays=curvatures_arrays, weights_arrays=weights_arrays,
         num_bins=num_bins, x_range=x_range, y_range=None,
-        normalize=False, cumulative=False, outfile=plot_file)
+        normalize=True, cumulative=False, outfile=plot_file)
 
 
 def plot_excluding_borders():
@@ -1511,13 +1508,12 @@ def plot_excluding_borders():
 if __name__ == "__main__":
     # Real data
     # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), num_bins=25,
-    #                                  weights="triangleAreas")
+    #                                  weights=None)
     # read_in_and_plot_surface_curvature(num_bins=25, weights="triangleAreas",
     #                                    curvature="kappa2",
     #                                    x_label=r"$\kappa_{2}\ (nm^{-1})$")
-    # read_in_and_plot_surface_curvatures(
-    #     x_range=(-0.1, 0.15), num_bins=25, weights=None)
-    plot_excluding_borders()
+    read_in_and_plot_surface_curvatures(num_bins=25, weights=None)
+    # plot_excluding_borders()
 
     # Benchmark data
     # plot_plane_normals()
