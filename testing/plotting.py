@@ -1434,14 +1434,92 @@ def read_in_and_plot_surface_curvatures(x_range=None, num_bins=20, weights=None)
         normalize=False, cumulative=False, outfile=plot_file)
 
 
+def plot_excluding_borders():
+    """
+    Plots maximal absolute curvatures and percent surface depending on distance
+    filtered from border.
+
+    Returns:
+        None
+    """
+    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
+             "180830_TITAN_l2_t2half/"
+    plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
+    method = "AVV"
+    radius_hit = 10
+    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding_borders.png".format(
+        plot_fold, method, radius_hit)
+    csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}.csv".format(
+        folder, method, radius_hit)
+
+    df = pd.read_csv(csv, sep=";")
+    kappa1 = df["kappa1"]
+    kappa2 = df["kappa2"]
+    areas = df["triangleAreas"]
+    border_dist = [0]
+    percent_surface = [100]
+    max_kappa1 = [max(kappa1)]
+    min_kappa2 = [abs(min(kappa2))]
+    for b in range(1, 6):
+        border_dist.append(b)
+        csv_b = csv[:-4] + "_excluding{}borders.csv".format(b)
+        df_b = pd.read_csv(csv_b, sep=";")
+        kappa1_b = df_b["kappa1"]
+        kappa2_b = df_b["kappa2"]
+        areas_b = df_b["triangleAreas"]
+        # percent = float(len(kappa1_b)) / float(len(kappa1)) * 100.0
+        percent = float(sum(areas_b)) / float(sum(areas)) * 100.0
+        percent_surface.append(percent)
+        max_kappa1.append(max(kappa1_b))
+        min_kappa2.append(abs(min(kappa2_b)))
+        print("{}% after excluding {} nm from border, max(kappa_1)={}, "
+              "min(kappa_2)={}".format(
+                percent, b, max(kappa1_b), min(kappa2_b)))
+
+    fig, ax1 = plt.subplots()
+    rcParams['axes.spines.top'] = True
+    rcParams['axes.spines.right'] = True
+    color = 'red'
+    ax1.set_xlabel('Distance filtered from border (nm)')
+    ax1.set_ylabel(r'|Curvature| $(nm^{-1})$', color=color)
+    ax1.plot(border_dist, max_kappa1, color=color, marker='^',
+             linestyle='None', label=r"maximal $\kappa_1$")
+    ax1.plot(border_dist, min_kappa2, color=color, marker='v',
+             linestyle='None', label=r"|minimal $\kappa_2$|")
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax1.legend(loc='upper right', fancybox=True, framealpha=0.5)
+    ax1.set_ylim(0, max(max(max_kappa1), max(min_kappa2)) + 0.1)
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+    color = 'blue'
+    ax2.set_ylabel('Surface (%)',
+                   color=color)  # we already handled the x-label with ax1
+    ax2.plot(border_dist, percent_surface, color=color, marker='*',
+             linestyle='None')
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_ylim(min(percent_surface) - 1, max(percent_surface) + 1)
+
+    plt.xlim(-0.1, 5.1)
+    plt.tight_layout()
+    plt.tick_params(direction='in')
+
+    fig.savefig(plot_file)
+    print("The plot was saved as {}".format(plot_file))
+
+
 if __name__ == "__main__":
+    # Real data
     # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), num_bins=25,
     #                                  weights="triangleAreas")
     # read_in_and_plot_surface_curvature(num_bins=25, weights="triangleAreas",
     #                                    curvature="kappa2",
     #                                    x_label=r"$\kappa_{2}\ (nm^{-1})$")
-    read_in_and_plot_surface_curvatures(
-        x_range=(-0.1, 0.15), num_bins=25, weights=None)
+    # read_in_and_plot_surface_curvatures(
+    #     x_range=(-0.1, 0.15), num_bins=25, weights=None)
+    plot_excluding_borders()
+
+    # Benchmark data
     # plot_plane_normals()
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
     # plot_cylinder_kappa_1_diff_rh()
