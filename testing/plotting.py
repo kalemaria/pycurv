@@ -1457,7 +1457,7 @@ def plot_excluding_borders():
     percent_surface = [100]
     max_kappa1 = [max(kappa1)]
     min_kappa2 = [abs(min(kappa2))]
-    for b in range(1, 6):
+    for b in range(1, 8):
         border_dist.append(b)
         csv_b = csv[:-4] + "_excluding{}borders.csv".format(b)
         df_b = pd.read_csv(csv_b, sep=";")
@@ -1478,9 +1478,9 @@ def plot_excluding_borders():
     rcParams['axes.spines.right'] = True
     color = 'red'
     ax1.set_xlabel('Distance filtered from border (nm)')
-    ax1.set_ylabel(r'|Curvature| $(nm^{-1})$', color=color)
+    ax1.set_ylabel(r'Absolute extreme curvature $(nm^{-1})$', color=color)
     ax1.plot(border_dist, max_kappa1, color=color, marker='^',
-             linestyle='None', label=r"maximal $\kappa_1$")
+             linestyle='None', label=r"|maximal $\kappa_1$|")
     ax1.plot(border_dist, min_kappa2, color=color, marker='v',
              linestyle='None', label=r"|minimal $\kappa_2$|")
     ax1.tick_params(axis='y', labelcolor=color)
@@ -1497,7 +1497,7 @@ def plot_excluding_borders():
     ax2.tick_params(axis='y', labelcolor=color)
     ax2.set_ylim(min(percent_surface) - 1, max(percent_surface) + 1)
 
-    plt.xlim(-0.1, 5.1)
+    plt.xlim(-0.1, 7.1)
     plt.tight_layout()
     plt.tick_params(direction='in')
 
@@ -1512,8 +1512,8 @@ if __name__ == "__main__":
     # read_in_and_plot_surface_curvature(num_bins=25, weights="triangleAreas",
     #                                    curvature="kappa2",
     #                                    x_label=r"$\kappa_{2}\ (nm^{-1})$")
-    read_in_and_plot_surface_curvatures(num_bins=25, weights=None)
-    # plot_excluding_borders()
+    # read_in_and_plot_surface_curvatures(num_bins=25, weights=None)
+    plot_excluding_borders()
 
     # Benchmark data
     # plot_plane_normals()
