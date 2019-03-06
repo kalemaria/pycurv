@@ -290,6 +290,7 @@ def plot_composite_line_hist(
     plt.tight_layout()
     plt.tick_params(top='off', right='off', which='both')  # sns.despine()
     plt.tick_params(direction='in')
+    # plt.locator_params(axis='x', nbins=5)  # plot_sphere_kappa_1_and_2_diff_rh
     if outfile is None:
         plt.show()
     elif isinstance(outfile, str):
@@ -620,12 +621,8 @@ def plot_sphere_kappa_1_and_2_diff_rh(
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "sphere_r{}".format(r)
+    y_label = "Relative frequency"
     for method in methods:
-        plot_file = "{}{}.{}_rh{}-{}.kappa_1.png".format(
-                plot_fold, basename, method, rhs[0], rhs[-1])
-        if x_range is not None:
-            plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0],
-                                                             x_range[1])
         kappa_1_arrays = []
         kappa_2_arrays = []
         kappas_arrays = []
@@ -655,9 +652,10 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             colors=['b', 'c', 'g', 'y', 'r'],
             title="{} on {}".format(method, type),
             x_label=r"$\kappa_1$",
-            y_label="Frequency",
-            outfile=plot_file,
-            num_bins=num_bins, x_range=x_range_1, max_val=None, normalize=False
+            y_label=y_label,
+            outfile="{}{}.{}_rh{}-{}.kappa_1.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1]),
+            num_bins=num_bins, x_range=x_range_1, max_val=None, normalize=True
         )
         if x_range is None:
             # Find minimal and maximal value to set the X-range:
@@ -674,10 +672,10 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             colors=['b', 'c', 'g', 'y', 'r'],
             title="{} on {}".format(method, type),
             x_label=r"$\kappa_2$",
-            y_label="Frequency",
+            y_label=y_label,
             outfile=("{}{}.{}_rh{}-{}.kappa_2.png".format(
                 plot_fold, basename, method, rhs[0], rhs[-1])),
-            num_bins=num_bins, x_range=x_range_2, max_val=None, normalize=False
+            num_bins=num_bins, x_range=x_range_2, max_val=None, normalize=True
         )
         if x_range is None:
             # Find minimal and maximal value to set the X-range:
@@ -694,11 +692,10 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             colors=['b', 'c', 'g', 'y', 'r'],
             title="{} on {}".format(method, type),
             x_label=r"$\kappa_1\ and\ \kappa_2$",
-            y_label="Frequency",
+            y_label=y_label,
             outfile=("{}{}.{}_rh{}-{}.kappa_1_and_2.png".format(
                 plot_fold, basename, method, rhs[0], rhs[-1])),
-            num_bins=num_bins, x_range=x_range_1_2, max_val=None,
-            normalize=False
+            num_bins=num_bins, x_range=x_range_1_2, max_val=None, normalize=True
         )
 
 
@@ -1516,7 +1513,7 @@ if __name__ == "__main__":
     # plot_excluding_borders()
 
     # Benchmark data
-    plot_plane_normals()
+    # plot_plane_normals()
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
     # plot_cylinder_kappa_1_diff_rh()
     # plot_cylinder_T_2_and_kappa_1_errors(
@@ -1539,9 +1536,9 @@ if __name__ == "__main__":
     # voxel sphere
     # plot_sphere_kappa_1_and_2_diff_rh(
     #     r=10, voxel=True, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10))
-    # for r in [10, 20, 30]:
-    #     plot_sphere_kappa_1_and_2_errors_noVTK(
-    #         r=r, rhVV=9, rhSSVV=8, voxel=True, x_range=(0, 0.65))
+    for r in [10, 20, 30]:
+        plot_sphere_kappa_1_and_2_errors_noVTK(
+            r=r, rhVV=9, rhSSVV=9, voxel=True, x_range=(0, 0.65))
     # plot_sphere_kappa_1_and_2_errors_noVTK(
     #     r=20, rhVV=18, rhSSVV=18, voxel=True, x_range=(0, 0.65))
     # plot_sphere_kappa_1_and_2_errors_noVTK(
