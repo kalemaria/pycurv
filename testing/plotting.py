@@ -321,13 +321,13 @@ def plot_plane_normals(n=10, y_range=(0, 1), res=20):
         fold, basename), sep=';')["normalErrors"].tolist()
     VTK_normal_errors = pd.read_csv("{}{}.VTK.csv".format(fold, basename),
                                     sep=';')["normalErrors"].tolist()
-    data = [SSVV_rh8_normal_errors, SSVV_rh4_normal_errors, VTK_normal_errors]
+    data = [VTK_normal_errors, SSVV_rh4_normal_errors, SSVV_rh8_normal_errors]
     print([max(d) for d in data])
     plot_composite_line_hist(
         data_arrays=data,
-        labels=["VV RadiusHit=8", "VV RadiusHit=4", "VTK"],
-        line_styles=['-', '--', ':'], markers=['^', 'v', 's'],
-        colors=['b', 'c', 'r'],
+        labels=["VTK", "VV RadiusHit=4", "VV RadiusHit=8"],
+        line_styles=[':', '--', '-'], markers=['s', 'v', '^'],
+        colors=['r', 'c', 'b'],
         title="Plane ({}% noise)".format(n),
         x_label="Normal orientation error",
         y_label="Cumulative relative frequency",
@@ -1513,10 +1513,10 @@ if __name__ == "__main__":
     #                                    curvature="kappa2",
     #                                    x_label=r"$\kappa_{2}\ (nm^{-1})$")
     # read_in_and_plot_surface_curvatures(num_bins=25, weights=None)
-    plot_excluding_borders()
+    # plot_excluding_borders()
 
     # Benchmark data
-    # plot_plane_normals()
+    plot_plane_normals()
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
     # plot_cylinder_kappa_1_diff_rh()
     # plot_cylinder_T_2_and_kappa_1_errors(
