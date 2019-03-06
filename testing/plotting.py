@@ -353,8 +353,8 @@ def plot_cylinder_kappa_1_diff_rh(n=0, x_range=None, num_bins=20):
     plot_fold = ("{}cylinder/noise0/plots/".format(FOLD, n))
     basename = "cylinder_r10_h25_eb0"
     for method in ['SSVV', 'AVV']:
-        plot_file = "{}{}_noise{}.{}_rh5-9.kappa_1.png".format(
-            plot_fold, basename, n, method)
+        plot_file = "{}{}_noise{}.{}_rh5-9.kappa_1_bins{}.png".format(
+            plot_fold, basename, n, method, num_bins)
         if x_range is not None:
             plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0],
                                                              x_range[1])
@@ -387,7 +387,7 @@ def plot_cylinder_kappa_1_diff_rh(n=0, x_range=None, num_bins=20):
 
 def plot_cylinder_T_2_and_kappa_1_errors(
         n=0, y_range=(0, 1), x_range_T=None, x_range_kappa=None,
-        RorAVV="AVV", exclude_borders=5):
+        RorAVV="AVV", rhVV=5, rhSSVV=7, exclude_borders=5):
     """Plots estimated kappa_2 and T_1 errors histograms on a cylinder surface
     for different methods (RVV or AVV and SSVV) and optimal RadiusHit for each
     method.
@@ -403,6 +403,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         RorAVV (str, optional): RVV or AVV (default)
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
+        rhVV (int, optional): radius_hit for VV (default 5)
+        rhSSVV (int, optional): radius_hit for SSVV (default 7)
         exclude_borders (int, optional): how many voxels from border were
             excluded for curvature calculation (default 5)
     """
@@ -411,7 +413,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "cylinder_r10_h25_eb{}".format(exclude_borders)
-    df = pd.read_csv("{}{}.SSVV_rh7.csv".format(fold, basename), sep=';')
+    df = pd.read_csv("{}{}.SSVV_rh{}.csv".format(
+        fold, basename, rhSSVV), sep=';')
     SSVV_T_2_errors = df["T2Errors"].tolist()
     SSVV_kappa_1_errors = df["kappa1RelErrors"].tolist()
 
@@ -423,7 +426,7 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         line_styles = ['-', '--']
         markers = ['^', 'v']
         colors = ['b', 'c']
-    df = pd.read_csv("{}{}.{}_rh5.csv".format(fold, basename, RorAVV),
+    df = pd.read_csv("{}{}.{}_rh{}.csv".format(fold, basename, RorAVV, rhVV),
                      sep=';')
     VV_T_2_errors = df["T2Errors"].tolist()
     VV_kappa_1_errors = df["kappa1RelErrors"].tolist()
@@ -440,8 +443,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         title="Cylinder ({}% noise)".format(n),
         x_label=r"$T_2\ error$",
         y_label="Cumulative relative frequency",
-        outfile="{}{}_noise{}.{}_rh5_SSVV_rh7.T_2_errors.png".format(
-            plot_fold, basename, n, RorAVV),
+        outfile="{}{}_noise{}.{}_rh{}_SSVV_rh{}.T_2_errors.png".format(
+            plot_fold, basename, n, RorAVV, rhVV, rhSSVV),
         num_bins=20, normalize=True, cumulative=True,  # max_val=1
         x_range=x_range_T,
         y_range=y_range
@@ -460,8 +463,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         title="Cylinder ({}% noise)".format(n),
         x_label=r"$\kappa_1\ relative\ error$",
         y_label="Cumulative relative frequency",
-        outfile=("{}{}_noise{}.{}_rh5_SSVV_rh7_vs_VTK.kappa_1_errors.png"
-                 .format(plot_fold, basename, n, RorAVV)),
+        outfile=("{}{}_noise{}.{}_rh{}_SSVV_rh{}_vs_VTK.kappa_1_errors.png"
+                 .format(plot_fold, basename, n, RorAVV, rhVV, rhSSVV)),
         num_bins=20, normalize=True, cumulative=True,
         x_range=x_range_kappa, y_range=y_range
     )
@@ -700,7 +703,7 @@ def plot_sphere_kappa_1_and_2_diff_rh(
 
 
 def plot_sphere_kappa_1_and_2_errors(
-        r=10, rhVV=8, rhSSVV=8, n=0, ico=0, voxel=False, y_range=(0, 1)):
+        r=10, rhVV=9, rhSSVV=9, n=0, ico=0, voxel=False, y_range=(0, 1)):
     """
     Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
     for different methods (RVV, AVV, SSVV and VTK) and an optimal RadiusHit for
@@ -708,8 +711,8 @@ def plot_sphere_kappa_1_and_2_errors(
 
     Args:
         r (int, optional): radius of the sphere in voxels (default 10)
-        rhVV (int, optional): radius_hit for VV (default 8)
-        rhSSVV (int, optional): radius_hit for SSVV (default 8)
+        rhVV (int, optional): radius_hit for VV (default 9)
+        rhSSVV (int, optional): radius_hit for SSVV (default 9)
         n (int, optional): noise in % (default 0)
         ico (int, optional): if > 0 (i.e. 1280), icosahedron results with so
             many faces are used; if 0 (default), smooth sphere results are used
@@ -1441,8 +1444,8 @@ def plot_excluding_borders():
     plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
     method = "AVV"
     radius_hit = 10
-    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding_borders.png".format(
-        plot_fold, method, radius_hit)
+    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding_borders.png"\
+        .format(plot_fold, method, radius_hit)
     csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}.csv".format(
         folder, method, radius_hit)
 
@@ -1515,11 +1518,13 @@ if __name__ == "__main__":
     # Benchmark data
     # plot_plane_normals()
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
-    # plot_cylinder_kappa_1_diff_rh()
+    plot_cylinder_kappa_1_diff_rh(num_bins=10)
     # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5)
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
+    #     rhVV=5, rhSSVV=7)
     # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0)
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+    #     rhVV=5, rhSSVV=7)
     # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
     # plot_torus_kappa_1_and_2_diff_rh()
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV()
@@ -1536,9 +1541,9 @@ if __name__ == "__main__":
     # voxel sphere
     # plot_sphere_kappa_1_and_2_diff_rh(
     #     r=10, voxel=True, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10))
-    for r in [10, 20, 30]:
-        plot_sphere_kappa_1_and_2_errors_noVTK(
-            r=r, rhVV=9, rhSSVV=9, voxel=True, x_range=(0, 0.65))
+    # for r in [10, 20, 30]:
+    #     plot_sphere_kappa_1_and_2_errors_noVTK(
+    #         r=r, rhVV=9, rhSSVV=9, voxel=True, x_range=(0, 0.65))
     # plot_sphere_kappa_1_and_2_errors_noVTK(
     #     r=20, rhVV=18, rhSSVV=18, voxel=True, x_range=(0, 0.65))
     # plot_sphere_kappa_1_and_2_errors_noVTK(
