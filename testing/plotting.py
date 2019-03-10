@@ -285,7 +285,7 @@ def plot_composite_line_hist(
     plt.ylabel(y_label)
     if y_range is not None:
         plt.ylim(y_range)
-    plt.legend(loc='best', fancybox=True, framealpha=0.5)  # frameon=False
+    plt.legend(loc='lower right', fancybox=True, framealpha=0.5)  # frameon=False, loc='best', loc='upper left'
     plt.grid(True)
     plt.tight_layout()
     plt.tick_params(top='off', right='off', which='both')  # sns.despine()
@@ -418,14 +418,6 @@ def plot_cylinder_T_2_and_kappa_1_errors(
     SSVV_T_2_errors = df["T2Errors"].tolist()
     SSVV_kappa_1_errors = df["kappa1RelErrors"].tolist()
 
-    if RorAVV == "AVV":
-        line_styles = ['-', '-.']
-        markers = ['^', 'o']
-        colors = ['b', 'orange']
-    else:
-        line_styles = ['-', '--']
-        markers = ['^', 'v']
-        colors = ['b', 'c']
     df = pd.read_csv("{}{}.{}_rh{}.csv".format(fold, basename, RorAVV, rhVV),
                      sep=';')
     VV_T_2_errors = df["T2Errors"].tolist()
@@ -433,15 +425,26 @@ def plot_cylinder_T_2_and_kappa_1_errors(
 
     VTK_kappa_1_errors = pd.read_csv("{}{}.VTK.csv".format(fold, basename),
                                      sep=';')["kappa1RelErrors"].tolist()
-    data = [SSVV_T_2_errors, VV_T_2_errors]
+    data = [VV_T_2_errors, SSVV_T_2_errors]
+    if RorAVV == "AVV":
+        line_styles = ['-.']
+        markers = ['o']
+        colors = ['orange']
+    else:
+        line_styles = ['--']
+        markers = ['v']
+        colors = ['c']
+    line_styles.append('-')
+    markers.append('^')
+    colors.append('b')
     if x_range_T is None:
         x_range_T = (0, max([max(d) for d in data]))
     plot_composite_line_hist(
         data_arrays=data,
-        labels=["SSVV RadiusHit=7", "{} RadiusHit=5".format(RorAVV)],
+        labels=["{} RadiusHit=5".format(RorAVV), "SSVV RadiusHit=7"],
         line_styles=line_styles, markers=markers, colors=colors,
-        title="Cylinder ({}% noise)".format(n),
-        x_label=r"$T_2\ error$",
+        title=None,  # "Cylinder ({}% noise)".format(n),
+        x_label=r"$\vec t_2\ error$",
         y_label="Cumulative relative frequency",
         outfile="{}{}_noise{}.{}_rh{}_SSVV_rh{}.T_2_errors.png".format(
             plot_fold, basename, n, RorAVV, rhVV, rhSSVV),
@@ -449,8 +452,7 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         x_range=x_range_T,
         y_range=y_range
     )
-    data = [SSVV_kappa_1_errors,
-            VV_kappa_1_errors, VTK_kappa_1_errors]
+    data = [VV_kappa_1_errors, SSVV_kappa_1_errors, VTK_kappa_1_errors]
     line_styles.append(':')
     markers.append('s')
     colors.append('r')
@@ -458,9 +460,9 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         x_range_kappa = (0, max([max(d) for d in data]))
     plot_composite_line_hist(
         data_arrays=data,
-        labels=["SSVV RadiusHit=7", "{} RadiusHit=5".format(RorAVV), "VTK"],
+        labels=["{} RadiusHit=5".format(RorAVV), "SSVV RadiusHit=7", "VTK"],
         line_styles=line_styles, markers=markers, colors=colors,
-        title="Cylinder ({}% noise)".format(n),
+        title=None,  # "Cylinder ({}% noise)".format(n),
         x_label=r"$\kappa_1\ relative\ error$",
         y_label="Cumulative relative frequency",
         outfile=("{}{}_noise{}.{}_rh{}_SSVV_rh{}_vs_VTK.kappa_1_errors.png"
@@ -653,7 +655,7 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             line_styles=['-.', '-.', '--', '-', ':'],
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
-            title="{} on {}".format(method, type),
+            title=None,  # "{} on {}".format(method, type),
             x_label=r"$\kappa_1$",
             y_label=y_label,
             outfile="{}{}.{}_rh{}-{}.kappa_1.png".format(
@@ -673,7 +675,7 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             line_styles=['-.', '-.', '--', '-', ':'],
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
-            title="{} on {}".format(method, type),
+            title=None,  # "{} on {}".format(method, type),
             x_label=r"$\kappa_2$",
             y_label=y_label,
             outfile=("{}{}.{}_rh{}-{}.kappa_2.png".format(
@@ -693,7 +695,7 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             line_styles=['-.', '-.', '--', '-', ':'],
             markers=['x', 'v', '^', 's', 'o'],
             colors=['b', 'c', 'g', 'y', 'r'],
-            title="{} on {}".format(method, type),
+            title=None,  # "{} on {}".format(method, type),
             x_label=r"$\kappa_1\ and\ \kappa_2$",
             y_label=y_label,
             outfile=("{}{}.{}_rh{}-{}.kappa_1_and_2.png".format(
@@ -755,19 +757,19 @@ def plot_sphere_kappa_1_and_2_errors(
     VTK_kappa_1_errors = df_VTK["kappa1RelErrors"].tolist()
     VTK_kappa_2_errors = df_VTK["kappa2RelErrors"].tolist()
 
-    data = [SSVV_kappa_1_errors + SSVV_kappa_2_errors,
+    data = [RVV_kappa_1_errors + RVV_kappa_2_errors,
             AVV_kappa_1_errors + AVV_kappa_2_errors,
-            RVV_kappa_1_errors + RVV_kappa_2_errors,
+            SSVV_kappa_1_errors + SSVV_kappa_2_errors,
             VTK_kappa_1_errors + VTK_kappa_2_errors]
     plot_composite_line_hist(  # kappa_1 + kappa_2
         data_arrays=data,
-        labels=["SSVV RadiusHit={}".format(rhSSVV),
+        labels=["RVV RadiusHit={}".format(rhVV),
                 "AVV RadiusHit={}".format(rhVV),
-                "RVV RadiusHit={}".format(rhVV), "VTK"],
-        line_styles=['-', '-.', '--', ':'],
-        markers=['^', 'o', 'v', 's'],
-        colors=['b', 'orange', 'c', 'r'],
-        title=type,
+                "SSVV RadiusHit={}".format(rhSSVV), "VTK"],
+        line_styles=['--', '-.', '-', ':'],
+        markers=['v', 'o', '^', 's'],
+        colors=['c', 'orange', 'b', 'r'],
+        title=None,  # type,
         x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
         y_label="Cumulative relative frequency",
         outfile=("{}{}.RVV_AVVrh{}_SSVVrh{}_vs_VTK."
@@ -824,28 +826,28 @@ def plot_sphere_kappa_1_and_2_errors_noVTK(
     SSVV_kappa_2_errors = df_SSVV["kappa2RelErrors"].tolist()
 
     if RorAVV == 'AVV':
-        line_styles = ['-', '-.']
-        markers = ['^', 'o']
-        colors = ['b', 'orange']
+        line_styles = ['-.', '-']
+        markers = ['o', '^']
+        colors = ['orange', 'b']
     else:
-        line_styles = ['-', '--']
-        markers = ['^', 'v']
-        colors = ['b', 'c']
+        line_styles = ['--', '-']
+        markers = ['v', '^']
+        colors = ['c', 'b']
     df_VV = pd.read_csv("{}{}.{}_rh{}.csv".format(fold, basename, RorAVV, rhVV),
                         sep=';')
     VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
     VV_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
 
-    data = [SSVV_kappa_1_errors + SSVV_kappa_2_errors,
-            VV_kappa_1_errors + VV_kappa_2_errors]
+    data = [VV_kappa_1_errors + VV_kappa_2_errors,
+            SSVV_kappa_1_errors + SSVV_kappa_2_errors]
     if x_range is None:
         x_range = (0, max([max(d) for d in data]))
     plot_composite_line_hist(  # kappa_1 + kappa_2
         data_arrays=data,
-        labels=["SSVV RadiusHit={}".format(rhSSVV),
-                "{} RadiusHit={}".format(RorAVV, rhVV)],
+        labels=["{} RadiusHit={}".format(RorAVV, rhVV),
+                "SSVV RadiusHit={}".format(rhSSVV)],
         line_styles=line_styles, markers=markers, colors=colors,
-        title=type,
+        title=None,  # type,
         x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
         y_label="Cumulative relative frequency",
         outfile=("{}{}.{}rh{}_vs_SSVVrh{}.kappa_1_and_2_errors_range{}.png".
@@ -907,20 +909,20 @@ def plot_sphere_kappa_1_and_2_errors_noVTK_allVV(
     AVV_kappa_1_errors = df_AVV["kappa1RelErrors"].tolist()
     AVV_kappa_2_errors = df_AVV["kappa2RelErrors"].tolist()
 
-    data = [SSVV_kappa_1_errors + SSVV_kappa_2_errors,
+    data = [RVV_kappa_1_errors + RVV_kappa_2_errors,
             AVV_kappa_1_errors + AVV_kappa_2_errors,
-            RVV_kappa_1_errors + RVV_kappa_2_errors]
+            SSVV_kappa_1_errors + SSVV_kappa_2_errors]
     if value_range is None:
         value_range = (0, max([max(d) for d in data]))
     plot_composite_line_hist(  # kappa_1 + kappa_2
         data_arrays=data,
-        labels=["SSVV RadiusHit={}".format(rhSSVV),
+        labels=["RVV RadiusHit={}".format(rhVV),
                 "AVV RadiusHit={}".format(rhVV),
-                "RVV RadiusHit={}".format(rhVV)],
-        line_styles=['-', '-.', '--'],
-        markers=['^', 'o', 'v'],
-        colors=['b', 'orange', 'c'],
-        title=type,
+                "SSVV RadiusHit={}".format(rhSSVV)],
+        line_styles=['--', '-.', '-'],
+        markers=['v', 'o', '^'],
+        colors=['c', 'orange', 'b'],
+        title=None,  # type,
         x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
         y_label="Cumulative relative frequency",
         outfile=("{}{}.RVV_AVVrh{}_vs_SSVVrh{}.kappa_1_and_2_errors_range{}.png"
@@ -1155,18 +1157,18 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         VTK_kappa_errors = pd.read_csv("{}{}.VTK.csv".format(
             fold, basename), sep=';')["kappa{}RelErrors".format(i)].tolist()
 
-        data = [SSVV_T_errors, AVV_T_errors, RVV_T_errors]
+        data = [RVV_T_errors, AVV_T_errors, SSVV_T_errors]
         if x_range_T is None:
             x_range = (0, max([max(d) for d in data]))
         plot_composite_line_hist(
             data_arrays=data,
-            labels=["SSVV RadiusHit={}".format(rhSSVV),
+            labels=["RVV RadiusHit={}".format(rhVV),
                     "AVV RadiusHit={}".format(rhVV),
-                    "RVV RadiusHit={}".format(rhVV)],
-            line_styles=['-', '-.', '--'], markers=['^', 'o', 'v'],
-            colors=['b', 'orange', 'c'],
-            title="Torus (major radius=25, minor radius=10)",
-            x_label=r"$T_{}\ error$".format(i),
+                    "SSVV RadiusHit={}".format(rhSSVV)],
+            line_styles=['--', '-.', '-'], markers=['v', 'o', '^'],
+            colors=['c', 'orange', 'b'],
+            title=None,  # "Torus (major radius=25, minor radius=10)",
+            x_label=r"$\vec t_{}\ error$".format(i),
             y_label="Cumulative relative frequency",
             outfile="{}{}.RVV_AVVrh{}_vs_SSVVrh{}.T_{}_errors.png".format(
                 plot_fold, basename, rhVV, rhSSVV, i),
@@ -1174,18 +1176,18 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
             x_range=x_range,
             y_range=y_range
         )
-        data = [VTK_kappa_errors, SSVV_kappa_errors,
-                AVV_kappa_errors, RVV_kappa_errors]
+        data = [RVV_kappa_errors, AVV_kappa_errors, SSVV_kappa_errors,
+                VTK_kappa_errors]
         if x_range_kappa is None:
             x_range = (0, max([max(d) for d in data]))
         plot_composite_line_hist(
             data_arrays=data,
-            labels=["VTK", "SSVV RadiusHit={}".format(rhSSVV),
+            labels=["RVV RadiusHit={}".format(rhVV),
                     "AVV RadiusHit={}".format(rhVV),
-                    "RVV RadiusHit={}".format(rhVV)],
-            line_styles=[':', '-', '-.', '--'], markers=['s', '^', 'o', 'v'],
-            colors=['r', 'b', 'orange', 'c'],
-            title="Torus (major radius=25, minor radius=10)",
+                    "SSVV RadiusHit={}".format(rhSSVV), "VTK"],
+            line_styles=['--', '-.', '-', ':'], markers=['v', 'o', '^', 's'],
+            colors=['c', 'orange', 'b', 'r'],
+            title=None,  # "Torus (major radius=25, minor radius=10)",
             x_label=r"$\kappa_{}\ relative\ error$".format(i),
             y_label="Cumulative relative frequency",
             outfile=("{}{}.RVV_AVVrh{}_SSVVrh{}_vs_VTK.kappa_{}_errors.png"
@@ -1199,7 +1201,7 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
 def plot_peak_curvature_diff_rh(
         df, segmentation="filled", method="AVV", curvature="kappa1",
         weights=None, x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=None,
-        num_bins=20, title=None, plot_fold=None):
+        y_range=None, num_bins=20, title=None, plot_fold=None):
     """
     Plots curvature data of a cER sub-surface with a peak, generated
     using a regular or compartment segmentation, estimated by AVV or SSVV and
@@ -1217,6 +1219,8 @@ def plot_peak_curvature_diff_rh(
         x_label (str, optional): X-label, default r"$\kappa_{1}\ (nm^{-1})$"
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default None)
         num_bins (int, optional): number of bins for the histogram (default 20)
         title (str, optional): plot title (default None - no title)
         plot_fold (str, optional): folder where to save the plot, if wished
@@ -1229,8 +1233,11 @@ def plot_peak_curvature_diff_rh(
         plot_file = "{}peak_{}_{}_{}_diffRadiusHit.png".format(
             plot_fold, segmentation, method, curvature)
         if x_range is not None:
-            plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0],
-                                                             x_range[1])
+            plot_file = plot_file[:-4] + "_X{}-{}.png".format(
+                x_range[0], x_range[1])
+        if y_range is not None:
+            plot_file = plot_file[:-4] + "_Y{}-{}.png".format(
+                y_range[0], y_range[1])
         if weights is not None:
             plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weights)
     else:
@@ -1269,13 +1276,14 @@ def plot_peak_curvature_diff_rh(
         line_styles=[':', '-.', '--', '-', ':'],
         markers=['x', 'v', '^', 's', 'o'],
         colors=['b', 'c', 'g', 'y', 'r'],
-        x_label=x_label, x_range=x_range, y_label=y_label, normalize=True,
-        num_bins=num_bins, title=title, outfile=plot_file,
+        x_label=x_label, x_range=x_range, y_label=y_label, y_range=y_range,
+        normalize=True, num_bins=num_bins, title=title, outfile=plot_file,
         weights_arrays=weights_arrays
     )
 
 
-def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weights=None):
+def read_in_and_plot_peak_curvatures(x_range=None, y_range=None, num_bins=20,
+                                     weights=None):
     """
     Reads in curvature data of a cER sub-surface with a peak, generated
     using a regular or compartment segmentation, estimated by AVV or SSVV and
@@ -1284,6 +1292,8 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weights=None):
     Args:
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default None)
         num_bins (int, optional): number of bins for the histogram (default 20)
         weights (str, optional): if given, curvatures will be weighted by this
             property (default None)
@@ -1325,8 +1335,8 @@ def read_in_and_plot_peak_curvatures(x_range=None, num_bins=20, weights=None):
             plot_peak_curvature_diff_rh(
                 super_df, segmentation, method, curvature="kappa1",
                 x_label=r"$\kappa_{1}\ (nm^{-1})$", x_range=x_range,
-                num_bins=num_bins, title=None, plot_fold=plot_fold,
-                weights=weights)
+                y_range=y_range, num_bins=num_bins, title=None,
+                plot_fold=plot_fold, weights=weights)
 
 
 def read_in_and_plot_surface_curvature(
@@ -1507,8 +1517,8 @@ def plot_excluding_borders():
 
 if __name__ == "__main__":
     # Real data
-    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), num_bins=25,
-    #                                  weights=None)
+    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.5),
+    #                                  num_bins=25, weights=None)
     # read_in_and_plot_surface_curvature(num_bins=25, weights="triangleAreas",
     #                                    curvature="kappa2",
     #                                    x_label=r"$\kappa_{2}\ (nm^{-1})$")
@@ -1517,15 +1527,8 @@ if __name__ == "__main__":
 
     # Benchmark data
     # plot_plane_normals()
-    # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
-    plot_cylinder_kappa_1_diff_rh(num_bins=10)
-    # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
-    #     rhVV=5, rhSSVV=7)
-    # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
-    #     rhVV=5, rhSSVV=7)
-    # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
+
+    # torus
     # plot_torus_kappa_1_and_2_diff_rh()
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV()
 
@@ -1537,14 +1540,25 @@ if __name__ == "__main__":
     #         r=r, rhVV=9, rhSSVV=9, voxel=False)
     #     plot_sphere_kappa_1_and_2_errors_noVTK_allVV(
     #         r=r, rhVV=9, rhSSVV=9, voxel=False)
+    # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
 
     # voxel sphere
     # plot_sphere_kappa_1_and_2_diff_rh(
     #     r=10, voxel=True, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10))
-    # for r in [10, 20, 30]:
-    #     plot_sphere_kappa_1_and_2_errors_noVTK(
-    #         r=r, rhVV=9, rhSSVV=9, voxel=True, x_range=(0, 0.65))
-    # plot_sphere_kappa_1_and_2_errors_noVTK(
-    #     r=20, rhVV=18, rhSSVV=18, voxel=True, x_range=(0, 0.65))
-    # plot_sphere_kappa_1_and_2_errors_noVTK(
-    #     r=30, rhVV=28, rhSSVV=28, voxel=True, x_range=(0, 0.65))
+    for r in [10, 20, 30]:
+        plot_sphere_kappa_1_and_2_errors_noVTK(
+            r=r, rhVV=9, rhSSVV=9, voxel=True, x_range=(0, 0.65))
+    plot_sphere_kappa_1_and_2_errors_noVTK(
+        r=20, rhVV=18, rhSSVV=18, voxel=True, x_range=(0, 0.65))
+    plot_sphere_kappa_1_and_2_errors_noVTK(
+        r=30, rhVV=28, rhSSVV=28, voxel=True, x_range=(0, 0.65))
+
+    # cylinder
+    # plot_cylinder_kappa_1_diff_rh(num_bins=10)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+    #     rhVV=5, rhSSVV=7)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
+    #     rhVV=5, rhSSVV=7)
+    # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
