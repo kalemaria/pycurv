@@ -93,11 +93,6 @@ def task_extract_cER_curvatures():
                        (extract_curvatures_after_new_workflow,
                         [subsubfold, base_filename, radius_hit], {
                             'methods': METHODS,
-                            'exclude_borders': 0
-                        }),
-                       (extract_curvatures_after_new_workflow,
-                        [subsubfold, base_filename, radius_hit], {
-                            'methods': METHODS,
                             'exclude_borders': 1
                         })
                     ],

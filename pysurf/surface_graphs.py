@@ -1248,17 +1248,15 @@ class TriangleGraph(SurfaceGraph):
                 elif cos_theta < 0:
                     cos_theta = 0.0
                 theta = acos(cos_theta)
-            # curvature sign has to be like this according to Page's paper:
-            # kappa_i_sign = signum(dot(T_i, n_i))
-            # but negated according to Tang & Medioni's definition (suitable
-            # for our surface normals convention):
-            kappa_i_sign = -1 * signum(dot(T_i, n_i))
             if page_curvature_formula:  # formula from Page et al. paper:
                 s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
                 kappa_i = theta / s
                 # decomposition does not work if multiply kappa_i with its sign
             else:  # formula from Tong and Tang paper:
                 kappa_i = abs(2 * cos((pi - theta) / 2) / sqrt(dot(vv_i, vv_i)))
+                # curvature sign has to be negated according to our surface
+                # normals convention (point towards inside of a convex surface):
+                kappa_i_sign = -1 * signum(dot(T_i, n_i))
                 kappa_i *= kappa_i_sign
 
             # Finally, sum up the components of B_v:
