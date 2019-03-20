@@ -66,3 +66,29 @@ def angular_error_vector(true_vector, estimated_vector):
         angle in radians between two vectors
     """
     return acos(abs(np.dot(true_vector, estimated_vector)))
+
+
+def calculate_histogram_area(counts, bin_edges):
+    """
+    Calculates normalized area of a cumulative histogram (maximal is 1), where
+    maximal count must be 1.
+
+    Args:
+        counts (ndarray):  normalized frequency of the values in the bins,
+            maximal value must be 1
+        bin_edges (Tuple[ndarray, float]): bin edges of the bins, length of this
+            array is one more than of the "counts" array
+
+    Returns:
+        normalized area
+    """
+    area = 0.0
+    bin_width = 0.0
+    for i, count in enumerate(counts):
+        bin_width = bin_edges[i+1] - bin_edges[i]
+        area += bin_width * count
+    max_count = 1
+    num_bins = len(counts)
+    max_area = bin_width * max_count * num_bins
+    normalized_area = area / max_area
+    return normalized_area

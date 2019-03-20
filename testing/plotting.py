@@ -1,10 +1,10 @@
 import numpy as np
 import os
 import pandas as pd
-from numpy.core.multiarray import ndarray
 from pathlib2 import PurePath
 
 from pysurf import pexceptions
+from errors_calculation import calculate_histogram_area
 
 import matplotlib.pyplot as plt
 plt.style.use('presentation')  # print(plt.style.available)
@@ -195,13 +195,16 @@ def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
         params["weights"] = weights
     counts, bin_edges = np.histogram(values, bins=num_bins, **params)
 
-    if normalize is True:
+    if normalize:
         if weights is None:
             counts = counts / float(len(values))  # normalized to max 1
         else:
             counts = counts / sum(weights)
-    if cumulative is True:
+    if cumulative:
         counts = np.cumsum(counts)
+        hist_area = calculate_histogram_area(counts, bin_edges)
+        print("normalized histogram area: {}%".format(
+            round(hist_area * 100, 2)))
     bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
     plt.plot(bincenters, counts, ls=ls, marker=marker, c=c, label=label,
              linewidth=LINEWIDTH, clip_on=False)
@@ -310,10 +313,8 @@ def plot_plane_normals(n=10, y_range=(0, 1), res=20):
         res (int, optional): defines the size of the square plane in pixels and
             triangle division: 2*res
     """
-    fold = ("{}plane/res{}_noise{}/files4plotting/".format(
-        FOLD, res, n))
-    plot_fold = ("{}plane/res{}_noise{}/plots/".format(
-        FOLD, res, n))
+    fold = ("{}plane/res{}_noise{}/files4plotting/".format(FOLD, res, n))
+    plot_fold = ("{}plane/res{}_noise{}/plots/".format(FOLD, res, n))
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "plane_half_size{}".format(res)
@@ -324,7 +325,7 @@ def plot_plane_normals(n=10, y_range=(0, 1), res=20):
     VTK_normal_errors = pd.read_csv("{}{}.VTK.csv".format(fold, basename),
                                     sep=';')["normalErrors"].tolist()
     data = [VTK_normal_errors, SSVV_rh4_normal_errors, SSVV_rh8_normal_errors]
-    print([max(d) for d in data])
+    print("maximal values: {}".format([max(d) for d in data]))
     plot_composite_line_hist(
         data_arrays=data,
         labels=["VTK", "VV RadiusHit=4", "VV RadiusHit=8"],
@@ -1534,7 +1535,7 @@ if __name__ == "__main__":
     # Real data
     # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
     #                                  num_bins=25, weights=None)
-    read_in_and_plot_surface_curvatures(num_bins=25, weights=None)
+    # read_in_and_plot_surface_curvatures(num_bins=25, weights=None)
     # plot_excluding_borders()
 
     # Benchmark data
@@ -1542,7 +1543,7 @@ if __name__ == "__main__":
 
     # torus
     # plot_torus_kappa_1_and_2_diff_rh()
-    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV()
+    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV()
 
     # smooth sphere
     # plot_sphere_kappa_1_and_2_diff_rh(
