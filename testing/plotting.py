@@ -607,10 +607,8 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             many faces are used; if 0 (default), smooth sphere results are used
         voxel (boolean, optional): if True (default False), voxel sphere
             results are used (ignoring the other options)
-        methods (list, optional): tells which method(s) should be used: 'RVV' or
-            'AVV' for normal vector voting (default) or 'SSVV' for vector and
-            curvature tensor voting to estimate the principal directions and
-            curvatures
+        methods (list, optional): tells which method(s) should be used
+            (default=["RVV", "AVV", "SSVV"])
         rhs (list, optional): wanted RadiusHit parameter values (default 5-9)
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
@@ -709,8 +707,134 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             y_label=y_label,
             outfile=("{}{}.{}_rh{}-{}.kappa_1_and_2.png".format(
                 plot_fold, basename, method, rhs[0], rhs[-1])),
-            num_bins=num_bins, x_range=x_range_1_2, max_val=None, normalize=True,
-            y_range=y_range, legend_loc=legend_loc
+            num_bins=num_bins, x_range=x_range_1_2, max_val=None,
+            normalize=True, y_range=y_range, legend_loc=legend_loc
+        )
+
+
+def plot_sphere_kappa_1_and_2_errors_diff_rh(
+        r=10, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10), n=0, ico=0,
+        voxel=False, x_range=None, y_range=(0, 1), num_bins=20,
+        legend_loc="lower right"):
+    """
+    Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+    for different methods and RadiusHit.
+
+    Args:
+        r (int, optional): radius of the sphere in voxels (default 10)
+        methods (list, optional): tells which method(s) should be used
+            (default=["RVV", "AVV", "SSVV"])
+        rhs (list, optional): wanted RadiusHit parameter values (default 5-9)
+        n (int, optional): noise in % (default 0)
+        ico (int, optional): if > 0 (e.g. 1280), icosahedron results with so
+            many faces are used; if 0 (default), smooth sphere results are used
+        voxel (boolean, optional): if True (default False), voxel sphere
+            results are used (ignoring the other options)
+        x_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default (0, 1))
+        num_bins (int, optional): number of bins for the histogram (default 20)
+        legend_loc (str, optional): legend location (default 'lower right')
+    """
+    if voxel:
+        subfolds = "sphere/voxel/"
+        type = "noisy sphere (radius={})".format(r)
+    elif ico > 0:
+        subfolds = "sphere/ico{}_noise{}/".format(ico, n)
+        type = "icosahedron {} sphere (radius={}, {}% noise)".format(ico, r, n)
+    else:
+        subfolds = "sphere/noise{}/".format(n)
+        type = "smooth sphere (radius={}, {}% noise)".format(r, n)
+    fold = ("{}{}files4plotting/".format(FOLD, subfolds))
+    plot_fold = ("{}{}plots/".format(FOLD, subfolds))
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+    basename = "sphere_r{}".format(r)
+    y_label = "Cumulative relative frequency"
+
+    for method in methods:
+        print(method)
+        kappa_1_arrays = []
+        kappa_2_arrays = []
+        kappas_arrays = []
+        labels = []
+        print("RadiusHits={}".format(rhs))
+        for rh in rhs:
+            df = pd.read_csv("{}{}.{}_rh{}.csv".format(
+                fold, basename, method, rh), sep=';')
+            kappa_1_array = df["kappa1RelErrors"].tolist()
+            kappa_2_array = df["kappa2RelErrors"].tolist()
+            kappa_1_arrays.append(kappa_1_array)
+            kappa_2_arrays.append(kappa_2_array)
+            kappas_arrays.append(kappa_1_array + kappa_2_array)
+            label = "RadiusHit={}".format(rh)
+            labels.append(label)
+        print("kappa_1")
+        if x_range is None:
+            # Find the maximal value to set the X-range:
+            max_value = max([max(d) for d in kappa_1_arrays])
+            x_range_1 = (0, max_value)
+        else:
+            x_range_1 = x_range
+        plot_composite_line_hist(
+            data_arrays=kappa_1_arrays,
+            labels=labels,
+            line_styles=['-', '-', '-', '-', '-'],
+            markers=['*', 'v', '^', 's', 'o'],
+            colors=['b', 'c', 'g', 'y', 'r'],
+            title=method,  # "{} on {}".format(method, type),
+            x_label=r"$\kappa_1\ relative\ error$",
+            y_label=y_label,
+            outfile="{}{}.{}_rh{}-{}.kappa_1_errors_range{}-{}.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1], x_range_1[0],
+                x_range_1[1]),
+            num_bins=num_bins, x_range=x_range_1, y_range=y_range,
+            normalize=True, cumulative=True, legend_loc=legend_loc
+        )
+        print("kappa_2")
+        if x_range is None:
+            # Find the maximal value to set the X-range:
+            max_value = max([max(d) for d in kappa_2_arrays])
+            x_range_2 = (0, max_value)
+        else:
+            x_range_2 = x_range
+        plot_composite_line_hist(
+            data_arrays=kappa_2_arrays,
+            labels=labels,
+            line_styles=['-', '-', '-', '-', '-'],
+            markers=['*', 'v', '^', 's', 'o'],
+            colors=['b', 'c', 'g', 'y', 'r'],
+            title=method,  # "{} on {}".format(method, type),
+            x_label=r"$\kappa_2\ relative\ error$",
+            y_label=y_label,
+            outfile="{}{}.{}_rh{}-{}.kappa_2_errors_range{}-{}.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1], x_range_2[0],
+                x_range_2[1]),
+            num_bins=num_bins, x_range=x_range_2, y_range=y_range,
+            normalize=True, cumulative=True, legend_loc=legend_loc
+        )
+        print("kappa_1 and kappa_2")
+        if x_range is None:
+            # Find the maximal value to set the X-range:
+            max_value = max([max(d) for d in kappas_arrays])
+            x_range_1_2 = (0, max_value)
+        else:
+            x_range_1_2 = x_range
+        plot_composite_line_hist(
+            data_arrays=kappas_arrays,
+            labels=labels,
+            line_styles=['-', '-', '-', '-', '-'],
+            markers=['*', 'v', '^', 's', 'o'],
+            colors=['b', 'c', 'g', 'y', 'r'],
+            title=method,  # "{} on {}".format(method, type),
+            x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
+            y_label=y_label,
+            outfile="{}{}.{}_rh{}-{}.kappa_1_and_2_errors_range{}-{}.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1], x_range_1_2[0],
+                x_range_1_2[1]),
+            num_bins=num_bins, x_range=x_range_1_2, y_range=y_range,
+            normalize=True, cumulative=True, legend_loc=legend_loc
         )
 
 
@@ -757,7 +881,7 @@ def plot_sphere_kappa_1_and_2_errors(
     SSVV_kappa_2_errors = df_SSVV["kappa2RelErrors"].tolist()
 
     df_RVV = pd.read_csv("{}{}.RVV_rh{}.csv".format(fold, basename, rhVV),
-                        sep=';')
+                         sep=';')
     RVV_kappa_1_errors = df_RVV["kappa1RelErrors"].tolist()
     RVV_kappa_2_errors = df_RVV["kappa2RelErrors"].tolist()
 
@@ -1543,7 +1667,7 @@ if __name__ == "__main__":
 
     # torus
     # plot_torus_kappa_1_and_2_diff_rh()
-    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV()
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV()
 
     # smooth sphere
     # plot_sphere_kappa_1_and_2_diff_rh(
@@ -1559,6 +1683,7 @@ if __name__ == "__main__":
     # plot_sphere_kappa_1_and_2_diff_rh(
     #     r=10, voxel=True, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10),
     #     x_range=(0.03, 0.12), y_range=(0, 0.7), legend_loc='upper left')
+    plot_sphere_kappa_1_and_2_errors_diff_rh(voxel=True, x_range=(0, 0.5))
     # for r in [10, 20, 30]:
     #     plot_sphere_kappa_1_and_2_errors_noVTK(
     #         r=r, rhVV=9, rhSSVV=9, voxel=True, x_range=(0, 0.65))
