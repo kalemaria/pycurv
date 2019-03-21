@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from scipy import ndimage
 import vtk  # for Anna's workflow
-# import cProfile
+import os
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
@@ -704,6 +704,49 @@ def annas_workflow(
             gt_file, surf_file))
 
 
+def from_ply_workflow(ply_file, pixel_size_nm, radius_hit,
+                      page_curvature_formula=False, methods=["VV"], area2=True,
+                      cores=4):
+    # Transforming PLY to VTP surface format
+    base_filename = os.path.splitext(ply_file)[0]
+    surf_file = base_filename + ".vtp"
+    io.ply_file_to_vtp_file(ply_file, surf_file)
+
+    # Reading in the surface and transforming it into a triangle graph
+    print('\nReading in the surface file to get a vtkPolyData surface...')
+    surf = io.load_poly(surf_file)
+    print('\nBuilding a triangle graph from the surface...')
+    tg = TriangleGraph()
+    tg.build_graph_from_vtk_surface(surf, pixel_size_nm)
+    if tg.graph.num_vertices() == 0:
+        raise pexceptions.PySegInputError(
+            expr="new_workflow", msg="The graph is empty!")
+    print('The graph has {} vertices and {} edges'.format(
+        tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    # Running the modified Normal Vector Voting algorithm:
+    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    method_tg_surf_dict = normals_directions_and_curvature_estimation(
+        tg, radius_hit, exclude_borders=0, methods=methods,
+        page_curvature_formula=page_curvature_formula,
+        area2=area2, poly_surf=surf, cores=cores,
+        graph_file=temp_normals_graph_file)
+
+    for method in method_tg_surf_dict.keys():
+        # Saving the output (TriangleGraph object) for later inspection in
+        # ParaView:
+        (tg, surf) = method_tg_surf_dict[method]
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
+        surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
+        io.save_vtp(surf, surf_file)
+
+
 def main_javier(membrane, radius_hit):
     """
     Main function for running the new_workflow function for Javier's cER or PM.
@@ -900,14 +943,14 @@ def main_anna():
 if __name__ == "__main__":
 
     # Get triangle areas from a scaled cleaned graph, excluding 1 nm from border
-    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/" \
-             "WT_HS/181127_TITAN_l1_t2/"
-    graph_file = "{}WT_HS_181127_l1_t2.cER.scaled_cleaned.gt".format(folder)
-    csv_file = "{}WT_HS_181127_l1_t2.cER.areas_excluding1borders.csv".format(
-        folder)
-    tg = TriangleGraph()
-    tg.graph = load_graph(graph_file)
-    extract_areas_from_graph(tg, csv_file, exclude_borders=1)
+    # folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/" \
+    #          "WT_HS/181127_TITAN_l1_t2/"
+    # graph_file = "{}WT_HS_181127_l1_t2.cER.scaled_cleaned.gt".format(folder)
+    # csv_file = "{}WT_HS_181127_l1_t2.cER.areas_excluding1borders.csv".format(
+    #     folder)
+    # tg = TriangleGraph()
+    # tg.graph = load_graph(graph_file)
+    # extract_areas_from_graph(tg, csv_file, exclude_borders=1)
 
     # One test peak run:
     # subsubfold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/" \
@@ -945,3 +988,7 @@ if __name__ == "__main__":
     # main_felix()
 
     # main_anna()
+
+    from_ply_workflow(ply_file="/fs/pool/pool-ruben/Maria/curvature/"
+                               "LimeSegOutput/DubSeg/cell_10/T_10.ply",
+                      pixel_size_nm=1, radius_hit=10)

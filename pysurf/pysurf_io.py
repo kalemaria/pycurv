@@ -349,6 +349,24 @@ def stl_file_to_vtp_file(infilename, outfilename):
     save_vtp(poly, outfilename)
 
 
+def ply_file_to_vtp_file(infilename, outfilename):
+    """
+    Converts an '.ply' file to a '.vtp' file.
+
+    Args:
+        infilename (str): an input '.ply' file name (with path)
+        outfilename (str): an output '.vtp' file name (with path)
+
+    Returns:
+        None
+    """
+    pr = vtk.vtkPLYReader()
+    pr.SetFileName(infilename)
+    pr.Update()
+    poly = pr.GetOutput()
+    save_vtp(poly, outfilename)
+
+
 def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
                          scale_z, logfilename=None, mean=False, verbose=False):
     """
