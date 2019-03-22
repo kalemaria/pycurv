@@ -358,8 +358,8 @@ def plot_cylinder_kappa_1_diff_rh(n=0, x_range=None, num_bins=20):
         plot_file = "{}{}_noise{}.{}_rh5-9.kappa_1_bins{}.png".format(
             plot_fold, basename, n, method, num_bins)
         if x_range is not None:
-            plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0],
-                                                             x_range[1])
+            plot_file = os.path.splitext(plot_file)[0] + "_{}-{}.png".format(
+                x_range[0], x_range[1])
         kappa_arrays = []
         labels = []
         for rh in range(5, 10):
@@ -1143,8 +1143,8 @@ def plot_torus_kappa_1_and_2_diff_rh(
         plot_file = "{}{}.{}_rh{}-{}.kappa_1.png".format(
                 plot_fold, basename, method, rhs[0], rhs[-1])
         if x_range is not None:
-            plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0],
-                                                             x_range[1])
+            plot_file = os.path.splitext(plot_file)[0] + "_{}-{}.png".format(
+                x_range[0], x_range[1])
         kappa_1_arrays = []
         labels = []
         for rh in rhs:
@@ -1373,13 +1373,14 @@ def plot_peak_curvature_diff_rh(
         plot_file = "{}peak_{}_{}_{}_diffRadiusHit.png".format(
             plot_fold, segmentation, method, curvature)
         if x_range is not None:
-            plot_file = plot_file[:-4] + "_X{}-{}.png".format(
+            plot_file = os.path.splitext(plot_file)[0] + "_X{}-{}.png".format(
                 x_range[0], x_range[1])
         if y_range is not None:
-            plot_file = plot_file[:-4] + "_Y{}-{}.png".format(
+            plot_file = os.path.splitext(plot_file)[0] + "_Y{}-{}.png".format(
                 y_range[0], y_range[1])
         if weights is not None:
-            plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weights)
+            plot_file = (os.path.splitext(plot_file)[0] +
+                         "_weighted_by_{}.png".format(weights))
     else:
         plot_file = None
     curvatures_arrays = []
@@ -1511,7 +1512,8 @@ def read_in_and_plot_surface_curvature(
     curvatures = df[curvature]
 
     if weights is not None:
-        plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weights)
+        plot_file = (os.path.splitext(plot_file)[0] +
+                     "_weighted_by_{}.png".format(weights))
         y_label += " weighted by area"
         weights = df[weights]
 
@@ -1522,10 +1524,13 @@ def read_in_and_plot_surface_curvature(
         normalize=False, cumulative=False, outfile=plot_file)
 
 
-def read_in_and_plot_surface_curvatures(x_range=None, num_bins=20, weights=None):
+def read_in_and_plot_surface_curvatures(
+        x_range=None, num_bins=20, weights=None, method="AVV", radius_hit=10,
+        borders=5):
     """
     Reads in curvature data of a cER surface, generated using a compartment
-    segmentation, estimated by AVV and RadiusHit=10 and plots the curvature.
+    segmentation, estimated by the given method and RadiusHit, and plots the
+    curvature (minimal and maximal principal as well as curvedness).
 
     Args:
         x_range (tuple, optional): a tuple of two values to limit the range
@@ -1533,6 +1538,10 @@ def read_in_and_plot_surface_curvatures(x_range=None, num_bins=20, weights=None)
         num_bins (int, optional): number of bins for the histogram (default 20)
         weights (str, optional): if given, curvatures will be weighted by this
             column of the DataFrame (default None)
+        method (str, optional): which method to plot (default "AVV")
+        radius_hit (int, optional): which RadiusHit to plot (default 10)
+        borders (int, optional): how much to exclude from borders in nm
+            (default 5)
 
     Returns:
         None
@@ -1540,19 +1549,19 @@ def read_in_and_plot_surface_curvatures(x_range=None, num_bins=20, weights=None)
     folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
              "180830_TITAN_l2_t2half/"
     plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
-    method = "AVV"
-    radius_hit = 10
-    csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding5borders.csv".format(
-        folder, method, radius_hit)
-    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding5borders" \
-                "_curvatures.png".format(plot_fold, method, radius_hit)
+    csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding{}borders.csv".format(
+        folder, method, radius_hit, borders)
+    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding{}borders" \
+                "_curvatures.png".format(plot_fold, method, radius_hit, borders)
     if x_range is not None:
-        plot_file = plot_file[:-4] + "_{}-{}.png".format(x_range[0], x_range[1])
+        plot_file = os.path.splitext(plot_file)[0] + "_{}-{}.png".format(
+            x_range[0], x_range[1])
     y_label = "Relative frequency"
 
     df = pd.read_csv(csv, sep=";", index_col=0)
     if weights is not None:
-        plot_file = plot_file[:-4] + "_weighted_by_{}.png".format(weights)
+        plot_file = (os.path.splitext(plot_file)[0] +
+                     "_weighted_by_{}.png".format(weights))
         y_label += " weighted by area"
         weights = df[weights]
     curvatures_arrays = []
@@ -1581,10 +1590,14 @@ def read_in_and_plot_surface_curvatures(x_range=None, num_bins=20, weights=None)
         normalize=True, cumulative=False, outfile=plot_file)
 
 
-def plot_excluding_borders():
+def plot_excluding_borders(method="AVV", radius_hit=10):
     """
     Plots maximal absolute curvatures and percent surface depending on distance
     filtered from border.
+
+    Args:
+        method (str, optional): which method to plot (default "AVV")
+        radius_hit (int, optional): which RadiusHit to plot (default 10)
 
     Returns:
         None
@@ -1592,8 +1605,6 @@ def plot_excluding_borders():
     folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
              "180830_TITAN_l2_t2half/"
     plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
-    method = "AVV"
-    radius_hit = 10
     plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding_borders.png"\
         .format(plot_fold, method, radius_hit)
     csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}.csv".format(
@@ -1609,7 +1620,7 @@ def plot_excluding_borders():
     min_kappa2 = [abs(min(kappa2))]
     for b in range(1, 8):
         border_dist.append(b)
-        csv_b = csv[:-4] + "_excluding{}borders.csv".format(b)
+        csv_b = os.path.splitext(csv)[0] + "_excluding{}borders.csv".format(b)
         df_b = pd.read_csv(csv_b, sep=";")
         kappa1_b = df_b["kappa1"]
         kappa2_b = df_b["kappa2"]
@@ -1658,9 +1669,10 @@ def plot_excluding_borders():
 if __name__ == "__main__":
     # Real data
     # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
-    #                                  num_bins=25, weights=None)
-    # read_in_and_plot_surface_curvatures(num_bins=25, weights=None)
-    # plot_excluding_borders()
+    #                                  num_bins=25)
+    for method in ["NVV", "RVV", "SSVV", "AVV"]:
+        # plot_excluding_borders(method=method)
+        read_in_and_plot_surface_curvatures(num_bins=25, method=method)
 
     # Benchmark data
     # plot_plane_normals()
@@ -1683,7 +1695,7 @@ if __name__ == "__main__":
     # plot_sphere_kappa_1_and_2_diff_rh(
     #     r=10, voxel=True, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10),
     #     x_range=(0.03, 0.12), y_range=(0, 0.7), legend_loc='upper left')
-    plot_sphere_kappa_1_and_2_errors_diff_rh(voxel=True, x_range=(0, 0.5))
+    # plot_sphere_kappa_1_and_2_errors_diff_rh(voxel=True, x_range=(0, 0.5))
     # for r in [10, 20, 30]:
     #     plot_sphere_kappa_1_and_2_errors_noVTK(
     #         r=r, rhVV=9, rhSSVV=9, voxel=True, x_range=(0, 0.65))

@@ -989,6 +989,7 @@ if __name__ == "__main__":
 
     # main_anna()
 
-    from_ply_workflow(ply_file="/fs/pool/pool-ruben/Maria/curvature/"
-                               "LimeSegOutput/DubSeg/cell_10/T_10.ply",
-                      pixel_size_nm=1, radius_hit=10)
+    from_ply_workflow(
+        ply_file="/fs/pool/pool-ruben/Maria/curvature/TestImages-LimeSeg/"
+                 "LimeSegOutput/DubSeg/cell_11/T_10.ply",
+        pixel_size_nm=1, radius_hit=10)
