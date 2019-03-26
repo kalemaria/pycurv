@@ -263,12 +263,12 @@ def test_plane_normals(half_size, radius_hit, res, noise):
         assert error <= 0.3
 
 
-@pytest.mark.parametrize("radius_hit", [5])  # range(5, 10)
+@pytest.mark.parametrize("radius_hit", [1, 2, 3, 4, 10, 11])  # range(5, 10)
 @pytest.mark.parametrize("radius,eb,inverse,methods", [
-    (10, 5, False, ['VV']),
-    (10, 5, False, ['SSVV']),
-    # (10, 0, False, ['VV']),  # TODO ok to fail
-    # (10, 0, False, ['SSVV']),
+    # (10, 5, False, ['VV']),
+    # (10, 5, False, ['SSVV']),
+    (10, 0, False, ['VV']),  # TODO ok to fail
+    (10, 0, False, ['SSVV']),
 ])
 def test_cylinder_directions_curvatures(
         radius, radius_hit, eb, inverse, methods,
@@ -498,41 +498,44 @@ def test_cylinder_directions_curvatures(
                 assert error <= allowed_error
 
 
-# @pytest.mark.parametrize("radius_hit", range(5, 10))
-# @pytest.mark.parametrize(
-#     "radius,inverse,voxel,ico,methods,area2,runtimes", [
-#         # (10, False, False, 1280, ['VV'], True, None),  # icosahedron
-#         (10, False, True, 0, ['VV'], False, None),  # voxel, RVV
-#         (10, False, True, 0, ['VV', 'SSVV'], True, None),  # voxel
-#         #"{}sphere/voxel/files4plotting/bin_spheres_runtimes.csv".format(FOLD)
-#         (10, False, False, 0, ['VV'], False, None),  # smooth, RVV
-#         (10, False, False, 0, ['VV', 'SSVV'], True, None),  # smooth
-#         # (10, True, False, 0, ['VV', 'SSVV'], False, None),  # smooth inverse
-#     ])
+@pytest.mark.parametrize("radius_hit", range(14, 21))
 @pytest.mark.parametrize(
-    "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes", [
-        # smooth, radius=10, radius_hit=9, SSVV & AVV:
-        (10, 9, False, False, 0, ['SSVV', 'VV'], True, None),
-        # smooth, radius=20, radius_hit=9, SSVV & AVV:
-        # (20, 9, False, False, 0, ['SSVV', 'VV'], True, None),
-        # smooth, radius=20, radius_hit=9, RVV:
-        # (20, 9, False, False, 0, ['VV'], False, None),
-        # voxel, radius=10, radius_hit=9, AVV & SSVV:
-        (10, 9, False, True, 0, ['VV'], True, None),
-        # (10, 9, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
-        # voxel, radius=20, SSVV & radius_hit=9:
-        # (20, 9, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
-        # voxel, radius=20, AVV & radius_hit=9:
-        # (20, 9, False, True, 0, ['VV'], True, None),
-        # voxel, radius=20, radius_hit=18, SSVV & AVV:
-        # (20, 18, False, True, 0, ['SSVV', 'VV'], True, None),
-        # voxel, radius=30, SSVV & radius_hit=8:
-        # (30, 9, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
-        # voxel, radius=30, AVV & radius_hit=9:
-        # (30, 9, False, True, 0, ['VV'], True, None),  # TODO ok to fail
-        # voxel, radius=30, radius_hit=18, SSVV & AVV:
-        # (30, 28, False, True, 0, ['SSVV', 'VV'], True, None),
+    "radius,inverse,voxel,ico,methods,area2,runtimes", [
+        # (10, False, False, 1280, ['VV'], True, None),  # icosahedron
+        # (10, False, True, 0, ['VV'], False, None),  # voxel, RVV
+        # (10, False, True, 0, ['VV'], True, None),  # voxel, AVV
+        # (10, False, True, 0, ['SSVV'], True, None),  # voxel, 'SSVV'
+        # "{}sphere/voxel/files4plotting/bin_spheres_runtimes.csv".format(FOLD)
+        # (10, False, False, 0, ['VV'], False, None),  # smooth, RVV
+        (10, False, False, 0, ['VV'], True, None),  # smooth, AVV
+        # (10, False, False, 0, ['SSVV'], True, None),  # smooth, SSVV
+        # (10, True, False, 0, ['VV', 'SSVV'], False, None),  # smooth inverse
     ])
+# @pytest.mark.parametrize(
+#     "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes", [
+#         # smooth, radius=10:
+#         # (10, 8, False, False, 0, ['SSVV'], True, None),
+#         # (10, 11, False, False, 0, ['VV'], True, None),  # AVV
+#         # (10, 11, False, False, 0, ['VV'], False, None),  # RVV
+#         # smooth, radius=20:
+#         (20, 8, False, False, 0, ['SSVV'], True, None),
+#         (20, 11, False, False, 0, ['VV'], True, None),  # AVV
+#         (20, 11, False, False, 0, ['VV'], False, None),  # RVV
+#         # voxel, radius=10:
+#         # (10, 10, False, True, 0, ['VV'], True, None),
+#         # (10, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+#         # voxel, radius=20:
+#         # (20, 10, False, True, 0, ['VV'], True, None),
+#         # (20, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+#         # voxel, radius=20, radius_hit=18, SSVV & AVV:
+#         # (20, 18, False, True, 0, ['SSVV', 'VV'], True, None),
+#         # voxel, radius=30:
+#         # (30, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+#         # voxel, radius=30:
+#         # (30, 10, False, True, 0, ['VV'], True, None),  # TODO ok to fail
+#         # voxel, radius=30, radius_hit=18, SSVV & AVV:
+#         # (30, 28, False, True, 0, ['SSVV', 'VV'], True, None),
+#     ])
 def test_sphere_curvatures(
         radius, radius_hit, inverse, methods, area2, voxel, ico, runtimes,
         res=0, noise=0, save_areas=False, page_curvature_formula=False,
@@ -752,7 +755,7 @@ def test_sphere_curvatures(
 #      "{}torus/files4plotting/torus_rr25_csr10_runtimes_VV2_cores.csv".format(
 #          FOLD)),
 # ])
-@pytest.mark.parametrize("radius_hit", [8])  # range(5, 10)
+@pytest.mark.parametrize("radius_hit", range(10, 14))
 @pytest.mark.parametrize("rr,csr,methods,area2,runtimes, cores", [
         (25, 10, ['VV'], False, None, 4),  # RVV
         (25, 10, ['VV', 'SSVV'], True, None, 4),
