@@ -1655,8 +1655,8 @@ def read_in_and_plot_peak_curvatures(x_range=None, y_range=None, num_bins=20,
     for segmentation in segmentations:  # 2
         for method in methods:  # 2
             for radius_hit in radius_hits:  # 5
-                csv_name = "TCB_180830_l2_t2peak.cER.{}_rh{}_" \
-                           "excluding1borders.csv".format(method, radius_hit)
+                csv_name = "TCB_180830_l2_t2peak.cER.{}_rh{}.csv".format(
+                    method, radius_hit)
                 csv_p = PurePath(folder, segmentation, csv_name)
                 csv = str(csv_p)
                 df = pd.read_csv(csv, sep=";", index_col=0)
@@ -1723,7 +1723,7 @@ def read_in_and_plot_surface_curvature(
 
 def read_in_and_plot_surface_curvatures(
         x_range=None, num_bins=20, weights=None, method="AVV", radius_hit=10,
-        borders=5):
+        borders=0):
     """
     Reads in curvature data of a cER surface, generated using a compartment
     segmentation, estimated by the given method and RadiusHit, and plots the
@@ -1738,7 +1738,7 @@ def read_in_and_plot_surface_curvatures(
         method (str, optional): which method to plot (default "AVV")
         radius_hit (int, optional): which RadiusHit to plot (default 10)
         borders (int, optional): how much to exclude from borders in nm
-            (default 5)
+            (default 0)
 
     Returns:
         None
@@ -1746,8 +1746,12 @@ def read_in_and_plot_surface_curvatures(
     folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
              "180830_TITAN_l2_t2half/"
     plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
-    csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding{}borders.csv".format(
-        folder, method, radius_hit, borders)
+    if borders == 0:
+        csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}.csv".format(
+            folder, method, radius_hit)
+    else:
+        csv = ("{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding{}borders.csv"
+               .format(folder, method, radius_hit, borders))
     plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding{}borders" \
                 "_curvatures.png".format(plot_fold, method, radius_hit, borders)
     if x_range is not None:
@@ -1865,11 +1869,12 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
 
 if __name__ == "__main__":
     # Real data
-    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
-    #                                  num_bins=25)
-    # for method in ["NVV", "RVV", "SSVV", "AVV"]:
-    #     plot_excluding_borders(method=method)
-    #     read_in_and_plot_surface_curvatures(num_bins=25, method=method)
+    read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
+                                     num_bins=25)
+    # for method in ["NVV", "RVV", "SSVV"]:  # ,"AVV"
+    #     # plot_excluding_borders(method=method)
+    #     read_in_and_plot_surface_curvatures(
+    #         num_bins=25, method=method, borders=0)  # , x_range=(-0.1, 0.15)
 
     # Benchmark data
     # plot_plane_normals()
@@ -1935,10 +1940,10 @@ if __name__ == "__main__":
     #     csv=str(PurePath(FOLD,
     #                      "cylinder/noise0/files4plotting/"
     #                      "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv")))
-    plot_cylinder_T_2_and_kappa_1_errors(
-        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
-        rhVV=5, rhSSVV=6)
-    plot_cylinder_T_2_and_kappa_1_errors(
-        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
-        rhVV=5, rhSSVV=6)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+    #     rhVV=5, rhSSVV=6)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
+    #     rhVV=5, rhSSVV=6)
     # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
