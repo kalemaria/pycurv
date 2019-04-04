@@ -2,6 +2,7 @@ import numpy as np
 import os
 import vtk
 from pyto.io.image_io import ImageIO
+import nibabel as nib
 
 import pexceptions
 
@@ -64,6 +65,24 @@ def load_tomo(fname, mmap=False):
         im_data = np.reshape(im_data, (im_data.shape[0], im_data.shape[1], 1))
 
     return im_data
+
+
+def load_nii(img_path):
+    """
+    Loads a 'nii' or 'nii.gz' file, returns everything needed to save another
+    'nii' or 'nii.gz' in the same dimensional space, i.e. the numpy array,
+    the affine matrix and the header.
+    author: Clement Zotti (clement.zotti@usherbrooke.ca)
+    date: April 2017
+
+    Args:
+        img_path (str): Path of the 'nii' or 'nii.gz' image file name.
+
+    Returns:
+        the numpy array, the affine matrix and the header
+    """
+    nimg = nib.load(img_path)
+    return nimg.get_data(), nimg.affine, nimg.header
 
 
 def vti_to_numpy(image, transpose=True):

@@ -141,7 +141,7 @@ def _vtp_arrays_to_mrc_volumes(
 
 
 def new_workflow(
-        fold, base_filename, pixel_size_nm, radius_hit, methods=['VV'],
+        fold, base_filename, scale_factor_to_nm, radius_hit, methods=['VV'],
         page_curvature_formula=False, area2=True,
         seg_file=None, label=1, filled_label=None, unfilled_mask=None, holes=0,
         remove_wrong_borders=True, min_component=100, only_normals=False,
@@ -161,7 +161,7 @@ def new_workflow(
         fold (str): path where the input membrane segmentation is and where the
             output will be written
         base_filename (str): base file name for saving the output files
-        pixel_size_nm (float): pixel size in nanometer of the membrane mask
+        scale_factor_to_nm (float): pixel size in nanometer of the membrane mask
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
@@ -272,7 +272,7 @@ def new_workflow(
     if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
         print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
-        tg.build_graph_from_vtk_surface(surf, pixel_size_nm)
+        tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
         if tg.graph.num_vertices() == 0:
             raise pexceptions.PySegInputError(
                 expr="new_workflow", msg="The graph is empty!")
@@ -288,7 +288,7 @@ def new_workflow(
         if b > 0:
             print('\nFinding triangles that are {} pixels to surface borders...'
                   .format(b))
-            tg.find_vertices_near_border(b * pixel_size_nm, purge=True)
+            tg.find_vertices_near_border(b * scale_factor_to_nm, purge=True)
             print('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
 
@@ -704,7 +704,7 @@ def annas_workflow(
             gt_file, surf_file))
 
 
-def from_ply_workflow(ply_file, pixel_size_nm, radius_hit,
+def from_ply_workflow(ply_file, scale_factor_to_nm, radius_hit,
                       page_curvature_formula=False, methods=["VV"], area2=True,
                       cores=4):
     # Transforming PLY to VTP surface format
@@ -717,7 +717,7 @@ def from_ply_workflow(ply_file, pixel_size_nm, radius_hit,
     surf = io.load_poly(surf_file)
     print('\nBuilding a triangle graph from the surface...')
     tg = TriangleGraph()
-    tg.build_graph_from_vtk_surface(surf, pixel_size_nm)
+    tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
     if tg.graph.num_vertices() == 0:
         raise pexceptions.PySegInputError(
             expr="new_workflow", msg="The graph is empty!")
@@ -745,6 +745,81 @@ def from_ply_workflow(ply_file, pixel_size_nm, radius_hit,
                 method = 'RVV'
         surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
+
+
+def from_nii_workflow(
+        nii_file, outfold, radius_hit, page_curvature_formula=False,
+        methods=["VV"], area2=True, cores=4):
+    # Reading in the data and getting the data type and average scaling in mm:
+    seg, _, header = io.load_nii(nii_file)
+    assert (isinstance(seg, np.ndarray))
+    data_type = seg.dtype
+    print("pixel size in mm (x, y, z) = {}".format(header.get_zooms()))
+    scale_factor_to_mm = round(np.average(header.get_zooms()), 2)
+    print("using average scale factor to mm = {}".format(scale_factor_to_mm))
+
+    # Save as MRC file:
+    base_filename = os.path.splitext(
+        os.path.splitext(os.path.basename(nii_file))[0]
+    )[0]  # without the path and without ".nii.gz" extensions
+    mrc_file = str(os.path.join(outfold, base_filename+".mrc"))
+    if not isfile(mrc_file):
+        io.save_numpy(seg, mrc_file)
+
+    for label in range(1, np.max(seg)+1):
+        print("Label {}".format(label))
+        # output base file name with the path and with the label:
+        outfile_base = str(os.path.join(outfold, base_filename+str(label)))
+
+        # Surface generation around the filled segmentation using
+        # vtkMarchingCubes
+        surf_file = outfile_base + ".surface.vtp"
+        if not isfile(surf_file):
+            filled_binary_seg = (seg == label).astype(data_type)
+            if not np.any(filled_binary_seg):
+                raise pexceptions.PySegInputError(
+                    expr="from_nii_workflow",
+                    msg="Label not found in the segmentation!")
+            print("\nGenerating a surface...")
+            surf = run_gen_surface(
+                filled_binary_seg, outfile_base, lbl=1,
+                other_mask=None, isosurface=True, sg=1, thr=THRESH_SIGMA1)
+        else:
+            print('\nReading in the surface from file...')
+            surf = io.load_poly(surf_file)
+
+        # Transforming the surface into a triangle graph
+        print('\nBuilding a triangle graph from the surface...')
+        tg = TriangleGraph()
+        tg.build_graph_from_vtk_surface(surf, scale_factor_to_mm)
+        if tg.graph.num_vertices() == 0:
+            raise pexceptions.PySegInputError(
+                expr="new_workflow", msg="The graph is empty!")
+        print('The graph has {} vertices and {} edges'.format(
+            tg.graph.num_vertices(), tg.graph.num_edges()))
+
+        # Running the modified Normal Vector Voting algorithm:
+        temp_normals_graph_file = '{}.normals.gt'.format(outfile_base)
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, exclude_borders=0, methods=methods,
+            page_curvature_formula=page_curvature_formula,
+            area2=area2, poly_surf=surf, cores=cores,
+            graph_file=temp_normals_graph_file)
+
+        for method in method_tg_surf_dict.keys():
+            # Saving the output (TriangleGraph object) for later inspection in
+            # ParaView:
+            (tg, surf) = method_tg_surf_dict[method]
+            if method == 'VV':
+                if page_curvature_formula:
+                    method = 'NVV'
+                elif area2:
+                    method = 'AVV'
+                else:
+                    method = 'RVV'
+            surf_file = '{}.{}_rh{}.vtp'.format(outfile_base, method,
+                                                radius_hit)
+            io.save_vtp(surf, surf_file)
 
 
 def main_javier(membrane, radius_hit):
@@ -903,7 +978,7 @@ def main_missing_wedge():
     print("\nNormal sphere (control)")
     base_filename = 'bin_sphere_r20_t1_thresh0.6'
     new_workflow(
-        fold, base_filename, pixel_size_nm=1, radius_hit=rh,
+        fold, base_filename, scale_factor_to_nm=1, radius_hit=rh,
         methods=['SSVV', 'VV'], remove_wrong_borders=False)
     print("\nExtracting all curvatures")
     extract_curvatures_after_new_workflow(
@@ -912,7 +987,7 @@ def main_missing_wedge():
 
     print("\nSphere with missing wedge")
     base_filename = 'bin_sphere_r20_t1_with_wedge30deg_thresh0.6'
-    new_workflow(fold, base_filename, pixel_size_nm=1, radius_hit=rh,
+    new_workflow(fold, base_filename, scale_factor_to_nm=1, radius_hit=rh,
                  methods=['SSVV', 'VV'], remove_wrong_borders=True)
     for b in range(0, 9):
         print("\nExtracting curvatures without {} nm from border".format(b))
@@ -989,7 +1064,14 @@ if __name__ == "__main__":
 
     # main_anna()
 
-    from_ply_workflow(
-        ply_file="/fs/pool/pool-ruben/Maria/curvature/TestImages-LimeSeg/"
-                 "LimeSegOutput/DubSeg/cell_11/T_10.ply",
-        pixel_size_nm=1, radius_hit=10)
+    # from_ply_workflow(
+    #     ply_file="/fs/pool/pool-ruben/Maria/curvature/TestImages-LimeSeg/"
+    #              "LimeSegOutput/DubSeg/cell_11/T_10.ply",
+    #     scale_factor_to_nm=1, radius_hit=10)
+
+    from_nii_workflow(
+        nii_file="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
+                 "GroundTruth/training_axial_full_pat0-label.nii.gz",
+        outfold="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
+                "GroundTruthOutput",
+        radius_hit=5)
