@@ -38,7 +38,7 @@ def normals_directions_and_curvature_estimation(
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
-        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+        radius_hit (float): radius in length unit of the graph;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         exclude_borders (int, optional): if > 0, principle curvatures and
@@ -62,7 +62,8 @@ def normals_directions_and_curvature_estimation(
             graph with the orientations clanum_pointsss, normals or tangents is
             returned.
         poly_surf (vtkPolyData, optional): surface from which the graph was
-            generated, scaled to nm (required only for SSVV, default None)
+            generated, scaled to given units (required only for SSVV, default
+            None)
         cores (int, optional): number of cores to run VV in parallel (default 4)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default None)
@@ -111,7 +112,7 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
 
     Args:
         tg (TriangleGraph): triangle graph generated from a surface of interest
-        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+        radius_hit (float): radius in length unit of the graph;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         full_dist_map (boolean, optional): if True, a full distance map is
@@ -150,7 +151,7 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
 
     # * Adding vertex properties to be filled in estimate_normal *
     # vertex property for storing the estimated normal of the corresponding
-    # triangle (scaled in nm):
+    # triangle:
     tg.graph.vp.N_v = tg.graph.new_vertex_property("vector<float>")
 
     t_end0 = time.time()
@@ -261,18 +262,17 @@ def preparation_for_curvature_estimation(
         graph_file (str): file path to save the graph
 
     Returns:
-        resulting triangle graph instance attributes: surface (scaled to nm),
-        scale_factor_to_nm
+        resulting triangle graph instance attributes: surface (scaled to units),
+        scale
     """
     # * Adding vertex properties to be filled by all curvature methods *
     # vertex properties for storing the estimated principal directions of the
     # maximal and minimal curvatures of the corresponding triangle (if the
-    # vertex belongs to class 1; scaled in nm):
+    # vertex belongs to class 1):
     tg.graph.vp.T_1 = tg.graph.new_vertex_property("vector<float>")
     tg.graph.vp.T_2 = tg.graph.new_vertex_property("vector<float>")
     # vertex properties for storing the estimated maximal and minimal curvatures
-    # of the corresponding triangle (if the vertex belongs to class 1; scaled in
-    # nm):
+    # of the corresponding triangle (if the vertex belongs to class 1):
     tg.graph.vp.kappa_1 = tg.graph.new_vertex_property("float")
     tg.graph.vp.kappa_2 = tg.graph.new_vertex_property("float")
     # vertex property for storing the Gaussian curvature calculated from kappa_1
@@ -293,7 +293,7 @@ def preparation_for_curvature_estimation(
 
         t_begin0 = time.time()
 
-        print('\nFinding triangles that are {} nm to surface borders and '
+        print('\nFinding triangles that are {} to surface borders and '
               'excluding them from curvatures calculation...'.format(
             exclude_borders))
         # Mark vertices at borders with vertex property 'is_near_border', do not
@@ -320,7 +320,7 @@ def curvature_estimation(
     normals_directions_and_curvature_estimation).
 
     Args:
-        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+        radius_hit (float): radius in length unit of the graph;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         exclude_borders (int, optional): if > 0, principle curvatures and
@@ -335,8 +335,8 @@ def curvature_estimation(
             collect_curvature_votes)
         area2 (boolean, optional): if True (default False), votes are
             weighted by triangle area also in the second pass
-        poly_surf (vtkPolyData): surface from which the graph was generated,
-            scaled to nm (required only if method="SSVV", default None)
+        poly_surf (vtkPolyData): scaled surface from which the graph was
+            generated, (required only if method="SSVV", default None)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map is
             calculated later for each vertex (default)

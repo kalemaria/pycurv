@@ -386,14 +386,14 @@ def ply_file_to_vtp_file(infilename, outfilename):
     save_vtp(poly, outfilename)
 
 
-def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
-                         scale_z, logfilename=None, mean=False, verbose=False):
+def poly_array_to_volume(poly, array_name, scale, size, logfilename=None,
+                         mean=False, verbose=False):
     """
     Converts a triangle-cell data array of the given vtkPolyData to a 3D array
     of size like the underlying segmentation.
 
     Initializes a 3D matrix of size like the segmentation with zeros, calculates
-    triangle centroid coordinates, transforms them from nanometers to voxels and
+    triangle centroid coordinates, transforms them from units to voxels and
     puts the corresponding cell data value into the voxel.
 
     If more than one triangles map to the same voxel, takes the maximal or mean
@@ -404,11 +404,9 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
         poly (vtk.vtkPolyData): a vtkPolyData object with triangle-cells.
         array_name (str): name of the desired cell data array of the vtkPolyData
             object
-        scale_factor_to_nm (float): pixel size in nanometers that was used for
+        scale (tuple): pixel size (X, Y, Z) in given units that was used for
             scaling the graph
-        scale_x (int): x axis length in pixels of the segmentation
-        scale_y (int): y axis length in pixels of the segmentation
-        scale_z (int): z axis length in pixels of the segmentation
+        size (tuple): (X, Y, Z) length in pixels of the segmentation
         logfilename (str, optional): specifies an output log file path (default
             None) for listing voxel coordinates with multiple values mapping to
             this voxel
@@ -476,11 +474,11 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
 
             # Calculate the corresponding voxel of the vertex and add the value
             # to the list keyed by the voxel in the dictionary:
-            # Scaling the coordinates back from nm to voxels. (Without round
+            # Scaling the coordinates back from units to voxels. (Without round
             # float coordinates are truncated to the next lowest integer.)
-            voxel_x = int(round(x_center / scale_factor_to_nm))
-            voxel_y = int(round(y_center / scale_factor_to_nm))
-            voxel_z = int(round(z_center / scale_factor_to_nm))
+            voxel_x = int(round(x_center / scale[0]))
+            voxel_y = int(round(y_center / scale[1]))
+            voxel_z = int(round(z_center / scale[2]))
             voxel = (voxel_x, voxel_y, voxel_z)
             if voxel in voxel_to_values:
                 voxel_to_values[voxel].append(cell_value)
@@ -505,7 +503,7 @@ def poly_array_to_volume(poly, array_name, scale_factor_to_nm, scale_x, scale_y,
     # Initialize a 3D array scaled like the original segmentation, which will
     # hold in each voxel the maximal value among the corresponding vertex
     # coordinates in the graph and 0 in all other (background) voxels:
-    volume = np.zeros((scale_x, scale_y, scale_z), dtype=np.float32)
+    volume = np.zeros(size, dtype=np.float32)
 
     # Write the array and (if logfilename is given) write the cases with
     # multiple values into a log file:

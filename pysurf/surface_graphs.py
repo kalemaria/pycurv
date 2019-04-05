@@ -28,8 +28,7 @@ __author__ = 'kalemanov'
 class SurfaceGraph(graphs.SegmentationGraph):
     """Class defining the abstract SurfaceGraph object."""
 
-    def build_graph_from_vtk_surface(self, surface, scale_factor_to_nm,
-                                     verbose=False):
+    def build_graph_from_vtk_surface(self, surface, scale, verbose=False):
         """
         Base method for building a graph from a vtkPolyData surface, to be
         implemented by SurfaceGraph subclasses.
@@ -37,7 +36,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
         Args:
             surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
                 generated from the segmentation in voxels
-            scale_factor_to_nm (float): pixel size in nanometers for scaling the
+            scale (tuple): pixel size (X, Y, Z) in given units for scaling the
                 surface and the graph
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
@@ -65,11 +64,11 @@ class PointGraph(SurfaceGraph):
         """
         graphs.SegmentationGraph.__init__(self)
 
-    def build_graph_from_vtk_surface(self, surface, scale_factor_to_nm=1,
-                                     verbose=False):
+    def build_graph_from_vtk_surface(
+            self, surface, scale=(1, 1, 1), verbose=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
-        nanometers according to the scale factor also specified when creating
+        given units according to the scale factor also specified when creating
         the PointGraph object.
 
         Every vertex of the graph represents a surface triangle vertex,
@@ -79,16 +78,16 @@ class PointGraph(SurfaceGraph):
         Args:
             surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
                 generated from the segmentation in voxels
-            scale_factor_to_nm (float, optional): pixel size in nanometers for
-                scaling the surface and the graph (default 1)
+            scale (tuple, optional): pixel size (X, Y, Z) in given units for
+                scaling the surface and the graph (default (1, 1, 1))
             verbose(boolean, optional): if True (default False), some extra
                 information will be printed out
 
         Returns:
             None
         """
-        # rescale the surface to nm and update the attribute
-        surface = rescale_surface(surface, scale_factor_to_nm)
+        # rescale the surface to units and update the attribute
+        surface = rescale_surface(surface, scale)
 
         if verbose:
             # 0. Check numbers of cells and all points.
@@ -177,11 +176,9 @@ class TriangleGraph(SurfaceGraph):
         graphs.SegmentationGraph.__init__(self)
 
         # Add more "internal property maps" to the graph.
-        # vertex property for storing the area in nanometers squared of the
-        # corresponding triangle:
+        # vertex property for storing the area of the corresponding triangle:
         self.graph.vp.area = self.graph.new_vertex_property("float")
-        # vertex property for storing the normal in nanometers of the
-        # corresponding triangle:
+        # vertex property for storing the normal of the corresponding triangle:
         self.graph.vp.normal = self.graph.new_vertex_property("vector<float>")
         # vertex property for storing the VTK minimal curvature at the
         # corresponding triangle:
@@ -195,23 +192,23 @@ class TriangleGraph(SurfaceGraph):
         # vertex property for storing the VTK mean curvature at the
         # corresponding triangle:
         self.graph.vp.mean_curvature = self.graph.new_vertex_property("float")
-        # vertex property for storing the coordinates in nanometers of the 3
-        # points of the corresponding triangle:
+        # vertex property for storing the coordinates of the 3 points of the
+        # corresponding triangle:
         self.graph.vp.points = self.graph.new_vertex_property("object")
         # edge property storing the "strength" property of the edge: 1 for a
         # "strong" or 0 for a "weak" one:
         self.graph.ep.is_strong = self.graph.new_edge_property("int")
 
         self.point_in_cells = {}
-        """dict: a dictionary mapping a point coordinates (x, y, z) in
-        nanometers to a list of triangle-cell indices sharing this point.
+        """dict: a dictionary mapping a point coordinates (x, y, z) to a list of
+        triangle-cell indices sharing this point.
         """
 
-    def build_graph_from_vtk_surface(self, surface, scale_factor_to_nm=1,
+    def build_graph_from_vtk_surface(self, surface, scale=(1, 1, 1),
                                      verbose=False, reverse_normals=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
-        nanometers according to the scale factor also specified when creating
+        given units according to the scale factor also specified when creating
         the TriangleGraph object.
 
         Every vertex of the graph represents the center of a surface triangle,
@@ -222,26 +219,25 @@ class TriangleGraph(SurfaceGraph):
         Args:
             surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
                 generated from the segmentation in voxels
-            scale_factor_to_nm (float, optional): pixel size in nanometers for
-                scaling the surface and the graph (default 1)
+            scale (tuple, optional): pixel size in given units for
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
             reverse_normals (boolean, optional): if True (default False), the
                 triangle normals are reversed during graph generation
 
         Returns:
-            rescaled surface to nanometers with VTK curvatures (vtk.vtkPolyData)
+            rescaled surface to given units with VTK curvatures
+            (vtk.vtkPolyData)
         """
 
         t_begin = time.time()
 
         # 1. Preparation
-        if scale_factor_to_nm != 1:
-            # rescale the surface to nm
-            surface = rescale_surface(surface, scale_factor_to_nm)
+        if scale != (1, 1, 1):
+            # rescale the surface to units
+            surface = rescale_surface(surface, scale)
 
         # Adding curvatures to the vtkPolyData surface
-        # TODO remove if not testing?
         # because VTK and we (gen_surface) have the opposite normal
         # convention: VTK outwards pointing normals, we: inwards pointing
         if reverse_normals:
@@ -653,11 +649,10 @@ class TriangleGraph(SurfaceGraph):
 
     def find_vertices_near_border(self, b, purge=False):
         """
-        Finds vertices that are within a given distance in nanometers to the
-        graph border.
+        Finds vertices that are within a given distance to the graph border.
 
         Args:
-            b (float): distance from border in nanometers
+            b (float): distance from border in given units
             purge (boolean, optional): if True, those vertices and their edges
                 will be filtered out permanently; if False (default), no
                 filtering will be done
@@ -686,7 +681,7 @@ class TriangleGraph(SurfaceGraph):
                             dist, vertex_id_within_b_to_border[idx])
                     except KeyError:
                         vertex_id_within_b_to_border[idx] = dist
-            print('{} vertices are within distance {} nm to the graph border.'
+            print('{} vertices are within distance {} to the graph border.'
                   .format(len(vertex_id_within_b_to_border), b))
 
             # Add a boolean vertex property telling whether a vertex is within
@@ -716,7 +711,7 @@ class TriangleGraph(SurfaceGraph):
             self.update_coordinates_to_vertex_index()
 
     def find_vertices_outside_mask(
-            self, mask, scale_factor_to_nm, label=1, allowed_dist=0):
+            self, mask, scale, label=1, allowed_dist=0):
         """
         Finds vertices that are outside a mask.
 
@@ -726,7 +721,7 @@ class TriangleGraph(SurfaceGraph):
         Args:
             mask (numpy.ndarray): 3D mask of the segmentation from which the
                 underlying surface was created
-            scale_factor_to_nm (float): voxel size in nanometers
+            scale (tuple): pixel size (X, Y, Z) in given units
             label (int, optional): the label in the mask to be considered
                 (default 1)
             allowed_dist (int, optional): allowed distance in pixels between a
@@ -739,8 +734,8 @@ class TriangleGraph(SurfaceGraph):
             print('\nFinding vertices outside the membrane mask...')
             # Add a boolean vertex property telling whether a vertex is outside
             # the mask:
-            self.graph.vp.is_outside_mask = \
-                self.graph.new_vertex_property("boolean")
+            self.graph.vp.is_outside_mask = self.graph.new_vertex_property(
+                "boolean")
             # Invert the boolean matrix, because distance_transform_edt
             # calculates distances from '0's, not from '1's!
             maskd = ndimage.morphology.distance_transform_edt(
@@ -749,9 +744,9 @@ class TriangleGraph(SurfaceGraph):
             num_vertices_outside_mask = 0
             for v in self.graph.vertices():
                 v_xyz = self.graph.vp.xyz[v]
-                v_pixel_x = int(round(v_xyz[0] / scale_factor_to_nm))
-                v_pixel_y = int(round(v_xyz[1] / scale_factor_to_nm))
-                v_pixel_z = int(round(v_xyz[2] / scale_factor_to_nm))
+                v_pixel_x = int(round(v_xyz[0] / scale[0]))
+                v_pixel_y = int(round(v_xyz[1] / scale[1]))
+                v_pixel_z = int(round(v_xyz[2] / scale[2]))
                 try:
                     if maskd[v_pixel_x, v_pixel_y, v_pixel_z] > allowed_dist:
                         self.graph.vp.is_outside_mask[v] = 1
@@ -759,7 +754,7 @@ class TriangleGraph(SurfaceGraph):
                     else:
                         self.graph.vp.is_outside_mask[v] = 0
                 except IndexError:
-                    print("IndexError happened. Vertex with coordinates in nm "
+                    print("IndexError happened. Vertex with coordinates "
                           "({}, {}, {})".format(v_xyz[0], v_xyz[1], v_xyz[2]))
                     print("was transformed to pixel ({}, {}, {}),".format(
                         v_pixel_x, v_pixel_y, v_pixel_z))
@@ -775,21 +770,21 @@ class TriangleGraph(SurfaceGraph):
                 msg="A a 3D numpy ndarray object required as the first input.")
 
     def find_vertices_near_border_and_outside_mask(
-            self, b, mask, scale_factor_to_nm, label=1, allowed_dist=0,
+            self, b, mask, scale, label=1, allowed_dist=0,
             purge=False):
         """
-        Finds vertices that are within distance in nanometers to the graph
-        border and outside a mask.
+        Finds vertices that are within distance to the graph border and outside
+        a mask.
 
         Outside mask means that scaled back to pixels vertices coordinates are
         further than the allowed distance in pixels to a mask voxel with the
         given label.
 
         Args:
-            b (float): distance from border in nanometers
+            b (float): distance from border in units of the graph
             mask (numpy.ndarray): 3D mask of the segmentation from which the
                 underlying surface was created
-            scale_factor_to_nm (float): voxel size in nanometers
+            scale (tuple): pixel size (X, Y, Z) in given units
             label (int, optional): the label in the mask to be considered
                 (default 1)
             allowed_dist (int, optional): allowed distance in pixels between a
@@ -804,7 +799,7 @@ class TriangleGraph(SurfaceGraph):
         # don't remove vertices near border, because have to intersect with the
         # mask first!
         self.find_vertices_near_border(b, purge=False)
-        self.find_vertices_outside_mask(mask, scale_factor_to_nm, label=label,
+        self.find_vertices_outside_mask(mask, scale, label=label,
                                         allowed_dist=allowed_dist)
 
         # Add a boolean vertex property telling whether a vertex within distance
@@ -819,7 +814,7 @@ class TriangleGraph(SurfaceGraph):
                 num_vertices_near_border_and_outside_mask += 1
             else:
                 self.graph.vp.is_near_border_and_outside_mask[v] = 0
-        print('{} vertices are within distance {} nm to the graph border and '
+        print('{} vertices are within distance {} to the graph border and '
               'further than {} pixel from the mask.'.format(
                num_vertices_near_border_and_outside_mask, b, allowed_dist))
 
@@ -943,8 +938,8 @@ class TriangleGraph(SurfaceGraph):
 
     def get_areas(self, verbose=False):
         """
-        Gets all triangle areas in nanometers squared from the vertex properties
-        of the graph and calculates the total area.
+        Gets all triangle areas from the vertex properties of the graph and
+        calculates the total area.
 
         Args:
             verbose (boolean, optional): if True (default False), prints out the
@@ -952,8 +947,8 @@ class TriangleGraph(SurfaceGraph):
                 total surface area
 
         Returns:
-            - all triangle areas in nanometers squared (numpy.ndarray)
-            - the total area in nanometers squared (float)
+            - all triangle areas in squared units (numpy.ndarray)
+            - the total area in squared units (float)
         """
         triangle_areas = self.graph.vp.area.get_array()
         total_area = np.sum(triangle_areas)
@@ -991,7 +986,7 @@ class TriangleGraph(SurfaceGraph):
         Args:
             vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph for which the votes are collected
-            g_max (float): the maximal geodesic distance in nanometers
+            g_max (float): the maximal geodesic distance in units of the graph
             A_max (float): the area of the largest triangle in the surface
                 triangle-graph
             sigma (float): sigma, defined as 3*sigma = g_max, so that votes
@@ -1147,7 +1142,7 @@ class TriangleGraph(SurfaceGraph):
         Args:
             vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph for which the votes are collected
-            g_max (float): the maximal geodesic distance in nanometers
+            g_max (float): the maximal geodesic distance in units of the graph
             sigma (float): sigma, defined as 3*sigma = g_max, so that votes
                 beyond the neighborhood can be ignored
             full_dist_map (graph_tool.PropertyMap, optional): the full distance
@@ -1368,12 +1363,12 @@ class TriangleGraph(SurfaceGraph):
 
         Args:
             poly_surf (vtkPolyData): surface from which the graph was generated,
-                scaled to nm
+                scaled to given units
             vertex_r (graph_tool.Vertex): the vertex r in the surface
                 triangle-graph for which the principal directions and curvatures
                 are estimated
-            radius_hit (float): radius in length unit of the graph, e.g.
-                nanometers, for sampling surface points in tangent directions
+            radius_hit (float): radius in length unit of the graph for sampling
+                surface points in tangent directions
         """
         # Get the coordinates of vertex r and its estimated normal N_r (as numpy
         # array, input of the original method):

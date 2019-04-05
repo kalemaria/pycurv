@@ -38,7 +38,7 @@ values 1 at the boundary with 0's become this value.
 
 
 def convert_vtp_to_stl_surface_and_mrc_curvatures(
-        surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z):
+        surf_vtp_file, outfile_base, scale, size):
     """
     Converts the '.vtp' surface file to '.stl' file and converts selected
     vtkPolyData cell arrays from the '.vtp' file as 3-D volumes in '.mrc' files.
@@ -48,10 +48,9 @@ def convert_vtp_to_stl_surface_and_mrc_curvatures(
         surf_vtp_file (str): surface .vtp file, should contain the final surface
             with curvatures
         outfile_base (str): base name for the output .mrc and .log files
-        pixel_size (float): pixel size in nanometer of the membrane mask
-        scale_x (int): size of the membrane mask in X dimension
-        scale_y (int): size of the membrane mask in Y dimension
-        scale_z (int): size of the membrane mask in Z dimension
+        scale (tuple): pixel size (X, Y, Z) of the membrane mask in units of the
+            surface
+        size (tuple): size (X, Y, Z) of the membrane mask
 
     Returns:
         None
@@ -67,16 +66,14 @@ def convert_vtp_to_stl_surface_and_mrc_curvatures(
     # volumes in '.mrc' files (and saving them as '.mrc.gz' files).
     # max voxel value & .log files:
     _vtp_arrays_to_mrc_volumes(
-        surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
-        log_files=True)
+        surf_vtp_file, outfile_base, scale, size, log_files=True)
     # mean voxel value & no .log files:
     _vtp_arrays_to_mrc_volumes(
-        surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
-        mean=True)
+        surf_vtp_file, outfile_base, scale, size, mean=True)
 
 
 def _vtp_arrays_to_mrc_volumes(
-        surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z,
+        surf_vtp_file, outfile_base, scale, size,
         mean=False, log_files=False, compress=False):
     """
     This function converts selected vtkPolyData cell arrays from the '.vtp' file
@@ -87,10 +84,9 @@ def _vtp_arrays_to_mrc_volumes(
         surf_vtp_file (str): surface .vtp file, should contain the final surface
             with curvatures
         outfile_base (str): base name for the output .mrc (and .log) files
-        pixel_size (float): pixel size in nanometer of the membrane mask
-        scale_x (int): size of the membrane mask in X dimension
-        scale_y (int): size of the membrane mask in Y dimension
-        scale_z (int): size of the membrane mask in Z dimension
+        scale (tuple): pixel size (X, Y, Z) of the membrane mask in units of the
+            surface
+        size (tuple): size (X, Y, Z) of the membrane mask
         mean (boolean, optional): if True (default False), in case multiple
             triangles map to the same voxel, takes the mean value, else the
             maximal value
@@ -125,9 +121,8 @@ def _vtp_arrays_to_mrc_volumes(
     # from arrays, write '.log' files, and save the volumes as '.mrc' files:
     poly = io.load_poly(surf_vtp_file)
     for i, array_name in enumerate(array_names):
-        volume = io.poly_array_to_volume(
-            poly, array_name, pixel_size, scale_x, scale_y, scale_z,
-            logfilename=logfilenames[i], mean=mean)
+        volume = io.poly_array_to_volume(poly, array_name, scale, size,
+                                         logfilename=logfilenames[i], mean=mean)
         io.save_numpy(volume, mrcfilenames[i])
 
     if compress:
@@ -141,7 +136,7 @@ def _vtp_arrays_to_mrc_volumes(
 
 
 def new_workflow(
-        fold, base_filename, scale_factor_to_nm, radius_hit, methods=['VV'],
+        fold, base_filename, pixel_size, radius_hit, methods=['VV'],
         page_curvature_formula=False, area2=True,
         seg_file=None, label=1, filled_label=None, unfilled_mask=None, holes=0,
         remove_wrong_borders=True, min_component=100, only_normals=False,
@@ -161,7 +156,7 @@ def new_workflow(
         fold (str): path where the input membrane segmentation is and where the
             output will be written
         base_filename (str): base file name for saving the output files
-        scale_factor_to_nm (float): pixel size in nanometer of the membrane mask
+        pixel_size (float): pixel size in nanometer of the membrane mask
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
@@ -272,7 +267,8 @@ def new_workflow(
     if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
         print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
-        tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
+        scale = (pixel_size, pixel_size, pixel_size)
+        tg.build_graph_from_vtk_surface(surf, scale)
         if tg.graph.num_vertices() == 0:
             raise pexceptions.PySegInputError(
                 expr="new_workflow", msg="The graph is empty!")
@@ -288,7 +284,7 @@ def new_workflow(
         if b > 0:
             print('\nFinding triangles that are {} pixels to surface borders...'
                   .format(b))
-            tg.find_vertices_near_border(b * scale_factor_to_nm, purge=True)
+            tg.find_vertices_near_border(b * pixel_size, purge=True)
             print('The graph has {} vertices and {} edges'.format(
                 tg.graph.num_vertices(), tg.graph.num_edges()))
 
@@ -396,7 +392,7 @@ def extract_curvatures_after_new_workflow(
         fold (str): path where the input membrane segmentation is and where the
             output will be written
         base_filename (str): base file name for saving the output files
-        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+        radius_hit (float): radius in length unit of the graph, here nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         methods (list, optional): all methods to run in the second pass ('VV'
@@ -408,7 +404,7 @@ def extract_curvatures_after_new_workflow(
             triangle area also in the second step (principle directions and
             curvatures estimation)
         exclude_borders (int, optional): if > 0, triangles within this distance
-            from borders in nm and corresponding values will be excluded from
+            from borders in dist and corresponding values will be excluded from
             the output files (graph .gt, surface.vtp file and .csv), iteratively
             starting from 0 until maximally this distance (integer by integer)
         categorize_shape_index (boolean, optional): if True (default False),
@@ -446,9 +442,9 @@ def extract_curvatures_after_new_workflow(
         else:
             gt_outfile = None
             vtp_outfile = None
-        for nm in range(exclude_borders + 1):
-            if nm > 0:
-                eb = "_excluding{}borders".format(nm)
+        for dist in range(exclude_borders + 1):
+            if dist > 0:
+                eb = "_excluding{}borders".format(dist)
                 csv_outfile = '{}{}.{}_rh{}{}.csv'.format(
                     fold, base_filename, method, radius_hit, eb)
                 gt_outfile = '{}{}.{}_rh{}{}.gt'.format(
@@ -461,7 +457,7 @@ def extract_curvatures_after_new_workflow(
             tg.graph = load_graph(gt_infile)
 
             _extract_curvatures_from_graph(
-                tg, csv_outfile, nm, gt_outfile, vtp_outfile,
+                tg, csv_outfile, dist, gt_outfile, vtp_outfile,
                 categorize_shape_index=categorize_shape_index)
 
 
@@ -574,7 +570,7 @@ def _shape_index_classifier(x):
 
 
 def annas_workflow(
-        fold, base_filename, radius_hit, seg_file=None, scale_factor_to_nm=1.368,
+        fold, base_filename, radius_hit, seg_file=None, pixel_size=1.368,
         methods=['VV'], thr=0.4, cores=4):
     """
     A script for running all processing steps to estimate membrane curvature.
@@ -590,11 +586,11 @@ def annas_workflow(
         fold (str): path where the input membrane segmentation is and where the
             output will be written
         base_filename (str): base file name for saving the output files
-        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+        radius_hit (float): radius in length unit of the graph, here nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         seg_file (str, optional): membrane segmentation mask
-        scale_factor_to_nm (float, optional): pixel size in nanometer of the
+        pixel_size (float, optional): pixel size in nanometer of the
             membrane mask (default 1.368)
         methods (list, optional): all methods to run in the second pass ('VV'
             and 'SSVV' are possible, default is 'VV')
@@ -652,7 +648,8 @@ def annas_workflow(
     if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
         print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
-        tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
+        scale = (pixel_size, pixel_size, pixel_size)
+        tg.build_graph_from_vtk_surface(surf, scale)
         print('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
 
@@ -704,7 +701,7 @@ def annas_workflow(
             gt_file, surf_file))
 
 
-def from_ply_workflow(ply_file, scale_factor_to_nm, radius_hit,
+def from_ply_workflow(ply_file, scale, radius_hit,
                       page_curvature_formula=False, methods=["VV"], area2=True,
                       cores=4):
     # Transforming PLY to VTP surface format
@@ -717,7 +714,7 @@ def from_ply_workflow(ply_file, scale_factor_to_nm, radius_hit,
     surf = io.load_poly(surf_file)
     print('\nBuilding a triangle graph from the surface...')
     tg = TriangleGraph()
-    tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm)
+    tg.build_graph_from_vtk_surface(surf, scale)
     if tg.graph.num_vertices() == 0:
         raise pexceptions.PySegInputError(
             expr="new_workflow", msg="The graph is empty!")
@@ -754,9 +751,8 @@ def from_nii_workflow(
     seg, _, header = io.load_nii(nii_file)
     assert (isinstance(seg, np.ndarray))
     data_type = seg.dtype
-    print("pixel size in mm (x, y, z) = {}".format(header.get_zooms()))
-    scale_factor_to_mm = round(np.average(header.get_zooms()), 2)
-    print("using average scale factor to mm = {}".format(scale_factor_to_mm))
+    scale = header.get_zooms()
+    print("pixel size in mm (x, y, z) = {}".format(scale))
 
     # Save as MRC file:
     base_filename = os.path.splitext(
@@ -791,7 +787,7 @@ def from_nii_workflow(
         # Transforming the surface into a triangle graph
         print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
-        tg.build_graph_from_vtk_surface(surf, scale_factor_to_mm)
+        tg.build_graph_from_vtk_surface(surf, scale)
         if tg.graph.num_vertices() == 0:
             raise pexceptions.PySegInputError(
                 expr="new_workflow", msg="The graph is empty!")
@@ -978,7 +974,7 @@ def main_missing_wedge():
     print("\nNormal sphere (control)")
     base_filename = 'bin_sphere_r20_t1_thresh0.6'
     new_workflow(
-        fold, base_filename, scale_factor_to_nm=1, radius_hit=rh,
+        fold, base_filename, pixel_size=1, radius_hit=rh,
         methods=['SSVV', 'VV'], remove_wrong_borders=False)
     print("\nExtracting all curvatures")
     extract_curvatures_after_new_workflow(
@@ -987,7 +983,7 @@ def main_missing_wedge():
 
     print("\nSphere with missing wedge")
     base_filename = 'bin_sphere_r20_t1_with_wedge30deg_thresh0.6'
-    new_workflow(fold, base_filename, scale_factor_to_nm=1, radius_hit=rh,
+    new_workflow(fold, base_filename, pixel_size=1, radius_hit=rh,
                  methods=['SSVV', 'VV'], remove_wrong_borders=True)
     for b in range(0, 9):
         print("\nExtracting curvatures without {} nm from border".format(b))
@@ -1067,7 +1063,7 @@ if __name__ == "__main__":
     # from_ply_workflow(
     #     ply_file="/fs/pool/pool-ruben/Maria/curvature/TestImages-LimeSeg/"
     #              "LimeSegOutput/DubSeg/cell_11/T_10.ply",
-    #     scale_factor_to_nm=1, radius_hit=10)
+    #     scale=(1, 1, 1), radius_hit=10)
 
     from_nii_workflow(
         nii_file="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"

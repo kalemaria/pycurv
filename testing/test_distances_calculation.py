@@ -93,8 +93,8 @@ def test_distances_and_thicknesses_calculation():
     print("Applying the script distances_and_thicknesses_calculation")
     distances_and_thicknesses_calculation(
         fold, segmentation_file, base_filename,
-        pixel_size_nm=pixel_size_nm, radius_hit=radius_hit,
-        maxdist_nm=maxdist_nm, maxthick_nm=maxthick_nm,
+        pixel_size=pixel_size_nm, radius_hit=radius_hit,
+        maxdist=maxdist_nm, maxthick=maxthick_nm,
         offset_voxels=offset_voxels)
 
     print('Reading in and checking distances between PM and cER')

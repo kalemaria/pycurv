@@ -9,7 +9,7 @@ __author__ = 'kalemanov'
 
 # CONSTANTS
 SAMPLE_DST = 1
-"""int: sampling distance in nm used in find_2_distances.
+"""int: sampling distance in units used in find_2_distances.
 """
 
 
@@ -18,12 +18,12 @@ def find_1_distance(
     """
     Given a point and a normal vector, finds the first intersection point with a
     membrane surface in the direction of the normal vector and measures
-    the distance.
+    the distance. All distances measures are in units of the surface.
 
     Args:
         p0 (numpy.ndarray): 3D point coordinates
         normal (numpy.ndarray): 3D normal vector
-        maxdist (float): maximal distance (nm) from p0 the membrane
+        maxdist (float): maximal distance from p0 the membrane
         tg_er (TriangleGraph): graph of the target membrane surface
         poly_er (vtkPolyData): the target membrane surface
         verbose (boolean, optional): if True (default False), some extra
@@ -86,12 +86,13 @@ def find_2_distances(
     Given a point and a normal vector, finds two intersection points with a
     double membrane surface in the direction of the normal vector and measures
     the two distances (to the first surface and between the two surfaces).
+    All distances measures are in units of the graph and the surface.
 
     Args:
         p0 (numpy.ndarray): 3D point coordinates
         normal (numpy.ndarray): 3D normal vector
-        maxdist (float): maximal distance (nm) from p0 to first membrane
-        maxthick (float): maximal thickness (nm) from first to second membrane
+        maxdist (float): maximal distance from p0 to first membrane
+        maxthick (float): maximal thickness from first to second membrane
         tg_er (TriangleGraph): graph of the target membrane surface
         poly_er (vtkPolyData): the target double membrane surface
         verbose (boolean, optional): if True (default False), some extra
@@ -165,12 +166,13 @@ def find_2_distances_2_surf(
     Given a point and a normal vector, finds two intersection points with two
     membrane surfaces in the direction of the normal vector and measures
     the two distances (to the first surface and between the two surfaces).
+    All distances measures are in units of the graphs and the surfaces.
 
     Args:
         p0 (numpy.ndarray): 3D point coordinates
         normal (numpy.ndarray): 3D normal vector
-        maxdist (float): maximal distance (nm) from p0 to first membrane
-        maxthick (float): maximal thickness (nm) from first to second membrane
+        maxdist (float): maximal distance from p0 to first membrane
+        maxthick (float): maximal thickness from first to second membrane
         tg1 (TriangleGraph): graph of the first target membrane surface
         poly1 (vtkPolyData): the first target membrane surface
         tg2 (TriangleGraph): graph of the second target membrane surface
@@ -221,15 +223,16 @@ def calculate_distances(
     surfaces. Adds a vertex property to cER graph:
     "<mem1>distance" with a distance from the first membrane surface for the
         intersected triangles in the second membrane surface.
+    All distances measures are in units of the graphs and the surface.
 
     Args:
         tg_mem1 (TriangleGraph): graph of the first membrane with corrected
             normals
         tg_mem2 (TriangleGraph): graph of the second membrane
         surf_mem2 (vtkPolyData): the second membrane surface
-        maxdist (float): maximal distance (nm) from the first to the second
+        maxdist (float): maximal distance from the first to the second
             membrane
-        offset (float, optional): positive or negative offset (nm, default 0)
+        offset (float, optional): positive or negative offset (default 0)
             to add to the distances, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
         both_directions (boolean, optional): if True, look in both directions of
@@ -243,9 +246,9 @@ def calculate_distances(
             information will be printed out
 
     Returns:
-        a lists of distances (nm) between the two membranes
+        a lists of distances between the two membranes
     """
-    print("maxdist = {} nm".format(maxdist))
+    print("maxdist = {}".format(maxdist))
     maxdist -= offset  # because add the offset to the distances
 
     # Initialize the vertex property in the second graph and distances lists:
@@ -317,17 +320,18 @@ def calculate_thicknesses(
     membrane surface normals and a two-sided inner membrane surface.
     Adds vertex properties to the second (organelle) membrane graph:
     "<mem2>thickness": distance from the 1st intersected triangles for the 2nd
-        intersected triangles in the second membrane surface
+    intersected triangles in the second membrane surface.
+    All distances measures are in units of the graphs and the surface.
 
     Args:
         tg_mem1 (TriangleGraph): graph of the first membrane surface with
             corrected normals
         tg_mem2 (TriangleGraph): graph of inner second membrane surface
         surf_mem2 (vtkPolyData): inner second membrane surface
-        maxdist (float): maximal distance (nm) from the first to the second
+        maxdist (float): maximal distance from the first to the second
             membrane
-        maxthick (float): maximal thickness (nm) of the second organelle
-        offset (float, optional): positive or negative offset (nm, default 0)
+        maxthick (float): maximal thickness of the second organelle
+        offset (float, optional): positive or negative offset (default 0)
             to add to the thicknesses, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
         both_directions (boolean, optional): if True, look in both directions of
@@ -341,10 +345,10 @@ def calculate_thicknesses(
             information will be printed out
 
     Returns:
-        a lists of thicknesses of the second organelle (nm)
+        a lists of thicknesses of the second organelle
     """
-    print("maxdist = {} nm".format(maxdist))
-    print("maxthick = {} nm".format(maxthick))
+    print("maxdist = {}".format(maxdist))
+    print("maxthick = {}".format(maxthick))
     maxthick -= offset  # because add the offset to the distances
 
     # Initialize vertex properties of the second graph and distances lists:

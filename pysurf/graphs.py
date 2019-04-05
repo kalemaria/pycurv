@@ -40,20 +40,19 @@ class SegmentationGraph(object):
         """
 
         # Add "internal property maps" to the graph.
-        # vertex property for storing the xyz coordinates in nanometers of the
-        # corresponding vertex:
+        # vertex property for storing the xyz coordinates of the corresponding
+        # vertex:
         self.graph.vp.xyz = self.graph.new_vertex_property("vector<float>")
-        # edge property for storing the distance in nanometers between the
-        # connected vertices:
+        # edge property for storing the distance between the connected vertices:
         self.graph.ep.distance = self.graph.new_edge_property("float")
 
         self.coordinates_to_vertex_index = {}
-        """dict: a dictionary mapping the vertex coordinates in nanometers
-        (x, y, z) to the vertex index.
+        """dict: a dictionary mapping the vertex coordinates (x, y, z) to the
+        vertex index.
         """
         self.coordinates_pair_connected = {}
-        """dict: a dictionary storing pairs of vertex coordinates in nanometers
-        that are connected by an edge as a key in a tuple form
+        """dict: a dictionary storing pairs of vertex coordinates that are
+        connected by an edge as a key in a tuple form
         ((x1, y1, z1), (x2, y2, z2)) with value True.
         """
 
@@ -87,10 +86,10 @@ class SegmentationGraph(object):
         """
         Updates graph's dictionary coordinates_to_vertex_index.
 
-        The dictionary maps the vertex coordinates (x, y, z) scaled in
-        nanometers to the vertex index. It has to be updated after purging the
-        graph, because vertices are renumbered, as well as after reading a graph
-        from a file (e.g. before density calculation).
+        The dictionary maps the vertex coordinates (x, y, z) to the vertex
+        index. It has to be updated after purging the graph, because vertices
+        are renumbered, as well as after reading a graph from a file (e.g.
+        before density calculation).
 
         Returns:
             None
@@ -101,14 +100,15 @@ class SegmentationGraph(object):
             self.coordinates_to_vertex_index[
                 (x, y, z)] = self.graph.vertex_index[vd]
 
-    def calculate_density(self, scale_x, scale_y, scale_z, scale_factor_to_nm,
-                          mask=None, target_coordinates=None, verbose=False):
+    def calculate_density(self, size, scale, mask=None, target_coordinates=None,
+                          verbose=False):
         """
         Calculates ribosome density for each membrane graph vertex.
 
         Calculates shortest geodesic distances (d) for each vertex in the graph
         to each reachable ribosome center mapped on the membrane given by a
-        binary mask with coordinates in pixels or an array of coordinates in nm.
+        binary mask with coordinates in pixels or an array of coordinates in
+        given units.
         Then, calculates a density measure of ribosomes at each vertex or
         membrane voxel: D = sum {over all reachable ribosomes} (1 / (d + 1)).
         Adds the density as vertex PropertyMap to the graph. Returns an array
@@ -117,16 +117,14 @@ class SegmentationGraph(object):
         background.
 
         Args:
-            scale_x (int): scale X in voxels of the original segmentation
-            scale_y (int): scale Y in voxels of the original segmentation
-            scale_z (int): scale Z in voxels of the original segmentation
-            scale_factor_to_nm (float): pixel size in nanometers of the original
+            size (tuple): size in voxels (X, Y, Z) of the original segmentation
+            scale (tuple): pixel size (X, Y, Z) in given units of the original
                 segmentation
             mask (numpy.ndarray, optional): a binary mask of the ribosome
                 centers as 3D array where indices are coordinates in pixels
                 (default None)
             target_coordinates (numpy.ndarray, optional): the ribosome centers
-                coordinates in nm as 2D array in format
+                coordinates in given units as 2D array in format
                 [[x1, y1, z1], [x2, y2, z2], ...] (default None)
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
@@ -140,33 +138,29 @@ class SegmentationGraph(object):
         """
         import ribosome_density as rd
         # If a mask is given, find the set of voxels of ribosome centers mapped
-        # on the membrane, 'target_voxels', and rescale them to nm,
+        # on the membrane, 'target_voxels', and rescale them to units,
         # 'target_coordinates':
         if mask is not None:
-            if mask.shape != (scale_x, scale_y, scale_z):
+            if mask.shape != size:
                 raise pexceptions.PySegInputError(
                     expr='calculate_density (SegmentationGraph)',
-                    msg=("Scales of the input 'mask' have to be equal to those "
+                    msg=("Size of the input 'mask' have to be equal to those "
                          "set during the generation of the graph."))
             # output as a list of tuples [(x1,y1,z1), (x2,y2,z2), ...] in pixels
             target_voxels = rd.get_foreground_voxels_from_mask(mask)
             # for rescaling have to convert to an ndarray
             target_ndarray_voxels = rd.tupel_list_to_ndarray_voxels(
-                target_voxels
-            )
-            # rescale to nm, output an ndarray [[x1,y1,z1], [x2,y2,z2], ...]
-            target_ndarray_coordinates = (target_ndarray_voxels *
-                                          scale_factor_to_nm)
-            # convert to a list of tuples, which are in nm now
+                target_voxels)
+            # rescale to units, output an ndarray [[x1,y1,z1], [x2,y2,z2], ...]
+            target_ndarray_coordinates = (target_ndarray_voxels * scale)  # TODO test that it works!
+            # convert to a list of tuples, which are in units now
             target_coordinates = rd.ndarray_voxels_to_tupel_list(
-                target_ndarray_coordinates
-            )
-        # If target_coordinates are given (in nm), convert them from a numpy
+                target_ndarray_coordinates)
+        # If target_coordinates are given (in units), convert them from a numpy
         # ndarray to a list of tuples:
         elif target_coordinates is not None:
             target_coordinates = rd.ndarray_voxels_to_tupel_list(
-                target_coordinates
-            )
+                target_coordinates)
         # Exit if the target_voxels list is empty:
         if len(target_coordinates) == 0:
             raise pexceptions.PySegInputError(
@@ -248,11 +242,11 @@ class SegmentationGraph(object):
 
             # Calculate the corresponding voxel of the vertex and add the
             # density to the list keyed by the voxel in the dictionary:
-            # Scaling the coordinates back from nm to voxels. (Without round
+            # Scaling the coordinates back from units to voxels. (Without round
             # float coordinates are truncated to the next lowest integer.)
-            voxel_x = int(round(membrane_xyz[0] / scale_factor_to_nm))
-            voxel_y = int(round(membrane_xyz[1] / scale_factor_to_nm))
-            voxel_z = int(round(membrane_xyz[2] / scale_factor_to_nm))
+            voxel_x = int(round(membrane_xyz[0] / scale[0]))
+            voxel_y = int(round(membrane_xyz[1] / scale[1]))
+            voxel_z = int(round(membrane_xyz[2] / scale[2]))
             voxel = (voxel_x, voxel_y, voxel_z)
             if voxel in voxel_to_densities:
                 voxel_to_densities[voxel].append(density)
@@ -272,7 +266,7 @@ class SegmentationGraph(object):
         # hold in each membrane voxel the maximal density among the
         # corresponding vertex coordinates in the graph plus 1 and 0 in each
         # background (non-membrane) voxel:
-        densities = np.zeros((scale_x, scale_y, scale_z), dtype=np.float16)
+        densities = np.zeros(size, dtype=np.float16)
         # The densities array membrane voxels are initialized with 1 in order to
         # distinguish membrane voxels from the background.
         for voxel in voxel_to_densities:
@@ -538,8 +532,7 @@ class SegmentationGraph(object):
 
         Args:
             v (graph_tool.Vertex): the source vertex
-            g_max: maximal geodesic distance (in nanometers, if the graph was
-                scaled)
+            g_max: maximal geodesic distance (in the units of the graph)
             full_dist_map (graph_tool.PropertyMap, optional): the full distance
                 map for the whole graph; if None, a local distance map is
                 calculated for each vertex (default)

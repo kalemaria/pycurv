@@ -481,21 +481,22 @@ def rescale_surface(surface, scale):
 
     Args:
         surface (vtk.vtkPolyData): a surface of triangles
-        scale (float): a scaling factor
+        scale (tuple): a scaling factor in 3D (x, y, z)
 
     Returns:
         rescaled surface (vtk.vtkPolyData)
     """
-    if isinstance(surface, vtk.vtkPolyData):
-        transf = vtk.vtkTransform()
-        transf.Scale(scale, scale, scale)
-        tpd = vtk.vtkTransformPolyDataFilter()
-        tpd.SetInputData(surface)
-        tpd.SetTransform(transf)
-        tpd.Update()
-        scaled_surface = tpd.GetOutput()
-        return scaled_surface
-    else:
+    try:
+        assert isinstance(surface, vtk.vtkPolyData)
+    except AssertionError:
         raise pexceptions.PySegInputError(
             expr='rescale_surface',
             msg="A vtkPolyData object required as the first input.")
+    transf = vtk.vtkTransform()
+    transf.Scale(scale[0], scale[1], scale[2])
+    tpd = vtk.vtkTransformPolyDataFilter()
+    tpd.SetInputData(surface)
+    tpd.SetTransform(transf)
+    tpd.Update()
+    scaled_surface = tpd.GetOutput()
+    return scaled_surface

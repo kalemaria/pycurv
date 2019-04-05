@@ -16,13 +16,13 @@ __author__ = 'kalemanov'
 def calculate_g_max_from_radius_hit(radius_hit):
     """
     Calculates maximal geodesic neighborhood distance g_max from radius_hit:
-    g_max is quoter of a circle with radius equal to radius_hit.
+    g_max is a quarter of a circle with radius equal to radius_hit.
 
     Args:
-        radius_hit (float): radius_hit parameter
+        radius_hit (float): radius_hit parameter in given units
 
     Returns:
-        g_max
+        g_max in given units
     """
     g_max = math.pi * radius_hit / 2
     print("radius_hit = {}".format(radius_hit))
@@ -31,14 +31,15 @@ def calculate_g_max_from_radius_hit(radius_hit):
 
 
 def calculate_distances_from_triangle(
-        surface, scale_factor_to_nm, triangle_index, verbose=False):
+        surface, scale, triangle_index, verbose=False):
     """
     Calculates shortest geodesic distances from a source triangle center to all
     other triangles on the surface.
 
     Args:
         surface (vtkPolyData): input surface
-        scale_factor_to_nm (float): scale factor from voxels to nanometers
+        scale (tuple): scale factor (X, Y, Z) from voxels to units of the
+            surface
         triangle_index (int): index of the source triangle
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
@@ -48,7 +49,7 @@ def calculate_distances_from_triangle(
     """
     # Build a triangle graph from the surface:
     tg = TriangleGraph()
-    tg.build_graph_from_vtk_surface(surface, scale_factor_to_nm)
+    tg.build_graph_from_vtk_surface(surface, scale)
     if verbose:
         print('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
@@ -79,7 +80,7 @@ if __name__ == "__main__":
 
     in_surface = io.load_poly(in_surface_vtp)
     out_surface = calculate_distances_from_triangle(
-        in_surface, scale_factor_to_nm=1, triangle_index=v_id, verbose=True)
+        in_surface, scale=(1, 1, 1), triangle_index=v_id, verbose=True)
     io.save_vtp(out_surface, out_surface_vtp)
 
     calculate_g_max_from_radius_hit(4)

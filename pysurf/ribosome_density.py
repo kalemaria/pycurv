@@ -271,7 +271,7 @@ def nearest_vertex_for_particles(vertices_xyz, particles_xyz, radius):
 
     Note:
         All input parameters have to be in the same scale (either in pixels or
-        in nanometers).
+        in given units).
     """
     # Construct the KD tree from the vertices coordinates:
     tree = spatial.KDTree(vertices_xyz)
@@ -298,19 +298,18 @@ class VoxelGraph(graphs.SegmentationGraph):
     Please use constructor parameters inherited from graphs.SegmentationGraph.
     """
 
-    def build_graph_from_np_ndarray(self, mask, scale_factor_to_nm,
-                                    verbose=False):
+    def build_graph_from_np_ndarray(self, mask, scale, verbose=False):
         """
         Builds a graph from a binary mask of a membrane segmentation, including
         only voxels with value 1 (foreground voxels).
 
         Each foreground voxel, its foreground neighbor voxels and edges with
         euclidean distances between the voxel and its neighbor voxels (all
-        scaled in nm) are added to the graph.
+        scaled in given units) are added to the graph.
 
         Args:
             mask (numpy.ndarray): a binary 3D mask
-            scale_factor_to_nm (float): pixel size in nanometers for scaling the
+            scale (tuple): pixel size (X, Y, Z) in given units for scaling the
                 surface and the graph
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
@@ -325,14 +324,14 @@ class VoxelGraph(graphs.SegmentationGraph):
             print('{} membrane voxels'.format(len(membrane_voxels)))
             if verbose:
                 print(membrane_voxels)
-            self._expand_voxels(mask, membrane_voxels, scale_factor_to_nm,
+            self._expand_voxels(mask, membrane_voxels, scale,
                                 verbose)
         else:
             raise pexceptions.PySegInputError(
                 expr='build_graph_from_np_ndarray (VoxelGraph)',
                 msg='A 3D numpy ndarray object required as first input.')
 
-    def _expand_voxels(self, mask, remaining_mem_voxels, scale_factor_to_nm,
+    def _expand_voxels(self, mask, remaining_mem_voxels, scale,
                        verbose=False):
         """
         An iterative function used for building the membrane graph of a
@@ -341,14 +340,14 @@ class VoxelGraph(graphs.SegmentationGraph):
         This private method should only be called by the method
         build_graph_from_np_ndarray! Expands each foreground voxel, adding it,
         its foreground neighbor voxels and edges with euclidean distances
-        between the voxel and its neighbor voxels (all scaled in nm) to the
-        graph.
+        between the voxel and its neighbor voxels (all scaled in given units)
+        to the graph.
 
         Args:
             mask (numpy.ndarray): a binary 3D mask
             remaining_mem_voxels: a list of remaining membrane voxel coordinates
                 as tuples in form (x, y, z)
-            scale_factor_to_nm (float): pixel size in nanometers for scaling the
+            scale (tuple): pixel size (X, Y, Z) in given units for scaling the
                 surface and the graph
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
@@ -377,9 +376,9 @@ class VoxelGraph(graphs.SegmentationGraph):
                         voxel_to_expand[2]))
 
                 scaled_voxel_to_expand = (
-                    voxel_to_expand[0] * scale_factor_to_nm,
-                    voxel_to_expand[1] * scale_factor_to_nm,
-                    voxel_to_expand[2] * scale_factor_to_nm
+                    voxel_to_expand[0] * scale[0],
+                    voxel_to_expand[1] * scale[1],
+                    voxel_to_expand[2] * scale[2]
                 )
                 # If the scaled voxel to be expanded has been already added to
                 # the graph, get its vertex descriptor:
@@ -411,9 +410,9 @@ class VoxelGraph(graphs.SegmentationGraph):
                     for neighbor_voxel in neighbor_voxels:
 
                         scaled_neighbor_voxel = (
-                            neighbor_voxel[0] * scale_factor_to_nm,
-                            neighbor_voxel[1] * scale_factor_to_nm,
-                            neighbor_voxel[2] * scale_factor_to_nm
+                            neighbor_voxel[0] * scale,
+                            neighbor_voxel[1] * scale,
+                            neighbor_voxel[2] * scale
                         )
                         # If the scaled neighbor voxel has been already added to
                         # the graph, get its vertex descriptor:

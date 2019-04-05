@@ -22,7 +22,7 @@ values 1 at the boundary with 0's become this value.
 
 
 def generate_mem1_mem2_graphs_and_surface(
-        segmentation_mrc_file, scale_factor_to_nm, mem1_graph_outfile,
+        segmentation_mrc_file, pixel_size, mem1_graph_outfile,
         mem2_surf_outfile, mem2_graph_outfile, mem1_surf_outfile=None,
         lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, mem1="PM", mem2="cER"):
     """
@@ -31,7 +31,7 @@ def generate_mem1_mem2_graphs_and_surface(
 
     Args:
         segmentation_mrc_file (string): segmentation '.mrc' file path
-        scale_factor_to_nm (float): pixel size in nanometers for scaling the
+        pixel_size (float): pixel size in given units for scaling the
             surface and the graph
         mem1_graph_outfile (string): first surface graph '.gt' output file
         mem2_surf_outfile (string): second surface '.vtp' output file
@@ -61,22 +61,23 @@ def generate_mem1_mem2_graphs_and_surface(
         thr=THRESH_SIGMA1)
     # Generate graphs and remove 3 pixels from borders:
     mem1_tg = TriangleGraph()
-    mem1_tg.build_graph_from_vtk_surface(mem1_surface, scale_factor_to_nm)
+    scale = (pixel_size, pixel_size, pixel_size)
+    mem1_tg.build_graph_from_vtk_surface(mem1_surface, scale)
     print('The raw {} graph has {} vertices and {} edges'.format(
             mem1, mem1_tg.graph.num_vertices(), mem1_tg.graph.num_edges()))
     mem1_tg.find_vertices_near_border(
-        MAX_DIST_SURF * scale_factor_to_nm, purge=True)
+        MAX_DIST_SURF * pixel_size, purge=True)
     print('The cleaned {} graph has {} vertices and {} edges'.format(
             mem1, mem1_tg.graph.num_vertices(), mem1_tg.graph.num_edges()))
     if mem1_tg.graph.num_vertices() == 0:
         raise IOError("Graph does not have vertices")
 
     mem2_tg = TriangleGraph()
-    mem2_tg.build_graph_from_vtk_surface(mem2_surface, scale_factor_to_nm)
+    mem2_tg.build_graph_from_vtk_surface(mem2_surface, scale)
     print('The raw {} graph has {} vertices and {} edges'.format(
             mem2, mem2_tg.graph.num_vertices(), mem2_tg.graph.num_edges()))
     mem2_tg.find_vertices_near_border(
-        MAX_DIST_SURF * scale_factor_to_nm, purge=True)
+        MAX_DIST_SURF * pixel_size, purge=True)
     print('The cleaned {} graph has {} vertices and {} edges'.format(
             mem2, mem2_tg.graph.num_vertices(), mem2_tg.graph.num_edges()))
     if mem2_tg.graph.num_vertices() == 0:
@@ -93,7 +94,7 @@ def generate_mem1_mem2_graphs_and_surface(
 
 
 def generate_mem_lumen_graph_and_surface(
-        segmentation_mrc_file, scale_factor_to_nm, mem_surf_outfile,
+        segmentation_mrc_file, pixel_size, mem_surf_outfile,
         mem_graph_outfile, lbl_mem=2, lbl_mem_lumen=3, mem="cER"):
     """
     Extracts inner membrane surface from a segmentation with labels for
@@ -101,7 +102,7 @@ def generate_mem_lumen_graph_and_surface(
 
     Args:
         segmentation_mrc_file (string): segmentation '.mrc' file path
-        scale_factor_to_nm (float): pixel size in nanometers for scaling the
+        pixel_size (float): pixel size in given units for scaling the
             surface and the graph
         mem_surf_outfile (string): membrane surface '.vtp' output file
         mem_graph_outfile (string): membrane graph '.gt' output file
@@ -119,11 +120,12 @@ def generate_mem_lumen_graph_and_surface(
         segmentation, lbl_mem_lumen, mask=lbl_mem, sg=1, thr=THRESH_SIGMA1)
     # Generate graph and remove 3 pixels from borders:
     mem_tg = TriangleGraph()
-    mem_tg.build_graph_from_vtk_surface(mem_surface, scale_factor_to_nm)
+    scale = (pixel_size, pixel_size, pixel_size)
+    mem_tg.build_graph_from_vtk_surface(mem_surface, scale)
     print('The raw {} graph has {} vertices and {} edges'.format(
             mem, mem_tg.graph.num_vertices(), mem_tg.graph.num_edges()))
     mem_tg.find_vertices_near_border(
-        MAX_DIST_SURF * scale_factor_to_nm, purge=True)
+        MAX_DIST_SURF * pixel_size, purge=True)
     print('The cleaned {} graph has {} vertices and {} edges'.format(
             mem, mem_tg.graph.num_vertices(), mem_tg.graph.num_edges()))
     if mem_tg.graph.num_vertices() == 0:
@@ -144,6 +146,7 @@ def run_calculate_distances(
     A script running calculate_distances with graphs and surface loaded from
     files, transforming the resulting graph to a surface with triangles and
     saving the resulting graph and surface into files.
+    All distance measures and in units of the graphs and surfaces.
 
     Args:
         mem1_graph_file (str): .gt input file with the first membrane's
@@ -157,9 +160,8 @@ def run_calculate_distances(
         mem2_graph_outfile (str): .gt output file for the second membrane's
             TriangleGraph with distances
         distances_outfile (str): .csv output file for the distances list
-        maxdist (float): maximal distance (nm) from the first to the second
-            membrane
-        offset (float, optional): positive or negative offset (nm, default 0)
+        maxdist (float): maximal distance from the first to the second membrane
+        offset (float, optional): positive or negative offset (default 0)
             to add to the distances, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
         both_directions (boolean, optional): if True, look in both directions of
@@ -208,6 +210,7 @@ def run_calculate_thicknesses(
     A script running calculate_thicknesses with graphs and surface loaded from
     files, transforming the resulting graph to a surface with triangles and
     saving the resulting graph and surface into files.
+    All distance measures and in units of the graphs and surfaces
 
     Args:
         mem1_graph_file (str): .gt input file with the first membrane's
@@ -221,10 +224,10 @@ def run_calculate_thicknesses(
         mem2_graph_outfile: .gt output file with the the second membrane's
             TriangleGraph with thicknesses
         thicknesses_outfile: .csv output file for the thicknesses list
-        maxdist (float): maximal distance (nm) from the first to the second
+        maxdist (float): maximal distance from the first to the second
             membrane
-        maxthick (float): maximal thickness (nm) of the second organelle
-        offset (float, optional): positive or negative offset (nm, default 0)
+        maxthick (float): maximal thickness of the second organelle
+        offset (float, optional): positive or negative offset (default 0)
             to add to the distances, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
         both_directions (boolean, optional): if True, look in both directions of
@@ -268,7 +271,7 @@ def extract_distances(
         fold, base_filename, name, exclude_borders=1):
     """
     Extracts distances information from a .gt file into a .csv file. By default,
-    values within 1 nm to surface borders are excluded.
+    values within 1 (in units of the graph) to surface borders are excluded.
 
     Args:
         fold (str): path where the input is and where the output will be written
@@ -276,8 +279,8 @@ def extract_distances(
         name (str): name of the property to extract (e.g., 'PMdistance' or
             'cERthickness')
         exclude_borders (int, optional): if > 0, triangles within this distance
-            from borders in nm and corresponding values will be excluded from
-            the output files (graph .gt, surface.vtp file and .csv)
+            from borders and corresponding values will be excluded from the
+            output files (graph .gt, surface.vtp file and .csv)
 
     Returns:
         None
@@ -330,17 +333,20 @@ def _extract_distances_from_graph(
 def distances_and_thicknesses_calculation(
         fold, segmentation_file, base_filename,
         lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, lbl_mem2_lumen=3,
-        pixel_size_nm=1.368, radius_hit=10, maxdist_nm=50, maxthick_nm=80,
+        pixel_size=1.368, radius_hit=10, maxdist=50, maxthick=80,
         offset_voxels=1, both_directions=True, reverse_direction=False,
         mem1="PM", mem2="cER"):
-    """Takes input/output folder, input segmentation MRC file and base name for
+    """
+    Takes input/output folder, input segmentation MRC file and base name for
     output files and calculates distances between the first and the second
-    membrane and thicknesses between two sides of the second membrane."""
+    membrane and thicknesses between two sides of the second membrane.
+    Default distance measures are given in nanometers.
+    """
     log_file = '{}{}.distances_and_thicknesses_calculation.log'.format(
         fold, base_filename)
     sys.stdout = open(log_file, 'a')
 
-    offset_nm = offset_voxels * pixel_size_nm
+    offset = offset_voxels * pixel_size
     if not fold.endswith('/'):
         fold += '/'
     segmentation_file = '{}{}'.format(fold, segmentation_file)
@@ -364,7 +370,7 @@ def distances_and_thicknesses_calculation(
         print('Generating {} and {} graphs and surface files'.format(
             mem1, mem2))
         generate_mem1_mem2_graphs_and_surface(
-            segmentation_file, pixel_size_nm,
+            segmentation_file, pixel_size,
             mem1_graph_file, mem2_surf_file, mem2_graph_file, mem1_surf_file,
             lbl_mem1, lbl_mem2, lbl_between_mem1_mem2, mem1, mem2)
     if not isfile(mem1_normals_graph_file):
@@ -380,8 +386,8 @@ def distances_and_thicknesses_calculation(
     run_calculate_distances(
         mem1_normals_graph_file, mem2_surf_file, mem2_graph_file,
         mem2_dist_surf_file, mem2_dist_graph_file, distances_outfile,
-        maxdist_nm, offset_nm, both_directions, reverse_direction, mem1)
-    if maxthick_nm > 0:
+        maxdist, offset, both_directions, reverse_direction, mem1)
+    if maxthick > 0:
         inner_mem2_surf_file = '{}{}.inner{}.vtp'.format(fold, base_filename,
                                                          mem2)
         inner_mem2_graph_file = '{}{}.inner{}.gt'.format(fold, base_filename,
@@ -395,11 +401,11 @@ def distances_and_thicknesses_calculation(
         if not isfile(inner_mem2_surf_file) or not isfile(inner_mem2_graph_file):
             print('Generating inner {} graphs and surface files'.format(mem2))
             generate_mem_lumen_graph_and_surface(
-                segmentation_file, pixel_size_nm, inner_mem2_surf_file,
+                segmentation_file, pixel_size, inner_mem2_surf_file,
                 inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen, mem2)
         print('Calculating and saving {} thicknesses'.format(mem2))
         run_calculate_thicknesses(
             mem1_normals_graph_file, inner_mem2_surf_file, inner_mem2_graph_file,
             inner_mem2_thick_surf_file, inner_mem2_thick_graph_file,
-            thicknesses_outfile, maxdist_nm, maxthick_nm, offset_nm,
+            thicknesses_outfile, maxdist, maxthick, offset,
             both_directions, reverse_direction, mem2)

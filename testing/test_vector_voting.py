@@ -117,15 +117,15 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
     return kappa_2, T_1, T_2
 
 
-def surface_to_graph(surf_file, scale_factor_to_nm=1, inverse=False):
+def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False):
     """
     Reads in the .vtp file with the triangle mesh surface and transforms it
     into a triangle graph.
 
     Args:
         surf_file (str): .vtp file with the triangle mesh surface
-        scale_factor_to_nm (float, optional): pixel size in nanometers for
-            scaling the surface and the graph (default 1)
+        scale (float, optional): scale factor (X, Y, Z) in given units for
+            scaling the surface and the graph (default (1, 1, 1))
         inverse (boolean, optional): if True, the graph will have normals
             pointing outwards (negative curvature), if False (default), the
             other way around
@@ -149,7 +149,7 @@ def surface_to_graph(surf_file, scale_factor_to_nm=1, inverse=False):
     # curvatures)
     else:
         reverse_normals = True
-    tg.build_graph_from_vtk_surface(surf, scale_factor_to_nm, verbose=False,
+    tg.build_graph_from_vtk_surface(surf, scale, verbose=False,
                                     reverse_normals=reverse_normals)
     print(tg.graph)
 
