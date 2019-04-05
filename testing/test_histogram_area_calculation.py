@@ -1,4 +1,3 @@
-import pytest
 import numpy as np
 
 from errors_calculation import calculate_histogram_area
