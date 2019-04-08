@@ -9,6 +9,7 @@ setup(
     author='Maria Kalemanov, Antonio Martinez-Sanchez',
     author_email='',
     description='',
-    install_requires=["numpy", "scipy", "scikit-image", "pandas", "pytest",
-                      "matplotlib", "pathlib2", "vtk", "nibabel", "pathos"]
+    install_requires=["numpy", "scipy", "scikit-image<0.15", "pandas", "pytest",
+                      "matplotlib", "pathlib2", "vtk", "nibabel",
+                      "pathos==0.2.2.1", "networkx==2.2"]
 )
