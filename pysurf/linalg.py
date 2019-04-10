@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from scipy.linalg import expm3
+from scipy.linalg import expm
 
 """
 Set of linear algebra and some basic math functions.
@@ -66,7 +66,7 @@ def rotation_matrix(axis, theta):
     """
     a = axis / math.sqrt(np.dot(axis, axis))  # unit vector along axis
     A = np.cross(np.eye(3), a)  # skew-symmetric matrix associated to a
-    return expm3(A * theta)
+    return expm(A * theta)
 
 
 def rotate_vector(v, theta, axis=None, matrix=None, debug=False):

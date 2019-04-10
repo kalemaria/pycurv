@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import os
 
 from pysurf import pysurf_io as io
 from scripts import distances_and_thicknesses_calculation
@@ -60,9 +61,10 @@ def test_distances_and_thicknesses_calculation():
     Tests for run_calculate_distances.py, assuming that other used functions are
     correct.
     """
-    # should exist:
-    fold = '/fs/pool/pool-ruben/Maria/4Javier/old_and_test/distances_phantom_test/'
     # will be generated:
+    fold = './test_distances_calculation_output/'
+    if not os.path.isdir(fold):
+        os.mkdir(fold)
     segmentation_file = 'phantom_segmentation.mrc'
     base_filename = "phantom"
     distances_outfile = '{}.cER.distancesFromPM.csv'.format(base_filename)
