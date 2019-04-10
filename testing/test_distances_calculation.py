@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+import shutil
 
 from pysurf import pysurf_io as io
 from scripts import distances_and_thicknesses_calculation
@@ -63,8 +64,9 @@ def test_distances_and_thicknesses_calculation():
     """
     # will be generated:
     fold = './test_distances_calculation_output/'
-    if not os.path.isdir(fold):
-        os.mkdir(fold)
+    if os.path.isdir(fold):
+        shutil.rmtree(fold)
+    os.mkdir(fold)  # start always with an empty directory
     segmentation_file = 'phantom_segmentation.mrc'
     base_filename = "phantom"
     distances_outfile = '{}.cER.distancesFromPM.csv'.format(base_filename)
@@ -97,7 +99,7 @@ def test_distances_and_thicknesses_calculation():
         fold, segmentation_file, base_filename,
         pixel_size=pixel_size_nm, radius_hit=radius_hit,
         maxdist=maxdist_nm, maxthick=maxthick_nm,
-        offset_voxels=offset_voxels)
+        offset_voxels=offset_voxels, smooth=False)
 
     print('Reading in and checking distances between PM and cER')
     df = pd.read_csv(fold+distances_outfile, sep=';', index_col=0)

@@ -24,7 +24,8 @@ values 1 at the boundary with 0's become this value.
 def generate_mem1_mem2_graphs_and_surface(
         segmentation_mrc_file, pixel_size, mem1_graph_outfile,
         mem2_surf_outfile, mem2_graph_outfile, mem1_surf_outfile=None,
-        lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, mem1="PM", mem2="cER"):
+        lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, mem1="PM", mem2="cER",
+        smooth=True):
     """
     Extracts two membrane surfaces from a segmentations with labels for
     both membranes and a space between them.
@@ -44,6 +45,8 @@ def generate_mem1_mem2_graphs_and_surface(
             (default 4)
         mem1 (str, optional): name of the first membrane (default "PM")
         mem2 (str, optional): name of the second membrane (default "cER")
+        smooth (boolean, optional): if True (default), the membrane masks will
+            be smoothed using a Gaussian kernel with sigma 1.
 
     Returns:
         None
@@ -51,14 +54,19 @@ def generate_mem1_mem2_graphs_and_surface(
     # Extract the three masks:
     segmentation = io.load_tomo(segmentation_mrc_file)
     # Generate isosurface around the mask in between the membranes,
-    # first applying the first membrane mask:
-    mem1_surface = surface.gen_isosurface(
-        segmentation, lbl_between_mem1_mem2, mask=lbl_mem1, sg=1,
-        thr=THRESH_SIGMA1)
-    # second applying the second membrane mask:
-    mem2_surface = surface.gen_isosurface(
-        segmentation, lbl_between_mem1_mem2, mask=lbl_mem2, sg=1,
-        thr=THRESH_SIGMA1)
+    # applying the first and then the second membrane mask:
+    if smooth:
+        mem1_surface = surface.gen_isosurface(
+            segmentation, lbl_between_mem1_mem2, mask=lbl_mem1, sg=1,
+            thr=THRESH_SIGMA1)
+        mem2_surface = surface.gen_isosurface(
+            segmentation, lbl_between_mem1_mem2, mask=lbl_mem2, sg=1,
+            thr=THRESH_SIGMA1)
+    else:
+        mem1_surface = surface.gen_isosurface(
+            segmentation, lbl_between_mem1_mem2, mask=lbl_mem1)
+        mem2_surface = surface.gen_isosurface(
+            segmentation, lbl_between_mem1_mem2, mask=lbl_mem2)
     # Generate graphs and remove 3 pixels from borders:
     mem1_tg = TriangleGraph()
     scale = (pixel_size, pixel_size, pixel_size)
@@ -95,7 +103,8 @@ def generate_mem1_mem2_graphs_and_surface(
 
 def generate_mem_lumen_graph_and_surface(
         segmentation_mrc_file, pixel_size, mem_surf_outfile,
-        mem_graph_outfile, lbl_mem=2, lbl_mem_lumen=3, mem="cER"):
+        mem_graph_outfile, lbl_mem=2, lbl_mem_lumen=3, mem="cER",
+        smooth=True):
     """
     Extracts inner membrane surface from a segmentation with labels for
     the membrane and its lumen.
@@ -109,6 +118,8 @@ def generate_mem_lumen_graph_and_surface(
         lbl_mem (int, optional): label of the membrane (default 2)
         lbl_mem_lumen (int, optional): label of the membrane lumen (default=3)
         mem (str, optional): name of the first membrane (default "cER")
+        smooth (boolean, optional): if True (default), the membrane masks will
+            be smoothed using a Gaussian kernel with sigma 1.
 
     Returns:
         None
@@ -116,8 +127,12 @@ def generate_mem_lumen_graph_and_surface(
     # Extract the three masks:
     segmentation = io.load_tomo(segmentation_mrc_file)
     # Generate isosurface around the mask of membrane lumen:
-    mem_surface = surface.gen_isosurface(
-        segmentation, lbl_mem_lumen, mask=lbl_mem, sg=1, thr=THRESH_SIGMA1)
+    if smooth:
+        mem_surface = surface.gen_isosurface(
+            segmentation, lbl_mem_lumen, mask=lbl_mem, sg=1, thr=THRESH_SIGMA1)
+    else:
+        mem_surface = surface.gen_isosurface(
+            segmentation, lbl_mem_lumen, mask=lbl_mem)
     # Generate graph and remove 3 pixels from borders:
     mem_tg = TriangleGraph()
     scale = (pixel_size, pixel_size, pixel_size)
@@ -335,7 +350,7 @@ def distances_and_thicknesses_calculation(
         lbl_mem1=1, lbl_mem2=2, lbl_between_mem1_mem2=4, lbl_mem2_lumen=3,
         pixel_size=1.368, radius_hit=10, maxdist=50, maxthick=80,
         offset_voxels=1, both_directions=True, reverse_direction=False,
-        mem1="PM", mem2="cER"):
+        mem1="PM", mem2="cER", smooth=True):
     """
     Takes input/output folder, input segmentation MRC file and base name for
     output files and calculates distances between the first and the second
@@ -372,7 +387,8 @@ def distances_and_thicknesses_calculation(
         generate_mem1_mem2_graphs_and_surface(
             segmentation_file, pixel_size,
             mem1_graph_file, mem2_surf_file, mem2_graph_file, mem1_surf_file,
-            lbl_mem1, lbl_mem2, lbl_between_mem1_mem2, mem1, mem2)
+            lbl_mem1, lbl_mem2, lbl_between_mem1_mem2, mem1, mem2,
+            smooth=smooth)
     if not isfile(mem1_normals_graph_file):
         print('Estimating normals for {} graph'.format(mem1))
         mem1_tg = TriangleGraph()
@@ -402,7 +418,8 @@ def distances_and_thicknesses_calculation(
             print('Generating inner {} graphs and surface files'.format(mem2))
             generate_mem_lumen_graph_and_surface(
                 segmentation_file, pixel_size, inner_mem2_surf_file,
-                inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen, mem2)
+                inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen, mem2,
+                smooth=smooth)
         print('Calculating and saving {} thicknesses'.format(mem2))
         run_calculate_thicknesses(
             mem1_normals_graph_file, inner_mem2_surf_file, inner_mem2_graph_file,
