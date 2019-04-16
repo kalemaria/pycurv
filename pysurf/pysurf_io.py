@@ -248,6 +248,23 @@ def load_poly(fname):
     return reader.GetOutput()
 
 
+def load_poly_from_vtk(fname):
+    """
+    Loads data from a legacy VTK file.
+
+    Args:
+        fname (str): input file name, should end with '.vtk'
+
+    Returns:
+        vtk.vtkPolyData object
+    """
+    reader = vtk.vtkPolyDataReader()
+    reader.SetFileName(fname)
+    reader.Update()
+
+    return reader.GetOutput()
+
+
 def write_values_to_file(values, filename):
     """
     Writes a list or numpy array of values into a file as a column.

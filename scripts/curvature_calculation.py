@@ -701,11 +701,15 @@ def annas_workflow(
             gt_file, surf_file))
 
 
-def from_ply_workflow(ply_file, scale, radius_hit,
-                      page_curvature_formula=False, methods=["VV"], area2=True,
-                      cores=4):
-    # Transforming PLY to VTP surface format
+def from_ply_workflow(
+        ply_file, scale, radius_hit, page_curvature_formula=False,
+        methods=["VV"], area2=True, cores=4):
     base_filename = os.path.splitext(ply_file)[0]
+    log_file = '{}.{}_rh{}.log'.format(
+        base_filename, methods[0], radius_hit)
+    sys.stdout = open(log_file, 'a')
+
+    # Transforming PLY to VTP surface format
     surf_file = base_filename + ".vtp"
     io.ply_file_to_vtp_file(ply_file, surf_file)
 
@@ -744,9 +748,59 @@ def from_ply_workflow(ply_file, scale, radius_hit,
         io.save_vtp(surf, surf_file)
 
 
+def from_vtk_workflow(
+        vtk_file, scale, radius_hit, page_curvature_formula=False,
+        methods=["VV"], area2=True, cores=4):
+    base_filename = os.path.splitext(vtk_file)[0].strip("_mean_curvature")
+    log_file = '{}.{}_rh{}.log'.format(
+        base_filename, methods[0], radius_hit)
+    sys.stdout = open(log_file, 'a')
+
+    # Reading in the surface and transforming it into a triangle graph
+    print('\nReading in the surface file to get a vtkPolyData surface...')
+    surf = io.load_poly_from_vtk(vtk_file)
+    print('\nBuilding a triangle graph from the surface...')
+    tg = TriangleGraph()
+    tg.build_graph_from_vtk_surface(surf, scale)
+    if tg.graph.num_vertices() == 0:
+        raise pexceptions.PySegInputError(
+            expr="new_workflow", msg="The graph is empty!")
+    print('The graph has {} vertices and {} edges'.format(
+        tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    # Running the modified Normal Vector Voting algorithm:
+    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    method_tg_surf_dict = normals_directions_and_curvature_estimation(
+        tg, radius_hit, exclude_borders=0, methods=methods,
+        page_curvature_formula=page_curvature_formula,
+        area2=area2, poly_surf=surf, cores=cores,
+        graph_file=temp_normals_graph_file)
+
+    for method in method_tg_surf_dict.keys():
+        # Saving the output (TriangleGraph object) for later inspection in
+        # ParaView:
+        (tg, surf) = method_tg_surf_dict[method]
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
+        surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
+        io.save_vtp(surf, surf_file)
+
+
 def from_nii_workflow(
         nii_file, outfold, radius_hit, page_curvature_formula=False,
         methods=["VV"], area2=True, cores=4):
+    base_filename = os.path.splitext(
+        os.path.splitext(os.path.basename(nii_file))[0]
+    )[0]  # without the path and without ".nii.gz" extensions
+    log_file = '{}.{}_rh{}.log'.format(
+        base_filename, methods[0], radius_hit)
+    sys.stdout = open(log_file, 'a')
+
     # Reading in the data and getting the data type and average scaling in mm:
     seg, _, header = io.load_nii(nii_file)
     assert (isinstance(seg, np.ndarray))
@@ -755,9 +809,6 @@ def from_nii_workflow(
     print("pixel size in mm (x, y, z) = {}".format(scale))
 
     # Save as MRC file:
-    base_filename = os.path.splitext(
-        os.path.splitext(os.path.basename(nii_file))[0]
-    )[0]  # without the path and without ".nii.gz" extensions
     mrc_file = str(os.path.join(outfold, base_filename+".mrc"))
     if not isfile(mrc_file):
         io.save_numpy(seg, mrc_file)
@@ -1065,9 +1116,14 @@ if __name__ == "__main__":
     #              "LimeSegOutput/DubSeg/cell_11/T_10.ply",
     #     scale=(1, 1, 1), radius_hit=10)
 
-    from_nii_workflow(
-        nii_file="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
-                 "GroundTruth/training_axial_full_pat0-label.nii.gz",
-        outfold="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
-                "GroundTruthOutput",
-        radius_hit=5)
+    # from_nii_workflow(
+    #     nii_file="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
+    #              "GroundTruth/training_axial_full_pat0-label.nii.gz",
+    #     outfold="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
+    #             "GroundTruthOutput",
+    #     radius_hit=5)
+
+    vtk_file = sys.argv[1]
+    scale = (1, 1, 1)  # should be scaled to mm
+    radius_hit = 2  # mm, used as default by Mindboggle's "radius disk"
+    from_vtk_workflow(vtk_file, scale, radius_hit)
