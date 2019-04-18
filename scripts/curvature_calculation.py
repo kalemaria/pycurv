@@ -807,26 +807,41 @@ def from_vtk_workflow(
         base_filename, methods[0], radius_hit)
     sys.stdout = open(log_file, 'a')
 
-    # Reading in the surface and transforming it into a triangle graph
     print('\nReading in the surface file to get a vtkPolyData surface...')
     surf = io.load_poly_from_vtk(vtk_file)
-    print('\nBuilding a triangle graph from the surface...')
-    tg = TriangleGraph()
-    tg.build_graph_from_vtk_surface(surf, scale)
-    if tg.graph.num_vertices() == 0:
-        raise pexceptions.PySegInputError(
-            expr="new_workflow", msg="The graph is empty!")
-    print('The graph has {} vertices and {} edges'.format(
-        tg.graph.num_vertices(), tg.graph.num_edges()))
+
+    graph_file = base_filename + ".gt"
+    if not isfile(graph_file):
+        print('\nBuilding a triangle graph from the surface...')
+        tg = TriangleGraph()
+        tg.build_graph_from_vtk_surface(surf, scale)
+        if tg.graph.num_vertices() == 0:
+            raise pexceptions.PySegInputError(
+                expr="new_workflow", msg="The graph is empty!")
+        print('The graph has {} vertices and {} edges'.format(
+            tg.graph.num_vertices(), tg.graph.num_edges()))
+    else:
+        print('\nReading in the graph from file...')
+        tg = TriangleGraph()
+        tg.graph = load_graph(graph_file)
 
     # Running the modified Normal Vector Voting algorithm:
-    temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+    normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
         base_filename, radius_hit)
-    method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=0, methods=methods,
-        page_curvature_formula=page_curvature_formula,
-        area2=area2, poly_surf=surf, cores=cores,
-        graph_file=temp_normals_graph_file)
+    method_tg_surf_dict = {}
+    if not isfile(normals_graph_file):
+        method_tg_surf_dict = normals_directions_and_curvature_estimation(
+            tg, radius_hit, exclude_borders=0, methods=methods,
+            page_curvature_formula=page_curvature_formula,
+            area2=area2, poly_surf=surf, cores=cores,
+            graph_file=normals_graph_file)
+    else:
+        for method in methods:
+            tg_curv, surface_curv = curvature_estimation(
+                radius_hit, exclude_borders=0, graph_file=normals_graph_file,
+                method=method, page_curvature_formula=page_curvature_formula,
+                area2=area2, poly_surf=surf, cores=cores)
+            method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
@@ -1209,6 +1224,5 @@ if __name__ == "__main__":
     #     radius_hit=5)
 
     vtk_file = sys.argv[1]
-    radius_hit = sys.argv[2]  # 2 mm, Mindboggle's default "radius disk"
-    scale = (1, 1, 1)  # should be scaled to mm
-    from_vtk_workflow(vtk_file, scale, radius_hit)
+    radius_hit = float(sys.argv[2])  # 2 mm, Mindboggle's default "radius disk"
+    from_vtk_workflow(vtk_file, radius_hit, scale=(1, 1, 1))  # scaled to mm
