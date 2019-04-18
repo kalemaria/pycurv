@@ -462,7 +462,7 @@ def extract_curvatures_after_new_workflow(
 
 
 def _extract_curvatures_from_graph(
-        tg, csv_file, exclude_borders, gt_file=None, vtp_file=None,
+        tg, csv_file, exclude_borders=0, gt_file=None, vtp_file=None,
         categorize_shape_index=False):
     # If don't want to include curvatures near borders, filter out those
     if exclude_borders > 0:
@@ -702,8 +702,31 @@ def annas_workflow(
 
 
 def from_ply_workflow(
-        ply_file, scale, radius_hit, page_curvature_formula=False,
+        ply_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False,
         methods=["VV"], area2=True, cores=4):
+    """
+    Estimates curvature for each triangle in a triangle mesh in PLY format.
+
+    Args:
+        ply_file (str): PLY file with the surface
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        scale (tuple, optional): pixel size (X, Y, Z) in given units for
+            scaling the surface if it is not scaled (default (1, 1, 1))
+        page_curvature_formula (boolean, optional): if True (default False),
+            normal curvature formula from Page et al. is used in VV (see
+            collect_curvature_votes)
+        methods (list, optional): all methods to run in the second pass ('VV'
+            and 'SSVV' are possible, default is 'VV')
+        area2 (boolean, optional): if True (default), votes are weighted by
+            triangle area also in the second step (principle directions and
+            curvatures estimation)
+        cores (int, optional): number of cores to run VV in parallel (default 4)
+
+    Returns:
+        None
+    """
     base_filename = os.path.splitext(ply_file)[0]
     log_file = '{}.{}_rh{}.log'.format(
         base_filename, methods[0], radius_hit)
@@ -726,7 +749,8 @@ def from_ply_workflow(
         tg.graph.num_vertices(), tg.graph.num_edges()))
 
     # Running the modified Normal Vector Voting algorithm:
-    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+        base_filename, radius_hit)
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=0, methods=methods,
         page_curvature_formula=page_curvature_formula,
@@ -746,11 +770,38 @@ def from_ply_workflow(
                 method = 'RVV'
         surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
+        gt_file = '{}.{}_rh{}.gt'.format(base_filename, method, radius_hit)
+        tg.graph.save(gt_file)
+        csv_file = '{}.{}_rh{}.csv'.format(base_filename, method, radius_hit)
+        _extract_curvatures_from_graph(tg, csv_file)
 
 
 def from_vtk_workflow(
-        vtk_file, scale, radius_hit, page_curvature_formula=False,
+        vtk_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False,
         methods=["VV"], area2=True, cores=4):
+    """
+    Estimates curvature for each triangle in a triangle mesh in VTK format.
+
+    Args:
+        vtk_file (str): VTK file with the surface
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        scale (tuple, optional): pixel size (X, Y, Z) in given units for
+            scaling the surface if it is not scaled (default (1, 1, 1))
+        page_curvature_formula (boolean, optional): if True (default False),
+            normal curvature formula from Page et al. is used in VV (see
+            collect_curvature_votes)
+        methods (list, optional): all methods to run in the second pass ('VV'
+            and 'SSVV' are possible, default is 'VV')
+        area2 (boolean, optional): if True (default), votes are weighted by
+            triangle area also in the second step (principle directions and
+            curvatures estimation)
+        cores (int, optional): number of cores to run VV in parallel (default 4)
+
+        Returns:
+            None
+        """
     base_filename = os.path.splitext(vtk_file)[0].strip("_mean_curvature")
     log_file = '{}.{}_rh{}.log'.format(
         base_filename, methods[0], radius_hit)
@@ -769,7 +820,8 @@ def from_vtk_workflow(
         tg.graph.num_vertices(), tg.graph.num_edges()))
 
     # Running the modified Normal Vector Voting algorithm:
-    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+        base_filename, radius_hit)
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
         tg, radius_hit, exclude_borders=0, methods=methods,
         page_curvature_formula=page_curvature_formula,
@@ -789,11 +841,39 @@ def from_vtk_workflow(
                 method = 'RVV'
         surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
+        gt_file = '{}.{}_rh{}.gt'.format(base_filename, method, radius_hit)
+        tg.graph.save(gt_file)
+        csv_file = '{}.{}_rh{}.csv'.format(base_filename, method, radius_hit)
+        _extract_curvatures_from_graph(tg, csv_file)
 
 
 def from_nii_workflow(
         nii_file, outfold, radius_hit, page_curvature_formula=False,
         methods=["VV"], area2=True, cores=4):
+    """
+    Extracts surface for every label > 0 in the segmentation in NII format,
+    after applying a Gaussian filter with sigma of 1.
+    For each surface, estimates curvature for each triangle in a triangle mesh.
+
+    Args:
+        nii_file (str): NII file with the segmentation
+        outfold (str): output folder
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        page_curvature_formula (boolean, optional): if True (default False),
+            normal curvature formula from Page et al. is used in VV (see
+            collect_curvature_votes)
+        methods (list, optional): all methods to run in the second pass ('VV'
+            and 'SSVV' are possible, default is 'VV')
+        area2 (boolean, optional): if True (default), votes are weighted by
+            triangle area also in the second step (principle directions and
+            curvatures estimation)
+        cores (int, optional): number of cores to run VV in parallel (default 4)
+
+        Returns:
+            None
+        """
     base_filename = os.path.splitext(
         os.path.splitext(os.path.basename(nii_file))[0]
     )[0]  # without the path and without ".nii.gz" extensions
@@ -846,7 +926,8 @@ def from_nii_workflow(
             tg.graph.num_vertices(), tg.graph.num_edges()))
 
         # Running the modified Normal Vector Voting algorithm:
-        temp_normals_graph_file = '{}.normals.gt'.format(outfile_base)
+        temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+            outfile_base, radius_hit)
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
             tg, radius_hit, exclude_borders=0, methods=methods,
             page_curvature_formula=page_curvature_formula,
@@ -864,9 +945,13 @@ def from_nii_workflow(
                     method = 'AVV'
                 else:
                     method = 'RVV'
-            surf_file = '{}.{}_rh{}.vtp'.format(outfile_base, method,
-                                                radius_hit)
+            surf_file = '{}.{}_rh{}.vtp'.format(
+                outfile_base, method, radius_hit)
             io.save_vtp(surf, surf_file)
+            gt_file = '{}.{}_rh{}.gt'.format(outfile_base, method, radius_hit)
+            tg.graph.save(gt_file)
+            csv_file = '{}.{}_rh{}.csv'.format(outfile_base, method, radius_hit)
+            _extract_curvatures_from_graph(tg, csv_file)
 
 
 def main_javier(membrane, radius_hit):
@@ -1114,7 +1199,7 @@ if __name__ == "__main__":
     # from_ply_workflow(
     #     ply_file="/fs/pool/pool-ruben/Maria/curvature/TestImages-LimeSeg/"
     #              "LimeSegOutput/DubSeg/cell_11/T_10.ply",
-    #     scale=(1, 1, 1), radius_hit=10)
+    #     radius_hit=10, scale=(1, 1, 1))
 
     # from_nii_workflow(
     #     nii_file="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
@@ -1124,6 +1209,6 @@ if __name__ == "__main__":
     #     radius_hit=5)
 
     vtk_file = sys.argv[1]
+    radius_hit = sys.argv[2]  # 2 mm, Mindboggle's default "radius disk"
     scale = (1, 1, 1)  # should be scaled to mm
-    radius_hit = 2  # mm, used as default by Mindboggle's "radius disk"
     from_vtk_workflow(vtk_file, scale, radius_hit)

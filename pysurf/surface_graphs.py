@@ -208,8 +208,7 @@ class TriangleGraph(SurfaceGraph):
                                      verbose=False, reverse_normals=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
-        given units according to the scale factor also specified when creating
-        the TriangleGraph object.
+        given units according to the scale factor.
 
         Every vertex of the graph represents the center of a surface triangle,
         and every edge of the graph connects two adjacent triangles. There are
@@ -219,7 +218,8 @@ class TriangleGraph(SurfaceGraph):
         Args:
             surface (vtk.vtkPolyData): a signed surface (mesh of triangles)
                 generated from the segmentation in voxels
-            scale (tuple, optional): pixel size in given units for
+            scale (tuple, optional): pixel size (X, Y, Z) in given units for
+                scaling the surface and the graph (default (1, 1, 1))
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
             reverse_normals (boolean, optional): if True (default False), the
