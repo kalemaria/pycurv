@@ -810,8 +810,8 @@ def from_vtk_workflow(
     print('\nReading in the surface file to get a vtkPolyData surface...')
     surf = io.load_poly_from_vtk(vtk_file)
 
-    graph_file = base_filename + ".gt"
-    if not isfile(graph_file):
+    surface_graph_file = base_filename + ".gt"
+    if not isfile(surface_graph_file):
         print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
         tg.build_graph_from_vtk_surface(surf, scale)
@@ -820,10 +820,11 @@ def from_vtk_workflow(
                 expr="new_workflow", msg="The graph is empty!")
         print('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
+        tg.graph.save(surface_graph_file)
     else:
         print('\nReading in the graph from file...')
         tg = TriangleGraph()
-        tg.graph = load_graph(graph_file)
+        tg.graph = load_graph(surface_graph_file)
 
     # Running the modified Normal Vector Voting algorithm:
     normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
