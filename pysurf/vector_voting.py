@@ -371,7 +371,7 @@ def curvature_estimation(
           "surface patches using {}...".format(method))
     t_begin2 = time.time()
 
-    collecting_curvature_votes = tg.collect_curvature_votes
+    collect_curvature_votes = tg.collect_curvature_votes
     gen_curv_vote = tg.gen_curv_vote
     estimate_curvature = tg.estimate_curvature
     if exclude_borders > 0:
@@ -407,7 +407,7 @@ def curvature_estimation(
             # Curvature votes collection for VV:
             # None is returned if v does not have any neighbors, then
             # estimate_curvature will return Nones as well
-            B_v_list = p.map(partial(collecting_curvature_votes,
+            B_v_list = p.map(partial(collect_curvature_votes,
                                      g_max=g_max, sigma=sigma,
                                      page_curvature_formula=page_curvature_formula,
                                      A_max=A_max, full_dist_map=full_dist_map),
@@ -442,7 +442,7 @@ def curvature_estimation(
         else:  # cores == 1, sequential processing
             # Curvature votes collection and estimation for VV:
             for i, v_ind in enumerate(good_vertices_ind):
-                B_v = collecting_curvature_votes(
+                B_v = collect_curvature_votes(
                     v_ind, g_max, sigma,
                     page_curvature_formula=page_curvature_formula,
                     A_max=A_max, full_dist_map=full_dist_map)
