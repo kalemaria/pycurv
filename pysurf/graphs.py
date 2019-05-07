@@ -50,7 +50,7 @@ class SegmentationGraph(object):
         """dict: a dictionary mapping the vertex coordinates (x, y, z) to the
         vertex index.
         """
-        self.coordinates_pair_connected = {}
+        self.coordinates_pair_connected = {}  # TODO use a set to save space?
         """dict: a dictionary storing pairs of vertex coordinates that are
         connected by an edge as a key in a tuple form
         ((x1, y1, z1), (x2, y2, z2)) with value True.

@@ -30,7 +30,9 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 
 __author__ = 'kalemanov'
 
-FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
+#FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
+FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
+       'vertex_based/test_vector_voting_output/'
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 LINEWIDTH = 4
 
@@ -214,7 +216,8 @@ def plot_composite_line_hist(
         x_label, y_label, title=None,
         data_arrays=None, data_files=None, weights_arrays=None,
         num_bins=20, x_range=None, y_range=None, max_val=None,
-        normalize=False, cumulative=False, outfile=None, legend_loc='best'):
+        normalize=False, cumulative=False, outfile=None, legend_loc='best',
+        num_x_values=0):
     """
     Plots several data sets as line histograms in one plot.
     Args:
@@ -243,6 +246,8 @@ def plot_composite_line_hist(
         outfile (str, optional): if given (default None), the plot will be saved
             as a file under this path
         legend_loc (str, optional): legend location (default 'best')
+        num_x_values (int, optional): if > 0 (default 0), plot this number of
+            ticks on X axis
 
     Returns:
         hist_areas: list of histogram areas, values are Null in not cumulative
@@ -296,7 +301,8 @@ def plot_composite_line_hist(
     plt.tight_layout()
     plt.tick_params(top='off', right='off', which='both')  # sns.despine()
     plt.tick_params(direction='in')
-    # plt.locator_params(axis='x', nbins=5)  # plot_sphere_kappa_1_and_2_diff_rh
+    if num_x_values > 0:
+        plt.locator_params(axis='x', nbins=num_x_values)
     if outfile is None:
         plt.show()
     elif isinstance(outfile, str):
@@ -305,22 +311,38 @@ def plot_composite_line_hist(
     return hist_areas
 
 
-def plot_plane_normals(n=10, y_range=(0, 1), res=20):
+def plot_plane_normals(
+        n=10, x_range=None, y_range=(0, 1), res=20, vertex_based=False):
     """ Plots estimated normals errors by VV versus original face normals
     (calculated by VTK) on a noisy plane surface.
 
     Args:
         n (int, optional): noise in % (default 10)
+        x_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
         y_range (tuple, optional): a tuple of two values to limit the range
             at Y axis (default (0, 1))
         res (int, optional): defines the size of the square plane in pixels and
             triangle division: 2*res
+        vertex_based (boolean, optional): if True (default False), curvature is
+            calculated per triangle vertex instead of triangle center
     """
     fold = ("{}plane/res{}_noise{}/files4plotting/".format(FOLD, res, n))
     plot_fold = ("{}plane/res{}_noise{}/plots/".format(FOLD, res, n))
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
+
+    plot_file = "{}plane_res{}_noise{}.VV_vs_VTK.normal_errors.png".format(
+        plot_fold, res, n)
+    if vertex_based:
+        plot_file = os.path.splitext(plot_file)[0] + "_vertex_based.png"
+    if x_range is not None:
+        plot_file = os.path.splitext(plot_file)[0] + "_{}-{}.png".format(
+            x_range[0], x_range[1])
+
     basename = "plane_half_size{}".format(res)
+    if vertex_based:
+        basename += "_vertex_based"
     SSVV_rh8_normal_errors = pd.read_csv("{}{}.SSVV_rh8.csv".format(
         fold, basename), sep=';')["normalErrors"].tolist()
     SSVV_rh4_normal_errors = pd.read_csv("{}{}.SSVV_rh4.csv".format(
@@ -329,6 +351,13 @@ def plot_plane_normals(n=10, y_range=(0, 1), res=20):
                                     sep=';')["normalErrors"].tolist()
     data = [VTK_normal_errors, SSVV_rh4_normal_errors, SSVV_rh8_normal_errors]
     print("maximal values: {}".format([max(d) for d in data]))
+    if x_range is None:
+        # Find minimal and maximal value to set the X-range:
+        min_value = min([min(d) for d in data])
+        max_value = max([max(d) for d in data])
+        x_range_1 = (min_value, max_value)
+    else:
+        x_range_1 = x_range
     plot_composite_line_hist(
         data_arrays=data,
         labels=["VTK", "VV RadiusHit=4", "VV RadiusHit=8"],
@@ -337,10 +366,10 @@ def plot_plane_normals(n=10, y_range=(0, 1), res=20):
         title=None,  # "Plane ({}% noise)".format(n),
         x_label="Normal orientation error",
         y_label="Cumulative relative frequency",
-        outfile="{}plane_res{}_noise{}.VV_vs_VTK.normal_errors.png".format(
-            plot_fold, res, n),
+        outfile=plot_file,
         num_bins=20, normalize=True, cumulative=True,
-        x_range=(0, max([max(d) for d in data])), y_range=y_range
+        x_range=x_range_1, y_range=y_range,
+        legend_loc='lower right'
     )
 
 
@@ -469,7 +498,7 @@ def plot_cylinder_kappa_1_errors_diff_rh(
 def plot_cylinder_T_2_and_kappa_1_errors(
         n=0, y_range=(0, 1), x_range_T=None, x_range_kappa=None,
         RorAVV="AVV", rhVV=5, rhSSVV=6, exclude_borders=5,
-        legend_loc='lower right'):
+        legend_loc='lower right', vertex_based=False):
     """Plots estimated kappa_2 and T_1 errors histograms on a cylinder surface
     for different methods (RVV or AVV and SSVV) and optimal RadiusHit for each
     method.
@@ -490,12 +519,16 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         exclude_borders (int, optional): how many voxels from border were
             excluded for curvature calculation (default 5)
         legend_loc (str, optional): legend location (default 'lower right')
+        vertex_based (boolean, optional): if True (default False), curvature is
+            calculated per triangle vertex instead of triangle center
     """
     fold = ("{}cylinder/noise0/files4plotting/".format(FOLD, n))
     plot_fold = ("{}cylinder/noise0/plots/".format(FOLD, n))
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "cylinder_r10_h25_eb{}".format(exclude_borders)
+    if vertex_based:
+        basename += "_vertex_based"
     df = pd.read_csv("{}{}.SSVV_rh{}.csv".format(
         fold, basename, rhSSVV), sep=';')
     SSVV_T_2_errors = df["T2Errors"].tolist()
@@ -938,6 +971,84 @@ def plot_sphere_kappa_1_and_2_errors_diff_rh(
 
 def plot_sphere_kappa_1_and_2_errors(
         r=10, rhVV=9, rhSSVV=9, n=0, ico=0, voxel=False, x_range=None,
+        y_range=(0, 1), RorAVV="AVV", vertex_based=False):
+    """
+    Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+    for different methods (RVV, AVV, SSVV and VTK) and an optimal RadiusHit for
+    each method.
+
+    Args:
+        r (int, optional): radius of the sphere in voxels (default 10)
+        rhVV (int, optional): radius_hit for VV (default 9)
+        rhSSVV (int, optional): radius_hit for SSVV (default 9)
+        n (int, optional): noise in % (default 0)
+        ico (int, optional): if > 0 (i.e. 1280), icosahedron results with so
+            many faces are used; if 0 (default), smooth sphere results are used
+        voxel (boolean, optional): if True (default False), voxel sphere
+            results are used (ignoring the other options)
+        x_range (tuple, optional): a tuple of two values to limit the range
+            at X axis
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default (0, 1))
+        RorAVV (str, optional): RVV or AVV (default)
+            weighted by triangle area also in the second step (principle
+            directions and curvatures estimation)
+        vertex_based (boolean, optional): if True (default False), curvature is
+            calculated per triangle vertex instead of triangle center
+    """
+    if voxel:
+        subfolds = "sphere/voxel/"
+    elif ico > 0:
+        subfolds = "sphere/ico{}_noise{}/".format(ico, n)
+    else:
+        subfolds = "sphere/noise{}/".format(n)
+    fold = ("{}{}files4plotting/".format(FOLD, subfolds))
+    plot_fold = ("{}{}plots/".format(FOLD, subfolds))
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+    basename = "sphere_r{}".format(r)
+    if vertex_based:
+        basename += "_vertex_based"
+
+    df_SSVV = pd.read_csv("{}{}.SSVV_rh{}.csv".format(fold, basename, rhSSVV),
+                          sep=';')
+    SSVV_kappa_1_errors = df_SSVV["kappa1RelErrors"].tolist()
+    SSVV_kappa_2_errors = df_SSVV["kappa2RelErrors"].tolist()
+
+    df_VV = pd.read_csv("{}{}.{}_rh{}.csv".format(fold, basename, RorAVV, rhVV),
+                         sep=';')
+    VV_kappa_1_errors = df_VV["kappa1RelErrors"].tolist()
+    VV_kappa_2_errors = df_VV["kappa2RelErrors"].tolist()
+
+    df_VTK = pd.read_csv("{}{}.VTK.csv".format(fold, basename), sep=';')
+    VTK_kappa_1_errors = df_VTK["kappa1RelErrors"].tolist()
+    VTK_kappa_2_errors = df_VTK["kappa2RelErrors"].tolist()
+
+    data = [VV_kappa_1_errors + VV_kappa_2_errors,
+            SSVV_kappa_1_errors + SSVV_kappa_2_errors,
+            VTK_kappa_1_errors + VTK_kappa_2_errors]
+    if x_range is None:
+        x_range = (0, max([max(d) for d in data]))
+    plot_composite_line_hist(  # kappa_1 + kappa_2
+        data_arrays=data,
+        labels=["{} RadiusHit={}".format(RorAVV, rhVV),
+                "SSVV RadiusHit={}".format(rhSSVV), "VTK"],
+        line_styles=['-', '-', '-'],
+        markers=['v', '^', 's'],
+        colors=['c', 'b', 'r'],
+        title="Sphere radius={}".format(r),
+        x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
+        y_label="Cumulative relative frequency",
+        outfile=("{}{}.{}rh{}_SSVVrh{}_vs_VTK."
+                 "kappa_1_and_2_errors.png".format(
+                    plot_fold, basename, RorAVV, rhVV, rhSSVV)),
+        num_bins=20, normalize=True, cumulative=True,
+        x_range=x_range, y_range=y_range
+    )
+
+
+def plot_sphere_kappa_1_and_2_errors_allVV(
+        r=10, rhVV=9, rhSSVV=9, n=0, ico=0, voxel=False, x_range=None,
         y_range=(0, 1)):
     """
     Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
@@ -1374,7 +1485,7 @@ def plot_torus_kappa_1_and_2_errors_diff_rh(
 
 def plot_torus_kappa_1_and_2_T_1_and_2_errors(
         rhVV=9, rhSSVV=5, x_range_T=None, x_range_kappa=None,
-        y_range=(0, 1), RorAVV="AVV"):
+        y_range=(0, 1), RorAVV="AVV", vertex_based=False):
     """
     Plots estimated kappa_1 and kappa_2 as well as T_1 and T_2 errors histograms
     on a torus surface for different methods (VV and SSVV) and an optimal
@@ -1392,14 +1503,17 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
         RorAVV (str, optional): RVV or AVV (default)
             weighted by triangle area also in the second step (principle
             directions and curvatures estimation)
+        vertex_based (boolean, optional): if True (default False), curvature is
+            calculated per triangle vertex instead of triangle center
     """
     fold = ("{}torus/files4plotting/".format(FOLD))
     plot_fold = ("{}torus/plots/".format(FOLD))
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "torus_rr25_csr10"
-    principal_components = {1: "maximal", 2: "minimal"}
-    for i in principal_components.keys():
+    if vertex_based:
+        basename += "_vertex_based"
+    for i in [1, 2]:
         df = pd.read_csv("{}{}.SSVV_rh{}.csv".format(fold, basename, rhSSVV),
                          sep=';')
         SSVV_T_errors = df["T{}Errors".format(i)].tolist()
@@ -1414,40 +1528,43 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
             fold, basename), sep=';')["kappa{}RelErrors".format(i)].tolist()
         data = [SSVV_T_errors, VV_T_errors]
         if x_range_T is None:
-            x_range_T = (0, max([max(d) for d in data]))
+            x_range = (0, max([max(d) for d in data]))
+        else:
+            x_range = x_range_T
         plot_composite_line_hist(
             data_arrays=data,
             labels=["SSVV rh={}".format(rhSSVV), "{} rh={}".format(
                 RorAVV, rhVV)],
             line_styles=['-', '-'], markers=['^', 'v'],
             colors=['b', 'c'],
-            title="Torus (major radius=25, minor radius=10)",
-            x_label="{} principal direction error".format(
-                principal_components[i]),
+            title=None,  # "Torus (major radius=25, minor radius=10)",
+            x_label=r"$\vec t_{}\ error$".format(i),
             y_label="Cumulative relative frequency",
-            outfile="{}{}.{}rh{}_vs_SSVVrh{}.T_{}_errors.png"
-                .format(plot_fold, basename, RorAVV, rhVV, rhSSVV, i),
+            outfile="{}{}.{}rh{}_vs_SSVVrh{}.T_{}_errors.png".format(
+                plot_fold, basename, RorAVV, rhVV, rhSSVV, i),
             num_bins=20, normalize=True, cumulative=True,
-            x_range=x_range_T,
-            y_range=y_range
+            x_range=x_range,
+            y_range=y_range,
+            num_x_values=7
         )
-        data = [SSVV_kappa_errors, VV_kappa_errors, VTK_kappa_errors]
+        data = [VV_kappa_errors, VTK_kappa_errors, SSVV_kappa_errors]
         if x_range_kappa is None:
-            x_range_kappa = (0, max([max(d) for d in data]))
+            x_range = (0, max([max(d) for d in data]))
+        else:
+            x_range = x_range_kappa
         plot_composite_line_hist(
             data_arrays=data,
-            labels=["SSVV rh={}".format(rhSSVV), "{} rh={}".format(
-                RorAVV, rhVV), "VTK"],
-            line_styles=['-', '-', '-'], markers=['^', 'v', 's'],
-            colors=['b', 'c', 'r'],
-            title="Torus (major radius=25, minor radius=10)",
-            x_label="{} principal curvature relative error".format(
-                principal_components[i]),
+            labels=["{} rh={}".format(RorAVV, rhVV), "VTK",
+                    "SSVV rh={}".format(rhSSVV), ],
+            line_styles=['-', '-', '-'], markers=['v', 's', '^'],
+            colors=['c', 'r', 'b'],
+            title=None,  # "Torus (major radius=25, minor radius=10)",
+            x_label=r"$\kappa_{}\ relative\ error$".format(i),
             y_label="Cumulative relative frequency",
             outfile=("{}{}.{}rh{}_SSVVrh{}_vs_VTK.kappa_{}_errors.png".format(
-                        plot_fold, basename, RorAVV, rhVV, rhSSVV, i)),
+                plot_fold, basename, RorAVV, rhVV, rhSSVV, i)),
             num_bins=20, normalize=True, cumulative=True,
-            x_range=x_range_kappa,
+            x_range=x_range,
             y_range=y_range
         )
 
@@ -1497,6 +1614,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         data = [RVV_T_errors, AVV_T_errors, SSVV_T_errors]
         if x_range_T is None:
             x_range = (0, max([max(d) for d in data]))
+        else:
+            x_range = x_range_T
         plot_composite_line_hist(
             data_arrays=data,
             labels=["RVV RadiusHit={}".format(rhVV),
@@ -1517,6 +1636,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
                 VTK_kappa_errors]
         if x_range_kappa is None:
             x_range = (0, max([max(d) for d in data]))
+        else:
+            x_range = x_range_kappa
         plot_composite_line_hist(
             data_arrays=data,
             labels=["RVV RadiusHit={}".format(rhVV),
@@ -1869,15 +1990,15 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
 
 if __name__ == "__main__":
     # Real data
-    read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
-                                     num_bins=25)
+    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
+    #                                  num_bins=25)
     # for method in ["NVV", "RVV", "SSVV"]:  # ,"AVV"
     #     # plot_excluding_borders(method=method)
     #     read_in_and_plot_surface_curvatures(
     #         num_bins=25, method=method, borders=0)  # , x_range=(-0.1, 0.15)
 
     # Benchmark data
-    # plot_plane_normals()
+    # plot_plane_normals(vertex_based=True, x_range=(0, 0.4))
 
     # torus
     # plot_torus_kappa_1_and_2_diff_rh()
@@ -1892,6 +2013,8 @@ if __name__ == "__main__":
     #                      "torus/files4plotting/"
     #                      "torus_rr25_csr10_SSVV_RadiusHit1-10_xmax0.5.csv")))
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
+    plot_torus_kappa_1_and_2_T_1_and_2_errors(
+        rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True)
 
     # smooth sphere
     # plot_sphere_kappa_1_and_2_diff_rh(
@@ -1907,8 +2030,11 @@ if __name__ == "__main__":
     #         FOLD, "sphere/noise0/files4plotting/"
     #               "sphere_r10_RVV_AVV_RadiusHit12-20_xmax0.25.csv")))
     # for r in [10, 20]:  # remove label for r=10, because overlapping
-    #     plot_sphere_kappa_1_and_2_errors(
+    #     plot_sphere_kappa_1_and_2_errors_allVV(
     #         r=r, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18))
+    # plot_sphere_kappa_1_and_2_errors(
+    #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
+    #     RorAVV="RVV", vertex_based=True)
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
 
     # voxel sphere
@@ -1932,6 +2058,9 @@ if __name__ == "__main__":
     #     r=20, rhVV=18, rhSSVV=18, voxel=True, x_range=(0, 0.65))
     # plot_sphere_kappa_1_and_2_errors_noVTK(
     #     r=30, rhVV=28, rhSSVV=28, voxel=True, x_range=(0, 0.65))
+    # plot_sphere_kappa_1_and_2_errors(
+    #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
+    #     RorAVV="RVV", vertex_based=True)
 
     # cylinder
     # plot_cylinder_kappa_1_diff_rh(num_bins=10)
@@ -1943,6 +2072,9 @@ if __name__ == "__main__":
     # plot_cylinder_T_2_and_kappa_1_errors(
     #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
     #     rhVV=5, rhSSVV=6)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+    #     rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
     # plot_cylinder_T_2_and_kappa_1_errors(
     #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
     #     rhVV=5, rhSSVV=6)

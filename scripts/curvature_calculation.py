@@ -12,7 +12,8 @@ import os
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
-    TriangleGraph, preparation_for_curvature_estimation, curvature_estimation)
+    TriangleGraph, PointGraph, preparation_for_curvature_estimation,
+    curvature_estimation)
 from pysurf import pysurf_io as io
 
 """
@@ -140,7 +141,7 @@ def new_workflow(
         page_curvature_formula=False, area2=True,
         seg_file=None, label=1, filled_label=None, unfilled_mask=None, holes=0,
         remove_wrong_borders=True, min_component=100, only_normals=False,
-        cores=4, runtimes=None):
+        cores=4, runtimes=''):
     """
     A script for running all processing steps to estimate membrane curvature.
 
@@ -191,7 +192,7 @@ def new_workflow(
             graph with the orientations class, normals or tangents is returned.
         cores (int, optional): number of cores to run VV in parallel (default 4)
         runtimes (str, optional): if given, runtimes and some parameters are
-            added to this file (default None)
+            added to this file (default '')
 
     Returns:
         None
@@ -317,26 +318,24 @@ def new_workflow(
             fold, base_filename, radius_hit)
     method_tg_surf_dict = {}
     if not isfile(gt_file1):
-        if runtimes is not None:
+        if runtimes != '':
             with open(runtimes, 'w') as f:
                 f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
                         "duration1;method;duration2\n")
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=0,
-            methods=methods, full_dist_map=False, graph_file=gt_file1,
-            page_curvature_formula=page_curvature_formula,
+            tg, radius_hit, methods=methods, full_dist_map=False,
+            graph_file=gt_file1, page_curvature_formula=page_curvature_formula,
             area2=area2, only_normals=only_normals, poly_surf=surf_clean,
             cores=cores, runtimes=runtimes)
     elif only_normals is False:
-        if runtimes is not None:
+        if runtimes != '':
             with open(runtimes, 'w') as f:
                 f.write("method;duration2\n")
         for method in methods:
             tg_curv, surface_curv = curvature_estimation(
-                radius_hit, exclude_borders=0, graph_file=gt_file1,
-                method=method, page_curvature_formula=page_curvature_formula,
-                area2=area2, poly_surf=surf_clean, cores=cores,
-                runtimes=runtimes)
+                radius_hit, graph_file=gt_file1, method=method,
+                page_curvature_formula=page_curvature_formula, area2=area2,
+                poly_surf=surf_clean, cores=cores, runtimes=runtimes)
             method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
     if only_normals is False:
@@ -371,11 +370,9 @@ def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=4):
     tg_curv, surf_curv = curvature_estimation(
         radius_hit, graph_file=gt_file_normals, method='VV', cores=cores)
 
-    gt_file_curv = "{}{}.AVV_rh{}.gt".format(
-        fold, base_filename, radius_hit)
+    gt_file_curv = "{}{}.AVV_rh{}.gt".format(fold, base_filename, radius_hit)
     tg_curv.graph.save(gt_file_curv)
-    surf_file_curv = "{}{}.AVV_rh{}.vtp".format(
-        fold, base_filename, radius_hit)
+    surf_file_curv = "{}{}.AVV_rh{}.vtp".format(fold, base_filename, radius_hit)
     io.save_vtp(surf_curv, surf_file_curv)
 
 
@@ -462,39 +459,38 @@ def extract_curvatures_after_new_workflow(
 
 
 def _extract_curvatures_from_graph(
-        tg, csv_file, exclude_borders=0, gt_file=None, vtp_file=None,
+        sg, csv_file, exclude_borders=0, gt_file=None, vtp_file=None,
         categorize_shape_index=False):
     # If don't want to include curvatures near borders, filter out those
-    if exclude_borders > 0:
-        tg.find_vertices_near_border(exclude_borders, purge=True)
+    if exclude_borders > 0 and sg.__class__.__name__ == TriangleGraph:
+        sg.find_vertices_near_border(exclude_borders, purge=True)
 
     # List of shape class labels of all vertices for the csv file:
     shape_index_class = []
     if categorize_shape_index:
         # Add a new property: categorical shape index (one value for class)
-        tg.graph.vp.shape_index_cat = tg.graph.new_vertex_property("float")
-        for v in tg.graph.vertices():
-            si_v = tg.graph.vp.shape_index_VV[v]
+        sg.graph.vp.shape_index_cat = sg.graph.new_vertex_property("float")
+        for v in sg.graph.vertices():
+            si_v = sg.graph.vp.shape_index_VV[v]
             si_cat_v, si_class_v = _shape_index_classifier(si_v)
-            tg.graph.vp.shape_index_cat[v] = si_cat_v
+            sg.graph.vp.shape_index_cat[v] = si_cat_v
             shape_index_class.append(si_class_v)
 
     # Saving the changes into graph and surface files, if specified:
     if gt_file is not None:
-        tg.graph.save(gt_file)
+        sg.graph.save(gt_file)
     if vtp_file is not None:
         # Transforming the resulting graph to a surface with triangles:
-        surf = tg.graph_to_triangle_poly()
+        surf = sg.graph_to_triangle_poly()
         io.save_vtp(surf, vtp_file)
 
     # Getting estimated principal curvatures from the output graph:
-    kappa_1 = tg.get_vertex_property_array("kappa_1")
-    kappa_2 = tg.get_vertex_property_array("kappa_2")
-    gauss_curvature = tg.get_vertex_property_array("gauss_curvature_VV")
-    mean_curvature = tg.get_vertex_property_array("mean_curvature_VV")
-    shape_index = tg.get_vertex_property_array("shape_index_VV")
-    curvedness = tg.get_vertex_property_array("curvedness_VV")
-    triangle_areas = tg.get_vertex_property_array("area")
+    kappa_1 = sg.get_vertex_property_array("kappa_1")
+    kappa_2 = sg.get_vertex_property_array("kappa_2")
+    gauss_curvature = sg.get_vertex_property_array("gauss_curvature_VV")
+    mean_curvature = sg.get_vertex_property_array("mean_curvature_VV")
+    shape_index = sg.get_vertex_property_array("shape_index_VV")
+    curvedness = sg.get_vertex_property_array("curvedness_VV")
 
     # Writing all the curvature values and errors into a csv file:
     df = pd.DataFrame()
@@ -506,7 +502,9 @@ def _extract_curvatures_from_graph(
     if categorize_shape_index:  # want the shape class labels
         df["shape_index_class"] = shape_index_class
     df["curvedness"] = curvedness
-    df["triangleAreas"] = triangle_areas
+    if sg.__class__.__name__ == TriangleGraph:
+        triangle_areas = sg.get_vertex_property_array("area")
+        df["triangleAreas"] = triangle_areas
     df.to_csv(csv_file, sep=';')
 
 
@@ -680,9 +678,9 @@ def annas_workflow(
         method_tg_surf_dict = {}
         if not isfile(gt_file1):
             method_tg_surf_dict = normals_directions_and_curvature_estimation(
-                tg, radius_hit, exclude_borders=0,
-                methods=methods, full_dist_map=False, graph_file=gt_file1,
-                area2=True, poly_surf=surf_clean, cores=cores)
+                tg, radius_hit, methods=methods, full_dist_map=False,
+                graph_file=gt_file1, area2=True, poly_surf=surf_clean,
+                cores=cores)
 
         for method in method_tg_surf_dict.keys():
             # Saving the output (graph and surface object) for later
@@ -752,10 +750,9 @@ def from_ply_workflow(
     temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
         base_filename, radius_hit)
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=0, methods=methods,
-        page_curvature_formula=page_curvature_formula,
-        area2=area2, poly_surf=surf, cores=cores,
-        graph_file=temp_normals_graph_file)
+        tg, radius_hit, methods=methods,
+        page_curvature_formula=page_curvature_formula, area2=area2,
+        poly_surf=surf, cores=cores, graph_file=temp_normals_graph_file)
 
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
@@ -778,7 +775,7 @@ def from_ply_workflow(
 
 def from_vtk_workflow(
         vtk_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False,
-        methods=["VV"], area2=True, cores=4):
+        methods=["VV"], area2=True, cores=4, vertex_based=False):
     """
     Estimates curvature for each triangle in a triangle mesh in VTK format.
 
@@ -796,8 +793,10 @@ def from_vtk_workflow(
             and 'SSVV' are possible, default is 'VV')
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
-            curvatures estimation)
+            curvatures estimation; not possible if vertex_based is True)
         cores (int, optional): number of cores to run VV in parallel (default 4)
+        vertex_based (boolean, optional): if True (default False), curvature is
+            calculated per triangle vertex instead of triangle center.
 
         Returns:
             None
@@ -810,8 +809,9 @@ def from_vtk_workflow(
     print('\nReading in the surface file to get a vtkPolyData surface...')
     surf = io.load_poly_from_vtk(vtk_file)
 
-    surface_graph_file = base_filename + ".gt"
-    if not isfile(surface_graph_file):
+    triangle_graph_file = base_filename + ".gt"
+    if not isfile(triangle_graph_file) or vertex_based:  # vertex-based approach
+        # uses TriangleGraph's point_in_cells and triangle_cell_ids
         print('\nBuilding a triangle graph from the surface...')
         tg = TriangleGraph()
         tg.build_graph_from_vtk_surface(surf, scale)
@@ -820,11 +820,32 @@ def from_vtk_workflow(
                 expr="new_workflow", msg="The graph is empty!")
         print('The graph has {} vertices and {} edges'.format(
             tg.graph.num_vertices(), tg.graph.num_edges()))
-        tg.graph.save(surface_graph_file)
+        tg.graph.save(triangle_graph_file)
     else:
-        print('\nReading in the graph from file...')
+        print('\nReading in the triangle graph from file...')
         tg = TriangleGraph()
-        tg.graph = load_graph(surface_graph_file)
+        tg.graph = load_graph(triangle_graph_file)
+
+    if vertex_based:
+        area2 = False
+        point_graph_file = base_filename + "_point.gt"
+        if not isfile(point_graph_file):
+            print('\nBuilding a point graph from the surface...')
+            pg = PointGraph()
+            pg.build_graph_from_vtk_surface(surf, scale)
+            if pg.graph.num_vertices() == 0:
+                raise pexceptions.PySegInputError(
+                    expr="new_workflow", msg="The graph is empty!")
+            print('The graph has {} vertices and {} edges'.format(
+                pg.graph.num_vertices(), pg.graph.num_edges()))
+            pg.graph.save(point_graph_file)
+        else:
+            print('\nReading in the point graph from file...')
+            pg = PointGraph()
+            pg.graph = load_graph(point_graph_file)
+        point_graph = pg
+    else:
+        point_graph = None
 
     # Running the modified Normal Vector Voting algorithm:
     normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
@@ -832,22 +853,22 @@ def from_vtk_workflow(
     method_tg_surf_dict = {}
     if not isfile(normals_graph_file):
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=0, methods=methods,
+            tg, radius_hit, methods=methods,
             page_curvature_formula=page_curvature_formula,
             area2=area2, poly_surf=surf, cores=cores,
-            graph_file=normals_graph_file)
+            graph_file=normals_graph_file, pg=point_graph)
     else:
         for method in methods:
-            tg_curv, surface_curv = curvature_estimation(
-                radius_hit, exclude_borders=0, graph_file=normals_graph_file,
-                method=method, page_curvature_formula=page_curvature_formula,
-                area2=area2, poly_surf=surf, cores=cores)
-            method_tg_surf_dict[method] = (tg_curv, surface_curv)
+            sg_curv, surface_curv = curvature_estimation(
+                radius_hit, graph_file=normals_graph_file, method=method,
+                page_curvature_formula=page_curvature_formula, area2=area2,
+                poly_surf=surf, cores=cores, pg=point_graph)
+            method_tg_surf_dict[method] = (sg_curv, surface_curv)
 
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
-        (tg, surf) = method_tg_surf_dict[method]
+        (sg, surf) = method_tg_surf_dict[method]
         if method == 'VV':
             if page_curvature_formula:
                 method = 'NVV'
@@ -858,9 +879,9 @@ def from_vtk_workflow(
         surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
         gt_file = '{}.{}_rh{}.gt'.format(base_filename, method, radius_hit)
-        tg.graph.save(gt_file)
+        sg.graph.save(gt_file)
         csv_file = '{}.{}_rh{}.csv'.format(base_filename, method, radius_hit)
-        _extract_curvatures_from_graph(tg, csv_file)
+        _extract_curvatures_from_graph(sg, csv_file)
 
 
 def from_nii_workflow(
@@ -945,10 +966,9 @@ def from_nii_workflow(
         temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
             outfile_base, radius_hit)
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, exclude_borders=0, methods=methods,
-            page_curvature_formula=page_curvature_formula,
-            area2=area2, poly_surf=surf, cores=cores,
-            graph_file=temp_normals_graph_file)
+            tg, radius_hit, methods=methods,
+            page_curvature_formula=page_curvature_formula, area2=area2,
+            poly_surf=surf, cores=cores, graph_file=temp_normals_graph_file)
 
         for method in method_tg_surf_dict.keys():
             # Saving the output (TriangleGraph object) for later inspection in
@@ -1012,9 +1032,7 @@ def main_javier(membrane, radius_hit):
     fold = "{}TCB/180830_TITAN_l2_t2/smooth/".format(base_fold)
     seg_file = "t2_ny01_lbl.labels_FILLED.mrc"
     base_filename = "TCBl2t2_180830_{}".format(membrane)
-    scale_x = 928
-    scale_y = scale_x
-    scale_z = 123
+    size = (928, 928, 123)
 
     # The "sheety" scs (done cER RH=6, but holes and ridges):
     # tomo = "scs_171108_l2_t4_ny01"
@@ -1065,8 +1083,9 @@ def main_javier(membrane, radius_hit):
             fold, base_filename, 'AVV', radius_hit)
         outfile_base = '{}{}.{}_rh{}'.format(
             fold, base_filename, 'AVV', radius_hit)
+        scale = (pixel_size, pixel_size, pixel_size)
         convert_vtp_to_stl_surface_and_mrc_curvatures(
-            surf_vtp_file, outfile_base, pixel_size, scale_x, scale_y, scale_z)
+            surf_vtp_file, outfile_base, scale, size)
     else:
         print("Membrane not known.")
         exit(0)
@@ -1226,4 +1245,5 @@ if __name__ == "__main__":
 
     vtk_file = sys.argv[1]
     radius_hit = float(sys.argv[2])  # 2 mm, Mindboggle's default "radius disk"
-    from_vtk_workflow(vtk_file, radius_hit, scale=(1, 1, 1))  # scaled to mm
+    from_vtk_workflow(vtk_file, radius_hit, scale=(1, 1, 1),  # scaled to mm
+                      vertex_based=True, methods=["SSVV"])

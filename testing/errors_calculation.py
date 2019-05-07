@@ -65,7 +65,16 @@ def angular_error_vector(true_vector, estimated_vector):
         acos(abs(np.dot(true_vector, estimated_vector)))
         angle in radians between two vectors
     """
-    return acos(abs(np.dot(true_vector, estimated_vector)))
+    try:
+        acos_arg = abs(np.dot(true_vector, estimated_vector))
+        angular_error = acos(acos_arg)
+    except ValueError:
+        if acos_arg > 1:
+            acos_arg = 1.0
+        elif acos_arg < 0:
+            acos_arg = 0.0
+        angular_error = acos(acos_arg)
+    return angular_error
 
 
 def calculate_histogram_area(counts, bin_edges):

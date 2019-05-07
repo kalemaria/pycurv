@@ -3,12 +3,13 @@ import time
 import os.path
 import math
 import pandas as pd
+import sys
 # import cProfile
 # import pstats
 
 from pysurf import pysurf_io as io
 from pysurf import (
-    TriangleGraph, normals_directions_and_curvature_estimation)
+    TriangleGraph, PointGraph, normals_directions_and_curvature_estimation)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
@@ -118,7 +119,8 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
     return kappa_2, T_1, T_2
 
 
-def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False):
+def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False,
+                     vertex_based=False):
     """
     Reads in the .vtp file with the triangle mesh surface and transforms it
     into a triangle graph.
@@ -130,6 +132,8 @@ def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False):
         inverse (boolean, optional): if True, the graph will have normals
             pointing outwards (negative curvature), if False (default), the
             other way around
+        vertex_based (boolean, optional): if True (default False), curvature is
+            calculated per triangle vertex instead of triangle center.
 
     Returns:
         surface (vtk.vtkPolyData) and triangle graph(TriangleGraph)
@@ -138,9 +142,14 @@ def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False):
 
     print('\nReading in the surface file to get a vtkPolyData surface...')
     surf = io.load_poly(surf_file)
-    print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
-          'curvatures...')
-    tg = TriangleGraph()
+    if vertex_based:
+        print('\nBuilding the PointGraph from the vtkPolyData surface with '
+              'curvatures...')
+        sg = PointGraph()
+    else:
+        print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
+              'curvatures...')
+        sg = TriangleGraph()
     # VTK has opposite surface normals convention than we use
     # a graph with normals pointing outwards is generated (normal case
     # for this method; negative curvatures)
@@ -150,16 +159,16 @@ def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False):
     # curvatures)
     else:
         reverse_normals = True
-    tg.build_graph_from_vtk_surface(surf, scale, verbose=False,
+    sg.build_graph_from_vtk_surface(surf, scale, verbose=False,
                                     reverse_normals=reverse_normals)
-    print(tg.graph)
+    print(sg.graph)
 
     t_end = time.time()
     duration = t_end - t_begin
     minutes, seconds = divmod(duration, 60)
     print('Graph construction from surface took: {} min {} s'.format(
         minutes, seconds))
-    return surf, tg
+    return surf, sg
 
 
 """
@@ -167,9 +176,12 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 """
 
 
-@pytest.mark.parametrize("radius_hit", [8])  # 4
-@pytest.mark.parametrize("half_size, res, noise", [(20, 20, 10)])
-def test_plane_normals(half_size, radius_hit, res, noise):
+@pytest.mark.parametrize("radius_hit", [4, 8])
+@pytest.mark.parametrize("half_size, res, noise, vertex_based", [
+    (20, 20, 10, False),
+    (20, 20, 10, True)
+])
+def test_plane_normals(half_size, radius_hit, res, noise, vertex_based):
     """
     Tests whether normals are correctly estimated for a plane surface with
     known orientation (parallel to to X and Y axes).
@@ -184,6 +196,8 @@ def test_plane_normals(half_size, radius_hit, res, noise):
         noise (int): determines variance of the Gaussian noise in
             percents of average triangle edge length, the noise
             is added on triangle vertex coordinates in its normal direction
+        vertex_based (boolean): if True, curvature is calculated per triangle
+            vertex instead of triangle center.
 
     Returns:
         None
@@ -195,11 +209,19 @@ def test_plane_normals(half_size, radius_hit, res, noise):
     files_fold = '{}files4plotting/'.format(fold)
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
-    base_filename = "{}plane_half_size{}".format(files_fold, half_size)
+    if vertex_based:
+        vertex_based_str = "_vertex_based"
+    else:
+        vertex_based_str = ""
+    base_filename = "{}plane_half_size{}{}".format(
+        files_fold, half_size, vertex_based_str)
     vv_surf_file = '{}.SSVV_rh{}.vtp'.format(base_filename, radius_hit)
     vv_eval_file = '{}.SSVV_rh{}.csv'.format(base_filename, radius_hit)
     vtk_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    log_file = '{}.SSVV_rh{}.log'.format(
+        base_filename, radius_hit)
+    sys.stdout = open(log_file, 'w')
 
     print("\n*** Generating a surface and a graph for a plane with "
           "half-size {} and {}% noise ***".format(half_size, noise))
@@ -214,20 +236,25 @@ def test_plane_normals(half_size, radius_hit, res, noise):
 
     # Reading in the surface and transforming it into a triangle graph
     surf, tg = surface_to_graph(surf_file)
+    if vertex_based:
+        _, pg = surface_to_graph(surf_file, vertex_based=True)
+    else:
+        pg = None
 
     # Running the modified Normal Vector Voting algorithm (with curvature
     # tensor voting, because its second pass is the fastest):
     results = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=0, methods=['SSVV'], poly_surf=surf,
-        graph_file=temp_normals_graph_file)
+        tg, radius_hit, methods=['SSVV'], poly_surf=surf,
+        graph_file=temp_normals_graph_file, pg=pg)
+    sg = results['SSVV'][0]
     surf_vv = results['SSVV'][1]
     # Saving the output (TriangleGraph object) for later inspection in ParaView:
     io.save_vtp(surf_vv, vv_surf_file)
 
     # Getting the initial and the estimated normals
     pos = [0, 1, 2]  # vector-property value positions
-    vtk_normals = tg.graph.vertex_properties["normal"].get_2d_array(pos)
-    vv_normals = tg.graph.vertex_properties["N_v"].get_2d_array(pos)
+    vtk_normals = sg.graph.vertex_properties["normal"].get_2d_array(pos)
+    vv_normals = sg.graph.vertex_properties["N_v"].get_2d_array(pos)
     # The shape is (3, <num_vertices>) - have to transpose to group the
     # respective x, y, z components to sub-arrays
     vtk_normals = np.transpose(vtk_normals)  # shape (<num_vertices>, 3)
@@ -264,17 +291,20 @@ def test_plane_normals(half_size, radius_hit, res, noise):
         assert error <= 0.3
 
 
-@pytest.mark.parametrize("radius_hit", [5])  # range(4, 10)
-@pytest.mark.parametrize("radius,eb,inverse,methods", [
-    (10, 5, False, ['VV']),
-    (10, 5, False, ['SSVV']),
-    # (10, 0, False, ['VV']),  # TODO ok to fail
-    # (10, 0, False, ['SSVV']),
+# @pytest.mark.parametrize("radius_hit", range(4, 10))
+@pytest.mark.parametrize("radius,radius_hit,eb,inverse,methods,area2,vertex_based", [
+    (10, 5, 5, False, ['VV'], True, False),  # AVV
+    (10, 6, 5, False, ['SSVV'], False, False),
+    (10, 5, 0, False, ['VV'], True, False),  # AVV TODO ok to fail
+    (10, 5, 0, False, ['VV'], False, False),  # RVV TODO ok to fail
+    (10, 6, 0, False, ['SSVV'], False, False),
+    (10, 5, 0, False, ['VV'], False, True),  # RVV, vertex TODO ok to fail
+    (10, 6, 0, False, ['SSVV'], False, True),  # SSVV, vertex
 ])
 def test_cylinder_directions_curvatures(
-        radius, radius_hit, eb, inverse, methods,
+        radius, radius_hit, eb, inverse, methods, area2, vertex_based,
         res=0, h=0, noise=0, page_curvature_formula=False, full_dist_map=False,
-        area2=True, cores=4):
+        cores=4):
     """
     Tests whether minimal principal directions (T_2), as well as minimal and
     maximal principal curvatures are correctly estimated for an opened
@@ -292,9 +322,14 @@ def test_cylinder_directions_curvatures(
             graph, here voxels
         inverse (boolean): if True, the cylinder will have normals pointing
             outwards (negative curvature), else the other way around
+        area2 (boolean, optional): if True (default), votes are weighted by
+            triangle area also in the second step (principle directions and
+            curvatures estimation; not possible if vertex_based is True)
         methods (list): tells which method(s) should be used: 'VV'
             for normal vector voting or 'SSVV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
+        vertex_based (boolean): if True, curvature is calculated per triangle
+            vertex instead of triangle center.
         res (int, optional): if > 0 determines how many stripes around both
             approximate circles (and then triangles) the cylinder has, the
             surface is generated using vtkCylinderSource; If 0 (default)
@@ -313,9 +348,6 @@ def test_cylinder_directions_curvatures(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        area2 (boolean, optional): if True (default), votes are
-            weighted by triangle area also in the second step (principle
-            directions and curvatures estimation)
         cores (int): number of cores to run VV in parallel (default 4)
 
     Returns:
@@ -342,10 +374,16 @@ def test_cylinder_directions_curvatures(
         inverse_str = "inverse_"
     else:
         inverse_str = ""
-    base_filename = "{}{}cylinder_r{}_h{}_eb{}".format(
-        files_fold, inverse_str, radius, h, eb)
+    if vertex_based:
+        vertex_based_str = "_vertex_based"
+    else:
+        vertex_based_str = ""
+    base_filename = "{}{}cylinder_r{}_h{}_eb{}{}".format(
+        files_fold, inverse_str, radius, h, eb, vertex_based_str)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    log_file = '{}.{}_rh{}.log'.format(base_filename, methods[0], radius_hit)
+    sys.stdout = open(log_file, 'w')
 
     if inverse:
         print("\n*** Generating a surface and a graph for an inverse "
@@ -368,13 +406,18 @@ def test_cylinder_directions_curvatures(
 
     # Reading in the surface and transforming it into a triangle graph
     surf, tg = surface_to_graph(surf_file, inverse=inverse)
+    if vertex_based:
+        _, pg = surface_to_graph(surf_file, inverse=inverse, vertex_based=True)
+        area2 = False
+    else:
+        pg = None
 
     # Running the modified Normal Vector Voting algorithm:
-    method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=eb, methods=methods,
+    method_sg_surf_dict = normals_directions_and_curvature_estimation(
+        tg, radius_hit, methods=methods,
         page_curvature_formula=page_curvature_formula,
         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        graph_file=temp_normals_graph_file)
+        graph_file=temp_normals_graph_file, pg=pg)
 
     # Ground-truth T_h vector is parallel to Z axis
     true_T_h = np.array([0, 0, 1])
@@ -387,10 +430,16 @@ def test_cylinder_directions_curvatures(
         true_kappa_1 = 1.0 / radius
         true_kappa_2 = 0.0
 
-    for method in method_tg_surf_dict.keys():
+    for method in method_sg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
-        (tg, surf) = method_tg_surf_dict[method]
+        (sg, surf) = method_sg_surf_dict[method]
+        if vertex_based is False:  # cannot exclude borders for PointGraph
+            # Exclude values at surface borders:
+            sg.find_vertices_near_border(eb, purge=True)  # sg is TriangleGraph
+            print('\nExcluded triangles that are {} to surface borders.'.format(
+                eb))
+            print(sg.graph)
         if method == 'VV':
             if page_curvature_formula:
                 method = 'NVV'
@@ -410,9 +459,9 @@ def test_cylinder_directions_curvatures(
         # Getting the estimated principal directions along cylinder height:
         pos = [0, 1, 2]  # vector-property value positions
         if not inverse:  # it's the minimal direction
-            T_h = tg.graph.vertex_properties["T_2"].get_2d_array(pos)
+            T_h = sg.graph.vertex_properties["T_2"].get_2d_array(pos)
         else:  # it's the maximal direction
-            T_h = tg.graph.vertex_properties["T_1"].get_2d_array(pos)
+            T_h = sg.graph.vertex_properties["T_1"].get_2d_array(pos)
         # The shape is (3, <num_vertices>) - have to transpose to group the
         # respective x, y, z components to sub-arrays
         T_h = np.transpose(T_h)  # shape (<num_vertices>, 3)
@@ -424,10 +473,10 @@ def test_cylinder_directions_curvatures(
 
         # Getting estimated and VTK principal curvatures from the output
         # graph:
-        kappa_1 = tg.get_vertex_property_array("kappa_1")
-        kappa_2 = tg.get_vertex_property_array("kappa_2")
-        vtk_kappa_1 = tg.get_vertex_property_array("max_curvature")
-        vtk_kappa_2 = tg.get_vertex_property_array("min_curvature")
+        kappa_1 = sg.get_vertex_property_array("kappa_1")
+        kappa_2 = sg.get_vertex_property_array("kappa_2")
+        vtk_kappa_1 = sg.get_vertex_property_array("max_curvature")
+        vtk_kappa_2 = sg.get_vertex_property_array("min_curvature")
 
         # Calculating errors of the principal curvatures:
         if not inverse:
@@ -453,7 +502,7 @@ def test_cylinder_directions_curvatures(
         df = pd.DataFrame()
         df['kappa1'] = kappa_1
         df['kappa2'] = kappa_2
-        if true_kappa_1 != 0:  # not inverse
+        if not inverse:
             df['kappa1AbsErrors'] = abs_kappa_1_errors
             df['kappa1RelErrors'] = rel_kappa_1_errors
             df['T2Errors'] = T_h_errors
@@ -506,41 +555,46 @@ def test_cylinder_directions_curvatures(
 #         (10, False, True, 0, ['VV'], False, None),  # voxel, RVV
 #         (10, False, True, 0, ['VV'], True, None),  # voxel, AVV
 #         (10, False, True, 0, ['SSVV'], True, None),  # voxel, 'SSVV'
-#         # "{}sphere/voxel/files4plotting/bin_spheres_runtimes.csv".format(FOLD)
+#         #"{}sphere/voxel/files4plotting/bin_spheres_runtimes.csv".format(FOLD)
 #         (10, False, False, 0, ['VV'], False, None),  # smooth, RVV
 #         (10, False, False, 0, ['VV'], True, None),  # smooth, AVV
 #         (10, False, False, 0, ['SSVV'], True, None),  # smooth, SSVV
 #         # (10, True, False, 0, ['VV', 'SSVV'], False, None),  # smooth inverse
 #     ])
 @pytest.mark.parametrize(
-    "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes", [
+    "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes, vertex_based", [
         # smooth, radius=10:
-        (10, 8, False, False, 0, ['SSVV'], True, None),
-        (10, 11, False, False, 0, ['VV'], True, None),  # AVV
-        (10, 11, False, False, 0, ['VV'], False, None),  # RVV
+        (10, 8, False, False, 0, ['SSVV'], True, '', False),
+        (10, 11, False, False, 0, ['VV'], True, '', False),  # AVV
+        (10, 11, False, False, 0, ['VV'], False, '', False),  # RVV
+        (10, 9, False, False, 0, ['VV'], False, '', True),  # RVV, vertex
+        (10, 9, False, False, 0, ['SSVV'], False, '', True),  # SSVV, vertex
         # smooth, radius=20:
-        # (20, 8, False, False, 0, ['SSVV'], True, None),
-        # (20, 11, False, False, 0, ['VV'], True, None),  # AVV
-        # (20, 11, False, False, 0, ['VV'], False, None),  # RVV
+        # (20, 8, False, False, 0, ['SSVV'], True, '', False),
+        # (20, 11, False, False, 0, ['VV'], True, '', False),  # AVV
+        # (20, 11, False, False, 0, ['VV'], False, '', False),  # RVV
         # voxel, radius=10:
-        (10, 10, False, True, 0, ['VV'], True, None),
-        # (10, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+        (10, 10, False, True, 0, ['VV'], True, '', False),  # AVV
+        (10, 10, False, True, 0, ['VV'], False, '', False),  # RVV
+        (10, 8, False, True, 0, ['SSVV'], True, '', False),  # TODO ok to fail
+        (10, 10, False, True, 0, ['VV'], False, '', True),  # RVV, vertex
+        (10, 8, False, True, 0, ['SSVV'], False, '', True),  # SSVV, vertex
         # voxel, radius=20:
-        # (20, 10, False, True, 0, ['VV'], True, None),
-        # (20, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+        # (20, 10, False, True, 0, ['VV'], True, '', False),
+        # (20, 8, False, True, 0, ['SSVV'], True, '', False),  # TODO ok to fail
         # voxel, radius=20, radius_hit=18, SSVV & AVV:
-        # (20, 18, False, True, 0, ['SSVV', 'VV'], True, None),
+        # (20, 18, False, True, 0, ['SSVV', 'VV'], True, '', False),
         # voxel, radius=30:
-        # (30, 8, False, True, 0, ['SSVV'], True, None),  # TODO ok to fail
+        # (30, 8, False, True, 0, ['SSVV'], True, None, False),# TODO ok to fail
         # voxel, radius=30:
-        # (30, 10, False, True, 0, ['VV'], True, None),  # TODO ok to fail
+        # (30, 10, False, True, 0, ['VV'], True, '', False),  # TODO ok to fail
         # voxel, radius=30, radius_hit=18, SSVV & AVV:
-        # (30, 28, False, True, 0, ['SSVV', 'VV'], True, None),
+        # (30, 28, False, True, 0, ['SSVV', 'VV'], True, '', False),
     ])
 def test_sphere_curvatures(
         radius, radius_hit, inverse, methods, area2, voxel, ico, runtimes,
-        res=0, noise=0, save_areas=False, page_curvature_formula=False,
-        full_dist_map=False, cores=4):
+        vertex_based, res=0, noise=0, save_areas=False,
+        page_curvature_formula=False, full_dist_map=False, cores=4):
     """
     Runs all the steps needed to calculate curvatures for a test sphere with a
     given radius. Tests whether the curvatures are correctly estimated using
@@ -559,13 +613,15 @@ def test_sphere_curvatures(
             voting to estimate the principal directions and curvatures
         area2 (boolean): if True (default), votes are weighted by triangle area
             also in the second step (principle directions and curvatures
-            estimation)
+            estimation; not possible if vertex_based is True)
         voxel (boolean): if True, a voxel sphere is generated (ignoring the
             options ico, res and noise)
         ico (int): if > 0 and res=0, an icosahedron with so many faces is used
             (1280 faces with radius 1 or 10 are available so far)
         runtimes (str): if given, runtimes and some parameters are added to
-            this file (otherwise None)
+            this file (otherwise empty string '')
+        vertex_based (boolean): if True, curvature is calculated per triangle
+            vertex instead of triangle center.
         res (int, optional): if > 0 determines how many longitude and
             latitude stripes the UV sphere from vtkSphereSource has, the
             surface is triangulated; If 0 (default) and ico=0, first a
@@ -575,7 +631,8 @@ def test_sphere_curvatures(
             percents of average triangle edge length (default 10), the noise
             is added on triangle vertex coordinates in its normal direction
         save_areas (boolean, optional): if True (default False), also mesh
-            triangle ares will be saved to a file
+            triangle ares will be saved to a file (not possible if vertex_based
+            is True)
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV (see
             collect_curvature_votes)
@@ -608,9 +665,16 @@ def test_sphere_curvatures(
         inverse_str = "inverse_"
     else:
         inverse_str = ""
-    base_filename = "{}{}sphere_r{}".format(files_fold, inverse_str, radius)
+    if vertex_based:
+        vertex_based_str = "_vertex_based"
+    else:
+        vertex_based_str = ""
+    base_filename = "{}{}sphere_r{}{}".format(
+        files_fold, inverse_str, radius, vertex_based_str)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    log_file = '{}.{}_rh{}.log'.format(base_filename, methods[0], radius_hit)
+    sys.stdout = open(log_file, 'w')
 
     if inverse:
         print("\n*** Generating a surface and a graph for an inverse "
@@ -650,17 +714,23 @@ def test_sphere_curvatures(
 
     # Reading in the surface and transforming it into a triangle graph
     surf, tg = surface_to_graph(surf_file, inverse=inverse)
+    if vertex_based:
+        _, pg = surface_to_graph(surf_file, inverse=inverse, vertex_based=True)
+        area2 = False
+        save_areas = False
+    else:
+        pg = None
 
     # Running the modified Normal Vector Voting algorithm:
-    if runtimes is not None and not os.path.isfile(runtimes):
+    if runtimes != '' and not os.path.isfile(runtimes):
         with open(runtimes, 'w') as f:
             f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
                     "duration1;method;duration2\n")
     method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=0, methods=methods,
+        tg, radius_hit, methods=methods,
         page_curvature_formula=page_curvature_formula,
         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        runtimes=runtimes, graph_file=temp_normals_graph_file)
+        runtimes=runtimes, graph_file=temp_normals_graph_file, pg=pg)
 
     # Ground truth principal curvatures
     true_curvature = 1.0 / radius
@@ -670,7 +740,7 @@ def test_sphere_curvatures(
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
-        (tg, surf) = method_tg_surf_dict[method]
+        (sg, surf) = method_tg_surf_dict[method]
         if method == 'VV':
             if page_curvature_formula:
                 method = 'NVV'
@@ -683,12 +753,11 @@ def test_sphere_curvatures(
 
         # Evaluating each method:
         print("\nEvaluating {}...".format(method))
-        eval_file = '{}.{}_rh{}.csv'.format(
-            base_filename, method, radius_hit)
+        eval_file = '{}.{}_rh{}.csv'.format(base_filename, method, radius_hit)
 
         # Getting estimated principal curvatures from the output graph:
-        kappa_1 = tg.get_vertex_property_array("kappa_1")
-        kappa_2 = tg.get_vertex_property_array("kappa_2")
+        kappa_1 = sg.get_vertex_property_array("kappa_1")
+        kappa_2 = sg.get_vertex_property_array("kappa_2")
 
         # Calculating errors of the principal curvatures:
         abs_kappa_1_errors = np.array(map(
@@ -709,14 +778,14 @@ def test_sphere_curvatures(
         df['kappa2AbsErrors'] = abs_kappa_2_errors
         df['kappa2RelErrors'] = rel_kappa_2_errors
         if save_areas:
-            triangle_areas = tg.get_vertex_property_array("area")
+            triangle_areas = sg.get_vertex_property_array("area")
             df['triangleAreas'] = triangle_areas
         df.to_csv(eval_file, sep=';')
 
         # The same steps for VTK, if the file does not exist yet:
         if not os.path.isfile(VTK_eval_file):
-            vtk_kappa_1_values = tg.get_vertex_property_array("max_curvature")
-            vtk_kappa_2_values = tg.get_vertex_property_array("min_curvature")
+            vtk_kappa_1_values = sg.get_vertex_property_array("max_curvature")
+            vtk_kappa_2_values = sg.get_vertex_property_array("min_curvature")
             vtk_abs_kappa_1_errors = np.array(map(
                 lambda x: absolute_error_scalar(true_curvature, x),
                 vtk_kappa_1_values))
@@ -756,14 +825,17 @@ def test_sphere_curvatures(
 #      "{}torus/files4plotting/torus_rr25_csr10_runtimes_VV2_cores.csv".format(
 #          FOLD)),
 # ])
-@pytest.mark.parametrize("radius_hit", [9])  # range(5, 10)
-@pytest.mark.parametrize("rr,csr,methods,area2,runtimes, cores", [
-        (25, 10, ['VV'], False, None, 4),  # RVV
-        (25, 10, ['VV'], True, None, 4),  # AVV
-        # (25, 10, ['SSVV'], True, None, 4),
+# @pytest.mark.parametrize("radius_hit", range(5, 10))
+@pytest.mark.parametrize(
+    "rr,csr,radius_hit,methods,area2,runtimes,cores,vertex_based", [
+        (25, 10, 9, ['VV'], False, '', 4, False),  # RVV
+        (25, 10, 9, ['VV'], True, '', 4, False),  # AVV
+        (25, 10, 5, ['SSVV'], True, '', 4, False),
+        (25, 10, 9, ['VV'], False, '', 4, True),  # RVV, vertex
+        (25, 10, 5, ['SSVV'], True, '', 4, True)  # SSVV, vertex
     ])
 def test_torus_directions_curvatures(
-        rr, csr, radius_hit, methods, area2, runtimes, cores,
+        rr, csr, radius_hit, methods, area2, runtimes, cores, vertex_based,
         page_curvature_formula=False, full_dist_map=False):
     """
     Runs all the steps needed to calculate curvatures for a test torus
@@ -782,10 +854,12 @@ def test_torus_directions_curvatures(
             voting to estimate the principal directions and curvatures
         area2 (boolean): if True (default), votes are weighted by triangle area
             also in the second step (principle directions and curvatures
-            estimation)
+            estimation; not possible if vertex_based is True)
         runtimes (str): if given, runtimes and some parameters are added to
-            this file (otherwise None)
+            this file (otherwise '')
         cores (int): number of cores to run VV in parallel
+        vertex_based (boolean): if True, curvature is calculated per triangle
+            vertex instead of triangle center.
         page_curvature_formula (boolean, optional): if True (default False)
             normal curvature formula from Page et al. is used for VV (see
             collect_curvature_votes)
@@ -807,9 +881,17 @@ def test_torus_directions_curvatures(
     files_fold = '{}files4plotting/'.format(fold)
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
-    base_filename = "{}torus_rr{}_csr{}".format(files_fold, rr, csr)
+    if vertex_based:
+        vertex_based_str = "_vertex_based"
+    else:
+        vertex_based_str = ""
+    base_filename = "{}torus_rr{}_csr{}{}".format(
+        files_fold, rr, csr, vertex_based_str)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    log_file = '{}.{}_rh{}.log'.format(
+        base_filename, methods[0], radius_hit)
+    sys.stdout = open(log_file, 'w')
 
     print("\n*** Generating a surface and a graph for a torus with ring "
           "radius {} and cross-section radius {}***".format(rr, csr))
@@ -821,53 +903,60 @@ def test_torus_directions_curvatures(
 
     # Reading in the surface and transforming it into a triangle graph
     surf, tg = surface_to_graph(surf_file, inverse=False)
+    if vertex_based:
+        _, pg = surface_to_graph(surf_file, inverse=False, vertex_based=True)
+        area2 = False
+        sg = pg
+    else:
+        pg = None
+        sg = tg
 
     # Ground-truth principal curvatures and directions
     # Vertex properties for storing the true maximal and minimal curvatures
     # and the their directions of the corresponding triangle:
-    tg.graph.vp.true_kappa_1 = tg.graph.new_vertex_property("float")
-    tg.graph.vp.true_kappa_2 = tg.graph.new_vertex_property("float")
-    tg.graph.vp.true_T_1 = tg.graph.new_vertex_property("vector<float>")
-    tg.graph.vp.true_T_2 = tg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.true_kappa_1 = sg.graph.new_vertex_property("float")
+    sg.graph.vp.true_kappa_2 = sg.graph.new_vertex_property("float")
+    sg.graph.vp.true_T_1 = sg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.true_T_2 = sg.graph.new_vertex_property("vector<float>")
 
     # Calculate and fill the properties
     true_kappa_1 = 1.0 / csr  # constant for the whole torus surface
-    xyz = tg.graph.vp.xyz
-    for v in tg.graph.vertices():
+    xyz = sg.graph.vp.xyz
+    for v in sg.graph.vertices():
         x, y, z = xyz[v]  # coordinates of triangle center v
         true_kappa_2, true_T_1, true_T_2 = torus_curvatures_and_directions(
             rr, csr, x, y, z)
-        tg.graph.vp.true_kappa_1[v] = true_kappa_1
-        tg.graph.vp.true_kappa_2[v] = true_kappa_2
-        tg.graph.vp.true_T_1[v] = true_T_1
-        tg.graph.vp.true_T_2[v] = true_T_2
+        sg.graph.vp.true_kappa_1[v] = true_kappa_1
+        sg.graph.vp.true_kappa_2[v] = true_kappa_2
+        sg.graph.vp.true_T_1[v] = true_T_1
+        sg.graph.vp.true_T_2[v] = true_T_2
 
     # Getting the true principal directions and principal curvatures:
     pos = [0, 1, 2]  # vector-property value positions
     # The shape is (3, <num_vertices>) - have to transpose to group the
     # respective x, y, z components to sub-arrays
     true_T_1 = np.transpose(
-        tg.graph.vertex_properties["true_T_1"].get_2d_array(pos))
+        sg.graph.vertex_properties["true_T_1"].get_2d_array(pos))
     true_T_2 = np.transpose(
-        tg.graph.vertex_properties["true_T_2"].get_2d_array(pos))
-    true_kappa_1 = tg.get_vertex_property_array("true_kappa_1")
-    true_kappa_2 = tg.get_vertex_property_array("true_kappa_2")
+        sg.graph.vertex_properties["true_T_2"].get_2d_array(pos))
+    true_kappa_1 = sg.get_vertex_property_array("true_kappa_1")
+    true_kappa_2 = sg.get_vertex_property_array("true_kappa_2")
 
     # Running the modified Normal Vector Voting algorithm:
-    if runtimes is not None and not os.path.isfile(runtimes):
+    if runtimes != '' and not os.path.isfile(runtimes):
         with open(runtimes, 'w') as f:
             f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
                     "duration1;method;duration2\n")
-    method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, exclude_borders=0, methods=methods,
+    method_sg_surf_dict = normals_directions_and_curvature_estimation(
+        tg, radius_hit, methods=methods,
         page_curvature_formula=page_curvature_formula,
         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        runtimes=runtimes, graph_file=temp_normals_graph_file)
+        runtimes=runtimes, graph_file=temp_normals_graph_file, pg=pg)
 
-    for method in method_tg_surf_dict.keys():
+    for method in method_sg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
-        (tg, surf) = method_tg_surf_dict[method]
+        (sg, surf) = method_sg_surf_dict[method]
         if method == 'VV':
             if page_curvature_formula:
                 method = 'NVV'
@@ -883,8 +972,8 @@ def test_torus_directions_curvatures(
         eval_file = '{}.{}_rh{}.csv'.format(base_filename, method, radius_hit)
 
         # Getting the estimated and true principal directions:
-        T_1 = np.transpose(tg.graph.vertex_properties["T_1"].get_2d_array(pos))
-        T_2 = np.transpose(tg.graph.vertex_properties["T_2"].get_2d_array(pos))
+        T_1 = np.transpose(sg.graph.vertex_properties["T_1"].get_2d_array(pos))
+        T_2 = np.transpose(sg.graph.vertex_properties["T_2"].get_2d_array(pos))
 
         # Computing errors of the estimated directions wrt the true ones:
         T_1_errors = np.array(map(
@@ -897,10 +986,10 @@ def test_torus_directions_curvatures(
             lambda x, y: angular_error_vector(x, y), true_T_2, T_2))
 
         # Getting the estimated principal curvatures:
-        kappa_1 = tg.get_vertex_property_array("kappa_1")
-        kappa_2 = tg.get_vertex_property_array("kappa_2")
-        vtk_kappa_1 = tg.get_vertex_property_array("max_curvature")
-        vtk_kappa_2 = tg.get_vertex_property_array("min_curvature")
+        kappa_1 = sg.get_vertex_property_array("kappa_1")
+        kappa_2 = sg.get_vertex_property_array("kappa_2")
+        vtk_kappa_1 = sg.get_vertex_property_array("max_curvature")
+        vtk_kappa_2 = sg.get_vertex_property_array("min_curvature")
 
         # Computing errors of the estimated curvatures wrt the true ones:
         abs_kappa_1_errors = np.array(map(
@@ -977,7 +1066,7 @@ def test_torus_directions_curvatures(
 #     stats_file = '{}sphere_r10.AVV_rh9.stats'.format(fold)
 #     cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
 #                  'inverse=False, voxel=True, ico=0, methods=[\'VV\'], '
-#                  'runtimes=None, cores=1)', stats_file)
+#                  'runtimes='', cores=1)', stats_file)
 #
 #     p = pstats.Stats(stats_file)
 #     # what algorithms are taking time:
