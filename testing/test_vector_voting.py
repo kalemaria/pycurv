@@ -564,19 +564,19 @@ def test_cylinder_directions_curvatures(
 @pytest.mark.parametrize(
     "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes, vertex_based", [
         # smooth, radius=10:
-        (10, 8, False, False, 0, ['SSVV'], True, '', False),
-        (10, 11, False, False, 0, ['VV'], True, '', False),  # AVV
-        (10, 11, False, False, 0, ['VV'], False, '', False),  # RVV
-        (10, 9, False, False, 0, ['VV'], False, '', True),  # RVV, vertex
-        (10, 9, False, False, 0, ['SSVV'], False, '', True),  # SSVV, vertex
+        (10, 9, False, False, 0, ['VV'], True, '', False),  # AVV
+        # RVV and SSVV:
+        (10, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
+        # RVV and SSVV, vertex:
+        (10, 9, False, False, 0, ['VV', 'SSVV'], False, '', True),
         # smooth, radius=20:
-        # (20, 8, False, False, 0, ['SSVV'], True, '', False),
-        # (20, 11, False, False, 0, ['VV'], True, '', False),  # AVV
-        # (20, 11, False, False, 0, ['VV'], False, '', False),  # RVV
+        # (20, 9, False, False, 0, ['VV'], True, '', False),  # AVV
+        # RVV and SSVV:
+        # (20, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
         # voxel, radius=10:
         (10, 10, False, True, 0, ['VV'], True, '', False),  # AVV
         (10, 10, False, True, 0, ['VV'], False, '', False),  # RVV
-        (10, 8, False, True, 0, ['SSVV'], True, '', False),  # TODO ok to fail
+        (10, 8, False, True, 0, ['SSVV'], False, '', False),  # TODO ok to fail
         (10, 10, False, True, 0, ['VV'], False, '', True),  # RVV, vertex
         (10, 8, False, True, 0, ['SSVV'], False, '', True),  # SSVV, vertex
         # voxel, radius=20:
@@ -586,7 +586,6 @@ def test_cylinder_directions_curvatures(
         # (20, 18, False, True, 0, ['SSVV', 'VV'], True, '', False),
         # voxel, radius=30:
         # (30, 8, False, True, 0, ['SSVV'], True, None, False),# TODO ok to fail
-        # voxel, radius=30:
         # (30, 10, False, True, 0, ['VV'], True, '', False),  # TODO ok to fail
         # voxel, radius=30, radius_hit=18, SSVV & AVV:
         # (30, 28, False, True, 0, ['SSVV', 'VV'], True, '', False),

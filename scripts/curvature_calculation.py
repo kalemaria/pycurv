@@ -829,20 +829,20 @@ def from_vtk_workflow(
     if vertex_based:
         area2 = False
         point_graph_file = base_filename + "_point.gt"
-        if not isfile(point_graph_file):
-            print('\nBuilding a point graph from the surface...')
-            pg = PointGraph()
-            pg.build_graph_from_vtk_surface(surf, scale)
-            if pg.graph.num_vertices() == 0:
-                raise pexceptions.PySegInputError(
-                    expr="new_workflow", msg="The graph is empty!")
-            print('The graph has {} vertices and {} edges'.format(
-                pg.graph.num_vertices(), pg.graph.num_edges()))
-            pg.graph.save(point_graph_file)
-        else:
-            print('\nReading in the point graph from file...')
-            pg = PointGraph()
-            pg.graph = load_graph(point_graph_file)
+        # if not isfile(point_graph_file):
+        print('\nBuilding a point graph from the surface...')
+        pg = PointGraph()
+        pg.build_graph_from_vtk_surface(surf, scale)
+        if pg.graph.num_vertices() == 0:
+            raise pexceptions.PySegInputError(
+                expr="new_workflow", msg="The graph is empty!")
+        print('The graph has {} vertices and {} edges'.format(
+            pg.graph.num_vertices(), pg.graph.num_edges()))
+        pg.graph.save(point_graph_file)
+        # else: read in PointGraph lacks a dictionary required for VTP creation
+        #     print('\nReading in the point graph from file...')
+        #     pg = PointGraph()
+        #     pg.graph = load_graph(point_graph_file)
         point_graph = pg
     else:
         point_graph = None
@@ -851,7 +851,8 @@ def from_vtk_workflow(
     normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
         base_filename, radius_hit)
     method_tg_surf_dict = {}
-    if not isfile(normals_graph_file):
+    if not isfile(normals_graph_file) or vertex_based:  # read in PointGraph
+        # lacks a dictionary required for VTP creation
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
             tg, radius_hit, methods=methods,
             page_curvature_formula=page_curvature_formula,
@@ -862,7 +863,7 @@ def from_vtk_workflow(
             sg_curv, surface_curv = curvature_estimation(
                 radius_hit, graph_file=normals_graph_file, method=method,
                 page_curvature_formula=page_curvature_formula, area2=area2,
-                poly_surf=surf, cores=cores, pg=point_graph)
+                poly_surf=surf, cores=cores, vertex_based=vertex_based, sg=tg)
             method_tg_surf_dict[method] = (sg_curv, surface_curv)
 
     for method in method_tg_surf_dict.keys():

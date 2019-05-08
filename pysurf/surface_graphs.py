@@ -335,7 +335,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
         return (T_1, T_2, kappa_1, kappa_2,
                 gauss_curvature, mean_curvature, shape_index, curvedness)
 
-    def gen_curv_vote(self, poly_surf, vertex_r, radius_hit):
+    def gen_curv_vote(self, poly_surf, vertex_v, radius_hit):
         """
         Implements the third pass of the method of Tong & Tang et al., 2005,
         "Algorithm 5. GenCurvVote". Estimates principal curvatures and
@@ -347,16 +347,16 @@ class SurfaceGraph(graphs.SegmentationGraph):
         Args:
             poly_surf (vtkPolyData): surface from which the graph was generated,
                 scaled to given units
-            vertex_r (graph_tool.Vertex): the vertex r in the surface
+            vertex_v (graph_tool.Vertex): the vertex v in the surface
                 triangle-graph for which the principal directions and curvatures
                 are estimated
             radius_hit (float): radius in length unit of the graph for sampling
                 surface points in tangent directions
         """
-        # Get the coordinates of vertex r and its estimated normal N_r (as numpy
+        # Get the coordinates of vertex v and its estimated normal N_v (as numpy
         # array, input of the original method):
-        r = np.array(self.graph.vp.xyz[vertex_r])
-        N_r = np.array(self.graph.vp.N_v[vertex_r])
+        v = np.array(self.graph.vp.xyz[vertex_v])
+        N_v = np.array(self.graph.vp.N_v[vertex_v])
 
         # Define a cellLocator to be able to compute intersections between lines
         # and the surface:
@@ -373,24 +373,24 @@ class SurfaceGraph(graphs.SegmentationGraph):
         pi = math.pi
 
         # a vector on tangent plane T_r(S)
-        votedir = perpendicular_vector(N_r)
+        votedir = perpendicular_vector(N_v)
         if votedir is None:
             print("Error: calculation of a perpendicular vector failed")
             exit(0)
-        # M_r = np.zeros(shape=(2, 2))  # when transform votedir to 2D
-        M_r = np.zeros(shape=(3, 3))
-        R = rotation_matrix(N_r, pi/4)
+        # B_v = np.zeros(shape=(2, 2))  # when transform votedir to 2D
+        B_v = np.zeros(shape=(3, 3))
+        R = rotation_matrix(N_v, pi/4)
         for i in range(8):
-            # rotate the vector by 45 degrees (pi/4 radians) around N_r axis
+            # rotate the vector by 45 degrees (pi/4 radians) around N_v axis
             votedir = rotate_vector(votedir, pi/4, matrix=R)
-            r_t = r + votedir * radius_hit
+            v_t = v + votedir * radius_hit
 
             # Find intersection point c between the surface and line segment l
-            # going through r_t and parallel to N_r:
-            # point on line l from r_t in normal direction
-            p1 = r_t + multiply(N_r, radius_hit)
-            # point on line l from r_t in opposite normal direction
-            p2 = r_t - multiply(N_r, radius_hit)
+            # going through v_t and parallel to N_v:
+            # point on line l from v_t in normal direction
+            p1 = v_t + multiply(N_v, radius_hit)
+            # point on line l from v_t in opposite normal direction
+            p2 = v_t - multiply(N_v, radius_hit)
             # Outputs (we need only c, which is the x, y, z position
             # of the intersection):
             t = vtk.mutable(0)
@@ -406,24 +406,24 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 # sense to give up if there is no continuation of the surface at
                 # radius_hit distance just in one or some of the 8 directions
 
-            b = sqrt(dot(r_t - c, r_t - c))
+            b = sqrt(dot(v_t - c, v_t - c))
             if b > radius_hit:
                 continue  # in paper "return None" ...
-            k_rc = 2 * b / (b ** 2 + radius_hit ** 2)
-            # sign(c) = 1 if c is above the tangent plane T_r(S)
+            k_vc = 2 * b / (b ** 2 + radius_hit ** 2)
+            # sign(c) = 1 if c is above the tangent plane T_v(S)
             #          -1 if c is below T_r(S)
             #           0 if c lies on T_r(S)
-            sign_c = signum(dot(N_r, c - r))
+            sign_c = signum(dot(N_v, c - v))
 
             outer_product = outer(votedir, votedir)
-            multiplicator = sign_c * k_rc
-            M_r += multiply(outer_product, multiplicator)
+            multiplicator = sign_c * k_vc
+            B_v += multiply(outer_product, multiplicator)
 
-        M_r /= 8
-        # Decompose the symmetric matrix M_r:
+        B_v /= 8
+        # Decompose the symmetric matrix B_v:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix
-        eigenvalues, eigenvectors = np.linalg.eigh(M_r)
+        eigenvalues, eigenvectors = np.linalg.eigh(B_v)
         # Eigenvalues from highest to lowest:
         lambda_1 = eigenvalues[2]  # in 2D eigenvalues[1]
         lambda_2 = eigenvalues[1]  # in 2D eigenvalues[0]
@@ -434,34 +434,34 @@ class SurfaceGraph(graphs.SegmentationGraph):
         T_2 = eigenvectors[:, 1]  # in 2D eigenvectors[:, 0]
         T_3 = eigenvectors[:, 0]
         try:
-            assert(round(abs(T_3[0]), 7) == round(abs(N_r[0]), 7) and
-                   round(abs(T_3[1]), 7) == round(abs(N_r[1]), 7) and
-                   round(abs(T_3[2]), 7) == round(abs(N_r[2]), 7))
+            assert(round(abs(T_3[0]), 7) == round(abs(N_v[0]), 7) and
+                   round(abs(T_3[1]), 7) == round(abs(N_v[1]), 7) and
+                   round(abs(T_3[2]), 7) == round(abs(N_v[2]), 7))
         except AssertionError:
-            if (round(abs(T_1[0]), 7) == round(abs(N_r[0]), 7) and
-                    round(abs(T_1[1]), 7) == round(abs(N_r[1]), 7) and
-                    round(abs(T_1[2]), 7) == round(abs(N_r[2]), 7)):
+            if (round(abs(T_1[0]), 7) == round(abs(N_v[0]), 7) and
+                    round(abs(T_1[1]), 7) == round(abs(N_v[1]), 7) and
+                    round(abs(T_1[2]), 7) == round(abs(N_v[2]), 7)):
                 T_1 = T_3
                 lambda_1 = lambda_3
-                # T_3 = N_r; lambda_3 = 0
-            elif (round(abs(T_2[0]), 7) == round(abs(N_r[0]), 7) and
-                    round(abs(T_2[1]), 7) == round(abs(N_r[1]), 7) and
-                    round(abs(T_2[2]), 7) == round(abs(N_r[2]), 7)):
+                # T_3 = N_v; lambda_3 = 0
+            elif (round(abs(T_2[0]), 7) == round(abs(N_v[0]), 7) and
+                    round(abs(T_2[1]), 7) == round(abs(N_v[1]), 7) and
+                    round(abs(T_2[2]), 7) == round(abs(N_v[2]), 7)):
                 T_2 = T_3
                 lambda_2 = lambda_3
-                # T_3 = N_r; lambda_3 = 0
+                # T_3 = N_v; lambda_3 = 0
             else:
                 print("Error: no eigenvector which equals to the normal found")
                 print("T_1 = {}".format(T_1))
                 print("T_2 = {}".format(T_2))
                 print("T_3 = {}".format(T_3))
-                print("N_r = {}".format(N_r))
+                print("N_v = {}".format(N_v))
                 print("lambda_1 = {}".format(lambda_1))
                 print("lambda_2 = {}".format(lambda_2))
                 print("lambda_3 = {}".format(lambda_3))
                 # add placeholders to the graph
                 self._add_curvature_descriptors_to_vertex(
-                    vertex_r, None, None, None, None, None, None, None, None)
+                    vertex_v, None, None, None, None, None, None, None, None)
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2
         kappa_2 = 3 * lambda_2 - lambda_1
@@ -477,7 +477,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
         shape_index = calculate_shape_index(kappa_1, kappa_2)
         curvedness = calculate_curvedness(kappa_1, kappa_2)
         self._add_curvature_descriptors_to_vertex(
-            vertex_r, T_1, T_2, kappa_1, kappa_2, gauss_curvature,
+            vertex_v, T_1, T_2, kappa_1, kappa_2, gauss_curvature,
             mean_curvature, shape_index, curvedness)
 
     def _add_curvature_descriptors_to_vertex(
