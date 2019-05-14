@@ -204,7 +204,7 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
     minutes, seconds = divmod(duration0, 60)
     print('Preparation took: {} min {} s' .format(minutes, seconds))
 
-    if full_dist_map is True:
+    if full_dist_map is True and pg is None:
         # * Distance map between all pairs of vertices *
         t_begin0 = time.time()
         print("\nCalculating the full distance map...")
@@ -241,15 +241,15 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
         # column 1 = V_v (3x3 float array)
         # each row i is of vertex v, its index == i
         # V_v_list = p.map(partial(collect_normal_votes, # if only V_v output
-        if pg is None:
+        if pg is None:  # TriangleGraph
             results1_list = p.map(partial(collect_normal_votes,
                                           g_max=g_max, A_max=A_max, sigma=sigma,
                                           full_dist_map=full_dist_map),
                                   range(num_v))  # a list of vertex v indices
-        else:
+        else:  # PointGraph
             results1_list = p.map(partial(collect_normal_votes,
                                           g_max=g_max, A_max=A_max, sigma=sigma,
-                                          tg=tg, full_dist_map=full_dist_map),
+                                          tg=tg),
                                   range(num_v))  # a list of vertex v indices
         results1_array = np.array(results1_list, dtype=object)
         # Calculating average neighbors number:
@@ -273,12 +273,12 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
     else:  # cores == 1, sequential processing
         sum_num_neighbors = 0
         for i in range(num_v):
-            if pg is None:
+            if pg is None:  # TriangleGraph
                 num_neighbors, V_v = collect_normal_votes(
                     i, g_max, A_max, sigma, full_dist_map=full_dist_map)
-            else:
+            else:  # PointGraph
                 num_neighbors, V_v = collect_normal_votes(
-                    i, g_max, A_max, sigma, tg=tg, full_dist_map=full_dist_map)
+                    i, g_max, A_max, sigma, tg=tg)
             sum_num_neighbors += num_neighbors
             N_v = estimate_normal(i, V_v)
             # Adding the estimated normal property to the graph:

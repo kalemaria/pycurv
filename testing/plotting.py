@@ -32,7 +32,7 @@ __author__ = 'kalemanov'
 
 #FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
 FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
-       'vertex_based/test_vector_voting_output/'
+       'vertex_based_exact_geodesics/test_vector_voting_output/'
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 LINEWIDTH = 4
 

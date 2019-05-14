@@ -12,7 +12,8 @@ import pexceptions
 from pysurf_io import TypesConverter
 from curvature_definitions import *
 from surface import add_curvature_to_vtk_surface, rescale_surface
-from linalg import perpendicular_vector, rotation_matrix, rotate_vector, signum
+from linalg import (
+    perpendicular_vector, rotation_matrix, rotate_vector, signum, nice_acos)
 
 """
 Set of functions and classes (abstract SurfaceGraph and derived TriangleGraph)
@@ -154,15 +155,23 @@ class SurfaceGraph(graphs.SegmentationGraph):
         sqrt = math.sqrt
         pi = math.pi
         cross = np.cross
-        acos = math.acos
+        acos = nice_acos
         outer = np.multiply.outer
         cos = math.cos
         if A_max > 0:
             area = self.graph.vp.area
 
         # Find the neighboring vertices of vertex v to be returned:
-        neighbor_idx_to_dist = self.find_geodesic_neighbors(
-            vertex_v, g_max, full_dist_map=full_dist_map)
+        if self.__class__.__name__ == "TriangleGraph":
+            if vertex_v_ind == 0:
+                print("Calling find_geodesic_neighbors")
+            neighbor_idx_to_dist = self.find_geodesic_neighbors(
+                vertex_v, g_max, full_dist_map=full_dist_map)
+        else:  # PointGraph
+            if vertex_v_ind == 0:
+                print("Calling find_geodesic_neighbors_exact")
+            neighbor_idx_to_dist = self.find_geodesic_neighbors_exact(
+                vertex_v, g_max, verbose=False)
         # Doing it again, because saving in first pass caused memory problems
         try:
             assert(len(neighbor_idx_to_dist) > 0)
@@ -218,14 +227,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
             n_i_len = sqrt(dot(n_i, n_i))
             # theta is the turning angle between n_i and N_v
             cos_theta = dot(N_v, n_i) / n_i_len
-            try:
-                theta = acos(cos_theta)
-            except ValueError:
-                if cos_theta > 1:
-                    cos_theta = 1.0
-                elif cos_theta < 0:
-                    cos_theta = 0.0
-                theta = acos(cos_theta)
+            theta = acos(cos_theta)
             if page_curvature_formula:  # formula from Page et al. paper:
                 s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
                 kappa_i = theta / s
@@ -806,8 +808,7 @@ class PointGraph(SurfaceGraph):
     # * The following PointGraph method is implementing with adaptations
     # the first part of the first step of normal vector voting algorithm of
     # Page et al., 2002. *
-    def collect_normal_votes(self, vertex_v_ind, g_max, A_max, sigma, tg,
-                             full_dist_map=None):
+    def collect_normal_votes(self, vertex_v_ind, g_max, A_max, sigma, tg):
         """
         For a vertex v, collects the normal votes of all triangles within its
         geodesic neighborhood and calculates the weighted covariance matrix sum
@@ -837,9 +838,6 @@ class PointGraph(SurfaceGraph):
                 beyond the neighborhood can be ignored
             tg (TriangleGraph): TriangleGraph generated from the same surface,
                 storing the triangle areas and normals.
-            full_dist_map (graph_tool.PropertyMap, optional): the full distance
-                map for the whole graph; if None, a local distance map is
-                calculated for this vertex (default)
 
         Returns:
             - number of geodesic neighbors of vertex v
@@ -865,8 +863,10 @@ class PointGraph(SurfaceGraph):
         v = array(v)
 
         # Find the neighboring vertices of vertex v to be returned:
-        neighbor_idx_to_dist = self.find_geodesic_neighbors(
-            vertex_v, g_max, full_dist_map=full_dist_map)
+        if vertex_v_ind == 0:
+            print("Calling find_geodesic_neighbors_exact")
+        neighbor_idx_to_dist = self.find_geodesic_neighbors_exact(
+            vertex_v, g_max, verbose=False)
         try:
             assert len(neighbor_idx_to_dist) > 0
         except AssertionError:
@@ -924,7 +924,7 @@ class PointGraph(SurfaceGraph):
             # distances to each of the triangle vertices v_i:
             A_i = area[tg_vertex_c_i]
             g_v_i_s = [neighbor_idx_to_dist[idx_v_i] for idx_v_i in ids_v_i]
-            g_i = array(g_v_i_s).mean()
+            g_i = array(g_v_i_s).mean()  # TODO check if a good approximation!
             w_i = A_i / A_max * exp(- g_i / sigma)
 
             # Weigh V_i and add it to the weighted matrix sum:
@@ -1780,6 +1780,8 @@ class TriangleGraph(SurfaceGraph):
         v = array(v)
 
         # Find the neighboring vertices of vertex v to be returned:
+        if vertex_v_ind == 0:
+            print("Calling find_geodesic_neighbors")
         neighbor_idx_to_dist = self.find_geodesic_neighbors(
             vertex_v, g_max, full_dist_map=full_dist_map)
         try:

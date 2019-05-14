@@ -167,3 +167,24 @@ def dot_norm(p, pnorm, norm):
         return 0
 
     return v[0]*norm[0] + v[1]*norm[1] + v[2]*norm[2]
+
+
+def nice_acos(cos_theta):
+    """
+    Returns the angle in radians given a cosine of the angle without ValueError.
+
+    Args:
+        cos_theta (float): cos of an angle
+
+    Returns:
+        angle in radians
+    """
+    try:
+        theta = math.acos(cos_theta)
+    except ValueError:
+        if cos_theta > 1:
+            cos_theta = 1.0
+        elif cos_theta < 0:
+            cos_theta = 0.0
+        theta = math.acos(cos_theta)
+    return theta
