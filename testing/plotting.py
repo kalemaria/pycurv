@@ -1529,8 +1529,10 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
         data = [SSVV_T_errors, VV_T_errors]
         if x_range_T is None:
             x_range = (0, max([max(d) for d in data]))
+            range_str = ""
         else:
             x_range = x_range_T
+            range_str = "_range{}-{}".format(x_range[0], x_range[1])
         plot_composite_line_hist(
             data_arrays=data,
             labels=["SSVV rh={}".format(rhSSVV), "{} rh={}".format(
@@ -1540,8 +1542,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
             title=None,  # "Torus (major radius=25, minor radius=10)",
             x_label=r"$\vec t_{}\ error$".format(i),
             y_label="Cumulative relative frequency",
-            outfile="{}{}.{}rh{}_vs_SSVVrh{}.T_{}_errors.png".format(
-                plot_fold, basename, RorAVV, rhVV, rhSSVV, i),
+            outfile="{}{}.{}rh{}_vs_SSVVrh{}.T_{}_errors{}.png".format(
+                plot_fold, basename, RorAVV, rhVV, rhSSVV, i, range_str),
             num_bins=20, normalize=True, cumulative=True,
             x_range=x_range,
             y_range=y_range,
@@ -1550,8 +1552,10 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
         data = [VV_kappa_errors, VTK_kappa_errors, SSVV_kappa_errors]
         if x_range_kappa is None:
             x_range = (0, max([max(d) for d in data]))
+            range_str = ""
         else:
             x_range = x_range_kappa
+            range_str = "_range{}-{}".format(x_range[0], x_range[1])
         plot_composite_line_hist(
             data_arrays=data,
             labels=["{} rh={}".format(RorAVV, rhVV), "VTK",
@@ -1561,8 +1565,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
             title=None,  # "Torus (major radius=25, minor radius=10)",
             x_label=r"$\kappa_{}\ relative\ error$".format(i),
             y_label="Cumulative relative frequency",
-            outfile=("{}{}.{}rh{}_SSVVrh{}_vs_VTK.kappa_{}_errors.png".format(
-                plot_fold, basename, RorAVV, rhVV, rhSSVV, i)),
+            outfile=("{}{}.{}rh{}_SSVVrh{}_vs_VTK.kappa_{}_errors{}.png".format(
+                plot_fold, basename, RorAVV, rhVV, rhSSVV, i, range_str)),
             num_bins=20, normalize=True, cumulative=True,
             x_range=x_range,
             y_range=y_range
@@ -1998,7 +2002,7 @@ if __name__ == "__main__":
     #         num_bins=25, method=method, borders=0)  # , x_range=(-0.1, 0.15)
 
     # Benchmark data
-    # plot_plane_normals(vertex_based=True, x_range=(0, 0.4))
+    plot_plane_normals(vertex_based=True, x_range=(0, 0.4))
 
     # torus
     # plot_torus_kappa_1_and_2_diff_rh()
@@ -2014,7 +2018,8 @@ if __name__ == "__main__":
     #                      "torus_rr25_csr10_SSVV_RadiusHit1-10_xmax0.5.csv")))
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
     plot_torus_kappa_1_and_2_T_1_and_2_errors(
-        rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True)
+        rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True)  # ,
+    #   x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
 
     # smooth sphere
     # plot_sphere_kappa_1_and_2_diff_rh(

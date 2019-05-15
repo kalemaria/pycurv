@@ -927,8 +927,14 @@ class PointGraph(SurfaceGraph):
             # Geodesic distances to the three vertices of the triangle i:
             g_v_i_s = [neighbor_idx_to_dist[idx_v_i] for idx_v_i in ids_v_i]
             # Find two triangle vertices among them that are closer to vertex v:
-            [v_a, v_b] = [vertex(idx_v_i) for idx_v_i in ids_v_i
-                          if neighbor_idx_to_dist[idx_v_i] != max(g_v_i_s)]
+            # Add all 3 vertices and remove the first one with maximal distance
+            # (because two vertices can have equal distances from origin)
+            v_i_s = [vertex(idx_v_i) for idx_v_i in ids_v_i]
+            for idx_v_i in ids_v_i:
+                if neighbor_idx_to_dist[idx_v_i] == max(g_v_i_s):
+                    v_i_s.remove(vertex(idx_v_i))
+                    break
+            [v_a, v_b] = v_i_s
             # Calculate g_c_i using these two vertices, a and b, forming an
             # imaginary triangle with vertices a, b and c_i:
             g_c_i = calculate_geodesic_distance(

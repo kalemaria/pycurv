@@ -176,7 +176,7 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 """
 
 
-@pytest.mark.parametrize("radius_hit", [4, 8])
+@pytest.mark.parametrize("radius_hit", [4, 8])  # TODO OK to fail for 4
 @pytest.mark.parametrize("half_size, res, noise, vertex_based, cores", [
     # (20, 20, 10, False, 4),
     (20, 20, 10, True, 4),
@@ -563,13 +563,14 @@ def test_cylinder_directions_curvatures(
 #         # (10, True, False, 0, ['VV', 'SSVV'], False, None),  # smooth inverse
 #     ])
 @pytest.mark.parametrize(
-    "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes, vertex_based", [
+    "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes,vertex_based", [
         # smooth, radius=10:
         #(10, 9, False, False, 0, ['VV'], True, '', False),  # AVV
         # RVV and SSVV:
         #(10, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
         # RVV and SSVV, vertex:
         (10, 9, False, False, 0, ['VV', 'SSVV'], False, '', True),
+        # (10, 9, True, False, 0, ['VV', 'SSVV'], False, '', True),  # inverse
         # smooth, radius=20:
         # (20, 9, False, False, 0, ['VV'], True, '', False),  # AVV
         # RVV and SSVV:
@@ -831,8 +832,8 @@ def test_sphere_curvatures(
         # (25, 10, 9, ['VV'], False, '', 4, False),  # RVV
         # (25, 10, 9, ['VV'], True, '', 4, False),  # AVV
         # (25, 10, 5, ['SSVV'], False, '', 4, False),
-        # (25, 10, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex
-        (25, 10, 5, ['VV'], False, '', 4, True)  # RVV, vertex TODO rh=9
+        (25, 10, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex
+        (25, 10, 9, ['VV'], False, '', 4, True)  # RVV, vertex
     ])
 def test_torus_directions_curvatures(
         rr, csr, radius_hit, methods, area2, runtimes, cores, vertex_based,
