@@ -856,9 +856,10 @@ class PointGraph(SurfaceGraph):
         area = tg.graph.vp.area
         exp = math.exp
         point_in_triangles = self.point_in_triangles
+        calculate_geodesic_distance = self.calculate_geodesic_distance
 
         # Get the coordinates of vertex v (as numpy array):
-        vertex_v = self.graph.vertex(vertex_v_ind)
+        vertex_v = vertex(vertex_v_ind)
         v = xyz[vertex_v]
         v = array(v)
 
@@ -866,7 +867,7 @@ class PointGraph(SurfaceGraph):
         if vertex_v_ind == 0:
             print("Calling find_geodesic_neighbors_exact")
         neighbor_idx_to_dist = self.find_geodesic_neighbors_exact(
-            vertex_v, g_max, verbose=False)
+            vertex_v, g_max, verbose=False, debug=False)
         try:
             assert len(neighbor_idx_to_dist) > 0
         except AssertionError:
@@ -903,9 +904,10 @@ class PointGraph(SurfaceGraph):
         for idx_c_i, ids_v_i in neighboring_triangles_of_v.items():
             # Calculate the normal vote N_i of c_i on v:
             tg_vertex_c_i = tg_vertex(idx_c_i)
-            N = array(normal[tg_vertex_c_i])
+            N = array(normal[tg_vertex_c_i])  # TODO calculate triangle normal using the 3 points?
 
-            c_i = tg_xyz[tg_vertex_c_i]
+            c_i = tg_xyz[tg_vertex_c_i]  # TODO calculate triangle center using the 3 points?
+            c_i = array(c_i)
             vc_i = c_i - v
             vc_i_len = sqrt(dot(vc_i, vc_i))
             vc_i_norm = vc_i / vc_i_len
@@ -919,13 +921,19 @@ class PointGraph(SurfaceGraph):
             V_i = outer(N_i, N_i)
 
             # Calculate the weight depending on the area of the neighboring
-            # triangle i, A_i, and the geodesic distance to the triangle center
-            # c_i from vertex v, g_i, approximated as average of geodesic
-            # distances to each of the triangle vertices v_i:
-            A_i = area[tg_vertex_c_i]
+            # triangle i, A_i, and the geodesic distance to its center c_i from
+            # vertex v, g_c_i:
+            A_i = area[tg_vertex_c_i]  # TODO calculate triangle area using the 3 points?
+            # Geodesic distances to the three vertices of the triangle i:
             g_v_i_s = [neighbor_idx_to_dist[idx_v_i] for idx_v_i in ids_v_i]
-            g_i = array(g_v_i_s).mean()  # TODO check if a good approximation!
-            w_i = A_i / A_max * exp(- g_i / sigma)
+            # Find two triangle vertices among them that are closer to vertex v:
+            [v_a, v_b] = [vertex(idx_v_i) for idx_v_i in ids_v_i
+                          if neighbor_idx_to_dist[idx_v_i] != max(g_v_i_s)]
+            # Calculate g_c_i using these two vertices, a and b, forming an
+            # imaginary triangle with vertices a, b and c_i:
+            g_c_i = calculate_geodesic_distance(
+                v_a, v_b, tuple(c_i), neighbor_idx_to_dist, verbose=False)
+            w_i = A_i / A_max * exp(- g_c_i / sigma)
 
             # Weigh V_i and add it to the weighted matrix sum:
             V_v += w_i * V_i

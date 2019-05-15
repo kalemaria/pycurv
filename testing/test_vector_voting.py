@@ -179,7 +179,7 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 @pytest.mark.parametrize("radius_hit", [4, 8])
 @pytest.mark.parametrize("half_size, res, noise, vertex_based, cores", [
     # (20, 20, 10, False, 4),
-    (20, 20, 10, True, 4)
+    (20, 20, 10, True, 4),
 ])
 def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
     """
@@ -832,7 +832,7 @@ def test_sphere_curvatures(
         # (25, 10, 9, ['VV'], True, '', 4, False),  # AVV
         # (25, 10, 5, ['SSVV'], False, '', 4, False),
         # (25, 10, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex
-        (25, 10, 5, ['VV'], False, '', 4, True)  # RVV, vertex, radius_hit=9
+        (25, 10, 5, ['VV'], False, '', 4, True)  # RVV, vertex TODO rh=9
     ])
 def test_torus_directions_curvatures(
         rr, csr, radius_hit, methods, area2, runtimes, cores, vertex_based,

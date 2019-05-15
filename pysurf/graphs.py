@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 from graph_tool import Graph
 from graph_tool.topology import shortest_distance
-import heapq
+from heapq import heappush, heappop
 
 from pysurf_io import TypesConverter
 import pexceptions
@@ -591,6 +591,12 @@ class SegmentationGraph(object):
             a dictionary mapping a neighbor vertex index to the geodesic
             distance from vertex o
         """
+        # Shortcuts
+        xyz = self.graph.vp.xyz
+        vertex = self.graph.vertex
+        distance_between_voxels = self.distance_between_voxels
+        calculate_geodesic_distance = self.calculate_geodesic_distance
+        insert_geo_dist_vertex_id = self._insert_geo_dist_vertex_id
         # Initialization
         geo_dist_heap = []  # heap has the smallest geodesic distance first
         # dictionaries to keep track which geodesic distance belongs to which
@@ -600,21 +606,22 @@ class SegmentationGraph(object):
         neighbor_id_to_dist = {}  # output dictionary
         # Tag the center point (o) as Alive:
         self.graph.vp.tag = self.graph.new_vertex_property("string")
-        self.graph.vp.tag[o] = "Alive"
+        tag = self.graph.vp.tag  # shortcut
+        tag[o] = "Alive"
         if debug:
             print("Vertex o={}: Alive".format(int(o)))
         vertex_id_to_geo_dist[int(o)] = 0  # need it for geo. dist. calculation
-        xyz_o = tuple(self.graph.vp.xyz[o])
+        xyz_o = tuple(xyz[o])
         for n in o.all_neighbours():
             # Tag all neighboring points of the center point (n) as Close
-            self.graph.vp.tag[n] = "Close"
+            tag[n] = "Close"
             # Geodesic distance in this case = Euclidean between o and n
-            xyz_n = tuple(self.graph.vp.xyz[n])
-            on = self.distance_between_voxels(xyz_o, xyz_n)
+            xyz_n = tuple(xyz[n])
+            on = distance_between_voxels(xyz_o, xyz_n)
             if debug:
                 print("Vertex n={}: Close with distance {}".format(int(n), on))
-            heapq.heappush(geo_dist_heap, on)
-            self._insert_geo_dist_vertex_id(geo_dist_to_vertex_ids, on, int(n))
+            heappush(geo_dist_heap, on)
+            insert_geo_dist_vertex_id(geo_dist_to_vertex_ids, on, int(n))
             vertex_id_to_geo_dist[int(n)] = on
 
         # Repeat while the smallest distance is <= g_max
@@ -624,14 +631,14 @@ class SegmentationGraph(object):
                     len(geo_dist_heap), geo_dist_heap[0]))
             # 1. Change the tag of the point in Close with the smallest
             # geodesic distance (a) from Close to Alive
-            smallest_geo_dist = heapq.heappop(geo_dist_heap)
+            smallest_geo_dist = heappop(geo_dist_heap)
             closest_vertices_ids = geo_dist_to_vertex_ids[smallest_geo_dist]
-            a = self.graph.vertex(closest_vertices_ids[0])
+            a = vertex(closest_vertices_ids[0])
             if len(closest_vertices_ids) > 1:  # move the first one (a) to the
                 # back, so it's not taken again next time
                 closest_vertices_ids.pop(0)
                 closest_vertices_ids.append(int(a))
-            self.graph.vp.tag[a] = "Alive"
+            tag[a] = "Alive"
             neighbor_id_to_dist[int(a)] = smallest_geo_dist  # add a to output
             if debug:
                 print("Vertex a={}: Alive".format(int(a)))
@@ -640,11 +647,11 @@ class SegmentationGraph(object):
             for c in neighbors_a:
                 # 2. Tag all neighboring points (c) of this point as Close,
                 # but skip those which are Alive already
-                if self.graph.vp.tag[c] == "Alive":
+                if tag[c] == "Alive":
                     if debug:
                         print("Skipping Alive neighbor {}".format(int(c)))
                     continue
-                self.graph.vp.tag[c] = "Close"
+                tag[c] = "Close"
                 if debug:
                     print("Vertex c={}: Close".format(int(c)))
                 # 3. Recompute the geodesic distance of these neighboring
@@ -656,18 +663,19 @@ class SegmentationGraph(object):
                 common_neighbors_a_c = neighbors_a.intersection(neighbors_c)
                 for b in common_neighbors_a_c:
                     # check if b is tagged Alive
-                    if self.graph.vp.tag[b] == "Alive":
+                    if tag[b] == "Alive":
                         if debug:
                             print("\tUsing vertex b={}".format(int(b)))
-                        new_geo_dist_c = self._calculate_geodesic_distance(
-                            a, b, c, vertex_id_to_geo_dist, verbose=verbose)
+                        xyz_c = tuple(xyz[c])
+                        new_geo_dist_c = calculate_geodesic_distance(
+                            a, b, xyz_c, vertex_id_to_geo_dist, verbose=verbose)
                         if int(c) not in vertex_id_to_geo_dist:  # add c
                             if debug:
                                 print("\tadding new distance {}".format(
                                     new_geo_dist_c))
                             vertex_id_to_geo_dist[int(c)] = new_geo_dist_c
-                            heapq.heappush(geo_dist_heap, new_geo_dist_c)
-                            self._insert_geo_dist_vertex_id(
+                            heappush(geo_dist_heap, new_geo_dist_c)
+                            insert_geo_dist_vertex_id(
                                 geo_dist_to_vertex_ids, new_geo_dist_c, int(c))
                         else:
                             old_geo_dist_c = vertex_id_to_geo_dist[int(c)]
@@ -679,14 +687,14 @@ class SegmentationGraph(object):
                                 if old_geo_dist_c in geo_dist_heap:
                                     # TODO check why is it sometimes not there
                                     geo_dist_heap.remove(old_geo_dist_c)
-                                heapq.heappush(geo_dist_heap, new_geo_dist_c)
+                                heappush(geo_dist_heap, new_geo_dist_c)
                                 old_geo_dist_vertex_ids = geo_dist_to_vertex_ids[
                                     old_geo_dist_c]
                                 if len(old_geo_dist_vertex_ids) == 1:
                                     del geo_dist_to_vertex_ids[old_geo_dist_c]
                                 else:
                                     old_geo_dist_vertex_ids.remove(int(c))
-                                self._insert_geo_dist_vertex_id(
+                                insert_geo_dist_vertex_id(
                                     geo_dist_to_vertex_ids, new_geo_dist_c,
                                     int(c))
                             elif debug:
@@ -712,13 +720,13 @@ class SegmentationGraph(object):
         return neighbor_id_to_dist
 
     # @profile
-    def _calculate_geodesic_distance(
-            self, a, b, c, vertex_id_to_geo_dist, verbose=False):
+    def calculate_geodesic_distance(
+            self, a, b, xyz_c, vertex_id_to_geo_dist, verbose=False):
+        # TODO docstring
         geo_dist_a = vertex_id_to_geo_dist[int(a)]
         geo_dist_b = vertex_id_to_geo_dist[int(b)]
         xyz_a = tuple(self.graph.vp.xyz[a])
         xyz_b = tuple(self.graph.vp.xyz[b])
-        xyz_c = tuple(self.graph.vp.xyz[c])
         ab = self.distance_between_voxels(xyz_a, xyz_b)
         ac = self.distance_between_voxels(xyz_a, xyz_c)
         bc = self.distance_between_voxels(xyz_b, xyz_c)
