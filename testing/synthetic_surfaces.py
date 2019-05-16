@@ -462,13 +462,15 @@ class SaddleGenerator(object):
     """
 
     @staticmethod
-    def generate_parametric_torus(rr, csr):
+    def generate_parametric_torus(rr, csr, subdivisions=0):
         """
         Generates a torus surface with triangular cells.
 
         Args:
             rr (int or float): ring radius
             csr (int or float): cross-section radius
+            subdivisions (int, optional): number of subdivisions in all three
+                dimensions, if 0 (default), default subdivisions are used
 
         Returns:
             a torus surface (vtk.vtkPolyData)
@@ -479,6 +481,10 @@ class SaddleGenerator(object):
 
         source = vtk.vtkParametricFunctionSource()
         source.SetParametricFunction(torus)
+        if subdivisions > 0:
+            source.SetUResolution(subdivisions)
+            source.SetVResolution(subdivisions)
+            source.SetWResolution(subdivisions)
         source.Update()
 
         # The surface has nasty discontinuities from the way the edges are

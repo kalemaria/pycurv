@@ -11,7 +11,8 @@ import graphs
 import pexceptions
 from pysurf_io import TypesConverter
 from curvature_definitions import *
-from surface import add_curvature_to_vtk_surface, rescale_surface
+from surface import (add_point_normals_to_vtk_surface,
+                     add_curvature_to_vtk_surface, rescale_surface)
 from linalg import (
     perpendicular_vector, rotation_matrix, rotate_vector, signum, nice_acos)
 
@@ -536,6 +537,8 @@ class PointGraph(SurfaceGraph):
         graphs.SegmentationGraph.__init__(self)
 
         # Add more "internal property maps" to the graph.
+        # vertex property for storing the normal of the corresponding vertex:
+        self.graph.vp.normal = self.graph.new_vertex_property("vector<float>")
         # vertex property for storing the VTK minimal curvature at the
         # corresponding triangle point:
         self.graph.vp.min_curvature = self.graph.new_vertex_property("float")
@@ -588,7 +591,7 @@ class PointGraph(SurfaceGraph):
         # rescale the surface to units and update the attribute
         surface = rescale_surface(surface, scale)
 
-        # Adding curvatures to the vtkPolyData surface
+        # Adding curvatures and normals to the vtkPolyData surface
         # because VTK and we (gen_surface) have the opposite normal
         # convention: VTK outwards pointing normals, we: inwards pointing
         if reverse_normals:
@@ -597,8 +600,10 @@ class PointGraph(SurfaceGraph):
             invert = True
         surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
         surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
+        surface = add_point_normals_to_vtk_surface(surface, reverse_normals)
 
         point_data = surface.GetPointData()
+        normals = point_data.GetNormals()
         n = point_data.GetNumberOfArrays()
         min_curvatures = None
         max_curvatures = None
@@ -652,14 +657,16 @@ class PointGraph(SurfaceGraph):
                         print('\tThe point ({}, {}, {}) has been added to '
                               'the graph as a vertex.'.format(x, y, z))
 
-                    # Add VTK curvatures to the graph
+                    # Add VTK curvatures and normals to the graph
                     self.graph.vp.min_curvature[vd] = min_curvatures.GetTuple1(
                         cell.GetPointId(j))
                     self.graph.vp.max_curvature[vd] = max_curvatures.GetTuple1(
                         cell.GetPointId(j))
-                    self.graph.vp.gauss_curvature[vd] = gauss_curvatures.GetTuple1(
-                        cell.GetPointId(j))
-                    self.graph.vp.mean_curvature[vd] = mean_curvatures.GetTuple1(
+                    self.graph.vp.gauss_curvature[vd] = (
+                        gauss_curvatures.GetTuple1(cell.GetPointId(j)))
+                    self.graph.vp.mean_curvature[vd] = (
+                        mean_curvatures.GetTuple1(cell.GetPointId(j)))
+                    self.graph.vp.normal[vd] = normals.GetTuple3(
                         cell.GetPointId(j))
                 self.triangle_points.append(triangle_points)
 

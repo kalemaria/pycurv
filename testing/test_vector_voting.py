@@ -150,13 +150,12 @@ def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False,
         print('\nBuilding the TriangleGraph from the vtkPolyData surface with '
               'curvatures...')
         sg = TriangleGraph()
-    # VTK has opposite surface normals convention than we use
-    # a graph with normals pointing outwards is generated (normal case
-    # for this method; negative curvatures)
+    # VTK has opposite surface normals convention than we use a graph with
+    # normals pointing outwards is generated (normal case for this method;
+    # negative curvatures)
     if inverse:
         reverse_normals = False
-    # a graph with normals pointing inwards is generated (positive
-    # curvatures)
+    # a graph with normals pointing inwards is generated (positive curvatures)
     else:
         reverse_normals = True
     sg.build_graph_from_vtk_surface(surf, scale, verbose=False,
@@ -514,18 +513,17 @@ def test_cylinder_directions_curvatures(
             df['T1Errors'] = T_h_errors
             df['T1AngularErrors'] = T_h_angular_errors
         df.to_csv(eval_file, sep=';')
-        # The same for VTK, if the file does not exist yet:
-        if not os.path.isfile(VTK_eval_file):
-            df = pd.DataFrame()
-            df['kappa1'] = vtk_kappa_1
-            df['kappa2'] = vtk_kappa_2
-            if not inverse:
-                df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
-                df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
-            else:  # inverse
-                df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
-                df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
-            df.to_csv(VTK_eval_file, sep=';')
+        # The same for VTK:
+        df = pd.DataFrame()
+        df['kappa1'] = vtk_kappa_1
+        df['kappa2'] = vtk_kappa_2
+        if not inverse:
+            df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
+            df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
+        else:  # inverse
+            df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
+            df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+        df.to_csv(VTK_eval_file, sep=';')
 
         # Asserting that all estimated T_h vectors are close to the true
         # vector, allowing error of 30%:
@@ -569,8 +567,8 @@ def test_cylinder_directions_curvatures(
         # RVV and SSVV:
         #(10, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
         # RVV and SSVV, vertex:
-        (10, 9, False, False, 0, ['VV', 'SSVV'], False, '', True),
-        # (10, 9, True, False, 0, ['VV', 'SSVV'], False, '', True),  # inverse
+        (10, 9, False, False, 0, ['VV'], False, '', True),
+        (10, 9, False, False, 0, ['SSVV'], False, '', True),
         # smooth, radius=20:
         # (20, 9, False, False, 0, ['VV'], True, '', False),  # AVV
         # RVV and SSVV:
@@ -783,30 +781,29 @@ def test_sphere_curvatures(
             df['triangleAreas'] = triangle_areas
         df.to_csv(eval_file, sep=';')
 
-        # The same steps for VTK, if the file does not exist yet:
-        if not os.path.isfile(VTK_eval_file):
-            vtk_kappa_1_values = sg.get_vertex_property_array("max_curvature")
-            vtk_kappa_2_values = sg.get_vertex_property_array("min_curvature")
-            vtk_abs_kappa_1_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_curvature, x),
-                vtk_kappa_1_values))
-            vtk_abs_kappa_2_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_curvature, x),
-                vtk_kappa_2_values))
-            vtk_rel_kappa_1_errors = np.array(map(
-                lambda x: relative_error_scalar(true_curvature, x),
-                vtk_kappa_1_values))
-            vtk_rel_kappa_2_errors = np.array(map(
-                lambda x: relative_error_scalar(true_curvature, x),
-                vtk_kappa_2_values))
-            df = pd.DataFrame()
-            df['kappa1'] = vtk_kappa_1_values
-            df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
-            df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
-            df['kappa2'] = vtk_kappa_2_values
-            df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
-            df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
-            df.to_csv(VTK_eval_file, sep=';')
+        # The same steps for VTK:
+        vtk_kappa_1_values = sg.get_vertex_property_array("max_curvature")
+        vtk_kappa_2_values = sg.get_vertex_property_array("min_curvature")
+        vtk_abs_kappa_1_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_curvature, x),
+            vtk_kappa_1_values))
+        vtk_abs_kappa_2_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_curvature, x),
+            vtk_kappa_2_values))
+        vtk_rel_kappa_1_errors = np.array(map(
+            lambda x: relative_error_scalar(true_curvature, x),
+            vtk_kappa_1_values))
+        vtk_rel_kappa_2_errors = np.array(map(
+            lambda x: relative_error_scalar(true_curvature, x),
+            vtk_kappa_2_values))
+        df = pd.DataFrame()
+        df['kappa1'] = vtk_kappa_1_values
+        df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
+        df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
+        df['kappa2'] = vtk_kappa_2_values
+        df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
+        df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+        df.to_csv(VTK_eval_file, sep=';')
 
         # Asserting that all values of both principal curvatures are close
         # to the true value, allowing error of +-30%:
@@ -828,16 +825,18 @@ def test_sphere_curvatures(
 # ])
 # @pytest.mark.parametrize("radius_hit", range(5, 10))
 @pytest.mark.parametrize(
-    "rr,csr,radius_hit,methods,area2,runtimes,cores,vertex_based", [
-        # (25, 10, 9, ['VV'], False, '', 4, False),  # RVV
-        # (25, 10, 9, ['VV'], True, '', 4, False),  # AVV
-        # (25, 10, 5, ['SSVV'], False, '', 4, False),
-        (25, 10, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex
-        (25, 10, 9, ['VV'], False, '', 4, True)  # RVV, vertex
+    "rr,csr,subdivisions,radius_hit,methods,area2,runtimes,cores,vertex_based", [
+        # (25, 10, 0, 9, ['VV'], False, '', 4, False),  # RVV
+        # (25, 10, 0, 9, ['VV'], True, '', 4, False),  # AVV
+        # (25, 10, 0, 5, ['SSVV'], False, '', 4, False),
+        (25, 10, 0, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex
+        (25, 10, 0, 9, ['VV'], False, '', 4, True),  # RVV, vertex
+        (25, 10, 100, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex, finer
+        (25, 10, 100, 9, ['VV'], False, '', 4, True),  # RVV, vertex, finer
     ])
 def test_torus_directions_curvatures(
-        rr, csr, radius_hit, methods, area2, runtimes, cores, vertex_based,
-        page_curvature_formula=False, full_dist_map=False):
+        rr, csr, subdivisions, radius_hit, methods, area2, runtimes, cores,
+        vertex_based, page_curvature_formula=False, full_dist_map=False):
     """
     Runs all the steps needed to calculate curvatures for a test torus
     with given radii using normal vector voting (VV) or VV combined with
@@ -847,6 +846,8 @@ def test_torus_directions_curvatures(
     Args:
         rr (int): ring radius of the torus
         csr (int): cross-section radius of the torus
+        subdivisions (int): number of subdivisions in all three
+            dimensions, if 0, default subdivisions are used
         radius_hit (float): radius in length unit of the graph, here voxels;
             it should be chosen to correspond to radius of smallest features
             of interest on the surface
@@ -877,7 +878,12 @@ def test_torus_directions_curvatures(
     fold = '{}torus/'.format(FOLD)
     if not os.path.exists(fold):
         os.makedirs(fold)
-    surf_filebase = '{}torus_rr{}_csr{}'.format(fold, rr, csr)
+    if subdivisions > 0:
+        subdivisions_str = "_subdivisions{}".format(subdivisions)
+    else:
+        subdivisions_str = ""
+    surf_filebase = '{}torus_rr{}_csr{}{}'.format(
+        fold, rr, csr, subdivisions_str)
     surf_file = '{}.surface.vtp'.format(surf_filebase)
     files_fold = '{}files4plotting/'.format(fold)
     if not os.path.exists(files_fold):
@@ -886,8 +892,8 @@ def test_torus_directions_curvatures(
         vertex_based_str = "_vertex_based"
     else:
         vertex_based_str = ""
-    base_filename = "{}torus_rr{}_csr{}{}".format(
-        files_fold, rr, csr, vertex_based_str)
+    base_filename = "{}torus_rr{}_csr{}{}{}".format(
+        files_fold, rr, csr, subdivisions_str, vertex_based_str)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
     log_file = '{}.{}_rh{}.log'.format(
@@ -899,7 +905,7 @@ def test_torus_directions_curvatures(
     # If the .vtp file with the test surface does not exist, create it:
     if not os.path.isfile(surf_file):
         sg = SaddleGenerator()
-        torus = sg.generate_parametric_torus(rr, csr)
+        torus = sg.generate_parametric_torus(rr, csr, subdivisions)
         io.save_vtp(torus, surf_file)
 
     # Reading in the surface and transforming it into a triangle graph
@@ -1027,16 +1033,15 @@ def test_torus_directions_curvatures(
         df['T2Errors'] = T_2_errors
         df['T2AngularErrors'] = T_2_angular_errors
         df.to_csv(eval_file, sep=';')
-        # The same for VTK, if the file does not exist yet:
-        if not os.path.isfile(VTK_eval_file):
-            df = pd.DataFrame()
-            df['kappa1'] = vtk_kappa_1
-            df['kappa2'] = vtk_kappa_2
-            df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
-            df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
-            df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
-            df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
-            df.to_csv(VTK_eval_file, sep=';')
+        # The same for VTK:
+        df = pd.DataFrame()
+        df['kappa1'] = vtk_kappa_1
+        df['kappa2'] = vtk_kappa_2
+        df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
+        df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
+        df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
+        df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+        df.to_csv(VTK_eval_file, sep=';')
 
         # Asserting that all estimated T_1 and T_2 vectors are close to the
         # corresponding true vector, allowing error of 30%:

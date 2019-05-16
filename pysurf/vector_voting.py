@@ -165,33 +165,6 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
     if pg is None:
         sg = tg
     else:
-        # Add normal at each triangle vertex as an average of normal vectors of
-        # its 1-ring neighboring triangles weighted by the triangle area:
-        pg.graph.vp.normal = pg.graph.new_vertex_property("vector<float>")
-        # shortcuts to function called in the loop:
-        pg_xyz = pg.graph.vp.xyz
-        tg_point_in_cells = tg.point_in_cells
-        tg_triangle_cell_ids = tg.triangle_cell_ids
-        average = np.average
-        tg_normal = tg.graph.vp.normal
-        tg_vertex = tg.graph.vertex
-        tg_area = tg.graph.vp.area
-        pg_normal = pg.graph.vp.normal
-        # iterate over all vertices in pg (triangle vertices)
-        for pg_vd in pg.graph.vertices():
-            # get the coordinates of the triangle vertex:
-            pg_v = pg_xyz[pg_vd]
-            # get the 1-ring neighborhood of the triangle vertex:
-            tg_cell_ring_ids = tg_point_in_cells[tuple(pg_v)]
-            tg_v_ring_ids = [tg_triangle_cell_ids.index(id)
-                             for id in tg_cell_ring_ids]
-            # average the normal vectors of the triangle neighbors:
-            normal_pg_v = average(
-                [tg_normal[tg_vertex(tg_v_id)] for tg_v_id in tg_v_ring_ids],
-                axis=0, weights=[tg_area[tg_vertex(tg_v_id)]
-                                 for tg_v_id in tg_v_ring_ids])
-            # add the average vector as vertex property of pg
-            pg_normal[pg_vd] = normal_pg_v
         sg = pg
 
     # * Adding vertex properties to be filled in estimate_normal *

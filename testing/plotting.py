@@ -32,7 +32,7 @@ __author__ = 'kalemanov'
 
 #FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
 FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
-       'vertex_based_exact_geodesics/test_vector_voting_output/'
+       'vertex_based_exact_geodesics_point_normals/test_vector_voting_output/'
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 LINEWIDTH = 4
 
@@ -2019,7 +2019,7 @@ if __name__ == "__main__":
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
     plot_torus_kappa_1_and_2_T_1_and_2_errors(
         rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True)  # ,
-    #   x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
+    #  x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
 
     # smooth sphere
     # plot_sphere_kappa_1_and_2_diff_rh(
@@ -2037,9 +2037,9 @@ if __name__ == "__main__":
     # for r in [10, 20]:  # remove label for r=10, because overlapping
     #     plot_sphere_kappa_1_and_2_errors_allVV(
     #         r=r, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18))
-    # plot_sphere_kappa_1_and_2_errors(
-    #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
-    #     RorAVV="RVV", vertex_based=True)
+    plot_sphere_kappa_1_and_2_errors(
+        r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
+        RorAVV="RVV", vertex_based=True)
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
 
     # voxel sphere
@@ -2063,9 +2063,9 @@ if __name__ == "__main__":
     #     r=20, rhVV=18, rhSSVV=18, voxel=True, x_range=(0, 0.65))
     # plot_sphere_kappa_1_and_2_errors_noVTK(
     #     r=30, rhVV=28, rhSSVV=28, voxel=True, x_range=(0, 0.65))
-    # plot_sphere_kappa_1_and_2_errors(
-    #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
-    #     RorAVV="RVV", vertex_based=True)
+    plot_sphere_kappa_1_and_2_errors(
+        r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
+        RorAVV="RVV", vertex_based=True)
 
     # cylinder
     # plot_cylinder_kappa_1_diff_rh(num_bins=10)
@@ -2077,9 +2077,9 @@ if __name__ == "__main__":
     # plot_cylinder_T_2_and_kappa_1_errors(
     #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
     #     rhVV=5, rhSSVV=6)
-    # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
-    #     rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
+    plot_cylinder_T_2_and_kappa_1_errors(
+       x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+       rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
     # plot_cylinder_T_2_and_kappa_1_errors(
     #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
     #     rhVV=5, rhSSVV=6)

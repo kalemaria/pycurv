@@ -425,17 +425,17 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
     return surface
 
 
-def add_curvature_to_vtk_surface(surface, curvature_type, invert=False):
+def add_curvature_to_vtk_surface(surface, curvature_type, invert=True):
     """
-    Adds curvatures (Gaussian, mean, maximum or minimum) to each triangle vertex
-    of a vtkPolyData surface calculated by VTK.
+    Adds curvatures (Gaussian, mean, maximum or minimum) calculated by VTK to
+    each triangle vertex of a vtkPolyData surface.
 
     Args:
         surface (vtk.vtkPolyData): a surface of triangles
         curvature_type (str): type of curvature to add: 'Gaussian', 'Mean',
             'Maximum' or 'Minimum'
-        invert (boolean, optional): if True (default False), VTK will calculate
-            curvatures as for meshes with inward pointing normals (their
+        invert (boolean, optional): if True (default), VTK will calculate
+            curvatures as for meshes with opposite pointing normals (their
             convention is outwards pointing normals, opposite from ours)
 
     Returns:
@@ -472,6 +472,37 @@ def add_curvature_to_vtk_surface(surface, curvature_type, invert=False):
     # curvatures = point_data.GetArray(n)
     # where n = 2 for Gaussian, 3 for Mean, 4 for Maximum or Minimum
     # curvature_point0 = curvatures.GetTuple1(0)
+
+
+def add_point_normals_to_vtk_surface(surface, reverse_normals=False):
+    """
+    Adds a normal to each triangle vertex of a vtkPolyData surface.
+
+    Args:
+        surface (vtk.vtkPolyData): a surface of triangles
+        reverse_normals (boolean, optional): if True (default False), VTK will
+            flip the normals (their convention is outwards pointing normals,
+            opposite from ours)
+
+    Returns:
+        the vtkPolyData surface with '<type>_Curvature' property added to each
+        triangle vertex
+    """
+    if isinstance(surface, vtk.vtkPolyData):
+        normals = vtk.vtkPolyDataNormals()
+        normals.SetInputData(surface)
+        normals.ComputePointNormalsOn()
+        if reverse_normals:
+            normals.FlipNormalsOn()
+        else:
+            normals.FlipNormalsOff()
+        normals.Update()
+        surface_normals = normals.GetOutput()
+        return surface_normals
+    else:
+        raise pexceptions.PySegInputError(
+            expr='add_point_normals_to_vtk_surface',
+            msg="A vtkPolyData object required as the first input.")
 
 
 def rescale_surface(surface, scale):
