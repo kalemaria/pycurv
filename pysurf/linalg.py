@@ -188,3 +188,51 @@ def nice_acos(cos_theta):
             cos_theta = 0.0
         theta = math.acos(cos_theta)
     return theta
+
+
+def triangle_normal(a, b, c):
+    """
+    Calculate triangle normal using 3 triangle points a, b, c, given their
+    coordinates (x, y, z).
+
+    Args:
+        a (numpy.ndarray): 3D point a coordinates
+        b (numpy.ndarray): 3D point b coordinates
+        c (numpy.ndarray): 3D point c coordinates
+
+    Returns:
+        normal vector of the triangle abc (numpy.ndarray).
+    """
+    pass
+
+
+def triangle_center(a, b, c):
+    """
+    Calculate triangle center using 3 triangle points a, b, c, given their
+    coordinates (x, y, z).
+
+    Args:
+        a (numpy.ndarray): 3D point a coordinates
+        b (numpy.ndarray): 3D point b coordinates
+        c (numpy.ndarray): 3D point c coordinates
+
+    Returns:
+        center coordinates of the triangle abc (numpy.ndarray).
+    """
+    return (a + b + c) / 3
+
+
+def triangle_area(a, b, c):
+    """
+    Calculate triangle area using 3 triangle points a, b, c, given their
+    coordinates (x, y, z).
+
+    Args:
+        a (numpy.ndarray): 3D point a coordinates
+        b (numpy.ndarray): 3D point b coordinates
+        c (numpy.ndarray): 3D point c coordinates
+
+    Returns:
+        area of the triangle abc (numpy.ndarray).
+    """
+    pass

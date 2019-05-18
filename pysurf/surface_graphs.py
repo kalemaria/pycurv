@@ -14,7 +14,8 @@ from curvature_definitions import *
 from surface import (add_point_normals_to_vtk_surface,
                      add_curvature_to_vtk_surface, rescale_surface)
 from linalg import (
-    perpendicular_vector, rotation_matrix, rotate_vector, signum, nice_acos)
+    perpendicular_vector, rotation_matrix, rotate_vector, signum, nice_acos,
+    triangle_center)
 
 """
 Set of functions and classes (abstract SurfaceGraph and derived TriangleGraph)
@@ -890,7 +891,7 @@ class PointGraph(SurfaceGraph):
         V_v = np.zeros(shape=(3, 3))
 
         # Find the neighboring triangles of vertex v:
-        neighboring_triangles_of_v = {}
+        neighboring_triangles_of_v = {}  # triangle_idx -> vertex_ids
         for idx_v_i in neighbor_idx_to_dist.keys():
             # Get neighboring vertex v_i and its coordinates (as numpy array):
             vertex_v_i = vertex(idx_v_i)
@@ -911,10 +912,16 @@ class PointGraph(SurfaceGraph):
         for idx_c_i, ids_v_i in neighboring_triangles_of_v.items():
             # Calculate the normal vote N_i of c_i on v:
             tg_vertex_c_i = tg_vertex(idx_c_i)
-            N = array(normal[tg_vertex_c_i])  # TODO calculate triangle normal using the 3 points?
-
-            c_i = tg_xyz[tg_vertex_c_i]  # TODO calculate triangle center using the 3 points?
-            c_i = array(c_i)
+            N = array(normal[tg_vertex_c_i])
+            # TODO calculate triangle normal using the 3 points?
+            # c_i_tg = array(tg_xyz[tg_vertex_c_i])
+            points_xyz = [array(xyz[vertex(idx_v_i)]) for idx_v_i in ids_v_i]
+            c_i = triangle_center(*points_xyz)
+            # try:
+            #     assert np.allclose(c_i, c_i_tg)
+            # except AssertionError:
+            #     print("PointGraph c_i={}".format(c_i))
+            #     print("TriangleGraph c_i={}".format(c_i_tg))
             vc_i = c_i - v
             vc_i_len = sqrt(dot(vc_i, vc_i))
             vc_i_norm = vc_i / vc_i_len
@@ -930,7 +937,8 @@ class PointGraph(SurfaceGraph):
             # Calculate the weight depending on the area of the neighboring
             # triangle i, A_i, and the geodesic distance to its center c_i from
             # vertex v, g_c_i:
-            A_i = area[tg_vertex_c_i]  # TODO calculate triangle area using the 3 points?
+            A_i = area[tg_vertex_c_i]
+            # TODO calculate triangle area using the 3 points?
             # Geodesic distances to the three vertices of the triangle i:
             g_v_i_s = [neighbor_idx_to_dist[idx_v_i] for idx_v_i in ids_v_i]
             # Find two triangle vertices among them that are closer to vertex v:
@@ -1101,15 +1109,8 @@ class TriangleGraph(SurfaceGraph):
                 continue
 
             # Calculate the centroid of the triangle:
-            x_center = 0
-            y_center = 0
-            z_center = 0
             for j in range(0, 3):
                 x, y, z = points_cell.GetPoint(j)
-                x_center += x
-                y_center += y
-                z_center += z
-
                 # Add each point j as a key in point_in_cells and cell index
                 # to the value list:
                 point_j = (x, y, z)
@@ -1119,10 +1120,8 @@ class TriangleGraph(SurfaceGraph):
                     self.point_in_cells[point_j] = [cell_id]
 
                 # Add each point j into the points coordinates list
-                points_xyz.append([x, y, z])
-            x_center /= 3
-            y_center /= 3
-            z_center /= 3
+                points_xyz.append(np.array([x, y, z]))
+            center_xyz = triangle_center(*points_xyz)
 
             # Calculate the normal of the triangle i;
             normal = np.zeros(shape=3)
@@ -1148,12 +1147,11 @@ class TriangleGraph(SurfaceGraph):
                 [mean_curvatures.GetTuple1(
                     cell.GetPointId(j)) for j in range(0, 3)])
 
-            # Add the centroid as vertex to the graph, setting its
-            # properties:
+            # Add the centroid as vertex to the graph, setting its properties:
             vd = self.graph.add_vertex()  # vertex descriptor
-            self.graph.vp.xyz[vd] = [x_center, y_center, z_center]
-            self.coordinates_to_vertex_index[(
-                x_center, y_center, z_center)] = self.graph.vertex_index[vd]
+            self.graph.vp.xyz[vd] = center_xyz
+            self.coordinates_to_vertex_index[
+                tuple(center_xyz)] = self.graph.vertex_index[vd]
             self.graph.vp.area[vd] = area
             self.graph.vp.normal[vd] = normal
             self.graph.vp.min_curvature[vd] = avg_min_curvature

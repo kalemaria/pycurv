@@ -351,7 +351,8 @@ def curvature_estimation(
             generated, (required only if method="SSVV", default None)
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map is
-            calculated later for each vertex (default)
+            calculated later for each vertex (default) (not possible for
+            vertex-based approach)
         cores (int): number of cores to run VV (collect_curvature_votes and
             estimate_curvature) in parallel (default 4)
         runtimes (str): if given, runtimes and some parameters are added to
@@ -371,6 +372,7 @@ def curvature_estimation(
             sg = PointGraph()
             # cannot weight by triangle area in vertex-based approach
             area2 = False
+            full_dist_map = False
         else:
             sg = TriangleGraph()
         sg.graph = load_graph(graph_file)
