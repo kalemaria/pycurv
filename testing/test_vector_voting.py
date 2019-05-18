@@ -536,14 +536,14 @@ def test_cylinder_directions_curvatures(
 
         # Asserting that all principal curvatures are close to the correct
         # ones allowing error of +-30% of the maximal absolute true value
-        allowed_error = 0.3 * max(abs(true_kappa_1), abs(true_kappa_2))
+        allowed_error = 0.3
         if not inverse:
             print("Testing the maximal principal curvature (kappa_1)...")
-            for error in abs_kappa_1_errors:
+            for error in rel_kappa_1_errors:
                 assert error <= allowed_error
         else:  # inverse
             print("Testing the minimal principal curvature (kappa_2)...")
-            for error in abs_kappa_2_errors:
+            for error in rel_kappa_2_errors:
                 assert error <= allowed_error
 
 
@@ -807,12 +807,12 @@ def test_sphere_curvatures(
 
         # Asserting that all values of both principal curvatures are close
         # to the true value, allowing error of +-30%:
-        allowed_error = 0.3 * abs(true_curvature)
+        allowed_error = 0.3
         print("Testing the maximal principal curvature (kappa_1)...")
-        for error in abs_kappa_1_errors:
+        for error in rel_kappa_1_errors:
             assert error <= allowed_error
         print("Testing the minimal principal curvature (kappa_2)...")
-        for error in abs_kappa_2_errors:
+        for error in rel_kappa_2_errors:
             assert error <= allowed_error
 
 
@@ -930,7 +930,7 @@ def test_torus_directions_curvatures(
     true_kappa_1 = 1.0 / csr  # constant for the whole torus surface
     xyz = sg.graph.vp.xyz
     for v in sg.graph.vertices():
-        x, y, z = xyz[v]  # coordinates of triangle center v
+        x, y, z = xyz[v]  # coordinates of graph vertex v
         true_kappa_2, true_T_1, true_T_2 = torus_curvatures_and_directions(
             rr, csr, x, y, z)
         sg.graph.vp.true_kappa_1[v] = true_kappa_1
@@ -1022,6 +1022,7 @@ def test_torus_directions_curvatures(
 
         # Writing all the VV curvature values and errors into a csv file:
         df = pd.DataFrame()
+        df['true_kappa2'] = true_kappa_2
         df['kappa1'] = kappa_1
         df['kappa2'] = kappa_2
         df['kappa1AbsErrors'] = abs_kappa_1_errors
@@ -1035,6 +1036,7 @@ def test_torus_directions_curvatures(
         df.to_csv(eval_file, sep=';')
         # The same for VTK:
         df = pd.DataFrame()
+        df['true_kappa2'] = true_kappa_2
         df['kappa1'] = vtk_kappa_1
         df['kappa2'] = vtk_kappa_2
         df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
@@ -1045,23 +1047,22 @@ def test_torus_directions_curvatures(
 
         # Asserting that all estimated T_1 and T_2 vectors are close to the
         # corresponding true vector, allowing error of 30%:
+        allowed_error = 0.3
         print("Testing the maximal principal directions (T_1)...")
         for error in T_1_errors:
-            assert error <= 0.3
+            assert error <= allowed_error
         print("Testing the minimal principal directions (T_2)...")
         for error in T_2_errors:
-            assert error <= 0.3
+            assert error <= allowed_error
         # Asserting that all estimated kappa_1 and kappa_2 values are close
         # to the corresponding true values, allowing error of 30% from the
         # true value (the maximal absolute value in case of kappa_2, because
         # it can be 0 or negative):
         print("Testing the maximal principal curvature (kappa_1)...")
-        allowed_error = 0.3 * max(true_kappa_1)
-        for error in abs_kappa_1_errors:
+        for error in rel_kappa_1_errors:
             assert error <= allowed_error
         print("Testing the minimal principal curvature (kappa_2)...")
-        allowed_error = 0.3 * max(abs(true_kappa_2))
-        for error in abs_kappa_2_errors:
+        for error in rel_kappa_2_errors:
             assert error <= allowed_error
 
 

@@ -1,5 +1,6 @@
 import numpy as np
-from math import acos
+
+from pysurf import nice_acos
 
 
 def absolute_error_scalar(true_value, estimated_value):
@@ -65,15 +66,7 @@ def angular_error_vector(true_vector, estimated_vector):
         acos(abs(np.dot(true_vector, estimated_vector)))
         angle in radians between two vectors
     """
-    try:
-        acos_arg = abs(np.dot(true_vector, estimated_vector))
-        angular_error = acos(acos_arg)
-    except ValueError:
-        if acos_arg > 1:
-            acos_arg = 1.0
-        elif acos_arg < 0:
-            acos_arg = 0.0
-        angular_error = acos(acos_arg)
+    angular_error = nice_acos(abs(np.dot(true_vector, estimated_vector)))
     return angular_error
 
 

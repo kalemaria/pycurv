@@ -1484,7 +1484,7 @@ def plot_torus_kappa_1_and_2_errors_diff_rh(
 
 
 def plot_torus_kappa_1_and_2_T_1_and_2_errors(
-        rhVV=9, rhSSVV=5, x_range_T=None, x_range_kappa=None,
+        rhVV=9, rhSSVV=5, subdivisions=0, x_range_T=None, x_range_kappa=None,
         y_range=(0, 1), RorAVV="AVV", vertex_based=False):
     """
     Plots estimated kappa_1 and kappa_2 as well as T_1 and T_2 errors histograms
@@ -1494,6 +1494,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
     Args:
         rhVV (int, optional): radius_hit for VV (default 9)
         rhSSVV (int, optional): radius_hit for SSVV (default 5)
+        subdivisions (int, optional): number of subdivisions in all three torus
+            dimensions, if 0 (default), default subdivisions are used
         x_range_T (tuple, optional): a tuple of two values to limit the
             range at X axis of principal directions plots (default None)
         x_range_kappa (tuple, optional): a tuple of two values to limit the
@@ -1511,6 +1513,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "torus_rr25_csr10"
+    if subdivisions > 0:
+        basename += "_subdivisions{}".format(subdivisions)
     if vertex_based:
         basename += "_vertex_based"
     for i in [1, 2]:
@@ -2020,6 +2024,8 @@ if __name__ == "__main__":
     plot_torus_kappa_1_and_2_T_1_and_2_errors(
         rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True)  # ,
     #  x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
+    plot_torus_kappa_1_and_2_T_1_and_2_errors(
+        rhVV=9, rhSSVV=5, subdivisions=100, RorAVV="RVV", vertex_based=True)
 
     # smooth sphere
     # plot_sphere_kappa_1_and_2_diff_rh(
