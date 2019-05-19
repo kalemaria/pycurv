@@ -221,8 +221,8 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
                                   range(num_v))  # a list of vertex v indices
         else:  # PointGraph
             results1_list = p.map(partial(collect_normal_votes,
-                                          g_max=g_max, A_max=A_max, sigma=sigma,
-                                          tg=tg),
+                                          g_max=g_max, A_max=A_max, sigma=sigma
+                                          ),  # tg=tg
                                   range(num_v))  # a list of vertex v indices
         results1_array = np.array(results1_list, dtype=object)
         # Calculating average neighbors number:
@@ -251,7 +251,7 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
                     i, g_max, A_max, sigma, full_dist_map=full_dist_map)
             else:  # PointGraph
                 num_neighbors, V_v = collect_normal_votes(
-                    i, g_max, A_max, sigma, tg=tg)
+                    i, g_max, A_max, sigma)  # , tg=tg
             sum_num_neighbors += num_neighbors
             N_v = estimate_normal(i, V_v)
             # Adding the estimated normal property to the graph:

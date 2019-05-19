@@ -15,7 +15,7 @@ from surface import (add_point_normals_to_vtk_surface,
                      add_curvature_to_vtk_surface, rescale_surface)
 from linalg import (
     perpendicular_vector, rotation_matrix, rotate_vector, signum, nice_acos,
-    triangle_center, triangle_area_cross_product)
+    triangle_normal, triangle_center, triangle_area_cross_product)
 
 """
 Set of functions and classes (abstract SurfaceGraph and derived TriangleGraph)
@@ -816,7 +816,7 @@ class PointGraph(SurfaceGraph):
     # * The following PointGraph method is implementing with adaptations
     # the first part of the first step of normal vector voting algorithm of
     # Page et al., 2002. *
-    def collect_normal_votes(self, vertex_v_ind, g_max, A_max, sigma, tg):
+    def collect_normal_votes(self, vertex_v_ind, g_max, A_max, sigma):  # , tg
         """
         For a vertex v, collects the normal votes of all triangles within its
         geodesic neighborhood and calculates the weighted covariance matrix sum
@@ -844,8 +844,6 @@ class PointGraph(SurfaceGraph):
                 triangle-graph
             sigma (float): sigma, defined as 3*sigma = g_max, so that votes
                 beyond the neighborhood can be ignored
-            tg (TriangleGraph): TriangleGraph generated from the same surface,
-                storing the triangle areas and normals.
 
         Returns:
             - number of geodesic neighbors of vertex v
@@ -853,8 +851,9 @@ class PointGraph(SurfaceGraph):
         """
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
-        tg_vertex = tg.graph.vertex
-        normal = tg.graph.vp.normal
+        # tg_vertex = tg.graph.vertex
+        normal = self.graph.vp.normal
+        # tg_normal = tg.graph.vp.normal
         array = np.array
         xyz = self.graph.vp.xyz
         # tg_xyz = tg.graph.vp.xyz
@@ -868,8 +867,7 @@ class PointGraph(SurfaceGraph):
 
         # Get the coordinates of vertex v (as numpy array):
         vertex_v = vertex(vertex_v_ind)
-        v = xyz[vertex_v]
-        v = array(v)
+        v = array(xyz[vertex_v])
 
         # Find the neighboring vertices of vertex v to be returned:
         if vertex_v_ind == 0:
@@ -911,11 +909,18 @@ class PointGraph(SurfaceGraph):
         # Let each of the neighboring triangles c_i to cast a vote on vertex v:
         for idx_c_i, ids_v_i in neighboring_triangles_of_v.items():
             # Calculate the normal vote N_i of c_i on v:
-            tg_vertex_c_i = tg_vertex(idx_c_i)
-            N = array(normal[tg_vertex_c_i])
-            # TODO calculate triangle normal using the 3 points?
-            # c_i_tg = array(tg_xyz[tg_vertex_c_i])
+            # tg_vertex_c_i = tg_vertex(idx_c_i)
+            # N_tg = array(tg_normal[tg_vertex_c_i])
             points_xyz = [array(xyz[vertex(idx_v_i)]) for idx_v_i in ids_v_i]
+            ref_normal = array(normal[vertex(ids_v_i[0])])
+            N = triangle_normal(ref_normal, *points_xyz)
+            # try:
+            #     assert np.allclose(N_tg, N)
+            # except AssertionError:
+            #     print(ref_normal)
+            #     print(N)
+            #     print(N_tg)
+            # c_i_tg = array(tg_xyz[tg_vertex_c_i])
             c_i = triangle_center(*points_xyz)
             # assert np.allclose(c_i, c_i_tg)
             vc_i = c_i - v
@@ -933,11 +938,11 @@ class PointGraph(SurfaceGraph):
             # Calculate the weight depending on the area of the neighboring
             # triangle i, A_i, and the geodesic distance to its center c_i from
             # vertex v, g_c_i:
-            # A_i_old = area[tg_vertex_c_i]
+            # A_i_tg = area[tg_vertex_c_i]
             A_i = triangle_area_cross_product(*points_xyz)
             # A_i_heron = triangle_area_heron(*points_xyz)
-            # assert round(A_i_old, 7) == round(A_i, 7)
-            # assert round(A_i_old, 7) == round(A_i_heron, 7)
+            # assert round(A_i_tg, 7) == round(A_i, 7)
+            # assert round(A_i_tg, 7) == round(A_i_heron, 7)
             # Geodesic distances to the three vertices of the triangle i:
             g_v_i_s = [neighbor_idx_to_dist[idx_v_i] for idx_v_i in ids_v_i]
             # Find two triangle vertices among them that are closer to vertex v:

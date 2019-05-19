@@ -32,7 +32,8 @@ __author__ = 'kalemanov'
 
 #FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
 FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
-       'vertex_based_exact_geodesics_point_normals/test_vector_voting_output/'
+       'vertex_based_exact_geodesics_point_normals_independent/' \
+       'test_vector_voting_output/'
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 LINEWIDTH = 4
 
@@ -2024,8 +2025,8 @@ if __name__ == "__main__":
     plot_torus_kappa_1_and_2_T_1_and_2_errors(
         rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True)  # ,
     #  x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
-    plot_torus_kappa_1_and_2_T_1_and_2_errors(
-        rhVV=9, rhSSVV=5, subdivisions=100, RorAVV="RVV", vertex_based=True)
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors(
+    #     rhVV=9, rhSSVV=5, subdivisions=100, RorAVV="RVV", vertex_based=True)
 
     # smooth sphere
     # plot_sphere_kappa_1_and_2_diff_rh(

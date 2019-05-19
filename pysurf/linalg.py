@@ -190,12 +190,14 @@ def nice_acos(cos_theta):
     return theta
 
 
-def triangle_normal(a, b, c):
+def triangle_normal(ref_normal, a, b, c):
     """
     Calculate triangle normal using 3 triangle points a, b, c, given their
     coordinates (x, y, z).
 
     Args:
+        ref_normal (numpy.ndarray): 3D reference normal vector to correct the
+            vector orientation
         a (numpy.ndarray): 3D point a coordinates
         b (numpy.ndarray): 3D point b coordinates
         c (numpy.ndarray): 3D point c coordinates
@@ -203,7 +205,19 @@ def triangle_normal(a, b, c):
     Returns:
         normal vector of the triangle abc (numpy.ndarray).
     """
-    pass
+    u = b - a
+    v = c - a
+    u_cross_v = np.cross(u, v)
+    u_cross_v_len = math.sqrt(np.dot(u_cross_v, u_cross_v))
+    normal1 = u_cross_v / u_cross_v_len
+    # orient normal like ref_normal:
+    normal2 = - normal1
+    cos_angle1 = np.dot(ref_normal, normal1)
+    cos_angle2 = np.dot(ref_normal, normal2)
+    if cos_angle1 > cos_angle2:  # angle1 < angle2
+        return normal1
+    else:
+        return normal2
 
 
 def triangle_center(a, b, c):
