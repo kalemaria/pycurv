@@ -217,15 +217,15 @@ def triangle_center(a, b, c):
         c (numpy.ndarray): 3D point c coordinates
 
     Returns:
-        center coordinates of the triangle abc (numpy.ndarray).
+        center coordinates of the triangle abc (1x3 numpy.ndarray).
     """
-    return (a + b + c) / 3
+    return (a + b + c) / 3.0
 
 
-def triangle_area(a, b, c):
+def triangle_area_cross_product(a, b, c):
     """
     Calculate triangle area using 3 triangle points a, b, c, given their
-    coordinates (x, y, z).
+    coordinates (x, y, z), and cross product formula.
 
     Args:
         a (numpy.ndarray): 3D point a coordinates
@@ -233,6 +233,47 @@ def triangle_area(a, b, c):
         c (numpy.ndarray): 3D point c coordinates
 
     Returns:
-        area of the triangle abc (numpy.ndarray).
+        area of the triangle abc (float).
     """
-    pass
+    ab_x, ab_y, ab_z = b - a
+    ac_x, ac_y, ac_z = c - a
+    return 0.5 * math.sqrt((ab_y * ac_z - ab_z * ac_y) ** 2 +
+                           (ab_z * ac_x - ab_x * ac_z) ** 2 +
+                           (ab_x * ac_y - ab_y * ac_x) ** 2)
+
+
+def triangle_area_heron(a, b, c):
+    """
+    Calculate triangle area using 3 triangle points a, b, c, given their
+    coordinates (x, y, z), and Heron's formula.
+
+    Args:
+        a (numpy.ndarray): 3D point a coordinates
+        b (numpy.ndarray): 3D point b coordinates
+        c (numpy.ndarray): 3D point c coordinates
+
+    Returns:
+        area of the triangle abc (float).
+    """
+    ab = euclidean_distance(a, b)
+    bc = euclidean_distance(b, c)
+    ac = euclidean_distance(a, c)
+    s = 0.5 * (ab + bc + ac)  # half perimeter
+    return math.sqrt(s * (s - ab) * (s - bc) * (s - ac))
+
+
+def euclidean_distance(a, b):
+    """
+    Calculates and returns the Euclidean distance between two voxels.
+
+    Args:
+        a (np.ndarray): first voxel coordinates in form of an array of
+            integers of length 3 (x1, y1, z1)
+        b (np.ndarray): second voxel coordinates in form of an array of
+            integers of length 3 (x2, y2, z2)
+
+    Returns:
+        the Euclidean distance between two voxels (float).
+    """
+    sum_of_squared_differences = np.sum((a - b) ** 2)
+    return math.sqrt(sum_of_squared_differences)

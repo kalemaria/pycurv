@@ -15,7 +15,7 @@ from surface import (add_point_normals_to_vtk_surface,
                      add_curvature_to_vtk_surface, rescale_surface)
 from linalg import (
     perpendicular_vector, rotation_matrix, rotate_vector, signum, nice_acos,
-    triangle_center)
+    triangle_center, triangle_area_cross_product)
 
 """
 Set of functions and classes (abstract SurfaceGraph and derived TriangleGraph)
@@ -857,11 +857,11 @@ class PointGraph(SurfaceGraph):
         normal = tg.graph.vp.normal
         array = np.array
         xyz = self.graph.vp.xyz
-        tg_xyz = tg.graph.vp.xyz
+        # tg_xyz = tg.graph.vp.xyz
         sqrt = math.sqrt
         dot = np.dot
         outer = np.multiply.outer
-        area = tg.graph.vp.area
+        # area = tg.graph.vp.area
         exp = math.exp
         point_in_triangles = self.point_in_triangles
         calculate_geodesic_distance = self.calculate_geodesic_distance
@@ -917,11 +917,7 @@ class PointGraph(SurfaceGraph):
             # c_i_tg = array(tg_xyz[tg_vertex_c_i])
             points_xyz = [array(xyz[vertex(idx_v_i)]) for idx_v_i in ids_v_i]
             c_i = triangle_center(*points_xyz)
-            # try:
-            #     assert np.allclose(c_i, c_i_tg)
-            # except AssertionError:
-            #     print("PointGraph c_i={}".format(c_i))
-            #     print("TriangleGraph c_i={}".format(c_i_tg))
+            # assert np.allclose(c_i, c_i_tg)
             vc_i = c_i - v
             vc_i_len = sqrt(dot(vc_i, vc_i))
             vc_i_norm = vc_i / vc_i_len
@@ -937,8 +933,11 @@ class PointGraph(SurfaceGraph):
             # Calculate the weight depending on the area of the neighboring
             # triangle i, A_i, and the geodesic distance to its center c_i from
             # vertex v, g_c_i:
-            A_i = area[tg_vertex_c_i]
-            # TODO calculate triangle area using the 3 points?
+            # A_i_old = area[tg_vertex_c_i]
+            A_i = triangle_area_cross_product(*points_xyz)
+            # A_i_heron = triangle_area_heron(*points_xyz)
+            # assert round(A_i_old, 7) == round(A_i, 7)
+            # assert round(A_i_old, 7) == round(A_i_heron, 7)
             # Geodesic distances to the three vertices of the triangle i:
             g_v_i_s = [neighbor_idx_to_dist[idx_v_i] for idx_v_i in ids_v_i]
             # Find two triangle vertices among them that are closer to vertex v:

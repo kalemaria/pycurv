@@ -58,16 +58,16 @@ class SegmentationGraph(object):
         ((x1, y1, z1), (x2, y2, z2)) with value True.
         """
 
-    @staticmethod
+    @staticmethod  # TODO replace by numpy array function in linalg.py (faster?)
     def distance_between_voxels(voxel1, voxel2):
         """
         Calculates and returns the Euclidean distance between two voxels.
 
         Args:
             voxel1 (tuple): first voxel coordinates in form of a tuple of
-                integers of length 3 (x1, y1, z1)
+                floats of length 3 (x1, y1, z1)
             voxel2 (tuple): second voxel coordinates in form of a tuple of
-                integers of length 3 (x2, y2, z2)
+                floats of length 3 (x2, y2, z2)
 
         Returns:
             the Euclidean distance between two voxels (float)
