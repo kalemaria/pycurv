@@ -1,6 +1,7 @@
 import pytest
 import time
 import os.path
+from os import remove
 import math
 import pandas as pd
 import sys
@@ -218,7 +219,8 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
     vv_surf_file = '{}.SSVV_rh{}.vtp'.format(base_filename, radius_hit)
     vv_eval_file = '{}.SSVV_rh{}.csv'.format(base_filename, radius_hit)
     vtk_eval_file = '{}.VTK.csv'.format(base_filename)
-    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+        base_filename, radius_hit)
     log_file = '{}.SSVV_rh{}.log'.format(
         base_filename, radius_hit)
     sys.stdout = open(log_file, 'w')
@@ -234,18 +236,17 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
             plane = add_gaussian_noise_to_surface(plane, percent=noise)
         io.save_vtp(plane, surf_file)
 
-    # Reading in the surface and transforming it into a triangle graph
-    surf, tg = surface_to_graph(surf_file)
-    if vertex_based:
-        _, pg = surface_to_graph(surf_file, vertex_based=True)
-    else:
-        pg = None
+    # Reading in the surface and transforming it into a graph
+    surf, sg = surface_to_graph(surf_file, vertex_based=vertex_based)
 
     # Running the modified Normal Vector Voting algorithm (with curvature
     # tensor voting, because its second pass is the fastest):
     results = normals_directions_and_curvature_estimation(
-        tg, radius_hit, methods=['SSVV'], poly_surf=surf,
-        graph_file=temp_normals_graph_file, pg=pg, cores=cores)
+        sg, radius_hit, methods=['SSVV'], poly_surf=surf,
+        graph_file=temp_normals_graph_file, cores=cores)
+    # Remove the normals graph file, so the next test will start anew
+    remove(temp_normals_graph_file)
+
     sg = results['SSVV'][0]
     surf_vv = results['SSVV'][1]
     # Saving the output (TriangleGraph object) for later inspection in ParaView:
@@ -375,13 +376,15 @@ def test_cylinder_directions_curvatures(
     else:
         inverse_str = ""
     if vertex_based:
+        area2 = False
         vertex_based_str = "_vertex_based"
     else:
         vertex_based_str = ""
     base_filename = "{}{}cylinder_r{}_h{}_eb{}{}".format(
         files_fold, inverse_str, radius, h, eb, vertex_based_str)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
-    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+        base_filename, radius_hit)
     log_file = '{}.{}_rh{}.log'.format(base_filename, methods[0], radius_hit)
     sys.stdout = open(log_file, 'w')
 
@@ -405,19 +408,17 @@ def test_cylinder_directions_curvatures(
         io.save_vtp(cylinder, surf_file)
 
     # Reading in the surface and transforming it into a triangle graph
-    surf, tg = surface_to_graph(surf_file, inverse=inverse)
-    if vertex_based:
-        _, pg = surface_to_graph(surf_file, inverse=inverse, vertex_based=True)
-        area2 = False
-    else:
-        pg = None
+    surf, sg = surface_to_graph(surf_file, inverse=inverse,
+                                vertex_based=vertex_based)
 
     # Running the modified Normal Vector Voting algorithm:
     method_sg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, methods=methods,
+        sg, radius_hit, methods=methods,
         page_curvature_formula=page_curvature_formula,
         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        graph_file=temp_normals_graph_file, pg=pg)
+        graph_file=temp_normals_graph_file)
+    # Remove the normals graph file, so the next test will start anew
+    remove(temp_normals_graph_file)
 
     # Ground-truth T_h vector is parallel to Z axis
     true_T_h = np.array([0, 0, 1])
@@ -567,8 +568,9 @@ def test_cylinder_directions_curvatures(
         # RVV and SSVV:
         #(10, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
         # RVV and SSVV, vertex:
-        (10, 9, False, False, 0, ['VV'], False, '', True),
-        (10, 9, False, False, 0, ['SSVV'], False, '', True),
+        # (10, 9, False, False, 0, ['VV'], False, '', True),
+        # (10, 9, False, False, 0, ['SSVV'], False, '', True),
+        (10, 9, False, False, 0, ['SSVV', 'VV'], False, '', True),
         # smooth, radius=20:
         # (20, 9, False, False, 0, ['VV'], True, '', False),  # AVV
         # RVV and SSVV:
@@ -665,13 +667,16 @@ def test_sphere_curvatures(
     else:
         inverse_str = ""
     if vertex_based:
+        area2 = False
+        save_areas = False
         vertex_based_str = "_vertex_based"
     else:
         vertex_based_str = ""
     base_filename = "{}{}sphere_r{}{}".format(
         files_fold, inverse_str, radius, vertex_based_str)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
-    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+        base_filename, radius_hit)
     log_file = '{}.{}_rh{}.log'.format(base_filename, methods[0], radius_hit)
     sys.stdout = open(log_file, 'w')
 
@@ -712,34 +717,31 @@ def test_sphere_curvatures(
                 io.save_vtp(sphere, surf_file)
 
     # Reading in the surface and transforming it into a triangle graph
-    surf, tg = surface_to_graph(surf_file, inverse=inverse)
-    if vertex_based:
-        _, pg = surface_to_graph(surf_file, inverse=inverse, vertex_based=True)
-        area2 = False
-        save_areas = False
-    else:
-        pg = None
+    surf, sg = surface_to_graph(surf_file, inverse=inverse,
+                                vertex_based=vertex_based)
 
     # Running the modified Normal Vector Voting algorithm:
     if runtimes != '' and not os.path.isfile(runtimes):
         with open(runtimes, 'w') as f:
             f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
                     "duration1;method;duration2\n")
-    method_tg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, methods=methods,
+    method_sg_surf_dict = normals_directions_and_curvature_estimation(
+        sg, radius_hit, methods=methods,
         page_curvature_formula=page_curvature_formula,
         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        runtimes=runtimes, graph_file=temp_normals_graph_file, pg=pg)
+        runtimes=runtimes, graph_file=temp_normals_graph_file)
+    # Remove the normals graph file, so the next test will start anew
+    remove(temp_normals_graph_file)
 
     # Ground truth principal curvatures
     true_curvature = 1.0 / radius
     if inverse:
         true_curvature *= -1
 
-    for method in method_tg_surf_dict.keys():
+    for method in method_sg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
-        (sg, surf) = method_tg_surf_dict[method]
+        (sg, surf) = method_sg_surf_dict[method]
         if method == 'VV':
             if page_curvature_formula:
                 method = 'NVV'
@@ -890,13 +892,15 @@ def test_torus_directions_curvatures(
     if not os.path.exists(files_fold):
         os.makedirs(files_fold)
     if vertex_based:
+        area2 = False
         vertex_based_str = "_vertex_based"
     else:
         vertex_based_str = ""
     base_filename = "{}torus_rr{}_csr{}{}{}".format(
         files_fold, rr, csr, subdivisions_str, vertex_based_str)
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
-    temp_normals_graph_file = '{}.normals.gt'.format(base_filename)
+    temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+        base_filename, radius_hit)
     log_file = '{}.{}_rh{}.log'.format(
         base_filename, methods[0], radius_hit)
     sys.stdout = open(log_file, 'w')
@@ -910,14 +914,8 @@ def test_torus_directions_curvatures(
         io.save_vtp(torus, surf_file)
 
     # Reading in the surface and transforming it into a triangle graph
-    surf, tg = surface_to_graph(surf_file, inverse=False)
-    if vertex_based:
-        _, pg = surface_to_graph(surf_file, inverse=False, vertex_based=True)
-        area2 = False
-        sg = pg
-    else:
-        pg = None
-        sg = tg
+    surf, sg = surface_to_graph(surf_file, inverse=False,
+                                vertex_based=vertex_based)
 
     # Ground-truth principal curvatures and directions
     # Vertex properties for storing the true maximal and minimal curvatures
@@ -956,10 +954,12 @@ def test_torus_directions_curvatures(
             f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
                     "duration1;method;duration2\n")
     method_sg_surf_dict = normals_directions_and_curvature_estimation(
-        tg, radius_hit, methods=methods,
+        sg, radius_hit, methods=methods,
         page_curvature_formula=page_curvature_formula,
         full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
-        runtimes=runtimes, graph_file=temp_normals_graph_file, pg=pg)
+        runtimes=runtimes, graph_file=temp_normals_graph_file)
+    # Remove the normals graph file, so the next test will start anew
+    remove(temp_normals_graph_file)
 
     for method in method_sg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in

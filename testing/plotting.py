@@ -30,10 +30,8 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 
 __author__ = 'kalemanov'
 
-#FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
-FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
-       'vertex_based_exact_geodesics_point_normals_independent/' \
-       'test_vector_voting_output/'
+# FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
+FOLD = './test_vector_voting_output/'
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 LINEWIDTH = 4
 

@@ -28,16 +28,17 @@ __author__ = 'kalemanov'
 
 
 def normals_directions_and_curvature_estimation(
-        tg, radius_hit, methods=['VV'], page_curvature_formula=False,
+        sg, radius_hit, methods=['VV'], page_curvature_formula=False,
         full_dist_map=False, graph_file='temp.gt', area2=True,
-        only_normals=False, poly_surf=None, cores=4, runtimes='', pg=None):
+        only_normals=False, poly_surf=None, cores=4, runtimes=''):
     """
     Runs the modified Normal Vector Voting algorithm (with different options for
     the second pass) to estimate surface orientation, principle curvatures and
     directions for a surface using its triangle graph.
 
     Args:
-        tg (TriangleGraph): triangle graph generated from a surface of interest
+        sg (TriangleGraph or PointGraph): triangle or point graph generated
+            from a surface of interest
         radius_hit (float): radius in length unit of the graph;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
@@ -47,13 +48,14 @@ def normals_directions_and_curvature_estimation(
             normal curvature formula from Page et al. is used in VV (see
             collect_curvature_votes)
         full_dist_map (boolean, optional): if True, a full distance map is
-            calculated for the whole graph, otherwise a local distance map is
-            calculated later for each vertex (default)
+            calculated for the whole graph (not possible for PointGraph),
+            otherwise a local distance map is calculated later for each vertex
+            (default)
         graph_file (string, optional): name for a temporary graph file
             after the first run of the algorithm (default 'temp.gt')
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
-            curvatures estimation; not possible if pg is not None)
+            curvatures estimation; not possible for PointGraph)
         only_normals (boolean, optional): if True (default False), only normals
             are estimated, without principal directions and curvatures, only the
             graph with the orientations, normals or tangents is returned.
@@ -63,8 +65,7 @@ def normals_directions_and_curvature_estimation(
         cores (int, optional): number of cores to run VV in parallel (default 4)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default '')
-        pg (PointGraph, optional): if given (default None), curvature
-            is calculated per triangle vertex instead of triangle center.
+
     Returns:
         a dictionary mapping the method name ('VV' and 'SSVV') to the
         tuple of two elements: TriangleGraph or PointGraph (if pg was given)
@@ -78,31 +79,27 @@ def normals_directions_and_curvature_estimation(
     """
     t_begin = time.time()
 
-    normals_estimation(tg, radius_hit, full_dist_map, cores=cores,
-                       runtimes=runtimes, pg=pg)
-
-    preparation_for_curvature_estimation(tg, graph_file, pg=pg)
-
-    if pg is None:
-        vertex_based = False
-    else:
+    normals_estimation(sg, radius_hit, full_dist_map, cores=cores,
+                       runtimes=runtimes, graph_file=graph_file)
+    if sg.__class__.__name__ == "PointGraph":
         vertex_based = True
+        area2 = False
+        full_dist_map = False
+    else:
+        vertex_based = False
 
     if only_normals is False:
-        if len(methods) == 1:
-            if pg is None:
-                sg = tg
-            else:
-                sg = pg
-        else:
+        if len(methods) > 1:
+            # load the graph from file, so each method starts anew
             sg = None
         results = {}
         for method in methods:
-            tg_curv, surface_curv = curvature_estimation(
-                radius_hit, graph_file, method, page_curvature_formula, area2,
+            sg_curv, surface_curv = curvature_estimation(
+                radius_hit, graph_file=graph_file, method=method,
+                page_curvature_formula=page_curvature_formula, area2=area2,
                 poly_surf=poly_surf, full_dist_map=full_dist_map, cores=cores,
                 runtimes=runtimes, vertex_based=vertex_based, sg=sg)
-            results[method] = (tg_curv, surface_curv)
+            results[method] = (sg_curv, surface_curv)
         if graph_file == 'temp.gt' and isfile(graph_file):
             remove(graph_file)
 
@@ -113,8 +110,8 @@ def normals_directions_and_curvature_estimation(
         return results
 
 
-def normals_estimation(tg, radius_hit, full_dist_map=False,
-                       cores=4, runtimes='', pg=None):
+def normals_estimation(sg, radius_hit, full_dist_map=False,
+                       cores=4, runtimes='', graph_file='temp.gt'):
     """
     Runs the modified Normal Vector Voting algorithm to estimate true normals
     for a surface using its triangle graph.
@@ -122,19 +119,20 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
     Adds the estimated normal "N_v" as vertex property into the graph.
 
     Args:
-        tg (TriangleGraph): triangle graph generated from a surface of interest
+        sg (TriangleGraph or PointGraph): triangle or point graph generated
+            from a surface of interest
         radius_hit (float): radius in length unit of the graph;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         full_dist_map (boolean, optional): if True, a full distance map is
-            calculated for the whole graph, otherwise a local distance map is
-            calculated later for each vertex (default)
-        cores (int): number of cores to run VV (collect_normal_votes and
-            estimate_normal) in parallel (default 8)
-        runtimes (str): if given, runtimes and some parameters are added to
-            this file (default '')
-        pg (PointGraph, optional): if given (default None), curvature
-            is calculated per triangle vertex instead of triangle center.
+            calculated for the whole graph (not possible for PointGraph),
+            otherwise a local distance map is calculated later for each vertex
+            (default)
+        cores (int, optional): number of cores to run VV (collect_normal_votes
+            and estimate_normal) in parallel (default 8)
+        runtimes (str, optional): if given, runtimes and some parameters are
+            added to this file (default '')
+        graph_file (str, optional): file path to save the graph
 
     Returns:
         None
@@ -157,19 +155,12 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
     sigma = g_max / 3.0
 
     # * Maximal triangle area *
-    A, _ = tg.get_areas()
-    A = np.array(A)
-    A_max = np.max(A)
+    A_max = sg.graph.gp.max_triangle_area
     print("Maximal triangle area = {}".format(A_max))
-
-    if pg is None:
-        sg = tg
-    else:
-        sg = pg
 
     # * Adding vertex properties to be filled in estimate_normal *
     # vertex property for storing the estimated normal of the corresponding
-    # triangle:
+    # vertex:
     sg.graph.vp.N_v = sg.graph.new_vertex_property("vector<float>")
 
     t_end0 = time.time()
@@ -177,7 +168,7 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
     minutes, seconds = divmod(duration0, 60)
     print('Preparation took: {} min {} s' .format(minutes, seconds))
 
-    if full_dist_map is True and pg is None:
+    if full_dist_map is True and sg.__class__.__name__ == "TriangleGraph":
         # * Distance map between all pairs of vertices *
         t_begin0 = time.time()
         print("\nCalculating the full distance map...")
@@ -214,7 +205,7 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
         # column 1 = V_v (3x3 float array)
         # each row i is of vertex v, its index == i
         # V_v_list = p.map(partial(collect_normal_votes, # if only V_v output
-        if pg is None:  # TriangleGraph
+        if sg.__class__.__name__ == "TriangleGraph":
             results1_list = p.map(partial(collect_normal_votes,
                                           g_max=g_max, A_max=A_max, sigma=sigma,
                                           full_dist_map=full_dist_map),
@@ -222,7 +213,7 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
         else:  # PointGraph
             results1_list = p.map(partial(collect_normal_votes,
                                           g_max=g_max, A_max=A_max, sigma=sigma
-                                          ),  # tg=tg
+                                          ),
                                   range(num_v))  # a list of vertex v indices
         results1_array = np.array(results1_list, dtype=object)
         # Calculating average neighbors number:
@@ -246,16 +237,16 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
     else:  # cores == 1, sequential processing
         sum_num_neighbors = 0
         for i in range(num_v):
-            if pg is None:  # TriangleGraph
+            if sg.__class__.__name__ == "TriangleGraph":
                 num_neighbors, V_v = collect_normal_votes(
                     i, g_max, A_max, sigma, full_dist_map=full_dist_map)
             else:  # PointGraph
                 num_neighbors, V_v = collect_normal_votes(
-                    i, g_max, A_max, sigma)  # , tg=tg
+                    i, g_max, A_max, sigma)
             sum_num_neighbors += num_neighbors
             N_v = estimate_normal(i, V_v)
             # Adding the estimated normal property to the graph:
-            v = tg.graph.vertex(i)
+            v = vertex(i)
             vp_N_v[v] = N_v
 
         avg_num_neighbors = float(sum_num_neighbors) / float(num_v)
@@ -273,51 +264,6 @@ def normals_estimation(tg, radius_hit, full_dist_map=False,
         with open(runtimes, 'a') as f:
             f.write("{};{};{};{};{};{};".format(
                 num_v, radius_hit, g_max, avg_num_neighbors, cores, duration1))
-
-
-def preparation_for_curvature_estimation(
-        tg, graph_file='temp.gt', pg=None):
-    """
-    Does preparation for principal directions and curvature estimation after the
-    surface orientation estimation (second part used by
-    normals_directions_and_curvature_estimation): adds vertex properties to be
-    filled by all curvature methods and saves the graph to a file.
-
-    Args:
-        tg (TriangleGraph): triangle graph generated from a surface of interest
-            graph_file (str): file path to save the graph
-        pg (PointGraph, optional): if given (default None), curvature
-            is calculated per triangle vertex instead of triangle center.
-
-    Returns:
-        None
-    """
-    if pg is None:
-        sg = tg
-    else:
-        sg = pg
-
-    # * Adding vertex properties to be filled by all curvature methods *
-    # vertex properties for storing the estimated principal directions of the
-    # maximal and minimal curvatures of the corresponding triangle:
-    sg.graph.vp.T_1 = sg.graph.new_vertex_property("vector<float>")
-    sg.graph.vp.T_2 = sg.graph.new_vertex_property("vector<float>")
-    # vertex properties for storing the estimated maximal and minimal curvatures
-    # of the corresponding triangle:
-    sg.graph.vp.kappa_1 = sg.graph.new_vertex_property("float")
-    sg.graph.vp.kappa_2 = sg.graph.new_vertex_property("float")
-    # vertex property for storing the Gaussian curvature calculated from kappa_1
-    # and kappa_2 at the corresponding triangle:
-    sg.graph.vp.gauss_curvature_VV = sg.graph.new_vertex_property("float")
-    # vertex property for storing the mean curvature calculated from kappa_1 and
-    # kappa_2 at the corresponding triangle:
-    sg.graph.vp.mean_curvature_VV = sg.graph.new_vertex_property("float")
-    # vertex property for storing the shape index calculated from kappa_1 and
-    # kappa_2 at the corresponding triangle:
-    sg.graph.vp.shape_index_VV = sg.graph.new_vertex_property("float")
-    # vertex property for storing the curvedness calculated from kappa_1 and
-    # kappa_2 at the corresponding triangle:
-    sg.graph.vp.curvedness_VV = sg.graph.new_vertex_property("float")
 
     # Save the graph to a file for use by different methods in the second run:
     sg.graph.save(graph_file)
@@ -350,9 +296,9 @@ def curvature_estimation(
         poly_surf (vtkPolyData): scaled surface from which the graph was
             generated, (required only if method="SSVV", default None)
         full_dist_map (boolean, optional): if True, a full distance map is
-            calculated for the whole graph, otherwise a local distance map is
-            calculated later for each vertex (default) (not possible for
-            vertex-based approach)
+            calculated for the whole graph (not possible for vertex-based
+            approach), otherwise a local distance map is calculated later for
+            each vertex (default)
         cores (int): number of cores to run VV (collect_curvature_votes and
             estimate_curvature) in parallel (default 4)
         runtimes (str): if given, runtimes and some parameters are added to
@@ -370,14 +316,15 @@ def curvature_estimation(
     if sg is None:
         if vertex_based:
             sg = PointGraph()
-            # cannot weight by triangle area in vertex-based approach
-            area2 = False
-            full_dist_map = False
         else:
             sg = TriangleGraph()
         sg.graph = load_graph(graph_file)
 
-    if full_dist_map is True:
+    if vertex_based:
+        # cannot weight by triangle area in vertex-based approach
+        area2 = False
+
+    if full_dist_map is True and sg.__class__.__name__ == "TriangleGraph":
         # * Distance map between all pairs of vertices *
         t_begin0 = time.time()
         print("\nCalculating the full distance map...")
@@ -395,23 +342,49 @@ def curvature_estimation(
           "surface patches using {}...".format(method))
     t_begin2 = time.time()
 
-    collect_curvature_votes = sg.collect_curvature_votes
-    gen_curv_vote = sg.gen_curv_vote
-    estimate_curvature = sg.estimate_curvature
     g_max = math.pi * radius_hit / 2.0
     sigma = g_max / 3.0
     if method == "VV" and area2:
-        A, _ = sg.get_areas()
-        A = np.array(A)
-        A_max = np.max(A)
+        A_max = sg.graph.gp.max_triangle_area
         print("Maximal triangle area = {}".format(A_max))
     else:
         A_max = 0.0
 
+    # * Adding vertex properties to be filled by all curvature methods *
+    # vertex properties for storing the estimated principal directions of the
+    # maximal and minimal curvatures of the corresponding triangle:
+    sg.graph.vp.T_1 = sg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.T_2 = sg.graph.new_vertex_property("vector<float>")
+    # vertex properties for storing the estimated maximal and minimal curvatures
+    # of the corresponding triangle:
+    sg.graph.vp.kappa_1 = sg.graph.new_vertex_property("float")
+    sg.graph.vp.kappa_2 = sg.graph.new_vertex_property("float")
+    # vertex property for storing the Gaussian curvature calculated from kappa_1
+    # and kappa_2 at the corresponding triangle:
+    sg.graph.vp.gauss_curvature_VV = sg.graph.new_vertex_property("float")
+    # vertex property for storing the mean curvature calculated from kappa_1 and
+    # kappa_2 at the corresponding triangle:
+    sg.graph.vp.mean_curvature_VV = sg.graph.new_vertex_property("float")
+    # vertex property for storing the shape index calculated from kappa_1 and
+    # kappa_2 at the corresponding triangle:
+    sg.graph.vp.shape_index_VV = sg.graph.new_vertex_property("float")
+    # vertex property for storing the curvedness calculated from kappa_1 and
+    # kappa_2 at the corresponding triangle:
+    sg.graph.vp.curvedness_VV = sg.graph.new_vertex_property("float")
+
+    # shortcuts
+    vertices = sg.graph.vertices
+    vertex = sg.graph.vertex
+    collect_curvature_votes = sg.collect_curvature_votes
+    gen_curv_vote = sg.gen_curv_vote
+    estimate_curvature = sg.estimate_curvature
+    add_curvature_descriptors_to_vertex = sg.add_curvature_descriptors_to_vertex
+    graph_to_triangle_poly = sg.graph_to_triangle_poly
+
     # Estimate principal directions and curvatures (and calculate the
     # Gaussian and mean curvatures, shape index and curvedness) for vertices
     vertices_ind = []
-    for v in sg.graph.vertices():
+    for v in vertices():
         vertices_ind.append(int(v))
         # Voting and curvature estimation for SSVV:
         if method == "SSVV":  # sequential processing, edits the graph
@@ -427,11 +400,11 @@ def curvature_estimation(
             # Curvature votes collection for VV:
             # None is returned if v does not have any neighbors, then
             # estimate_curvature will return Nones as well
-            B_v_list = p.map(partial(collect_curvature_votes,
-                                     g_max=g_max, sigma=sigma,
-                                     page_curvature_formula=page_curvature_formula,
-                                     A_max=A_max, full_dist_map=full_dist_map),
-                             vertices_ind)
+            B_v_list = p.map(partial(
+                collect_curvature_votes, g_max=g_max, sigma=sigma,
+                page_curvature_formula=page_curvature_formula, A_max=A_max,
+                full_dist_map=full_dist_map),
+                vertices_ind)
             # Curvature estimation for VV:
             # results_list has same length as vertices_ind
             # columns: T_1, T_2, kappa_1, kappa_2, gauss_curvature,
@@ -452,8 +425,8 @@ def curvature_estimation(
             # Add the curvature descriptors as properties to the graph:
             # (v_ind is vertex v index, i is v_ind index in results arrays)
             for i, v_ind in enumerate(vertices_ind):
-                v = sg.graph.vertex(v_ind)
-                sg._add_curvature_descriptors_to_vertex(
+                v = vertex(v_ind)
+                add_curvature_descriptors_to_vertex(
                     v, T_1_array[i], T_2_array[i], kappa_1_array[i],
                     kappa_2_array[i], gauss_curvature_array[i],
                     mean_curvature_array[i], shape_index_array[i],
@@ -468,11 +441,11 @@ def curvature_estimation(
                     A_max=A_max, full_dist_map=full_dist_map)
                 results = estimate_curvature(v_ind, B_v)
                 # Add the properties to the graph:
-                v = sg.graph.vertex(v_ind)
-                sg._add_curvature_descriptors_to_vertex(v, *results)
+                v = vertex(v_ind)
+                add_curvature_descriptors_to_vertex(v, *results)
 
     # Transforming the resulting graph to a surface with triangles:
-    surface_curv = sg.graph_to_triangle_poly(verbose=False)
+    surface_curv = graph_to_triangle_poly(verbose=False)
 
     t_end2 = time.time()
     duration2 = t_end2 - t_begin2

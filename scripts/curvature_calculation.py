@@ -12,7 +12,7 @@ import os
 
 from pysurf import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
-    TriangleGraph, PointGraph, preparation_for_curvature_estimation,
+    TriangleGraph, PointGraph,
     curvature_estimation)
 from pysurf import pysurf_io as io
 
@@ -365,10 +365,8 @@ def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=4):
     tg = TriangleGraph()
     tg.graph = load_graph(gt_file_normals)
 
-    preparation_for_curvature_estimation(tg, graph_file=gt_file_normals)
-
     tg_curv, surf_curv = curvature_estimation(
-        radius_hit, graph_file=gt_file_normals, method='VV', cores=cores)
+        radius_hit, graph_file=gt_file_normals, method='VV', cores=cores, sg=tg)
 
     gt_file_curv = "{}{}.AVV_rh{}.gt".format(fold, base_filename, radius_hit)
     tg_curv.graph.save(gt_file_curv)
@@ -462,7 +460,7 @@ def _extract_curvatures_from_graph(
         sg, csv_file, exclude_borders=0, gt_file=None, vtp_file=None,
         categorize_shape_index=False):
     # If don't want to include curvatures near borders, filter out those
-    if exclude_borders > 0 and sg.__class__.__name__ == TriangleGraph:
+    if exclude_borders > 0 and sg.__class__.__name__ == "TriangleGraph":
         sg.find_vertices_near_border(exclude_borders, purge=True)
 
     # List of shape class labels of all vertices for the csv file:
@@ -502,7 +500,7 @@ def _extract_curvatures_from_graph(
     if categorize_shape_index:  # want the shape class labels
         df["shape_index_class"] = shape_index_class
     df["curvedness"] = curvedness
-    if sg.__class__.__name__ == TriangleGraph:
+    if sg.__class__.__name__ == "TriangleGraph":
         triangle_areas = sg.get_vertex_property_array("area")
         df["triangleAreas"] = triangle_areas
     df.to_csv(csv_file, sep=';')
@@ -809,43 +807,43 @@ def from_vtk_workflow(
     print('\nReading in the surface file to get a vtkPolyData surface...')
     surf = io.load_poly_from_vtk(vtk_file)
 
-    triangle_graph_file = base_filename + ".gt"
-    if not isfile(triangle_graph_file) or vertex_based:  # vertex-based approach
-        # uses TriangleGraph's point_in_cells and triangle_cell_ids
-        print('\nBuilding a triangle graph from the surface...')
-        tg = TriangleGraph()
-        tg.build_graph_from_vtk_surface(surf, scale)
-        if tg.graph.num_vertices() == 0:
-            raise pexceptions.PySegInputError(
-                expr="new_workflow", msg="The graph is empty!")
-        print('The graph has {} vertices and {} edges'.format(
-            tg.graph.num_vertices(), tg.graph.num_edges()))
-        tg.graph.save(triangle_graph_file)
-    else:
-        print('\nReading in the triangle graph from file...')
-        tg = TriangleGraph()
-        tg.graph = load_graph(triangle_graph_file)
+    if not vertex_based:
+        triangle_graph_file = base_filename + ".gt"
+        if not isfile(triangle_graph_file):
+            # uses TriangleGraph's point_in_cells and triangle_cell_ids
+            print('\nBuilding a triangle graph from the surface...')
+            tg = TriangleGraph()
+            tg.build_graph_from_vtk_surface(surf, scale)
+            if tg.graph.num_vertices() == 0:
+                raise pexceptions.PySegInputError(
+                    expr="new_workflow", msg="The graph is empty!")
+            print('The graph has {} vertices and {} edges'.format(
+                tg.graph.num_vertices(), tg.graph.num_edges()))
+            tg.graph.save(triangle_graph_file)
+        else:
+            print('\nReading in the triangle graph from file...')
+            tg = TriangleGraph()
+            tg.graph = load_graph(triangle_graph_file)
+        sg = tg
 
-    if vertex_based:
+    else:  # vertex_based
         area2 = False
         point_graph_file = base_filename + "_point.gt"
-        # if not isfile(point_graph_file):
-        print('\nBuilding a point graph from the surface...')
-        pg = PointGraph()
-        pg.build_graph_from_vtk_surface(surf, scale)
-        if pg.graph.num_vertices() == 0:
-            raise pexceptions.PySegInputError(
-                expr="new_workflow", msg="The graph is empty!")
-        print('The graph has {} vertices and {} edges'.format(
-            pg.graph.num_vertices(), pg.graph.num_edges()))
-        pg.graph.save(point_graph_file)
-        # else: read in PointGraph lacks a dictionary required for VTP creation
-        #     print('\nReading in the point graph from file...')
-        #     pg = PointGraph()
-        #     pg.graph = load_graph(point_graph_file)
-        point_graph = pg
-    else:
-        point_graph = None
+        if not isfile(point_graph_file):
+            print('\nBuilding a point graph from the surface...')
+            pg = PointGraph()
+            pg.build_graph_from_vtk_surface(surf, scale)
+            if pg.graph.num_vertices() == 0:
+                raise pexceptions.PySegInputError(
+                    expr="new_workflow", msg="The graph is empty!")
+            print('The graph has {} vertices and {} edges'.format(
+                pg.graph.num_vertices(), pg.graph.num_edges()))
+            pg.graph.save(point_graph_file)
+        else:
+            print('\nReading in the point graph from file...')
+            pg = PointGraph()
+            pg.graph = load_graph(point_graph_file)
+        sg = pg
 
     # Running the modified Normal Vector Voting algorithm:
     normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
@@ -854,16 +852,16 @@ def from_vtk_workflow(
     if not isfile(normals_graph_file) or vertex_based:  # read in PointGraph
         # lacks a dictionary required for VTP creation
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            tg, radius_hit, methods=methods,
+            sg, radius_hit, methods=methods,
             page_curvature_formula=page_curvature_formula,
             area2=area2, poly_surf=surf, cores=cores,
-            graph_file=normals_graph_file, pg=point_graph)
+            graph_file=normals_graph_file)
     else:
         for method in methods:
             sg_curv, surface_curv = curvature_estimation(
                 radius_hit, graph_file=normals_graph_file, method=method,
                 page_curvature_formula=page_curvature_formula, area2=area2,
-                poly_surf=surf, cores=cores, vertex_based=vertex_based, sg=tg)
+                poly_surf=surf, cores=cores, vertex_based=vertex_based)
             method_tg_surf_dict[method] = (sg_curv, surface_curv)
 
     for method in method_tg_surf_dict.keys():

@@ -464,7 +464,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 print("lambda_2 = {}".format(lambda_2))
                 print("lambda_3 = {}".format(lambda_3))
                 # add placeholders to the graph
-                self._add_curvature_descriptors_to_vertex(
+                self.add_curvature_descriptors_to_vertex(
                     vertex_v, None, None, None, None, None, None, None, None)
         # Estimated principal curvatures:
         kappa_1 = 3 * lambda_1 - lambda_2
@@ -480,11 +480,11 @@ class SurfaceGraph(graphs.SegmentationGraph):
         mean_curvature = calculate_mean_curvature(kappa_1, kappa_2)
         shape_index = calculate_shape_index(kappa_1, kappa_2)
         curvedness = calculate_curvedness(kappa_1, kappa_2)
-        self._add_curvature_descriptors_to_vertex(
+        self.add_curvature_descriptors_to_vertex(
             vertex_v, T_1, T_2, kappa_1, kappa_2, gauss_curvature,
             mean_curvature, shape_index, curvedness)
 
-    def _add_curvature_descriptors_to_vertex(
+    def add_curvature_descriptors_to_vertex(
             self, vertex, T_1, T_2, kappa_1, kappa_2, gauss_curvature,
             mean_curvature, shape_index, curvedness):
         """
@@ -552,10 +552,16 @@ class PointGraph(SurfaceGraph):
         # vertex property for storing the VTK mean curvature at the
         # corresponding triangle point:
         self.graph.vp.mean_curvature = self.graph.new_vertex_property("float")
-
-        self.triangle_points = []
-        """list: a list of triplet lists of vertex coordinates (x, y, z)
-        belonging to one triangle."""
+        # graph property for storing the maximal triangle area:
+        self.graph.gp.max_triangle_area = self.graph.new_graph_property("float")
+        self.graph.gp.max_triangle_area = 0.0  # initialize
+        # graph property for storing the total surface area:
+        self.graph.gp.total_area = self.graph.new_graph_property("float")
+        self.graph.gp.total_area = 0.0  # initialize
+        # graph property for storing a list of triplet lists of vertex
+        # coordinates (x, y, z) belonging to one triangle.
+        self.graph.gp.triangle_points = self.graph.new_graph_property("object")
+        self.graph.gp.triangle_points = []
 
         self.point_in_triangles = {}
         """dict: a dictionary mapping a point coordinates (x, y, z) to a list of
@@ -669,7 +675,7 @@ class PointGraph(SurfaceGraph):
                         mean_curvatures.GetTuple1(cell.GetPointId(j)))
                     self.graph.vp.normal[vd] = normals.GetTuple3(
                         cell.GetPointId(j))
-                self.triangle_points.append(triangle_points)
+                self.graph.gp.triangle_points.append(triangle_points)
 
                 # 1b) Add an edge with a distance between all 3 pairs of
                 # vertices, if it has not been added yet.
@@ -699,6 +705,13 @@ class PointGraph(SurfaceGraph):
                                       'edge with a distance of {} pixels.'
                                       .format(x1, y1, z1, x2, y2, z2,
                                               self.graph.ep.distance[ed]))
+
+                # 1c) Calculate area of the triangle and update the maximal area
+                # and total area graph properties:
+                area = triangle_area_cross_product(*np.array(triangle_points))
+                if area > self.graph.gp.max_triangle_area:
+                    self.graph.gp.max_triangle_area = area
+                self.graph.gp.total_area += area
             else:
                 print('Oops, there are {} points in cell number {}'.format(
                     points_cell.GetNumberOfPoints(), i))
@@ -707,7 +720,6 @@ class PointGraph(SurfaceGraph):
         assert self.graph.num_vertices() == len(
             self.coordinates_to_vertex_index)
         assert self.graph.num_edges() == len(self.coordinates_pair_connected)
-        assert len(self.triangle_points) == surface.GetNumberOfCells()
 
         t_end = time.time()
         duration = t_end - t_begin
@@ -780,11 +792,8 @@ class PointGraph(SurfaceGraph):
             # Topology
             # Triangles
             triangles = vtk.vtkCellArray()
-            if len(self.triangle_points) == 0:
-                print('Warning: triangle points information is not found in a '
-                      'graph loaded from file, make sure to use a graph object.'
-                      'No triangle cells will be added to the surface.')
-            for triangle_points in self.triangle_points:  # triplet of (x, y, z)
+            for triangle_points in self.graph.gp.triangle_points:
+                # triangle_points is a list of three (x, y, z)
                 triangle = vtk.vtkTriangle()
                 # The first parameter is the index of the triangle vertex which
                 # is ALWAYS 0-2.
@@ -1007,6 +1016,11 @@ class TriangleGraph(SurfaceGraph):
         # edge property storing the "strength" property of the edge: 1 for a
         # "strong" or 0 for a "weak" one:
         self.graph.ep.is_strong = self.graph.new_edge_property("int")
+        # graph property for storing the maximal triangle area:
+        self.graph.gp.max_triangle_area = self.graph.new_graph_property("float")
+        self.graph.gp.max_triangle_area = 0.0  # initialize
+        # graph property for storing the total surface area:
+        self.graph.gp.total_area = self.graph.new_graph_property("float")
 
         self.point_in_cells = {}
         """dict: a dictionary mapping a point coordinates (x, y, z) to a list of
@@ -1100,10 +1114,13 @@ class TriangleGraph(SurfaceGraph):
             # Get the 3 points which made up the triangular cell:
             points_cell = cell.GetPoints()
 
-            # Calculate the area of the triangle i;
+            # Calculate the area of the triangle i and update the maximal area
+            # graph property:
             area = cell.TriangleArea(points_cell.GetPoint(0),
                                      points_cell.GetPoint(1),
                                      points_cell.GetPoint(2))
+            if area > self.graph.gp.max_triangle_area:
+                self.graph.gp.max_triangle_area = area
             try:
                 assert(area > 0)
             except AssertionError:
@@ -1265,6 +1282,10 @@ class TriangleGraph(SurfaceGraph):
         if verbose:
             print('Real number of unique points: {}'.format(
                 len(self.point_in_cells)))
+
+        # 5. Calculate the total surface area and store as graph property:
+        triangle_areas = self.graph.vp.area.get_array()
+        self.graph.gp.total_area = np.sum(triangle_areas)
 
         t_end = time.time()
         duration = t_end - t_begin
@@ -1722,29 +1743,6 @@ class TriangleGraph(SurfaceGraph):
         minutes, seconds = divmod(duration, 60)
         print('Finding small components took: {} min {} s'.format(
             minutes, seconds))
-
-    def get_areas(self, verbose=False):
-        """
-        Gets all triangle areas from the vertex properties of the graph and
-        calculates the total area.
-
-        Args:
-            verbose (boolean, optional): if True (default False), prints out the
-                minimal and the maximal triangle area values as well as the the
-                total surface area
-
-        Returns:
-            - all triangle areas in squared units (numpy.ndarray)
-            - the total area in squared units (float)
-        """
-        triangle_areas = self.graph.vp.area.get_array()
-        total_area = np.sum(triangle_areas)
-        if verbose:
-            print('{} triangle area values'.format(len(triangle_areas)))
-            print('min = {}, max = {}'.format(
-                min(triangle_areas), max(triangle_areas)))
-            print('total surface area = {}'.format(total_area))
-        return triangle_areas, total_area
 
     # * The following TriangleGraph methods are implementing with adaptations
     # the first step of normal vector voting algorithm of Page et al., 2002. *
