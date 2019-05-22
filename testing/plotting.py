@@ -2005,7 +2005,8 @@ if __name__ == "__main__":
     #         num_bins=25, method=method, borders=0)  # , x_range=(-0.1, 0.15)
 
     # Benchmark data
-    plot_plane_normals(vertex_based=True, x_range=(0, 0.4))
+    plot_plane_normals(vertex_based=False, x_range=(0, 0.4))
+    # plot_plane_normals(vertex_based=True, x_range=(0, 0.4))
 
     # torus
     # plot_torus_kappa_1_and_2_diff_rh()
@@ -2019,9 +2020,9 @@ if __name__ == "__main__":
     #     csv=str(PurePath(FOLD,
     #                      "torus/files4plotting/"
     #                      "torus_rr25_csr10_SSVV_RadiusHit1-10_xmax0.5.csv")))
-    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
-    plot_torus_kappa_1_and_2_T_1_and_2_errors(
-        rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True)  # ,
+    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors(
+    #     rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True)  # ,
     #  x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
     # plot_torus_kappa_1_and_2_T_1_and_2_errors(
     #     rhVV=9, rhSSVV=5, subdivisions=100, RorAVV="RVV", vertex_based=True)
@@ -2039,12 +2040,12 @@ if __name__ == "__main__":
     #     rhs=range(12, 21), csv=str(PurePath(
     #         FOLD, "sphere/noise0/files4plotting/"
     #               "sphere_r10_RVV_AVV_RadiusHit12-20_xmax0.25.csv")))
-    # for r in [10, 20]:  # remove label for r=10, because overlapping
-    #     plot_sphere_kappa_1_and_2_errors_allVV(
-    #         r=r, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18))
-    plot_sphere_kappa_1_and_2_errors(
-        r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
-        RorAVV="RVV", vertex_based=True)
+    for r in [10]:  # remove label for r=10, because overlapping
+        plot_sphere_kappa_1_and_2_errors_allVV(
+            r=r, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18))
+    # plot_sphere_kappa_1_and_2_errors(
+    #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
+    #     RorAVV="RVV", vertex_based=True)
     # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
 
     # voxel sphere
@@ -2070,7 +2071,10 @@ if __name__ == "__main__":
     #     r=30, rhVV=28, rhSSVV=28, voxel=True, x_range=(0, 0.65))
     plot_sphere_kappa_1_and_2_errors(
         r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
-        RorAVV="RVV", vertex_based=True)
+        RorAVV="RVV", vertex_based=False)
+    # plot_sphere_kappa_1_and_2_errors(
+    #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
+    #     RorAVV="RVV", vertex_based=True)
 
     # cylinder
     # plot_cylinder_kappa_1_diff_rh(num_bins=10)
@@ -2079,13 +2083,13 @@ if __name__ == "__main__":
     #     csv=str(PurePath(FOLD,
     #                      "cylinder/noise0/files4plotting/"
     #                      "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv")))
-    # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
-    #     rhVV=5, rhSSVV=6)
     plot_cylinder_T_2_and_kappa_1_errors(
-       x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
-       rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
+        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+        rhVV=5, rhSSVV=6)
     # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
-    #     rhVV=5, rhSSVV=6)
+    #    x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+    #    rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
+    plot_cylinder_T_2_and_kappa_1_errors(
+        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
+        rhVV=5, rhSSVV=6)
     # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
