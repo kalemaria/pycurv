@@ -385,7 +385,9 @@ class CylinderGenerator(object):
     A class for generating triangular-mesh surface of a cylinder.
     """
     @staticmethod
-    def generate_cylinder_surface(r=10.0, h=20.0, res=100):
+    def generate_cylinder_surface(
+            r=10.0, h=20.0, res=100, subdivisions=0, max_edge=0, max_area=0,
+            decimate=0, verbose=False):
         """
         Generates a cylinder surface with minimal number of triangular cells
         and two circular planes.
@@ -394,6 +396,16 @@ class CylinderGenerator(object):
             r (float, optional): cylinder radius (default 10.0)
             h (float, optional): cylinder high (default 20.0)
             res (int, optional): resolution (default 100)
+            subdivisions (int, optional): if > 0 (default 0) vtkLinearSubdivi-
+                sionFilter is applied with this number of subdivisions
+            max_edge (float, optional): if > 0 (default 0) vtkAdaptiveSubdivi-
+                sionFilter is applied with this maximal triangle edge length
+            max_area (float, optional):  if > 0 (default 0) vtkAdaptiveSubdivi-
+                sionFilter is applied with this maximal triangle area
+            decimate (float, optional): if > 0 (default) vtkDecimatePro is
+                applied with this target reduction (< 1)
+            verbose (boolean, optional): if True (default False), some extra
+                information will be printed out
 
         Returns:
             a cylinder surface (vtk.vtkPolyData)
@@ -402,6 +414,7 @@ class CylinderGenerator(object):
               "resolution={}".format(r, h, res))
         is_positive_number(r)
         is_positive_number(h)
+        is_positive_number(res)
         cylinder = vtk.vtkCylinderSource()
         # the origin around which the cylinder should be centered
         cylinder.SetCenter(0, 0, 0)
@@ -427,6 +440,51 @@ class CylinderGenerator(object):
 
         # Might contain non-triangle cells after cleaning - remove them
         cylinder_surface = remove_non_triangle_cells(cleaner.GetOutput())
+
+        if verbose:
+            print("{} points".format(cylinder_surface.GetNumberOfPoints()))
+            print("{} triangles".format(cylinder_surface.GetNumberOfCells()))
+
+        if subdivisions > 0:
+            cylinder_linear = vtk.vtkLinearSubdivisionFilter()
+            cylinder_linear.SetNumberOfSubdivisions(subdivisions)
+            cylinder_linear.SetInputData(cylinder_surface)
+            cylinder_linear.Update()
+            cylinder_surface = cylinder_linear.GetOutput()
+            if verbose:
+                print("{} points after linear subdivision".format(
+                    cylinder_surface.GetNumberOfPoints()))
+                print("{} triangles after linear subdivision".format(
+                    cylinder_surface.GetNumberOfCells()))
+
+        if max_area > 0 or max_edge > 0:
+            cylinder_adaptive = vtk.vtkAdaptiveSubdivisionFilter()
+            cylinder_adaptive.SetMaximumEdgeLength(max_edge)
+            cylinder_adaptive.SetMaximumTriangleArea(max_area)
+            cylinder_adaptive.SetInputData(cylinder_surface)
+            cylinder_adaptive.Update()
+            cylinder_surface = cylinder_adaptive.GetOutput()
+            if verbose:
+                print("{} points after adaptive subdivision".format(
+                    cylinder_surface.GetNumberOfPoints()))
+                print("{} triangles after adaptive subdivision".format(
+                    cylinder_surface.GetNumberOfCells()))
+
+        if decimate > 0:
+            cylinder_decimate = vtk.vtkDecimatePro()
+            cylinder_decimate.SetInputData(cylinder_surface)
+            cylinder_decimate.SetTargetReduction(decimate)
+            cylinder_decimate.PreserveTopologyOn()
+            cylinder_decimate.SplittingOn()
+            cylinder_decimate.BoundaryVertexDeletionOn()
+            cylinder_decimate.Update()
+            cylinder_surface = cylinder_decimate.GetOutput()
+            if verbose:
+                print("{} points after decimation".format(
+                    cylinder_surface.GetNumberOfPoints()))
+                print("{} triangles after decimation".format(
+                    cylinder_surface.GetNumberOfCells()))
+
         return cylinder_surface
 
     @staticmethod
@@ -515,12 +573,14 @@ class ConeGenerator(object):
         Args:
             r (int): cone base radius
             h (int): cone height
-            subdivisions (int): if > 0 (default) vtkLinearSubdivisionsFilter
-                is applied with this number of subdivisions
-            decimate (float): if > 0 (default) vtkDecimatePro is applied
-                with this target reduction (< 1)
-            smoothing_iterations: if > 0 (default) vtkWindowedSincPolyDataFilter
-                is applied with this number of smoothing iterations
+            res (int): resolution
+            subdivisions (int, optional): if > 0 (default 0) vtkLinearSubdivi-
+                sionFilter is applied with this number of subdivisions
+            decimate (float, optional): if > 0 (default 0) vtkDecimatePro is
+                applied with this target reduction (< 1)
+            smoothing_iterations (int, optional): if > 0 (default 0)
+                vtkWindowedSincPolyDataFilter is applied with this number of
+                smoothing iterations
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 

@@ -52,49 +52,87 @@ class SurfaceGraph(graphs.SegmentationGraph):
     # * The following SurfaceGraph method is implementing with adaptations
     # the second part of the first step of normal vector voting algorithm of
     # Page et al., 2002. *
-    def estimate_normal(self, vertex_v_ind, V_v):
+    def estimate_normal(self, vertex_v_ind, V_v, epsilon=0, eta=0):
         """
-        For a vertex v, its calculated matrix V_v (output of collecting_votes),
-        estimates its true normal N_v.
+        For a vertex v, its calculated matrix V_v (output of collecting_votes)
+        and the parameters epsilon and eta (default 2 each), classifies its
+        orientation.
 
-        This is done using eigen-decomposition of V_v, N_v equals to the highest
-        eigenvector E_1 (Page et al., 2002).
+        The output classes are 1 if it belongs to a surface patch, 2 if it
+        belongs to a crease junction or 3 if it doesn't have a preferred
+        orientation.
+
+        This is done using eigen-decomposition of V_v and equations (9) and (10)
+        from the paper of Page et al., 2002. Equations (11) and (12) may help to
+        choose epsilon and eta.
 
         Args:
-            vertex_v_ind (int): index of the vertex v in the TriangleGraph
+            vertex_v_ind (int): index of the vertex v in the surface
+                triangle-graph whose orientation is classified
             V_v (numpy.ndarray): the 3x3 symmetric matrix V_v
+            epsilon (int, optional): parameter of Normal Vector Voting algorithm
+                influencing the number of triangles classified as "crease
+                junction" (class 2), default 0
+            eta (int, optional): parameter of Normal Vector Voting algorithm
+                influencing the number of triangles classified as "crease
+                junction" (class 2) and "no preferred orientation" (class 3, see
+                Notes), default 0
 
         Returns:
-            estimated normal "N_v" (3x1 array)
+            - orientation of vertex v (int): 1 if it belongs to a surface patch,
+              2 if it belongs to a crease junction or 3 if it doesn't have a
+              preferred orientation
+            - estimated normal "N_v" (3x1 array) if class is 1, otherwise zeros
+            - the estimated_tangent "T_v" (3x1 array) if class is 2, otherwise
+              zeros
 
         Notes:
-            We assume that all triangles belong to a surface patch without
-            crease junctions or noise.
+            If epsilon = 0 and eta = 0, all triangles will be classified as
+            "surface patch" (class 1).
         """
         vertex_v = self.graph.vertex(vertex_v_ind)
         # Decompose the symmetric semidefinite matrix V_v:
         # eigenvalues are in increasing order and eigenvectors are in columns of
         # the returned quadratic matrix
         eigenvalues, eigenvectors = np.linalg.eigh(V_v)
-        # The normal vector is oriented like the highest eigenvector:
+        # Eigenvalues from highest to lowest:
+        lambda_1 = eigenvalues[2]
+        lambda_2 = eigenvalues[1]
+        lambda_3 = eigenvalues[0]
+        # Eigenvectors, corresponding to the eigenvalues:
         E_1 = eigenvectors[:, 2]
+        E_3 = eigenvectors[:, 0]
+        # Saliency maps:
+        S_s = lambda_1 - lambda_2  # surface patch
+        S_c = lambda_2 - lambda_3  # crease junction
+        S_n = lambda_3  # no preferred orientation
 
-        # Eventually have to flip (negate) the normal, because its direction is
-        # lost during the matrix generation! Take the one for which the angle to
-        # the original normal is smaller (or cosine of the angle is higher):
-        normal1 = E_1
-        normal2 = -E_1
-        orig_normal = self.graph.vp.normal[vertex_v]
-        cos_angle1 = np.dot(orig_normal, normal1)
-        cos_angle2 = np.dot(orig_normal, normal2)
-        if cos_angle1 > cos_angle2:
-            N_v = normal1
+        # Make decision and add the estimated normal or tangent as properties to
+        # the graph (add a placeholder [0, 0, 0] to each property, where it does
+        # not apply):
+        max_saliency = max(S_s, epsilon * S_c, epsilon * eta * S_n)
+        if max_saliency == S_s:
+            # Eventually have to flip (negate) the estimated normal, because its
+            # direction is lost during the matrix generation!
+            # Take the one for which the angle to the original normal is smaller
+            # (or cosine of the angle is higher):
+            normal1 = E_1
+            normal2 = -E_1
+            orig_normal = self.graph.vp.normal[vertex_v]
+            cos_angle1 = np.dot(orig_normal, normal1)
+            cos_angle2 = np.dot(orig_normal, normal2)
+            if cos_angle1 > cos_angle2:
+                N_v = normal1
+            else:
+                N_v = normal2
+            return 1, N_v, np.zeros(shape=3)
+        elif max_saliency == (epsilon * S_c):
+            return 2, np.zeros(shape=3), E_3
         else:
-            N_v = normal2
-        return N_v
+            return 3, np.zeros(shape=3), np.zeros(shape=3)
 
     # * The following SurfaceGraph methods are implementing with adaptations
-    # the second step pf normal vector voting algorithm of Page et al., 2002. *
+    # the second step of normal vector voting algorithm of Page et al., 2002. *
     def collect_curvature_votes(
             self, vertex_v_ind, g_max, sigma, full_dist_map=None,
             page_curvature_formula=False, A_max=0.0):
@@ -167,13 +205,15 @@ class SurfaceGraph(graphs.SegmentationGraph):
         if self.__class__.__name__ == "TriangleGraph":
             if vertex_v_ind == 0:
                 print("Calling find_geodesic_neighbors")
+            # leave only neighbors belonging to a surface patch
             neighbor_idx_to_dist = self.find_geodesic_neighbors(
-                vertex_v, g_max, full_dist_map=full_dist_map)
+                vertex_v, g_max, full_dist_map=full_dist_map, only_surface=True)
         else:  # PointGraph
             if vertex_v_ind == 0:
                 print("Calling find_geodesic_neighbors_exact")
+            # stop looking if neighbor is not in a surface patch
             neighbor_idx_to_dist = self.find_geodesic_neighbors_exact(
-                vertex_v, g_max, verbose=False)
+                vertex_v, g_max, verbose=False, only_surface=True)
         # Doing it again, because saving in first pass caused memory problems
         try:
             assert(len(neighbor_idx_to_dist) > 0)
@@ -278,7 +318,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
             shape_index, curvedness
             if B_v is None or the decomposition does not work, a list of None
         """
-        if B_v is None:
+        if B_v is None or math.isnan(B_v[0, 0]):
             return None, None, None, None, None, None, None, None
 
         vertex_v = self.graph.vertex(vertex_v_ind)
@@ -559,14 +599,14 @@ class PointGraph(SurfaceGraph):
         self.graph.gp.total_area = self.graph.new_graph_property("float")
         self.graph.gp.total_area = 0.0  # initialize
         # graph property for storing a list of triplet lists of vertex
-        # coordinates (x, y, z) belonging to one triangle.
+        # coordinates (x, y, z) belonging to one triangle:
         self.graph.gp.triangle_points = self.graph.new_graph_property("object")
         self.graph.gp.triangle_points = []
-
-        self.point_in_triangles = {}
-        """dict: a dictionary mapping a point coordinates (x, y, z) to a list of
-        triangle indices sharing this point.
-        """
+        # graph property for storing a dictionary mapping vertex coordinates
+        # (x, y, z) to a list of triangle indices sharing this point:
+        self.graph.gp.point_in_triangles = self.graph.new_graph_property(
+            "object")
+        self.graph.gp.point_in_triangles = {}
 
     def build_graph_from_vtk_surface(
             self, surface, scale=(1, 1, 1), verbose=False,
@@ -650,10 +690,10 @@ class PointGraph(SurfaceGraph):
                     x, y, z = points_cell.GetPoint(j)
                     p = (x, y, z)
                     triangle_points.append(p)
-                    if p in self.point_in_triangles:
-                        self.point_in_triangles[p].append(triangle_i)
+                    if p in self.graph.gp.point_in_triangles:
+                        self.graph.gp.point_in_triangles[p].append(triangle_i)
                     else:
-                        self.point_in_triangles[p] = [triangle_i]
+                        self.graph.gp.point_in_triangles[p] = [triangle_i]
                     if p in self.coordinates_to_vertex_index:
                         continue
                     vd = self.graph.add_vertex()  # vertex descriptor
@@ -860,18 +900,14 @@ class PointGraph(SurfaceGraph):
         """
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
-        # tg_vertex = tg.graph.vertex
         normal = self.graph.vp.normal
-        # tg_normal = tg.graph.vp.normal
         array = np.array
         xyz = self.graph.vp.xyz
-        # tg_xyz = tg.graph.vp.xyz
         sqrt = math.sqrt
         dot = np.dot
         outer = np.multiply.outer
-        # area = tg.graph.vp.area
         exp = math.exp
-        point_in_triangles = self.point_in_triangles
+        point_in_triangles = self.graph.gp.point_in_triangles
         calculate_geodesic_distance = self.calculate_geodesic_distance
 
         # Get the coordinates of vertex v (as numpy array):
@@ -890,8 +926,6 @@ class PointGraph(SurfaceGraph):
                   "ignored later.".format(v))
             # return a placeholder instead of V_v
             return 0, np.zeros(shape=(3, 3))
-            # if don't want to calculate average number of neighbors:
-            # return np.zeros(shape=(3, 3))
 
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated and returned:
@@ -918,20 +952,10 @@ class PointGraph(SurfaceGraph):
         # Let each of the neighboring triangles c_i to cast a vote on vertex v:
         for idx_c_i, ids_v_i in neighboring_triangles_of_v.items():
             # Calculate the normal vote N_i of c_i on v:
-            # tg_vertex_c_i = tg_vertex(idx_c_i)
-            # N_tg = array(tg_normal[tg_vertex_c_i])
             points_xyz = [array(xyz[vertex(idx_v_i)]) for idx_v_i in ids_v_i]
             ref_normal = array(normal[vertex(ids_v_i[0])])
             N = triangle_normal(ref_normal, *points_xyz)
-            # try:
-            #     assert np.allclose(N_tg, N)
-            # except AssertionError:
-            #     print(ref_normal)
-            #     print(N)
-            #     print(N_tg)
-            # c_i_tg = array(tg_xyz[tg_vertex_c_i])
             c_i = triangle_center(*points_xyz)
-            # assert np.allclose(c_i, c_i_tg)
             vc_i = c_i - v
             vc_i_len = sqrt(dot(vc_i, vc_i))
             vc_i_norm = vc_i / vc_i_len
@@ -947,11 +971,7 @@ class PointGraph(SurfaceGraph):
             # Calculate the weight depending on the area of the neighboring
             # triangle i, A_i, and the geodesic distance to its center c_i from
             # vertex v, g_c_i:
-            # A_i_tg = area[tg_vertex_c_i]
             A_i = triangle_area_cross_product(*points_xyz)
-            # A_i_heron = triangle_area_heron(*points_xyz)
-            # assert round(A_i_tg, 7) == round(A_i, 7)
-            # assert round(A_i_tg, 7) == round(A_i_heron, 7)
             # Geodesic distances to the three vertices of the triangle i:
             g_v_i_s = [neighbor_idx_to_dist[idx_v_i] for idx_v_i in ids_v_i]
             # Find two triangle vertices among them that are closer to vertex v:
@@ -973,7 +993,6 @@ class PointGraph(SurfaceGraph):
             V_v += w_i * V_i
 
         return len(neighbor_idx_to_dist), V_v
-        # return V_v  # if don't want to calculate average number of neighbors
 
 
 class TriangleGraph(SurfaceGraph):
@@ -1812,8 +1831,6 @@ class TriangleGraph(SurfaceGraph):
                   "ignored later.".format(v))
             # return a placeholder instead of V_v
             return 0, np.zeros(shape=(3, 3))
-            # if don't want to calculate average number of neighbors:
-            # return np.zeros(shape=(3, 3))
 
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated and returned:
@@ -1853,4 +1870,3 @@ class TriangleGraph(SurfaceGraph):
             V_v += w_i * V_i
 
         return len(neighbor_idx_to_dist), V_v
-        # return V_v  # if don't want to calculate average number of neighbors

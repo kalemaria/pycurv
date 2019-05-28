@@ -1066,13 +1066,169 @@ def test_torus_directions_curvatures(
             assert error <= allowed_error
 
 
+def run_cylinder_with_creases(
+        radius_hit, inverse, methods, area2, vertex_based, epsilon, eta,
+        radius=10, h=25, res=10, subdivisions=3, max_edge=0, max_area=0,
+        decimate=0, noise=0,
+        page_curvature_formula=False, full_dist_map=False, cores=4):
+    """
+    Tests whether surface is correctly classified for a cylinder surface with
+    circular planes and that neighborhood search does not go over the creases
+    for curvature estimation step, using normal vector voting (VV) or VV
+    combined with curvature tensor voting (SSVV).
+
+    Args:
+        radius_hit (float): radius in length unit of the graph, here voxels;
+            it should be chosen to correspond to radius of smallest features
+            of interest on the surface
+        inverse (boolean): if True, the cylinder will have normals pointing
+            outwards (negative curvature), else the other way around
+        methods (list): tells which method(s) should be used: 'VV'
+            for normal vector voting or 'SSVV' for vector and curvature tensor
+            voting to estimate the principal directions and curvatures
+        area2 (boolean, optional): if True (default), votes are weighted by
+            triangle area also in the second step (principle directions and
+            curvatures estimation; not possible if vertex_based is True)
+        vertex_based (boolean): if True, curvature is calculated per triangle
+            vertex instead of triangle center.
+        epsilon (int): parameter of Normal Vector Voting algorithm influencing
+            the number of triangles classified as "crease junction" (class 2)
+        eta (int): parameter of Normal Vector Voting algorithm influencing the
+            number of triangles classified as "crease junction" (class 2) and
+            "no preferred orientation" (class 3)
+        radius (int, optional): cylinder radius in voxels (>0, default 10)
+        h (int, optional): cylinder height in voxels (>0, default 25)
+        res (int, optional): determines how many stripes around both
+            approximate circles (and then triangles) the cylinder has, the
+            surface is generated using vtkCylinderSource (>0, default 10)
+        subdivisions (int, optional): if > 0 (default 3) vtkLinearSubdivi-
+            sionFilter is applied with this number of subdivisions
+        max_edge (float, optional): if > 0 (default 0) vtkAdaptiveSubdivi-
+            sionFilter is applied with this maximal triangle edge length
+        max_area (float, optional):  if > 0 (default 0) vtkAdaptiveSubdivi-
+            sionFilter is applied with this maximal triangle area
+        decimate (float, optional): if > 0 (default 0) vtkDecimatePro is
+            applied with this target reduction (< 1)
+        noise (int, optional): determines variance of the Gaussian noise in
+            percents of average triangle edge length (default 0), the noise
+            is added on triangle vertex coordinates in its normal direction
+        page_curvature_formula (boolean, optional): if True (default False)
+            normal curvature formula from Page at al. is used for VV (see
+            collect_curvature_votes)
+        full_dist_map (boolean, optional): if True, a full distance map is
+            calculated for the whole graph, otherwise a local distance map
+            is calculated for each vertex (default)
+        cores (int): number of cores to run VV in parallel (default 4)
+
+    Returns:
+        None
+    """
+    fold = '{}cylinder/res{}_noise{}/'.format(FOLD, res, noise)
+    if not os.path.exists(fold):
+        os.makedirs(fold)
+
+    if subdivisions > 0:
+        subdiv_str = "_linear_subdiv{}".format(subdivisions)
+    else:
+        subdiv_str = ""
+    if max_edge > 0:
+        max_edge_str = "_max_edge{}".format(max_edge)
+    else:
+        max_edge_str = ""
+    if max_area > 0:
+        max_area_str = "_max_area{}".format(max_area)
+    else:
+        max_area_str = ""
+    if decimate > 0:
+        decim_str = "_decim{}".format(decimate)
+    else:
+        decim_str = ""
+
+    surf_filebase = '{}cylinder_r{}_h{}{}{}{}{}'.format(
+        fold, radius, h, subdiv_str, max_edge_str, max_area_str, decim_str)
+    surf_file = '{}.surface.vtp'.format(surf_filebase)
+    files_fold = '{}files4plotting/'.format(fold)
+    if not os.path.exists(files_fold):
+        os.makedirs(files_fold)
+    if inverse:
+        inverse_str = "inverse_"
+    else:
+        inverse_str = ""
+    if vertex_based:
+        area2 = False
+        vertex_based_str = "_vertex_based"
+    else:
+        vertex_based_str = ""
+    base_filename = ("{}{}cylinder_r{}_h{}{}{}{}{}{}_epsilon{}_eta{}".
+        format(files_fold, inverse_str, radius, h, subdiv_str, max_edge_str,
+               max_area_str, decim_str, vertex_based_str, epsilon, eta))
+    temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
+        base_filename, radius_hit)
+    log_file = '{}.{}_rh{}.log'.format(base_filename, methods[0], radius_hit)
+    sys.stdout = open(log_file, 'w')
+
+    if inverse:
+        print("\n*** Generating a surface and a graph for an inverse "
+              "cylinder with radius {}, height {} and {}% noise ***".format(
+                radius, h, noise))
+    else:
+        print("\n*** Generating a surface and a graph for a cylinder with "
+              "radius {}, height {} and {}% noise ***".format(radius, h, noise))
+    # If the .vtp file with the test surface does not exist, create it:
+    if not os.path.isfile(surf_file):
+        cg = CylinderGenerator()
+        cylinder = cg.generate_cylinder_surface(
+            radius, h, res, subdivisions, max_edge, max_area, decimate,
+            verbose=True)
+        if noise > 0:
+            cylinder = add_gaussian_noise_to_surface(cylinder, percent=noise)
+        io.save_vtp(cylinder, surf_file)
+
+    # Reading in the surface and transforming it into a triangle graph
+    surf, sg = surface_to_graph(surf_file, inverse=inverse,
+                                vertex_based=vertex_based)
+
+    # Running the modified Normal Vector Voting algorithm:
+    method_sg_surf_dict = normals_directions_and_curvature_estimation(
+        sg, radius_hit, epsilon, eta, methods=methods,
+        page_curvature_formula=page_curvature_formula,
+        full_dist_map=full_dist_map, area2=area2, poly_surf=surf, cores=cores,
+        graph_file=temp_normals_graph_file)
+    # Remove the normals graph file, so the next test will start anew
+    remove(temp_normals_graph_file)
+
+    for method in method_sg_surf_dict.keys():
+        # Saving the output (TriangleGraph object) for later inspection in
+        # ParaView:
+        (sg, surf) = method_sg_surf_dict[method]
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
+        surf_file = '{}.{}_rh{}.vtp'.format(
+            base_filename, method, radius_hit)
+        io.save_vtp(surf, surf_file)
+
+
 # py.test -n 4   # test on multiple CPUs
 
 if __name__ == "__main__":
-    test_plane_normals(
-        half_size=10, radius_hit=4, res=10, noise=10, vertex_based=True,
-        cores=1)
-#     fold = '{}sphere/voxel/'.format(FOLD)
+    # test_plane_normals(
+    #     half_size=10, radius_hit=4, res=10, noise=10, vertex_based=True,
+    #     cores=1)
+    res = 10
+    eta = 0
+    epsilon = 5
+    run_cylinder_with_creases(
+        radius_hit=5, res=res, inverse=False, methods=["VV"], area2=False,
+        vertex_based=True, epsilon=epsilon, eta=eta, cores=4)
+    run_cylinder_with_creases(
+        radius_hit=5, res=res, inverse=False, methods=["VV"], area2=True,
+        vertex_based=False, epsilon=epsilon, eta=eta, cores=4)
+    #     fold = '{}sphere/voxel/'.format(FOLD)
 #     stats_file = '{}sphere_r10.AVV_rh9.stats'.format(fold)
 #     cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
 #                  'inverse=False, voxel=True, ico=0, methods=[\'VV\'], '

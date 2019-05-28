@@ -412,9 +412,9 @@ class SegmentationGraph(object):
         Gets a property value of a vertex for inserting into a VTK vtkDataArray
         object.
 
-        This private function is used by the methods
-        graph_to_points_and_lines_polys and graph_to_triangle_poly (the latter
-        of the derived class surface_graphs.TriangleGraph).
+        This function is used by the methods graph_to_points_and_lines_polys and
+        graph_to_triangle_poly (the latter of the derived classes PointGraph and
+        TriangleGraph (in surface_graphs).
 
         Args:
             prop_key (str): name of the desired vertex property
@@ -524,7 +524,7 @@ class SegmentationGraph(object):
         return average_edge_length
 
     def find_geodesic_neighbors(self, v, g_max, full_dist_map=None,
-                                verbose=False):
+                                only_surface=False, verbose=False):
         """
         Finds geodesic neighbor vertices of a given vertex v in the graph that
         are within a given maximal geodesic distance g_max from it.
@@ -539,6 +539,8 @@ class SegmentationGraph(object):
             full_dist_map (graph_tool.PropertyMap, optional): the full distance
                 map for the whole graph; if None, a local distance map is
                 calculated for each vertex (default)
+            only_surface (boolean, optional): if True (default False), only
+                neighbors classified as surface patch (class 1) are considered
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
 
@@ -555,13 +557,17 @@ class SegmentationGraph(object):
             dist_v = dist_v.get_array()
         # numpy array of distances from v to all vertices, in vertex index order
 
+        vertex = self.graph.vertex
+        orientation_class = self.graph.vp.orientation_class
         neighbor_id_to_dist = dict()
 
-        idxs = np.where(dist_v <= g_max)[0]
+        idxs = np.where(dist_v <= g_max)[0]  # others are INF
         for idx in idxs:
             dist = dist_v[idx]
             if dist != 0:  # ignore the source vertex itself
-                neighbor_id_to_dist[idx] = dist
+                v_i = vertex(idx)
+                if (not only_surface) or orientation_class[v_i] == 1:
+                    neighbor_id_to_dist[idx] = dist
 
         if verbose:
             print("{} neighbors".format(len(neighbor_id_to_dist)))
@@ -569,7 +575,7 @@ class SegmentationGraph(object):
 
     # @profile
     def find_geodesic_neighbors_exact(
-            self, o, g_max, verbose=False, debug=False):
+            self, o, g_max, only_surface=False, verbose=False, debug=False):
         """
         Finds geodesic neighbor vertices of the origin vertex o in the graph
         that are within a given maximal geodesic distance g_max from it.
@@ -582,6 +588,8 @@ class SegmentationGraph(object):
         Args:
             o (graph_tool.Vertex): the source vertex
             g_max: maximal geodesic distance (in the units of the graph)
+            only_surface (boolean, optional): if True (default False), only
+                neighbors classified as surface patch (class 1) are considered
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
             debug (boolean, optional): if True (default False), some more extra
@@ -594,6 +602,7 @@ class SegmentationGraph(object):
         # Shortcuts
         xyz = self.graph.vp.xyz
         vertex = self.graph.vertex
+        orientation_class = self.graph.vp.orientation_class
         distance_between_voxels = self.distance_between_voxels
         calculate_geodesic_distance = self.calculate_geodesic_distance
         insert_geo_dist_vertex_id = self._insert_geo_dist_vertex_id
@@ -639,6 +648,9 @@ class SegmentationGraph(object):
                 closest_vertices_ids.pop(0)
                 closest_vertices_ids.append(int(a))
             tag[a] = "Alive"
+            # only proceed if a is a surface patch:
+            if only_surface and orientation_class[a] != 1:
+                continue
             neighbor_id_to_dist[int(a)] = smallest_geo_dist  # add a to output
             if debug:
                 print("Vertex a={}: Alive".format(int(a)))

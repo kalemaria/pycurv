@@ -772,8 +772,8 @@ def from_ply_workflow(
 
 
 def from_vtk_workflow(
-        vtk_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False,
-        methods=["VV"], area2=True, cores=4, vertex_based=False):
+        vtk_file, radius_hit, vertex_based, epsilon, eta, scale=(1, 1, 1),
+        page_curvature_formula=False, methods=["VV"], area2=True, cores=4):
     """
     Estimates curvature for each triangle in a triangle mesh in VTK format.
 
@@ -782,6 +782,13 @@ def from_vtk_workflow(
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
+        vertex_based (boolean): if True, curvature is calculated per triangle
+            vertex instead of triangle center
+        epsilon (int): parameter of Normal Vector Voting algorithm influencing
+            the number of triangles classified as "crease junction" (class 2)
+        eta (int): parameter of Normal Vector Voting algorithm influencing the
+            number of triangles classified as "crease junction" (class 2) and
+            "no preferred orientation" (class 3)
         scale (tuple, optional): pixel size (X, Y, Z) in given units for
             scaling the surface if it is not scaled (default (1, 1, 1))
         page_curvature_formula (boolean, optional): if True (default False),
@@ -793,15 +800,13 @@ def from_vtk_workflow(
             triangle area also in the second step (principle directions and
             curvatures estimation; not possible if vertex_based is True)
         cores (int, optional): number of cores to run VV in parallel (default 4)
-        vertex_based (boolean, optional): if True (default False), curvature is
-            calculated per triangle vertex instead of triangle center.
 
         Returns:
             None
         """
-    base_filename = os.path.splitext(vtk_file)[0].strip("_mean_curvature")
-    log_file = '{}.{}_rh{}.log'.format(
-        base_filename, methods[0], radius_hit)
+    base_filename = os.path.splitext(vtk_file)[0][:-15]
+    log_file = '{}.{}_rh{}_epsilon{}_eta{}.log'.format(
+        base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
 
     print('\nReading in the surface file to get a vtkPolyData surface...')
@@ -846,13 +851,13 @@ def from_vtk_workflow(
         sg = pg
 
     # Running the modified Normal Vector Voting algorithm:
-    normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
-        base_filename, radius_hit)
+    normals_graph_file = '{}.VV_rh{}_epsilon{}_eta{}_normals.gt'.format(
+        base_filename, radius_hit, epsilon, eta)
     method_tg_surf_dict = {}
     if not isfile(normals_graph_file) or vertex_based:  # read in PointGraph
         # lacks a dictionary required for VTP creation
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
-            sg, radius_hit, methods=methods,
+            sg, radius_hit, epsilon, eta, methods=methods,
             page_curvature_formula=page_curvature_formula,
             area2=area2, poly_surf=surf, cores=cores,
             graph_file=normals_graph_file)
@@ -875,11 +880,14 @@ def from_vtk_workflow(
                 method = 'AVV'
             else:
                 method = 'RVV'
-        surf_file = '{}.{}_rh{}.vtp'.format(base_filename, method, radius_hit)
+        surf_file = '{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
+            base_filename, method, radius_hit, epsilon, eta)
         io.save_vtp(surf, surf_file)
-        gt_file = '{}.{}_rh{}.gt'.format(base_filename, method, radius_hit)
+        gt_file = '{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
+            base_filename, method, radius_hit, epsilon, eta)
         sg.graph.save(gt_file)
-        csv_file = '{}.{}_rh{}.csv'.format(base_filename, method, radius_hit)
+        csv_file = '{}.{}_rh{}_epsilon{}_eta{}.csv'.format(
+            base_filename, method, radius_hit, epsilon, eta)
         _extract_curvatures_from_graph(sg, csv_file)
 
 
@@ -1243,6 +1251,6 @@ if __name__ == "__main__":
     #     radius_hit=5)
 
     vtk_file = sys.argv[1]
-    radius_hit = float(sys.argv[2])  # 2 mm, Mindboggle's default "radius disk"
-    from_vtk_workflow(vtk_file, radius_hit, scale=(1, 1, 1),  # scaled to mm
-                      vertex_based=True, methods=["SSVV"])
+    radius_hit = float(sys.argv[2])  # 2 mm, Mindboggle's default? "radius disk"
+    from_vtk_workflow(vtk_file, radius_hit, epsilon=2, eta=2, scale=(1, 1, 1),
+                      vertex_based=True, methods=["VV"], cores=4)
