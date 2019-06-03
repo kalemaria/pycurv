@@ -54,9 +54,9 @@ class SurfaceGraph(graphs.SegmentationGraph):
     # Page et al., 2002. *
     def estimate_normal(self, vertex_v_ind, V_v, epsilon=0, eta=0):
         """
-        For a vertex v, its calculated matrix V_v (output of collecting_votes)
-        and the parameters epsilon and eta (default 2 each), classifies its
-        orientation.
+        For a vertex v, its calculated matrix V_v (output of
+        collect_normal_votes) and the parameters epsilon and eta (default 2
+        each), classifies its orientation.
 
         The output classes are 1 if it belongs to a surface patch, 2 if it
         belongs to a crease junction or 3 if it doesn't have a preferred
@@ -70,10 +70,10 @@ class SurfaceGraph(graphs.SegmentationGraph):
             vertex_v_ind (int): index of the vertex v in the surface
                 triangle-graph whose orientation is classified
             V_v (numpy.ndarray): the 3x3 symmetric matrix V_v
-            epsilon (int, optional): parameter of Normal Vector Voting algorithm
-                influencing the number of triangles classified as "crease
-                junction" (class 2), default 0
-            eta (int, optional): parameter of Normal Vector Voting algorithm
+            epsilon (float, optional): parameter of Normal Vector Voting
+                algorithm influencing the number of triangles classified as
+                "crease junction" (class 2), default 0
+            eta (float, optional): parameter of Normal Vector Voting algorithm
                 influencing the number of triangles classified as "crease
                 junction" (class 2) and "no preferred orientation" (class 3, see
                 Notes), default 0
@@ -188,6 +188,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         vp_N_v = self.graph.vp.N_v
+        # vp_normal = self.graph.vp.normal  # for my test below
         exp = math.exp
         xyz = self.graph.vp.xyz
         array = np.array
@@ -267,9 +268,10 @@ class SurfaceGraph(graphs.SegmentationGraph):
             # and v_i
             n_i = N_v_i - dot(P_i, N_v_i) * P_i
             n_i_len = sqrt(dot(n_i, n_i))
-            # theta is the turning angle between n_i and N_v
-            cos_theta = dot(N_v, n_i) / n_i_len
+            # 0 <= theta <= pi is the turning angle between n_i and N_v
+            cos_theta = float(dot(N_v, n_i) / n_i_len)
             theta = acos(cos_theta)
+            # kappa_i_sign = 0  # initialize for my test below
             if page_curvature_formula:  # formula from Page et al. paper:
                 s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
                 kappa_i = theta / s
@@ -280,6 +282,42 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 # normals convention (point towards inside of a convex surface):
                 kappa_i_sign = -1 * signum(dot(T_i, n_i))
                 kappa_i *= kappa_i_sign
+            # # my test:
+            # if 5*pi/6 < theta < pi and kappa_i_sign == -1:
+            #     # if 150 < theta < 180 degrees and normal curvature is negative
+            #     # calculate everything using the original normals of v and v_i:
+            #     N_v_orig = array(vp_normal[vertex_v])
+            #     N_v_i_orig = array(vp_normal[vertex_v_i])
+            #     # tangent direction:
+            #     t_i_orig = vv_i - dot(N_v_orig, vv_i) * N_v_orig
+            #     t_i_orig_len = sqrt(dot(t_i_orig, t_i_orig))
+            #     T_i_orig = t_i_orig / t_i_orig_len
+            #     # vector perpendicular to the plane...
+            #     P_i_orig = cross(N_v_orig, T_i_orig)
+            #     # projection of N_v_i_orig on the plane...
+            #     n_i_orig = N_v_i_orig - dot(P_i_orig, N_v_i_orig) * P_i_orig
+            #     n_i_orig_len = sqrt(dot(n_i_orig, n_i_orig))
+            #     # turning angle:
+            #     cos_theta_orig = float(dot(N_v_orig, n_i_orig) / n_i_orig_len)
+            #     theta_orig = acos(cos_theta_orig)
+            #     # normal curvature:
+            #     kappa_i_orig = abs(2 * cos((pi - theta_orig) / 2)
+            #                        / sqrt(dot(vv_i, vv_i)))
+            #     kappa_i_orig_sign = -1 * signum(dot(T_i_orig, n_i_orig))
+            #     kappa_i_orig *= kappa_i_orig_sign
+            #     if (5*pi/6 < theta_orig < pi and
+            #             kappa_i_orig_sign != kappa_i_sign):
+            #         # if 150 < theta_orig < 180 but the kappa_i sign is opposite
+            #         print("(collect_curvature_votes) v index={} : theta={}, "
+            #               "theta_orig={}, kappa_i={}, kappa_i_orig={}".format(
+            #                 vertex_v_ind, theta, theta_orig,
+            #                 kappa_i, kappa_i_orig))
+            #         # # replace the vote components by the "original" values:
+            #         # kappa_i = kappa_i_orig
+            #         # T_i = T_i_orig
+            #         # -> leads to eigenvector decomposition error
+            #         # just invert the sign:
+            #         kappa_i *= -1
 
             # Finally, sum up the components of B_v:
             B_v += w_i * kappa_i * outer(T_i, T_i)
@@ -298,8 +336,8 @@ class SurfaceGraph(graphs.SegmentationGraph):
     def estimate_curvature(self, vertex_v_ind, B_v):
         """
         For a vertex v and its calculated matrix B_v (output of
-        collecting_votes2), calculates the principal directions (T_1 and T_2)
-        and curvatures (kappa_1 and kappa_2) at this vertex.
+        collect_curvature_votes), calculates the principal directions (T_1 and
+        T_2) and curvatures (kappa_1 and kappa_2) at this vertex.
 
         This is done using eigen-decomposition of B_v: the eigenvectors
         corresponding to the two largest eigenvalues are the principal
@@ -311,7 +349,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 triangle-graph for which the principal directions and curvatures
                 are estimated
             B_v (numpy.ndarray): the 3x3 symmetric matrix B_v (output of
-                collecting_votes2)
+                collect_curvature_votes)
 
         Returns:
             T_1, T_2, kappa_1, kappa_2, gauss_curvature, mean_curvature,
@@ -865,7 +903,7 @@ class PointGraph(SurfaceGraph):
     # * The following PointGraph method is implementing with adaptations
     # the first part of the first step of normal vector voting algorithm of
     # Page et al., 2002. *
-    def collect_normal_votes(self, vertex_v_ind, g_max, A_max, sigma):  # , tg
+    def collect_normal_votes(self, vertex_v_ind, g_max, A_max, sigma):
         """
         For a vertex v, collects the normal votes of all triangles within its
         geodesic neighborhood and calculates the weighted covariance matrix sum
@@ -909,10 +947,12 @@ class PointGraph(SurfaceGraph):
         exp = math.exp
         point_in_triangles = self.graph.gp.point_in_triangles
         calculate_geodesic_distance = self.calculate_geodesic_distance
+        # acos = nice_acos
 
         # Get the coordinates of vertex v (as numpy array):
         vertex_v = vertex(vertex_v_ind)
         v = array(xyz[vertex_v])
+        # N_v = array(normal[vertex_v])  # original normal at v
 
         # Find the neighboring vertices of vertex v to be returned:
         if vertex_v_ind == 0:
@@ -950,20 +990,34 @@ class PointGraph(SurfaceGraph):
                 del neighboring_triangles_of_v[triangle_idx]
 
         # Let each of the neighboring triangles c_i to cast a vote on vertex v:
+        # except for those with almost opposite normals
         for idx_c_i, ids_v_i in neighboring_triangles_of_v.items():
-            # Calculate the normal vote N_i of c_i on v:
+            # Calculate the normal of triangle c_i, N_c_i:
             points_xyz = [array(xyz[vertex(idx_v_i)]) for idx_v_i in ids_v_i]
             ref_normal = array(normal[vertex(ids_v_i[0])])
-            N = triangle_normal(ref_normal, *points_xyz)
+            N_c_i = triangle_normal(ref_normal, *points_xyz)
+
+            # Calculate the angle alpha_i between N_v and N_c_i and skip c_i if
+            # alpha_i is above 150 degrees (my test):
+            # cos_alpha_i = float(dot(N_v, N_c_i))
+            # alpha_i = acos(cos_alpha_i)
+            # if alpha_i > 5*pi/6:
+            #     print("(collect_normal_votes) v index={} : triangle c_i {} "
+            #           "skipped because alpha_i={} radians >150 degrees".format(
+            #                 vertex_v_ind, idx_c_i, alpha_i))
+            #     continue
+
+            # Calculate center of the triangle c_i and normalized vc_i vector:
             c_i = triangle_center(*points_xyz)
             vc_i = c_i - v
             vc_i_len = sqrt(dot(vc_i, vc_i))
             vc_i_norm = vc_i / vc_i_len
 
-            # theta_i is the angle between the vectors N and vc_i
-            cos_theta_i = - (dot(N, vc_i)) / vc_i_len
+            # theta_i is the angle between the vectors N_c_i and vc_i
+            cos_theta_i = - (dot(N_c_i, vc_i)) / vc_i_len
 
-            N_i = N + 2 * cos_theta_i * vc_i_norm
+            # Calculate the normal vote N_i of c_i on v:
+            N_i = N_c_i + 2 * cos_theta_i * vc_i_norm
 
             # Covariance matrix containing one vote of c_i on v:
             V_i = outer(N_i, N_i)

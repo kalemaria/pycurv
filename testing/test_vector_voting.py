@@ -1091,9 +1091,9 @@ def run_cylinder_with_creases(
             curvatures estimation; not possible if vertex_based is True)
         vertex_based (boolean): if True, curvature is calculated per triangle
             vertex instead of triangle center.
-        epsilon (int): parameter of Normal Vector Voting algorithm influencing
+        epsilon (float): parameter of Normal Vector Voting algorithm influencing
             the number of triangles classified as "crease junction" (class 2)
-        eta (int): parameter of Normal Vector Voting algorithm influencing the
+        eta (float): parameter of Normal Vector Voting algorithm influencing the
             number of triangles classified as "crease junction" (class 2) and
             "no preferred orientation" (class 3)
         radius (int, optional): cylinder radius in voxels (>0, default 10)

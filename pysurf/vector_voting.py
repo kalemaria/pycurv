@@ -42,10 +42,10 @@ def normals_directions_and_curvature_estimation(
         radius_hit (float): radius in length unit of the graph;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
-        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+        epsilon (float, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2), default 0
-        eta (int, optional): parameter of Normal Vector Voting algorithm
+        eta (float, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2) and "no preferred orientation" (class 3, see Notes),
             default 0
@@ -138,10 +138,10 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         radius_hit (float): radius in length unit of the graph;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
-        epsilon (int, optional): parameter of Normal Vector Voting algorithm
+        epsilon (float, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2), default 0
-        eta (int, optional): parameter of Normal Vector Voting algorithm
+        eta (float, optional): parameter of Normal Vector Voting algorithm
             influencing the number of triangles classified as "crease junction"
             (class 2) and "no preferred orientation" (class 3, see Notes),
             default 0

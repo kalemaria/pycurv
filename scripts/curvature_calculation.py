@@ -773,20 +773,21 @@ def from_ply_workflow(
 
 def from_vtk_workflow(
         vtk_file, radius_hit, vertex_based, epsilon, eta, scale=(1, 1, 1),
-        page_curvature_formula=False, methods=["VV"], area2=True, cores=4):
+        page_curvature_formula=False, methods=["VV"], area2=True, cores=4,
+        reverse_normals=False):
     """
     Estimates curvature for each triangle in a triangle mesh in VTK format.
 
     Args:
-        vtk_file (str): VTK file with the surface
+        vtk_file (str): path to the VTK file with the surface
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
         vertex_based (boolean): if True, curvature is calculated per triangle
             vertex instead of triangle center
-        epsilon (int): parameter of Normal Vector Voting algorithm influencing
+        epsilon (float): parameter of Normal Vector Voting algorithm influencing
             the number of triangles classified as "crease junction" (class 2)
-        eta (int): parameter of Normal Vector Voting algorithm influencing the
+        eta (float): parameter of Normal Vector Voting algorithm influencing the
             number of triangles classified as "crease junction" (class 2) and
             "no preferred orientation" (class 3)
         scale (tuple, optional): pixel size (X, Y, Z) in given units for
@@ -800,11 +801,18 @@ def from_vtk_workflow(
             triangle area also in the second step (principle directions and
             curvatures estimation; not possible if vertex_based is True)
         cores (int, optional): number of cores to run VV in parallel (default 4)
+        reverse_normals (boolean, optional): if True (default False), original
+            surface normals will be reversed
 
         Returns:
             None
         """
-    base_filename = os.path.splitext(vtk_file)[0][:-15]
+    if reverse_normals:
+        reverse_normals_str = "_reversed_normals"
+    else:
+        reverse_normals_str = ""
+    vtk_filename = os.path.basename(vtk_file)
+    base_filename = os.path.splitext(vtk_filename)[0][:-15]+reverse_normals_str
     log_file = '{}.{}_rh{}_epsilon{}_eta{}.log'.format(
         base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
@@ -812,56 +820,58 @@ def from_vtk_workflow(
     print('\nReading in the surface file to get a vtkPolyData surface...')
     surf = io.load_poly_from_vtk(vtk_file)
 
-    if not vertex_based:
-        triangle_graph_file = base_filename + ".gt"
-        if not isfile(triangle_graph_file):
-            # uses TriangleGraph's point_in_cells and triangle_cell_ids
-            print('\nBuilding a triangle graph from the surface...')
-            tg = TriangleGraph()
-            tg.build_graph_from_vtk_surface(surf, scale)
-            if tg.graph.num_vertices() == 0:
-                raise pexceptions.PySegInputError(
-                    expr="new_workflow", msg="The graph is empty!")
-            print('The graph has {} vertices and {} edges'.format(
-                tg.graph.num_vertices(), tg.graph.num_edges()))
-            tg.graph.save(triangle_graph_file)
-        else:
-            print('\nReading in the triangle graph from file...')
-            tg = TriangleGraph()
-            tg.graph = load_graph(triangle_graph_file)
-        sg = tg
-
-    else:  # vertex_based
-        area2 = False
-        point_graph_file = base_filename + "_point.gt"
-        if not isfile(point_graph_file):
-            print('\nBuilding a point graph from the surface...')
-            pg = PointGraph()
-            pg.build_graph_from_vtk_surface(surf, scale)
-            if pg.graph.num_vertices() == 0:
-                raise pexceptions.PySegInputError(
-                    expr="new_workflow", msg="The graph is empty!")
-            print('The graph has {} vertices and {} edges'.format(
-                pg.graph.num_vertices(), pg.graph.num_edges()))
-            pg.graph.save(point_graph_file)
-        else:
-            print('\nReading in the point graph from file...')
-            pg = PointGraph()
-            pg.graph = load_graph(point_graph_file)
-        sg = pg
-
     # Running the modified Normal Vector Voting algorithm:
     normals_graph_file = '{}.VV_rh{}_epsilon{}_eta{}_normals.gt'.format(
         base_filename, radius_hit, epsilon, eta)
     method_tg_surf_dict = {}
-    if not isfile(normals_graph_file) or vertex_based:  # read in PointGraph
-        # lacks a dictionary required for VTP creation
+    if not isfile(normals_graph_file):
+        # Make or read in the graph first:
+        if not vertex_based:
+            triangle_graph_file = base_filename + ".gt"
+            if not isfile(triangle_graph_file):
+                # uses TriangleGraph's point_in_cells and triangle_cell_ids
+                print('\nBuilding a triangle graph from the surface...')
+                tg = TriangleGraph()
+                tg.build_graph_from_vtk_surface(
+                    surf, scale, reverse_normals=reverse_normals)
+                if tg.graph.num_vertices() == 0:
+                    raise pexceptions.PySegInputError(
+                        expr="new_workflow", msg="The graph is empty!")
+                print('The graph has {} vertices and {} edges'.format(
+                    tg.graph.num_vertices(), tg.graph.num_edges()))
+                tg.graph.save(triangle_graph_file)
+            else:
+                print('\nReading in the triangle graph from file...')
+                tg = TriangleGraph()
+                tg.graph = load_graph(triangle_graph_file)
+            sg = tg
+        else:  # vertex_based
+            area2 = False
+            point_graph_file = base_filename + "_point.gt"
+            if not isfile(point_graph_file):
+                print('\nBuilding a point graph from the surface...')
+                pg = PointGraph()
+                pg.build_graph_from_vtk_surface(
+                    surf, scale, reverse_normals=reverse_normals)
+                if pg.graph.num_vertices() == 0:
+                    raise pexceptions.PySegInputError(
+                        expr="new_workflow", msg="The graph is empty!")
+                print('The graph has {} vertices and {} edges'.format(
+                    pg.graph.num_vertices(), pg.graph.num_edges()))
+                pg.graph.save(point_graph_file)
+            else:
+                print('\nReading in the point graph from file...')
+                pg = PointGraph()
+                pg.graph = load_graph(point_graph_file)
+            sg = pg
+        # Estimate normals, directions and curvatures:
         method_tg_surf_dict = normals_directions_and_curvature_estimation(
             sg, radius_hit, epsilon, eta, methods=methods,
             page_curvature_formula=page_curvature_formula,
             area2=area2, poly_surf=surf, cores=cores,
             graph_file=normals_graph_file)
     else:
+        # Estimate directions and curvatures using the graph file with normals:
         for method in methods:
             sg_curv, surface_curv = curvature_estimation(
                 radius_hit, graph_file=normals_graph_file, method=method,
@@ -872,7 +882,7 @@ def from_vtk_workflow(
     for method in method_tg_surf_dict.keys():
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
-        (sg, surf) = method_tg_surf_dict[method]
+        (sg_curv, surface_curv) = method_tg_surf_dict[method]
         if method == 'VV':
             if page_curvature_formula:
                 method = 'NVV'
@@ -882,13 +892,13 @@ def from_vtk_workflow(
                 method = 'RVV'
         surf_file = '{}.{}_rh{}_epsilon{}_eta{}.vtp'.format(
             base_filename, method, radius_hit, epsilon, eta)
-        io.save_vtp(surf, surf_file)
+        io.save_vtp(surface_curv, surf_file)
         gt_file = '{}.{}_rh{}_epsilon{}_eta{}.gt'.format(
             base_filename, method, radius_hit, epsilon, eta)
-        sg.graph.save(gt_file)
+        sg_curv.graph.save(gt_file)
         csv_file = '{}.{}_rh{}_epsilon{}_eta{}.csv'.format(
             base_filename, method, radius_hit, epsilon, eta)
-        _extract_curvatures_from_graph(sg, csv_file)
+        _extract_curvatures_from_graph(sg_curv, csv_file)
 
 
 def from_nii_workflow(
@@ -1252,5 +1262,14 @@ if __name__ == "__main__":
 
     vtk_file = sys.argv[1]
     radius_hit = float(sys.argv[2])  # 2 mm, Mindboggle's default? "radius disk"
-    from_vtk_workflow(vtk_file, radius_hit, epsilon=2, eta=2, scale=(1, 1, 1),
-                      vertex_based=True, methods=["VV"], cores=4)
+    if len(sys.argv) > 3:
+        epsilon = float(sys.argv[3])
+    else:
+        epsilon = 0
+    if len(sys.argv) > 4:
+        eta = float(sys.argv[4])
+    else:
+        eta = 0
+    from_vtk_workflow(
+        vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
+        scale=(1, 1, 1), methods=["VV"], cores=4, reverse_normals=False)
