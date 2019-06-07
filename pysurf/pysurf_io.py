@@ -231,6 +231,25 @@ def save_vtp(poly, fname):
             expr='save_vtp', msg='Error writing the file {}.'.format(fname))
 
 
+def save_vtk(poly, fname):
+    """
+    Saves a VTK PolyData object into a VTK file.
+
+    Args:
+        poly (vtk.vtkPolyData): input VTK PolyData object
+        fname (str): output file name
+
+    Returns:
+        None
+    """
+    writer = vtk.vtkPolyDataWriter()
+    writer.SetFileName(fname)
+    writer.SetInputData(poly)
+    if writer.Write() != 1:
+        raise pexceptions.PySegInputError(
+            expr='save_vtp', msg='Error writing the file {}.'.format(fname))
+
+
 def load_poly(fname):
     """
     Loads data from a VTK PolyData (VTP) file.
@@ -401,6 +420,21 @@ def ply_file_to_vtp_file(infilename, outfilename):
     pr.Update()
     poly = pr.GetOutput()
     save_vtp(poly, outfilename)
+
+
+def vtp_file_to_vtk_file(infilename, outfilename):
+    """
+    Converts an '.vtp' file to a '.vtk' file.
+
+    Args:
+        infilename (str): an input '.vtp' file name (with path)
+        outfilename (str): an output '.vtk' file name (with path)
+
+    Returns:
+        None
+    """
+    poly = load_poly(infilename)
+    save_vtk(poly, outfilename)
 
 
 def poly_array_to_volume(poly, array_name, scale, size, logfilename=None,
