@@ -33,6 +33,28 @@ values at the boundary with 0's become this value
 """
 
 
+def reverse_sense_and_normals(vtk_algorithm_output):
+    """
+    Sometimes the contouring algorithm can create a volume whose gradient
+    vector and ordering of polygon (using the right hand rule) are
+    inconsistent. vtkReverseSense cures this problem.
+
+    Args:
+        vtk_algorithm_output (vtkAlgorithmOutput): output of a VTK algorithm,
+            to get with: algorithm_instance.GetOutputPort()
+
+    Returns:
+        surface with reversed normals (vtk.vtkPolyData)
+    """
+
+    reverse = vtk.vtkReverseSense()
+    reverse.SetInputConnection(vtk_algorithm_output)
+    reverse.ReverseCellsOn()
+    reverse.ReverseNormalsOn()
+    reverse.Update()
+    return reverse.GetOutput()
+
+
 def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
                 field=False, mode_2d=False, verbose=False):
     """
@@ -105,15 +127,7 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
     contf.SetInputConnection(surf.GetOutputPort())
     contf.SetValue(0, 0)
 
-    # Sometimes the contouring algorithm can create a volume whose gradient
-    # vector and ordering of polygon (using the right hand rule) are
-    # inconsistent. vtkReverseSense cures this problem.
-    reverse = vtk.vtkReverseSense()
-    reverse.SetInputConnection(contf.GetOutputPort())
-    reverse.ReverseCellsOn()
-    reverse.ReverseNormalsOn()
-    reverse.Update()
-    rsurf = reverse.GetOutput()
+    rsurf = reverse_sense_and_normals(contf.GetOutputPort())
 
     if verbose:
         print('Isosurfaces generated...')
@@ -315,15 +329,7 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
     surfaces.SetValue(0, thr)
     surfaces.Update()
 
-    # Sometimes the contouring algorithm can create a volume whose gradient
-    # vector and ordering of polygon (using the right hand rule) are
-    # inconsistent. vtkReverseSense cures this problem.
-    reverse = vtk.vtkReverseSense()
-    reverse.SetInputConnection(surfaces.GetOutputPort())
-    reverse.ReverseCellsOn()
-    reverse.ReverseNormalsOn()
-    reverse.Update()
-    surf = reverse.GetOutput()
+    surf = reverse_sense_and_normals(surfaces.GetOutputPort())
 
     # Apply the mask
     if mask is not None:

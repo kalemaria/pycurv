@@ -4,7 +4,8 @@ import numpy as np
 # import os
 
 from pysurf import pysurf_io as io
-from pysurf import pexceptions, surface_graphs, run_gen_surface
+from pysurf import (pexceptions, surface_graphs, run_gen_surface,
+                    reverse_sense_and_normals)
 from synthetic_volumes import SphereMask, CylinderMask, ConeMask
 
 """
@@ -178,7 +179,8 @@ def isosurface_from_mask(mask_np, threshold=1.0):
     surfaces.ComputeGradientsOn()
     surfaces.SetValue(0, threshold)
     surfaces.Update()
-    return surfaces.GetOutput()
+    # Reverse normals
+    return reverse_sense_and_normals(surfaces.GetOutputPort())
 
 
 def is_coordinate_on_sphere_surface(x, y, z, r, error=0.0):
@@ -322,8 +324,11 @@ class SphereGenerator(object):
         cleaner.SetTolerance(0.0005)
         cleaner.Update()
 
+        # Reverse normals
+        sphere_surface = reverse_sense_and_normals(cleaner.GetOutputPort())
+
         # Might contain non-triangle cells after cleaning - remove them
-        sphere_surface = remove_non_triangle_cells(cleaner.GetOutput(),
+        sphere_surface = remove_non_triangle_cells(sphere_surface,
                                                    verbose=verbose)
         return sphere_surface
 
@@ -438,8 +443,11 @@ class CylinderGenerator(object):
         cleaner.SetTolerance(0.005)
         cleaner.Update()
 
+        # Reverse normals
+        cylinder_surface = reverse_sense_and_normals(cleaner.GetOutputPort())
+
         # Might contain non-triangle cells after cleaning - remove them
-        cylinder_surface = remove_non_triangle_cells(cleaner.GetOutput())
+        cylinder_surface = remove_non_triangle_cells(cylinder_surface)
 
         if verbose:
             print("{} points".format(cylinder_surface.GetNumberOfPoints()))
@@ -553,9 +561,13 @@ class SaddleGenerator(object):
         cleaner.SetTolerance(0.005)
         cleaner.Update()
 
+        # Reverse normals
+        torus_surface = reverse_sense_and_normals(cleaner.GetOutputPort())
+
         # Might contain non-triangle cells after cleaning - remove them
-        surface = remove_non_triangle_cells(cleaner.GetOutput())
-        return surface
+        torus_surface = remove_non_triangle_cells(torus_surface)
+
+        return torus_surface
 
 
 class ConeGenerator(object):
