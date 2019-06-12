@@ -284,38 +284,6 @@ def load_poly_from_vtk(fname):
     return reader.GetOutput()
 
 
-def write_values_to_file(values, filename):
-    """
-    Writes a list or numpy array of values into a file as a column.
-
-    Args:
-        values (list or numpy.ndarray): a list or 1D array of values
-        filename (str): an output file name (with path)
-
-    Returns:
-        None
-    """
-    with open(filename, 'w') as f:
-        for i in xrange(len(values)):
-            f.write(str(values[i]) + '\n')
-
-
-def read_values_from_file(filename):
-    """
-    Reads numerical values from a file, written as a column, and returns them
-    as a list of floats.
-
-    Args:
-        filename (str): an input file name (with path)
-
-    Returns:
-        list of floats
-    """
-    with open(filename, 'r') as f:
-        values = f.read().splitlines()  # list of strings
-        return [float(value) for value in values]  # list of floats
-
-
 def merge_vtp_files(vtp_file_list, outfilename):
     """
     Merges a list of '.vtp' files to one file.
