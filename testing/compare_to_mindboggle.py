@@ -105,8 +105,11 @@ def calculate_curvature_errors_torus(
     # Writing all the curvature errors into a second CSV file:
     df = pd.DataFrame()
     df['kappa1RelErrors'] = rel_kappa_1_errors
+    df['true_kappa2'] = true_kappa_2
     df['kappa2RelErrors'] = rel_kappa_2_errors
+    df['true_mean_curv'] = true_mean_curv
     df['mean_curvatureRelErrors'] = rel_mean_curv_errors
+    df['true_gauss_curv'] = true_gauss_curv
     df['gauss_curvatureRelErrors'] = rel_gauss_curv_errors
     df.to_csv(errors_csv_file, sep=';')
 

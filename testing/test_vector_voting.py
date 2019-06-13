@@ -584,7 +584,7 @@ def test_cylinder_directions_curvatures(
         # voxel, radius=20, radius_hit=18, SSVV & AVV:
         # (20, 18, False, True, 0, ['SSVV', 'VV'], True, '', False),
         # voxel, radius=30:
-        pytest.param(30, 8, False, True, 0, ['SSVV'], True, None, False,
+        pytest.param(30, 8, False, True, 0, ['SSVV'], False, '', False,
                      marks=pytest.mark.xfail(reason="too high errors")),
         (30, 10, False, True, 0, ['VV'], True, '', False),
         # voxel, radius=30, radius_hit=18, SSVV & AVV:
