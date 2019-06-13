@@ -115,22 +115,22 @@ def calculate_curvature_errors_torus(
 
 
 if __name__ == '__main__':
-    n = 9
+    n = 2
     fold = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
         "comparison_to_mindboggle/test_surfaces_mindboggle_output_n{}".format(
             n))
 
-    # sphere_radius = 10
-    # sphere_curvatures_csv_file = join(
-    #     fold, "noisy_sphere_r{}.surface.mindboggle_n{}_curvatures.csv".format(
-    #         sphere_radius, n))
-    # sphere_errors_csv_file = join(
-    #     fold,
-    #     "noisy_sphere_r{}.surface.mindboggle_n{}_curvature_errors.csv".format(
-    #         sphere_radius, n))
-    # calculate_curvature_errors_sphere(
-    #     sphere_radius, sphere_curvatures_csv_file, sphere_errors_csv_file)
+    sphere_radius = 10
+    sphere_curvatures_csv_file = join(
+        fold, "noisy_sphere_r{}.surface.mindboggle_n{}_curvatures.csv".format(
+            sphere_radius, n))
+    sphere_errors_csv_file = join(
+        fold,
+        "noisy_sphere_r{}.surface.mindboggle_n{}_curvature_errors.csv".format(
+            sphere_radius, n))
+    calculate_curvature_errors_sphere(
+        sphere_radius, sphere_curvatures_csv_file, sphere_errors_csv_file)
 
     torus_rr = 25
     torus_csr = 10

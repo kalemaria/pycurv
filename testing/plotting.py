@@ -2036,109 +2036,112 @@ if __name__ == "__main__":
     #     read_in_and_plot_surface_curvatures(
     #         num_bins=25, method=method, borders=0)  # , x_range=(-0.1, 0.15)
 
-    # Benchmark data
-    plot_plane_normals(vertex_based=False, x_range=(0, 0.4))
-    plot_plane_normals(vertex_based=True, x_range=(0, 0.4))
-
-    # torus
-    # plot_torus_kappa_1_and_2_diff_rh()
-    # plot_torus_kappa_1_and_2_errors_diff_rh(
-    #     x_range=(0, 0.5), methods=["RVV", "AVV"], rhs=range(5, 12),
-    #     csv=str(PurePath(FOLD,
-    #                      "torus/files4plotting/"
-    #                      "torus_rr25_csr10_RVV_AVV_RadiusHit5-11_xmax0.5.csv")))
-    # plot_torus_kappa_1_and_2_errors_diff_rh(
-    #     x_range=(0, 0.5), methods=["SSVV"], rhs=range(1, 11),
-    #     csv=str(PurePath(FOLD,
-    #                      "torus/files4plotting/"
-    #                      "torus_rr25_csr10_SSVV_RadiusHit1-10_xmax0.5.csv")))
-    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
-    plot_torus_kappa_1_and_2_T_1_and_2_errors(
-        rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True,
-        x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
+    # # Benchmark data
+    # plot_plane_normals(vertex_based=False, x_range=(0, 0.4))
+    # plot_plane_normals(vertex_based=True, x_range=(0, 0.4))
+    #
+    # # torus
+    # # plot_torus_kappa_1_and_2_diff_rh()
+    # # plot_torus_kappa_1_and_2_errors_diff_rh(
+    # #     x_range=(0, 0.5), methods=["RVV", "AVV"], rhs=range(5, 12),
+    # #     csv=str(PurePath(FOLD,
+    # #                      "torus/files4plotting/"
+    # #                      "torus_rr25_csr10_RVV_AVV_RadiusHit5-11_xmax0.5.csv")))
+    # # plot_torus_kappa_1_and_2_errors_diff_rh(
+    # #     x_range=(0, 0.5), methods=["SSVV"], rhs=range(1, 11),
+    # #     csv=str(PurePath(FOLD,
+    # #                      "torus/files4plotting/"
+    # #                      "torus_rr25_csr10_SSVV_RadiusHit1-10_xmax0.5.csv")))
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
     # plot_torus_kappa_1_and_2_T_1_and_2_errors(
-    #     rhVV=9, rhSSVV=5, subdivisions=100, RorAVV="RVV", vertex_based=True)
-
-    # smooth sphere
-    # plot_sphere_kappa_1_and_2_diff_rh(
-    #     r=10, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10))
-    # plot_sphere_kappa_1_and_2_errors_diff_rh(
-    #     x_range=(0, 0.25), methods=["RVV", "AVV", "SSVV"],
-    #     rhs=range(5, 12), csv=str(PurePath(
-    #         FOLD, "sphere/noise0/files4plotting/"
-    #         "sphere_r10_RVV_AVV_SSVV_RadiusHit5-11_xmax0.25.csv")))
-    # plot_sphere_kappa_1_and_2_errors_diff_rh(
-    #     x_range=(0, 0.25), methods=["RVV", "AVV"],
-    #     rhs=range(12, 21), csv=str(PurePath(
-    #         FOLD, "sphere/noise0/files4plotting/"
-    #               "sphere_r10_RVV_AVV_RadiusHit12-20_xmax0.25.csv")))
-    for r in [10, 20]:  # remove label for r=10, because overlapping
-        plot_sphere_kappa_1_and_2_errors_allVV(
-            r=r, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18))
-    plot_sphere_kappa_1_and_2_errors(
-        r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
-        RorAVV="RVV", vertex_based=True)
-    # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
-
-    # voxel sphere
-    # plot_sphere_kappa_1_and_2_diff_rh(
-    #     r=10, voxel=True, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10),
-    #     x_range=(0.03, 0.12), y_range=(0, 0.7), legend_loc='upper left')
-    # plot_sphere_kappa_1_and_2_errors_diff_rh(
-    #     voxel=True, x_range=(0, 0.5), methods=["RVV", "AVV", "SSVV"],
-    #     rhs=range(5, 12), csv=str(PurePath(
-    #         FOLD,
-    #         "sphere/voxel/files4plotting/sphere_r10_SSVV_AVV_RadiusHit5-11_xmax0.5.csv")))
-    # plot_sphere_kappa_1_and_2_errors_diff_rh(
-    #     voxel=True, x_range=(0, 0.5), methods=["RVV"],
-    #     rhs=range(9, 18), csv=str(PurePath(
-    #         FOLD,
-    #         "sphere/voxel/files4plotting/sphere_r10_RVV_RadiusHit9-17_xmax0.5.csv")))
-    for r in [10, 30]:
-        plot_sphere_kappa_1_and_2_errors_noVTK(
-            r=r, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7))
+    #     rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True,
+    #     x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
+    # # plot_torus_kappa_1_and_2_T_1_and_2_errors(
+    # #     rhVV=9, rhSSVV=5, subdivisions=100, RorAVV="RVV", vertex_based=True)
+    #
+    # # smooth sphere
+    # # plot_sphere_kappa_1_and_2_diff_rh(
+    # #     r=10, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10))
+    # # plot_sphere_kappa_1_and_2_errors_diff_rh(
+    # #     x_range=(0, 0.25), methods=["RVV", "AVV", "SSVV"],
+    # #     rhs=range(5, 12), csv=str(PurePath(
+    # #         FOLD, "sphere/noise0/files4plotting/"
+    # #         "sphere_r10_RVV_AVV_SSVV_RadiusHit5-11_xmax0.25.csv")))
+    # # plot_sphere_kappa_1_and_2_errors_diff_rh(
+    # #     x_range=(0, 0.25), methods=["RVV", "AVV"],
+    # #     rhs=range(12, 21), csv=str(PurePath(
+    # #         FOLD, "sphere/noise0/files4plotting/"
+    # #               "sphere_r10_RVV_AVV_RadiusHit12-20_xmax0.25.csv")))
+    # for r in [10, 20]:  # remove label for r=10, because overlapping
+    #     plot_sphere_kappa_1_and_2_errors_allVV(
+    #         r=r, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18))
+    # plot_sphere_kappa_1_and_2_errors(
+    #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
+    #     RorAVV="RVV", vertex_based=True)
+    # # plot_inverse_sphere_kappa_1_and_2_errors()  # not used
+    #
+    # # voxel sphere
+    # # plot_sphere_kappa_1_and_2_diff_rh(
+    # #     r=10, voxel=True, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10),
+    # #     x_range=(0.03, 0.12), y_range=(0, 0.7), legend_loc='upper left')
+    # # plot_sphere_kappa_1_and_2_errors_diff_rh(
+    # #     voxel=True, x_range=(0, 0.5), methods=["RVV", "AVV", "SSVV"],
+    # #     rhs=range(5, 12), csv=str(PurePath(
+    # #         FOLD,
+    # #         "sphere/voxel/files4plotting/sphere_r10_SSVV_AVV_RadiusHit5-11_xmax0.5.csv")))
+    # # plot_sphere_kappa_1_and_2_errors_diff_rh(
+    # #     voxel=True, x_range=(0, 0.5), methods=["RVV"],
+    # #     rhs=range(9, 18), csv=str(PurePath(
+    # #         FOLD,
+    # #         "sphere/voxel/files4plotting/sphere_r10_RVV_RadiusHit9-17_xmax0.5.csv")))
+    # for r in [10, 30]:
+    #     plot_sphere_kappa_1_and_2_errors_noVTK(
+    #         r=r, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7))
+    # # plot_sphere_kappa_1_and_2_errors_noVTK(
+    # #     r=20, rhVV=18, rhSSVV=18, voxel=True, x_range=(0, 0.7))
     # plot_sphere_kappa_1_and_2_errors_noVTK(
-    #     r=20, rhVV=18, rhSSVV=18, voxel=True, x_range=(0, 0.7))
-    plot_sphere_kappa_1_and_2_errors_noVTK(
-        r=30, rhVV=28, rhSSVV=28, voxel=True, x_range=(0, 0.7))
-    plot_sphere_kappa_1_and_2_errors(
-        r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
-        RorAVV="RVV", vertex_based=False)
-    plot_sphere_kappa_1_and_2_errors(
-        r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
-        RorAVV="RVV", vertex_based=True)
+    #     r=30, rhVV=28, rhSSVV=28, voxel=True, x_range=(0, 0.7))
+    # plot_sphere_kappa_1_and_2_errors(
+    #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
+    #     RorAVV="RVV", vertex_based=False)
+    # plot_sphere_kappa_1_and_2_errors(
+    #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
+    #     RorAVV="RVV", vertex_based=True)
+    #
+    # # cylinder
+    # # plot_cylinder_kappa_1_diff_rh(num_bins=10)
+    # # plot_cylinder_kappa_1_errors_diff_rh(
+    # #     x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=range(2, 11),
+    # #     csv=str(PurePath(FOLD,
+    # #                      "cylinder/noise0/files4plotting/"
+    # #                      "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv")))
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+    #     rhVV=5, rhSSVV=6)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #    x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
+    #    rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
+    #     rhVV=5, rhSSVV=6)
+    # # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
 
-    # cylinder
-    # plot_cylinder_kappa_1_diff_rh(num_bins=10)
-    # plot_cylinder_kappa_1_errors_diff_rh(
-    #     x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=range(2, 11),
-    #     csv=str(PurePath(FOLD,
-    #                      "cylinder/noise0/files4plotting/"
-    #                      "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv")))
-    plot_cylinder_T_2_and_kappa_1_errors(
-        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
-        rhVV=5, rhSSVV=6)
-    plot_cylinder_T_2_and_kappa_1_errors(
-       x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
-       rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
-    plot_cylinder_T_2_and_kappa_1_errors(
-        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=5,
-        rhVV=5, rhSSVV=6)
-    # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
-
-    # Mindboggle
+    # Mindboggle default method 0
     base_fold = "{}../".format(FOLD)
+    n = 2
     plot_mindboggle_errors(
-        errors_csv_file="{}test_surfaces_mindboggle_output_n9/"
+        errors_csv_file="{}test_surfaces_mindboggle_output_n{}/"
                         "noisy_sphere_r10.surface."
-                        "mindboggle_n9_curvature_errors.csv".format(base_fold),
+                        "mindboggle_n{}_curvature_errors.csv".format(
+                            base_fold, n, n),
         plot_fold="{}plot_mindboggle_errors".format(base_fold),
         x_range=None, y_range=(0, 1),
-        title="Mindboggle with n=9 on\nnoisy sphere with radius=10")
+        title="Mindboggle with n={} on\nnoisy sphere with radius=10".format(n))
     plot_mindboggle_errors(
-        errors_csv_file="{}test_surfaces_mindboggle_output_n9/"
+        errors_csv_file="{}test_surfaces_mindboggle_output_n{}/"
                         "torus_rr25_csr10.surface."
-                        "mindboggle_n9_curvature_errors.csv".format(base_fold),
+                        "mindboggle_n{}_curvature_errors.csv".format(
+                            base_fold, n, n),
         plot_fold="{}plot_mindboggle_errors".format(base_fold),
         x_range=None, y_range=(0, 1),
-        title="Mindboggle with n=9 on\ntorus with rr=25 and csr=10")
+        title="Mindboggle with n={} on\ntorus with rr=25 and csr=10".format(n))
