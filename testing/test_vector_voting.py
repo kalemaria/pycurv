@@ -288,14 +288,14 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
 
 # @pytest.mark.parametrize("radius_hit", range(4, 10))
 @pytest.mark.parametrize("radius,radius_hit,eb,inverse,methods,area2,vertex_based", [
-    # (10, 5, 5, False, ['VV'], True, False),  # AVV
-    # (10, 5, 5, False, ['VV'], False, False),  # RVV
+    (10, 5, 5, False, ['VV'], True, False),  # AVV
+    (10, 5, 5, False, ['VV'], False, False),  # RVV
     (10, 6, 5, False, ['SSVV'], False, False),
-    # pytest.param(10, 5, 0, False, ['VV'], True, False,
-    #              marks=pytest.mark.xfail(reason="too high errors")),  # AVV
-    # pytest.param(10, 5, 0, False, ['VV'], False, False,
-    #              marks=pytest.mark.xfail(reason="too high errors")),  # RVV
-    # (10, 6, 0, False, ['SSVV'], False, False),
+    pytest.param(10, 5, 0, False, ['VV'], True, False,
+                 marks=pytest.mark.xfail(reason="too high errors")),  # AVV
+    pytest.param(10, 5, 0, False, ['VV'], False, False,
+                 marks=pytest.mark.xfail(reason="too high errors")),  # RVV
+    (10, 6, 0, False, ['SSVV'], False, False),
     # pytest.param(10, 5, 0, False, ['VV'], False, True,  # RVV, vertex
     #              marks=pytest.mark.xfail(reason="too high errors")),
     # (10, 6, 0, False, ['SSVV'], False, True),  # SSVV, vertex
@@ -470,8 +470,7 @@ def test_cylinder_directions_curvatures(
         T_h_angular_errors = np.array(map(
             lambda x: angular_error_vector(true_T_h, x), T_h))
 
-        # Getting estimated and VTK principal curvatures from the output
-        # graph:
+        # Getting estimated and VTK principal curvatures from the output graph:
         kappa_1 = sg.get_vertex_property_array("kappa_1")
         kappa_2 = sg.get_vertex_property_array("kappa_2")
         vtk_kappa_1 = sg.get_vertex_property_array("max_curvature")
@@ -497,6 +496,20 @@ def test_cylinder_directions_curvatures(
             vtk_rel_kappa_2_errors = np.array(map(
                 lambda x: relative_error_scalar(true_kappa_2, x), vtk_kappa_2))
 
+        # Calculating estimated and VTK mean curvatures and their errors:
+        true_mean_curv = (true_kappa_1 + true_kappa_2) / 2.0
+        mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(kappa_1, kappa_2)]
+        vtk_mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(
+            vtk_kappa_1, vtk_kappa_2)]
+        abs_mean_curv_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_mean_curv, x), mean_curv))
+        rel_mean_curv_errors = np.array(map(
+            lambda x: relative_error_scalar(true_mean_curv, x), mean_curv))
+        vtk_abs_mean_curv_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_mean_curv, x), vtk_mean_curv))
+        vtk_rel_mean_curv_errors = np.array(map(
+            lambda x: relative_error_scalar(true_mean_curv, x), vtk_mean_curv))
+
         # Writing all the curvature values and errors into a csv file:
         df = pd.DataFrame()
         df['kappa1'] = kappa_1
@@ -511,6 +524,8 @@ def test_cylinder_directions_curvatures(
             df['kappa2RelErrors'] = rel_kappa_2_errors
             df['T1Errors'] = T_h_errors
             df['T1AngularErrors'] = T_h_angular_errors
+        df['mean_curvatureAbsErrors'] = abs_mean_curv_errors
+        df['mean_curvatureRelErrors'] = rel_mean_curv_errors
         df.to_csv(eval_file, sep=';')
         # The same for VTK:
         df = pd.DataFrame()
@@ -522,6 +537,8 @@ def test_cylinder_directions_curvatures(
         else:  # inverse
             df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
             df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+        df['mean_curvatureAbsErrors'] = vtk_abs_mean_curv_errors
+        df['mean_curvatureRelErrors'] = vtk_rel_mean_curv_errors
         df.to_csv(VTK_eval_file, sep=';')
 
         # Asserting that all estimated T_h vectors are close to the true
@@ -566,17 +583,17 @@ def test_cylinder_directions_curvatures(
         # RVV and SSVV:
         (10, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
         # RVV and SSVV, vertex:
-        (10, 9, False, False, 0, ['SSVV', 'VV'], False, '', True),
+        # (10, 9, False, False, 0, ['SSVV', 'VV'], False, '', True),
         # smooth, radius=20:
-        (20, 9, False, False, 0, ['VV'], True, '', False),  # AVV
+        # (20, 9, False, False, 0, ['VV'], True, '', False),  # AVV
         # RVV and SSVV:
-        (20, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
+        # (20, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
         # voxel, radius=10:
         (10, 10, False, True, 0, ['VV'], True, '', False),  # AVV
         (10, 10, False, True, 0, ['VV'], False, '', False),  # RVV
-        (10, 8, False, True, 0, ['SSVV'], False, '', False),  # SSVV
-        (10, 10, False, True, 0, ['VV'], False, '', True),  # RVV, vertex
-        (10, 8, False, True, 0, ['SSVV'], False, '', True),  # SSVV, vertex
+        (10, 8, False, True, 0, ['SSVV'], False, '', False),
+        # (10, 10, False, True, 0, ['VV'], False, '', True),  # RVV, vertex
+        # (10, 8, False, True, 0, ['SSVV'], False, '', True),  # SSVV, vertex
         # voxel, radius=20:
         # (20, 10, False, True, 0, ['VV'], True, '', False),
         # pytest.param(20, 8, False, True, 0, ['SSVV'], True, '', False,
@@ -584,11 +601,11 @@ def test_cylinder_directions_curvatures(
         # voxel, radius=20, radius_hit=18, SSVV & AVV:
         # (20, 18, False, True, 0, ['SSVV', 'VV'], True, '', False),
         # voxel, radius=30:
-        pytest.param(30, 8, False, True, 0, ['SSVV'], False, '', False,
-                     marks=pytest.mark.xfail(reason="too high errors")),
-        (30, 10, False, True, 0, ['VV'], True, '', False),
+        # pytest.param(30, 8, False, True, 0, ['SSVV'], False, '', False,
+        #              marks=pytest.mark.xfail(reason="too high errors")),
+        # (30, 10, False, True, 0, ['VV'], True, '', False),
         # voxel, radius=30, radius_hit=18, SSVV & AVV:
-        (30, 28, False, True, 0, ['SSVV', 'VV'], True, '', False),
+        # (30, 28, False, True, 0, ['SSVV', 'VV'], True, '', False),
     ])
 def test_sphere_curvatures(
         radius, radius_hit, inverse, methods, area2, voxel, ico, runtimes,
@@ -757,6 +774,8 @@ def test_sphere_curvatures(
         # Getting estimated principal curvatures from the output graph:
         kappa_1 = sg.get_vertex_property_array("kappa_1")
         kappa_2 = sg.get_vertex_property_array("kappa_2")
+        vtk_kappa_1 = sg.get_vertex_property_array("max_curvature")
+        vtk_kappa_2 = sg.get_vertex_property_array("min_curvature")
 
         # Calculating errors of the principal curvatures:
         abs_kappa_1_errors = np.array(map(
@@ -767,6 +786,27 @@ def test_sphere_curvatures(
             lambda x: relative_error_scalar(true_curvature, x), kappa_1))
         rel_kappa_2_errors = np.array(map(
             lambda x: relative_error_scalar(true_curvature, x), kappa_2))
+        vtk_abs_kappa_1_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_curvature, x), vtk_kappa_1))
+        vtk_abs_kappa_2_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_curvature, x), vtk_kappa_2))
+        vtk_rel_kappa_1_errors = np.array(map(
+            lambda x: relative_error_scalar(true_curvature, x), vtk_kappa_1))
+        vtk_rel_kappa_2_errors = np.array(map(
+            lambda x: relative_error_scalar(true_curvature, x), vtk_kappa_2))
+
+        # Calculating estimated and VTK mean curvatures and their errors:
+        mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(kappa_1, kappa_2)]
+        vtk_mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(
+            vtk_kappa_1, vtk_kappa_2)]
+        abs_mean_curv_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_curvature, x), mean_curv))
+        rel_mean_curv_errors = np.array(map(
+            lambda x: relative_error_scalar(true_curvature, x), mean_curv))
+        vtk_abs_mean_curv_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_curvature, x), vtk_mean_curv))
+        vtk_rel_mean_curv_errors = np.array(map(
+            lambda x: relative_error_scalar(true_curvature, x), vtk_mean_curv))
 
         # Writing all the curvature values and errors into a csv file:
         df = pd.DataFrame()
@@ -776,33 +816,22 @@ def test_sphere_curvatures(
         df['kappa2'] = kappa_2
         df['kappa2AbsErrors'] = abs_kappa_2_errors
         df['kappa2RelErrors'] = rel_kappa_2_errors
+        df['mean_curvatureAbsErrors'] = abs_mean_curv_errors
+        df['mean_curvatureRelErrors'] = rel_mean_curv_errors
         if save_areas:
             triangle_areas = sg.get_vertex_property_array("area")
             df['triangleAreas'] = triangle_areas
         df.to_csv(eval_file, sep=';')
-
         # The same steps for VTK:
-        vtk_kappa_1_values = sg.get_vertex_property_array("max_curvature")
-        vtk_kappa_2_values = sg.get_vertex_property_array("min_curvature")
-        vtk_abs_kappa_1_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x),
-            vtk_kappa_1_values))
-        vtk_abs_kappa_2_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x),
-            vtk_kappa_2_values))
-        vtk_rel_kappa_1_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x),
-            vtk_kappa_1_values))
-        vtk_rel_kappa_2_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x),
-            vtk_kappa_2_values))
         df = pd.DataFrame()
-        df['kappa1'] = vtk_kappa_1_values
+        df['kappa1'] = vtk_kappa_1
         df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
         df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
-        df['kappa2'] = vtk_kappa_2_values
+        df['kappa2'] = vtk_kappa_2
         df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
         df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+        df['mean_curvatureAbsErrors'] = vtk_abs_mean_curv_errors
+        df['mean_curvatureRelErrors'] = vtk_rel_mean_curv_errors
         df.to_csv(VTK_eval_file, sep=';')
 
         # Asserting that all values of both principal curvatures are close
@@ -830,8 +859,8 @@ def test_sphere_curvatures(
         (25, 10, 0, 9, ['VV'], False, '', 4, False),  # RVV
         (25, 10, 0, 9, ['VV'], True, '', 4, False),  # AVV
         (25, 10, 0, 5, ['SSVV'], False, '', 4, False),
-        (25, 10, 0, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex
-        (25, 10, 0, 9, ['VV'], False, '', 4, True),  # RVV, vertex
+        # (25, 10, 0, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex
+        # (25, 10, 0, 9, ['VV'], False, '', 4, True),  # RVV, vertex
         # (25, 10, 100, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex, finer
         # (25, 10, 100, 9, ['VV'], False, '', 4, True),  # RVV, vertex, finer
     ])
@@ -1019,6 +1048,24 @@ def test_torus_directions_curvatures(
             lambda x, y: relative_error_scalar(x, y),
             true_kappa_2, vtk_kappa_2))
 
+        # Calculating estimated and VTK mean curvatures and their errors:
+        true_mean_curv = (true_kappa_1 + true_kappa_2) / 2.0
+        mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(kappa_1, kappa_2)]
+        vtk_mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(
+            vtk_kappa_1, vtk_kappa_2)]
+        abs_mean_curv_errors = np.array(map(
+            lambda x, y: absolute_error_scalar(x, y),
+            true_mean_curv, mean_curv))
+        rel_mean_curv_errors = np.array(map(
+            lambda x, y: relative_error_scalar(x, y),
+            true_mean_curv, mean_curv))
+        vtk_abs_mean_curv_errors = np.array(map(
+            lambda x, y: absolute_error_scalar(x, y),
+            true_mean_curv, vtk_mean_curv))
+        vtk_rel_mean_curv_errors = np.array(map(
+            lambda x, y: relative_error_scalar(x, y),
+            true_mean_curv, vtk_mean_curv))
+
         # Writing all the VV curvature values and errors into a csv file:
         df = pd.DataFrame()
         df['true_kappa2'] = true_kappa_2
@@ -1032,6 +1079,8 @@ def test_torus_directions_curvatures(
         df['T1AngularErrors'] = T_1_angular_errors
         df['T2Errors'] = T_2_errors
         df['T2AngularErrors'] = T_2_angular_errors
+        df['mean_curvatureAbsErrors'] = abs_mean_curv_errors
+        df['mean_curvatureRelErrors'] = rel_mean_curv_errors
         df.to_csv(eval_file, sep=';')
         # The same for VTK:
         df = pd.DataFrame()
@@ -1042,6 +1091,8 @@ def test_torus_directions_curvatures(
         df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
         df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
         df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+        df['mean_curvatureAbsErrors'] = vtk_abs_mean_curv_errors
+        df['mean_curvatureRelErrors'] = vtk_rel_mean_curv_errors
         df.to_csv(VTK_eval_file, sep=';')
 
         # Asserting that all estimated T_1 and T_2 vectors are close to the
