@@ -1,7 +1,9 @@
 import numpy as np
 import os
+from os.path import join
 import pandas as pd
 from pathlib2 import PurePath
+from itertools import cycle
 
 from pysurf import pexceptions
 from errors_calculation import calculate_histogram_area
@@ -35,6 +37,8 @@ FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
        'comparison_to_mindboggle/test_vector_voting_output/'
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 LINEWIDTH = 4
+MARKERS = ['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*']
+COLORS = ['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r']
 
 
 def plot_hist(values, num_bins, title, x_label="Value", y_label="Frequency",
@@ -1663,41 +1667,102 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         )
 
 
+def plot_mindboggle_errors_different_n(
+        mb_errors_csv_file_template, ns, plot_fold, curvature="kappa1",
+        x_range=None, y_range=(0, 1), title=None, *args, **kwargs):
+    # TODO docstring:
+    # X instead of n in mb_errors_csv_file_template
+    # curvature="kappa1", "kappa2" or "mean_curvature"
+    if not os.path.exists(plot_fold):
+        os.makedirs(plot_fold)
+
+    base_filename = os.path.splitext(
+        os.path.basename(mb_errors_csv_file_template))[0]
+    outfile = str(os.path.join(plot_fold, base_filename)) + '.png'
+    outfile = outfile.replace("curvature", curvature)
+    outfile = outfile.replace("X", "{}-{}".format(ns[0], ns[-1]))
+
+    data = []
+    labels = []
+    for n in ns:
+        mb_errors_csv_file = mb_errors_csv_file_template.replace('X', str(n))
+
+        # read in the curvature errors from the CSV file:
+        mb_df = pd.read_csv(mb_errors_csv_file, sep=';')
+        mb_rel_curv_errors = mb_df["{}RelErrors".format(curvature)].values
+        data.append(mb_rel_curv_errors)
+
+        labels.append("n={}".format(n))
+
+    if x_range is None:
+        x_range = (0, max([max(d) for d in data]))
+
+    data_size = len(data)
+    line_styles = ['-'] * data_size
+    markers_iter = cycle(MARKERS)
+    markers = [next(markers_iter) for i in range(data_size)]
+    colors_iter = cycle(COLORS)
+    colors = [next(colors_iter) for i in range(data_size)]
+    if curvature == "kappa1":
+        formatted_curvature = r"$\kappa_1$"
+    elif curvature == "kappa2":
+        formatted_curvature = r"$\kappa_2$"
+    else:
+        formatted_curvature = "mean curvature"
+
+    plot_composite_line_hist(
+        data_arrays=data, labels=labels,
+        line_styles=line_styles, markers=markers, colors=colors,
+        title=title,
+        x_label="Relative {} error".format(formatted_curvature),
+        y_label="Cumulative relative frequency",
+        outfile=outfile,
+        num_bins=20, normalize=True, cumulative=True,
+        x_range=x_range, y_range=y_range,
+        *args, **kwargs
+    )
+
+
 def plot_mindboggle_errors(
         mb_errors_csv_file, avv_errors_csv_file, vtk_errors_csv_file, plot_fold,
-        x_range=None, y_range=(0, 1), title=None):
-    # TODO docstring
+        curvature="kappa1", x_range=None, y_range=(0, 1), title=None,
+        *args, **kwargs):
+    # TODO docstring:
+    # curvature="kappa1", "kappa2" or "mean_curvature"
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     # read in the curvature errors from the CSV files:
     mb_df = pd.read_csv(mb_errors_csv_file, sep=';')
-    mb_rel_mean_curv_errors = mb_df["mean_curvatureRelErrors"].values
-    # mb_rel_kappa_1_errors = mb_df["kappa1RelErrors"].values
-    # mb_rel_kappa_2_errors = mb_df["kappa2RelErrors"].values
-    # mb_rel_gauss_curv_errors = mb_df["gauss_curvatureRelErrors"].values
+    mb_rel_curv_errors = mb_df["{}RelErrors".format(curvature)].values
     avv_df = pd.read_csv(avv_errors_csv_file, sep=';')
-    avv_rel_mean_curv_errors = avv_df["mean_curvatureRelErrors"].values
+    avv_rel_curv_errors = avv_df["{}RelErrors".format(curvature)].values
     vtk_df = pd.read_csv(vtk_errors_csv_file, sep=';')
-    vtk_rel_mean_curv_errors = vtk_df["mean_curvatureRelErrors"].values
+    vtk_rel_curv_errors = vtk_df["{}RelErrors".format(curvature)].values
 
-    data = [avv_rel_mean_curv_errors, mb_rel_mean_curv_errors,
-            vtk_rel_mean_curv_errors]
-    # TODO replace by kappa1 and kappa2, when they work!
+    data = [avv_rel_curv_errors, mb_rel_curv_errors, vtk_rel_curv_errors]
     if x_range is None:
         x_range = (0, max([max(d) for d in data]))
     base_filename = os.path.splitext(os.path.basename(mb_errors_csv_file))[0]
     outfile = str(os.path.join(plot_fold, base_filename)) + '.png'
+    outfile = outfile.replace("curvature", curvature)
+    if curvature == "kappa1":
+        formatted_curvature = r"$\kappa_1$"
+    elif curvature == "kappa2":
+        formatted_curvature = r"$\kappa_2$"
+    else:
+        formatted_curvature = "mean curvature"
+
     plot_composite_line_hist(
-        data_arrays=data,
-        labels=["AVV", "Mindboggle", "VTK"],
+        data_arrays=data, labels=["AVV", "Mindboggle", "VTK"],
         line_styles=['-', '-', '-'], markers=['o', '*', 's'],
         colors=['orange', 'g', 'r'],
         title=title,
-        x_label="Relative mean curvature error",
+        x_label="Relative {} error".format(formatted_curvature),
         y_label="Cumulative relative frequency",
         outfile=outfile,
         num_bins=20, normalize=True, cumulative=True,
-        x_range=x_range, y_range=y_range
+        x_range=x_range, y_range=y_range,
+        *args, **kwargs
     )
 
 
@@ -2133,28 +2198,77 @@ if __name__ == "__main__":
     # # plot_inverse_cylinder_T_1_and_kappa_2_errors()  # not used
 
     # Mindboggle
-    m = 2
-    for n in [0.75, 2, 10]:
-        MB_FOLD = "{}../test_surfaces_mindboggle_output_n{}/".format(FOLD, n)
-        plot_mindboggle_errors(
-            mb_errors_csv_file="{}noisy_sphere_r10.surface."
-                               "mindboggle_m{}_n{}_curvature_errors.csv".format(
-                                MB_FOLD, m, n),
-            avv_errors_csv_file="{}sphere/voxel/files4plotting/"
-                                "sphere_r10.AVV_rh10.csv".format(FOLD),
-            vtk_errors_csv_file="{}sphere/voxel/files4plotting/"
-                                "sphere_r10.VTK.csv".format(FOLD),
-            plot_fold="{}plot_mindboggle_errors".format(MB_FOLD),
-            x_range=None, y_range=(0, 1))
-    for n in [0.75, 2, 9]:
-        MB_FOLD = "{}../test_surfaces_mindboggle_output_n{}/".format(FOLD, n)
-        plot_mindboggle_errors(
-            mb_errors_csv_file="{}torus_rr25_csr10.surface."
-                               "mindboggle_m{}_n{}_curvature_errors.csv".format(
-                                MB_FOLD, m, n),
-            avv_errors_csv_file="{}torus/files4plotting/"
-                                "torus_rr25_csr10.AVV_rh9.csv".format(FOLD),
-            vtk_errors_csv_file="{}torus/files4plotting/"
-                                "torus_rr25_csr10.VTK.csv".format(FOLD),
-            plot_fold="{}plot_mindboggle_errors".format(MB_FOLD),
-            x_range=None, y_range=(0, 1))
+    test_mindboggle_output_fold = (
+        "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
+        "comparison_to_mindboggle/test_mindboggle_output/")
+    surface_bases = ['torus_rr25_csr10.surface.', 'smooth_sphere_r10.surface.',
+                     'noisy_sphere_r10.surface.', 'cylinder_r10_h25.surface.']
+    subfolds = ['torus', 'smooth_sphere', 'noisy_sphere', 'cylinder']
+    m = 0
+    ns = range(2, 11)  # range(2, 21, 2)
+    plot_fold = (
+        "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
+        "comparison_to_mindboggle/plots")
+    # for curvature in ["kappa1", "kappa2", "mean_curvature"]:
+    #     for surface_base, subfold in zip(surface_bases, subfolds):
+    #         fold = join(test_mindboggle_output_fold, subfold)
+    #         out_base = "{}mindboggle_m{}_nX".format(surface_base, m)
+    #         mb_errors_csv_file_template = join(
+    #             fold, "{}_curvature_errors.csv".format(out_base))
+    #         kwargs = {}
+    #         if surface_base.startswith("torus"):
+    #             kwargs["num_x_values"] = 5
+    #         plot_mindboggle_errors_different_n(
+    #             mb_errors_csv_file_template, ns, plot_fold, curvature=curvature,
+    #             **kwargs)
+
+    best_ns = [5, 2, 2, 2]
+    avv_errors_csv_files = ["torus/files4plotting/torus_rr25_csr10.AVV_rh9.csv",
+                            "sphere/noise0/files4plotting/sphere_r10.AVV_rh9.csv",
+                            "sphere/voxel/files4plotting/sphere_r10.AVV_rh10.csv",
+                            "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.AVV_rh5.csv"]
+    vtk_errors_csv_files = ["torus/files4plotting/torus_rr25_csr10.VTK.csv",
+                            "sphere/noise0/files4plotting/sphere_r10.VTK.csv",
+                            "sphere/voxel/files4plotting/sphere_r10.VTK.csv",
+                            "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.VTK.csv"]
+    for curvature in ["kappa1", "kappa2", "mean_curvature"]:
+        for i, surface_base in enumerate(surface_bases):
+            fold = join(test_mindboggle_output_fold, subfolds[i])
+            out_base = "{}mindboggle_m{}_n{}".format(surface_base, m, best_ns[i])
+            mb_errors_csv_file = join(
+                fold, "{}_curvature_errors.csv".format(out_base))
+            avv_errors_csv_file = join(FOLD, avv_errors_csv_files[i])
+            vtk_errors_csv_file = join(FOLD, vtk_errors_csv_files[i])
+            if surface_base.startswith("cylinder") and curvature == "kappa2":
+                continue
+            plot_mindboggle_errors(
+                mb_errors_csv_file=mb_errors_csv_file,
+                avv_errors_csv_file=avv_errors_csv_file,
+                vtk_errors_csv_file=vtk_errors_csv_file,
+                plot_fold=plot_fold, curvature=curvature)
+
+    # old structure and only 2 surfaces:
+    # for n in range(2, 21, 2):
+    #     MB_FOLD = "{}../test_surfaces_mindboggle_output_n{}/".format(FOLD, n)
+    #     plot_mindboggle_errors(
+    #         mb_errors_csv_file="{}noisy_sphere_r10.surface."
+    #                            "mindboggle_m{}_n{}_curvature_errors.csv".format(
+    #                             MB_FOLD, m, n),
+    #         avv_errors_csv_file="{}sphere/voxel/files4plotting/"
+    #                             "sphere_r10.AVV_rh10.csv".format(FOLD),
+    #         vtk_errors_csv_file="{}sphere/voxel/files4plotting/"
+    #                             "sphere_r10.VTK.csv".format(FOLD),
+    #         plot_fold="{}plot_mindboggle_errors".format(MB_FOLD),
+    #         x_range=None, y_range=(0, 1))
+    # for n in [0.75, 2, 9]:
+    #     MB_FOLD = "{}../test_surfaces_mindboggle_output_n{}/".format(FOLD, n)
+    #     plot_mindboggle_errors(
+    #         mb_errors_csv_file="{}torus_rr25_csr10.surface."
+    #                            "mindboggle_m{}_n{}_curvature_errors.csv".format(
+    #                             MB_FOLD, m, n),
+    #         avv_errors_csv_file="{}torus/files4plotting/"
+    #                             "torus_rr25_csr10.AVV_rh9.csv".format(FOLD),
+    #         vtk_errors_csv_file="{}torus/files4plotting/"
+    #                             "torus_rr25_csr10.VTK.csv".format(FOLD),
+    #         plot_fold="{}plot_mindboggle_errors".format(MB_FOLD),
+    #         x_range=None, y_range=(0, 1))

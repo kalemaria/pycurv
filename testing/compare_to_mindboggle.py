@@ -197,7 +197,7 @@ if __name__ == '__main__':
                  'noisy_sphere_r10.surface.', 'cylinder_r10_h25.surface.']
     subfolds = ['torus', 'smooth_sphere', 'noisy_sphere', 'cylinder']
     m = 0
-    ns = range(2, 21, 2)
+    ns = range(1, 10, 2)  # range(2, 21, 2)
     for surface_base, subfold in zip(surface_bases, subfolds):
         fold = join(test_mindboggle_output_fold, subfold)
         chdir(fold)
