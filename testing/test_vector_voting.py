@@ -171,9 +171,9 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 @pytest.mark.parametrize("half_size,radius_hit,res,noise,vertex_based,cores", [
     (20, 4, 20, 10, False, 4),
     (20, 8, 20, 10, False, 4),
-    pytest.param(20, 4, 20, 10, True, 4,
-                 marks=pytest.mark.xfail(reason="too high errors")),  # vertex
-    (20, 8, 20, 10, True, 4),  # vertex
+    # pytest.param(20, 4, 20, 10, True, 4,
+    #              marks=pytest.mark.xfail(reason="too high errors")),  # vertex
+    # (20, 8, 20, 10, True, 4),  # vertex
 ])
 def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
     """
@@ -477,24 +477,22 @@ def test_cylinder_directions_curvatures(
         vtk_kappa_2 = sg.get_vertex_property_array("min_curvature")
 
         # Calculating errors of the principal curvatures:
-        if not inverse:
-            abs_kappa_1_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_1, x), kappa_1))
-            rel_kappa_1_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_1, x), kappa_1))
-            vtk_abs_kappa_1_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_1, x), vtk_kappa_1))
-            vtk_rel_kappa_1_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_1, x), vtk_kappa_1))
-        else:  # inverse
-            abs_kappa_2_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_2, x), kappa_2))
-            rel_kappa_2_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_2, x), kappa_2))
-            vtk_abs_kappa_2_errors = np.array(map(
-                lambda x: absolute_error_scalar(true_kappa_2, x), vtk_kappa_2))
-            vtk_rel_kappa_2_errors = np.array(map(
-                lambda x: relative_error_scalar(true_kappa_2, x), vtk_kappa_2))
+        abs_kappa_1_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_kappa_1, x), kappa_1))
+        rel_kappa_1_errors = np.array(map(
+            lambda x: relative_error_scalar(true_kappa_1, x), kappa_1))
+        vtk_abs_kappa_1_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_kappa_1, x), vtk_kappa_1))
+        vtk_rel_kappa_1_errors = np.array(map(
+            lambda x: relative_error_scalar(true_kappa_1, x), vtk_kappa_1))
+        abs_kappa_2_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_kappa_2, x), kappa_2))
+        rel_kappa_2_errors = np.array(map(
+            lambda x: relative_error_scalar(true_kappa_2, x), kappa_2))
+        vtk_abs_kappa_2_errors = np.array(map(
+            lambda x: absolute_error_scalar(true_kappa_2, x), vtk_kappa_2))
+        vtk_rel_kappa_2_errors = np.array(map(
+            lambda x: relative_error_scalar(true_kappa_2, x), vtk_kappa_2))
 
         # Calculating estimated and VTK mean curvatures and their errors:
         true_mean_curv = (true_kappa_1 + true_kappa_2) / 2.0
@@ -514,16 +512,16 @@ def test_cylinder_directions_curvatures(
         df = pd.DataFrame()
         df['kappa1'] = kappa_1
         df['kappa2'] = kappa_2
-        if not inverse:
-            df['kappa1AbsErrors'] = abs_kappa_1_errors
-            df['kappa1RelErrors'] = rel_kappa_1_errors
-            df['T2Errors'] = T_h_errors
-            df['T2AngularErrors'] = T_h_angular_errors
-        else:  # inverse
-            df['kappa2AbsErrors'] = abs_kappa_2_errors
-            df['kappa2RelErrors'] = rel_kappa_2_errors
+        df['kappa1AbsErrors'] = abs_kappa_1_errors
+        df['kappa1RelErrors'] = rel_kappa_1_errors
+        df['kappa2AbsErrors'] = abs_kappa_2_errors
+        df['kappa2RelErrors'] = rel_kappa_2_errors
+        if inverse:
             df['T1Errors'] = T_h_errors
             df['T1AngularErrors'] = T_h_angular_errors
+        else:
+            df['T2Errors'] = T_h_errors
+            df['T2AngularErrors'] = T_h_angular_errors
         df['mean_curvatureAbsErrors'] = abs_mean_curv_errors
         df['mean_curvatureRelErrors'] = rel_mean_curv_errors
         df.to_csv(eval_file, sep=';')
@@ -531,12 +529,10 @@ def test_cylinder_directions_curvatures(
         df = pd.DataFrame()
         df['kappa1'] = vtk_kappa_1
         df['kappa2'] = vtk_kappa_2
-        if not inverse:
-            df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
-            df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
-        else:  # inverse
-            df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
-            df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
+        df['kappa1AbsErrors'] = vtk_abs_kappa_1_errors
+        df['kappa1RelErrors'] = vtk_rel_kappa_1_errors
+        df['kappa2AbsErrors'] = vtk_abs_kappa_2_errors
+        df['kappa2RelErrors'] = vtk_rel_kappa_2_errors
         df['mean_curvatureAbsErrors'] = vtk_abs_mean_curv_errors
         df['mean_curvatureRelErrors'] = vtk_rel_mean_curv_errors
         df.to_csv(VTK_eval_file, sep=';')
