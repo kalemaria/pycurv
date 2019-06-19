@@ -1669,10 +1669,11 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
 
 def plot_mindboggle_errors_different_n(
         mb_errors_csv_file_template, ns, plot_fold, curvature="kappa1",
-        x_range=None, y_range=(0, 1), title=None, *args, **kwargs):
+        x_range=None, y_range=(0, 1), title=None, csv=None, *args, **kwargs):
     # TODO docstring:
     # X instead of n in mb_errors_csv_file_template
     # curvature="kappa1", "kappa2" or "mean_curvature"
+    # csv (str, optional): csv file for saving cumulative histogram areas
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
 
@@ -1710,7 +1711,7 @@ def plot_mindboggle_errors_different_n(
     else:
         formatted_curvature = "mean curvature"
 
-    plot_composite_line_hist(
+    hist_areas = plot_composite_line_hist(
         data_arrays=data, labels=labels,
         line_styles=line_styles, markers=markers, colors=colors,
         title=title,
@@ -1721,6 +1722,14 @@ def plot_mindboggle_errors_different_n(
         x_range=x_range, y_range=y_range,
         *args, **kwargs
     )
+    i = hist_areas.index(max(hist_areas))
+    print("Best performance for kappa_1 is for n={}".format(ns[i]))
+
+    if csv is not None:
+        df = pd.DataFrame(index=None)
+        df["n"] = ns
+        df["hist_area_{}".format(curvature)] = hist_areas
+        df.to_csv(csv, sep=';')
 
 
 def plot_mindboggle_errors(
@@ -2205,24 +2214,26 @@ if __name__ == "__main__":
                      'noisy_sphere_r10.surface.', 'cylinder_r10_h25.surface.']
     subfolds = ['torus', 'smooth_sphere', 'noisy_sphere', 'cylinder']
     m = 0
-    ns = range(2, 11)
-    plot_fold = (
-        "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
-        "comparison_to_mindboggle/plots")
+    # ns = range(1, 11)
+    # plot_fold_n_choice = (
+    #     "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
+    #     "comparison_to_mindboggle/plots/n_choice")
     # for curvature in ["kappa1", "kappa2", "mean_curvature"]:
     #     for surface_base, subfold in zip(surface_bases, subfolds):
     #         fold = join(test_mindboggle_output_fold, subfold)
     #         out_base = "{}mindboggle_m{}_nX".format(surface_base, m)
     #         mb_errors_csv_file_template = join(
     #             fold, "{}_curvature_errors.csv".format(out_base))
+    #         n_area_csv_file = join(
+    #             fold, "{}_{}_area.csv".format(out_base, curvature))
     #         kwargs = {}
     #         if surface_base.startswith("torus"):
     #             kwargs["num_x_values"] = 5
     #         plot_mindboggle_errors_different_n(
-    #             mb_errors_csv_file_template, ns, plot_fold, curvature=curvature,
-    #             **kwargs)
+    #             mb_errors_csv_file_template, ns, plot_fold_n_choice,
+    #             curvature=curvature, csv=n_area_csv_file, **kwargs)
 
-    best_ns = [5, 2, 2, 2]
+    best_ns = [5, 8, 4, 2]  # for mean curvature
     avv_errors_csv_files = ["torus/files4plotting/torus_rr25_csr10.AVV_rh9.csv",
                             "sphere/noise0/files4plotting/sphere_r10.AVV_rh9.csv",
                             "sphere/voxel/files4plotting/sphere_r10.AVV_rh10.csv",
@@ -2231,7 +2242,10 @@ if __name__ == "__main__":
                             "sphere/noise0/files4plotting/sphere_r10.VTK.csv",
                             "sphere/voxel/files4plotting/sphere_r10.VTK.csv",
                             "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.VTK.csv"]
-    for curvature in ["kappa1", "kappa2", "mean_curvature"]:
+    plot_fold = (
+        "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
+        "comparison_to_mindboggle/plots")
+    for curvature in ["mean_curvature"]:
         for i, surface_base in enumerate(surface_bases):
             fold = join(test_mindboggle_output_fold, subfolds[i])
             out_base = "{}mindboggle_m{}_n{}".format(surface_base, m, best_ns[i])
