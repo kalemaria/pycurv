@@ -1749,11 +1749,17 @@ def plot_mindboggle_errors(
     vtk_rel_curv_errors = vtk_df["{}RelErrors".format(curvature)].values
 
     data = [avv_rel_curv_errors, mb_rel_curv_errors, vtk_rel_curv_errors]
-    if x_range is None:
-        x_range = (0, max([max(d) for d in data]))
+
     base_filename = os.path.splitext(os.path.basename(mb_errors_csv_file))[0]
     outfile = str(os.path.join(plot_fold, base_filename)) + '.png'
     outfile = outfile.replace("curvature", curvature)
+    if x_range is not None:
+        outfile = outfile.replace(
+            ".png", "{}-{}.png".format(x_range[0], x_range[1]))
+
+    if x_range is None:
+        x_range = (0, max([max(d) for d in data]))
+
     if curvature == "kappa1":
         formatted_curvature = r"$\kappa_1$"
     elif curvature == "kappa2":
@@ -2257,4 +2263,4 @@ if __name__ == "__main__":
                 mb_errors_csv_file=mb_errors_csv_file,
                 avv_errors_csv_file=avv_errors_csv_file,
                 vtk_errors_csv_file=vtk_errors_csv_file,
-                plot_fold=plot_fold, curvature=curvature)
+                plot_fold=plot_fold, curvature=curvature, x_range=(0, 4))
