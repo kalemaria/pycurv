@@ -496,6 +496,29 @@ class CylinderGenerator(object):
         return cylinder_surface
 
     @staticmethod
+    def generate_voxel_cylinder_surface(r):
+        """
+        Generates a cylinder surface with a given radius using a filled voxel
+        cylinder mask and the Marching Cubes method. The resulting surface tends
+        to follow the sharp voxels outline and does not have planes on both
+        sides of the cylinder.
+
+        Args:
+            r (int): cylinder radius in voxels
+
+        Returns:
+            a cylinder surface (vtk.vtkPolyData)
+        """
+        # Generate a sphere mask with radius == r
+        box = int(math.ceil(r * 2.5))
+        h = int(math.ceil(r * 2.5))
+        sm = CylinderMask()
+        mask_np = sm.generate_cylinder_mask(r, h, box)
+
+        # Generate iso-surface from the mask
+        return isosurface_from_mask(mask_np)
+
+    @staticmethod
     def generate_gauss_cylinder_surface(r):
         """
         Generates a cylinder surface with a given radius using a gaussian

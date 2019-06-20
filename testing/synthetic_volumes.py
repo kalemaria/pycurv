@@ -110,10 +110,10 @@ class CylinderMask(object):
             raise pexceptions.PySegInputError(
                 expr='CylinderMask.generate_cylinder_mask',
                 msg="Cylinder diameter has to fit into the box.")
-        if h + 1 > box:
-            raise pexceptions.PySegInputError(
-                expr='CylinderMask.generate_cylinder_mask',
-                msg="Cylinder high has to fit into the box.")
+        # if h + 1 > box:
+        #     raise pexceptions.PySegInputError(
+        #         expr='CylinderMask.generate_cylinder_mask',
+        #         msg="Cylinder high has to fit into the box.")
 
         # Create a 2D grid with center (0, 0) in the middle
         # (slice through the box in XY plane)

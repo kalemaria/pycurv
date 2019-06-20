@@ -286,22 +286,31 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
         assert error <= 0.3
 
 
-# @pytest.mark.parametrize("radius_hit", range(4, 10))
-@pytest.mark.parametrize("radius,radius_hit,eb,inverse,methods,area2,vertex_based", [
-    (10, 5, 5, False, ['VV'], True, False),  # AVV
-    (10, 5, 5, False, ['VV'], False, False),  # RVV
-    (10, 6, 5, False, ['SSVV'], False, False),
-    pytest.param(10, 5, 0, False, ['VV'], True, False,
+@pytest.mark.parametrize("radius_hit", range(5, 10))
+@pytest.mark.parametrize("radius,eb,inverse,methods,area2,voxel,vertex_based", [
+    pytest.param(10, 0, False, ['VV'], True, True, False,
                  marks=pytest.mark.xfail(reason="too high errors")),  # AVV
-    pytest.param(10, 5, 0, False, ['VV'], False, False,
-                 marks=pytest.mark.xfail(reason="too high errors")),  # RVV
-    (10, 6, 0, False, ['SSVV'], False, False),
-    # pytest.param(10, 5, 0, False, ['VV'], False, True,  # RVV, vertex
-    #              marks=pytest.mark.xfail(reason="too high errors")),
-    # (10, 6, 0, False, ['SSVV'], False, True),  # SSVV, vertex
 ])
+# @pytest.mark.parametrize(
+#     "radius,radius_hit,eb,inverse,methods,area2,voxel,vertex_based", [
+#         # smooth cylinder
+#         # (10, 5, 5, False, ['VV'], True, False, False),  # AVV
+#         # (10, 5, 5, False, ['VV'], False, False, False),  # RVV
+#         # (10, 6, 5, False, ['SSVV'], False, False, False),
+#         # pytest.param(10, 5, 0, False, ['VV'], True, False, False,
+#         #              marks=pytest.mark.xfail(reason="too high errors")),  # AVV
+#         # pytest.param(10, 5, 0, False, ['VV'], False, False, False,
+#         #              marks=pytest.mark.xfail(reason="too high errors")),  # RVV
+#         # (10, 6, 0, False, ['SSVV'], False, False, False),
+#         # pytest.param(10, 5, 0, False, ['VV'], False, False, True,  # RVV, vertex
+#         #              marks=pytest.mark.xfail(reason="too high errors")),
+#         # (10, 6, 0, False, ['SSVV'], False, False, True),  # SSVV, vertex
+#         # noisy cylinder
+#         pytest.param(10, 5, 0, False, ['VV'], True, True, False,
+#                      marks=pytest.mark.xfail(reason="too high errors")),  # AVV
+#     ])
 def test_cylinder_directions_curvatures(
-        radius, radius_hit, eb, inverse, methods, area2, vertex_based,
+        radius, radius_hit, eb, inverse, methods, area2, voxel, vertex_based,
         res=0, h=0, noise=0, page_curvature_formula=False, full_dist_map=False,
         cores=4):
     """
@@ -324,6 +333,8 @@ def test_cylinder_directions_curvatures(
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
             curvatures estimation; not possible if vertex_based is True)
+        voxel (boolean): if True, a voxel cylinder is generated (ignoring the
+            options res and noise)
         methods (list): tells which method(s) should be used: 'VV'
             for normal vector voting or 'SSVV' for vector and curvature tensor
             voting to estimate the principal directions and curvatures
@@ -352,12 +363,15 @@ def test_cylinder_directions_curvatures(
     Returns:
         None
     """
-    if res == 0:
-        fold = '{}cylinder/noise{}/'.format(FOLD, noise)
+    if voxel:
+        fold = '{}cylinder/voxel/'.format(FOLD)
     else:
-        fold = '{}cylinder/res{}_noise{}/'.format(FOLD, res, noise)
-    if not os.path.exists(fold):
-        os.makedirs(fold)
+        if res == 0:
+            fold = '{}cylinder/noise{}/'.format(FOLD, noise)
+        else:
+            fold = '{}cylinder/res{}_noise{}/'.format(FOLD, res, noise)
+        if not os.path.exists(fold):
+            os.makedirs(fold)
 
     if res == 0 and h != 0:
         h = 0  # h has to be also 0 if res is 0
@@ -396,14 +410,19 @@ def test_cylinder_directions_curvatures(
     # If the .vtp file with the test surface does not exist, create it:
     if not os.path.isfile(surf_file):
         cg = CylinderGenerator()
-        if res == 0:  # generate surface from a smooth mask
-            cylinder = cg.generate_gauss_cylinder_surface(radius)
-        else:  # generate surface directly with VTK
-            print("Warning: cylinder contains planes!")
-            cylinder = cg.generate_cylinder_surface(radius, h, res)
-        if noise > 0:
-            cylinder = add_gaussian_noise_to_surface(cylinder, percent=noise)
-        io.save_vtp(cylinder, surf_file)
+        if voxel:
+            cylinder = cg.generate_voxel_cylinder_surface(radius)
+            io.save_vtp(cylinder, surf_file)
+        else:
+            if res == 0:  # generate surface from a smooth mask
+                cylinder = cg.generate_gauss_cylinder_surface(radius)
+            else:  # generate surface directly with VTK
+                print("Warning: cylinder contains planes!")
+                cylinder = cg.generate_cylinder_surface(radius, h, res)
+            if noise > 0:
+                cylinder = add_gaussian_noise_to_surface(cylinder,
+                                                         percent=noise)
+            io.save_vtp(cylinder, surf_file)
 
     # Reading in the surface and transforming it into a triangle graph
     surf, sg = surface_to_graph(surf_file, inverse=inverse,
