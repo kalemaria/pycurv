@@ -2,9 +2,11 @@ import pandas as pd
 import numpy as np
 from os.path import join
 from os import chdir
+import vtk
 
 from errors_calculation import relative_error_scalar
 from test_vector_voting import torus_curvatures_and_directions
+from synthetic_surfaces import SaddleGenerator
 
 
 def calculate_curvature_errors_sphere(
@@ -118,7 +120,7 @@ def calculate_curvature_errors_cylinder(
 
 
 def calculate_curvature_errors_torus(
-        rr, csr, curvatures_csv_file, errors_csv_file):
+        rr, csr, curvatures_csv_file, errors_csv_file, voxel=False):
     """
     Function calculating relative curvature errors for a torus surface.
 
@@ -130,6 +132,7 @@ def calculate_curvature_errors_torus(
             including coordinates columns labeled 'x', 'y' and 'z'
         errors_csv_file (string): output error file with "RelErrors" appended to
             the aforementioned curvature column labels.
+        voxel (boolean): if True, a voxel torus is generated (default False)
 
     Returns:
         None
@@ -139,6 +142,20 @@ def calculate_curvature_errors_torus(
     x = df['x'].values
     y = df['y'].values
     z = df['z'].values
+    if voxel:
+        # correct the coordinates to have (0,0,0) in the middle
+        x = x - (rr + csr)
+        y = y - (rr + csr)
+        z = z - csr
+        # Map the noisy coordinates to coordinates on smooth torus surface:
+        # generate the smooth torus surface
+        sgen = SaddleGenerator()
+        smooth_torus = sgen.generate_parametric_torus(rr, csr, subdivisions=0)
+        # make point locator on the smooth torus surface
+        pointLocator = vtk.vtkPointLocator()
+        pointLocator.SetDataSet(smooth_torus)
+        pointLocator.SetNumberOfPointsPerBucket(10)
+        pointLocator.BuildLocator()
     mean_curv = df["mean_curvature"].values  # is always there
     kappa_1 = None
     kappa_2 = None
@@ -156,8 +173,16 @@ def calculate_curvature_errors_torus(
     true_kappa_2 = []
     for i in range(x.size):
         true_kappa_1.append(one_true_kappa_1)
-        true_kappa_2_i, _, _ = torus_curvatures_and_directions(
-            rr, csr, x[i], y[i], z[i])
+        if voxel:
+            # find the closest point on the smooth surface
+            closest_point_id = pointLocator.FindClosestPoint([x[i], y[i], z[i]])
+            closest_true_xyz = np.zeros(shape=3)
+            smooth_torus.GetPoint(closest_point_id, closest_true_xyz)
+            true_kappa_2_i, _, _ = torus_curvatures_and_directions(
+                rr, csr, *closest_true_xyz)
+        else:
+            true_kappa_2_i, _, _ = torus_curvatures_and_directions(
+                rr, csr, x[i], y[i], z[i])
         true_kappa_2.append(true_kappa_2_i)
     true_kappa_1 = np.array(true_kappa_1)
     true_kappa_2 = np.array(true_kappa_2)

@@ -96,8 +96,7 @@ class CylinderMask(object):
             r (int): radius in voxels difference (default 10)
             h (int): height in voxels difference (default 20)
             box (int): size of the box in x, y, and z dimensions in voxels, has
-                to be at least 2 * r + 1 or h + 1 (the bigger of them, default
-                23)
+                to be at least 2 * r + 1 or h (the bigger of them, default 23)
             t (int): thickness of a hollow cylinder in voxels, if 0 (default) a
                 filled cylinder is generated
             opened (boolean): if True (default False) and t>0, an "opened"
@@ -110,10 +109,10 @@ class CylinderMask(object):
             raise pexceptions.PySegInputError(
                 expr='CylinderMask.generate_cylinder_mask',
                 msg="Cylinder diameter has to fit into the box.")
-        # if h + 1 > box:
-        #     raise pexceptions.PySegInputError(
-        #         expr='CylinderMask.generate_cylinder_mask',
-        #         msg="Cylinder high has to fit into the box.")
+        if h > box:
+            raise pexceptions.PySegInputError(
+                expr='CylinderMask.generate_cylinder_mask',
+                msg="Cylinder high has to fit into the box.")
 
         # Create a 2D grid with center (0, 0) in the middle
         # (slice through the box in XY plane)
@@ -170,6 +169,50 @@ class CylinderMask(object):
         gauss_cylinder = np.exp(-(x ** 2 + y ** 2) / (2 * (sg ** 2)))
 
         return gauss_cylinder
+
+
+class TorusMask(object):
+    """
+    A class for generating a torus mask.
+    """
+    @staticmethod
+    def generate_torus_mask(c, a, box, t=0):
+        """
+        Generates a 3D volume with a torus mask.
+
+        Args:
+            c (int or float): ring radius
+            a (int or float): cross-section radius
+            box (int): size of the box in x, y, and z dimensions in voxels, has
+                to be at least 2 * c + 2 * a + 1
+            t (int): thickness of a hollow torus in voxels, if 0 (default) a
+                filled torus is generated
+
+        Returns:
+            3D volume with the torus mask (numpy.ndarray)
+        """
+        if 2 * c + 2 * a + 1 > box:
+            raise pexceptions.PySegInputError(
+                expr='TorusMask.generate_torus_mask',
+                msg="Torus has to fit into the box.")
+        # Create a 3D grid with center (0, 0, 0) in the middle of the box
+        low = - math.floor(box / 2.0)
+        high = math.ceil(box / 2.0)
+        x, y, z = np.mgrid[low:high, low:high, -a:a+1]
+
+        # Threshold to generate a filled torus
+        torus = (
+                (c - np.sqrt(x ** 2 + y ** 2)) ** 2 + z ** 2 <= a ** 2
+        ).astype(int)
+
+        if t > 0:  # Generate a hollow sphere with thickness t
+            # Generate an inner sphere with radius smaller by t
+            inner_torus = TorusMask.generate_torus_mask(c=c, a=a-t, box=box)
+
+            # Subtract it from the bigger sphere
+            torus = torus - inner_torus
+
+        return torus
 
 
 class ConeMask(object):

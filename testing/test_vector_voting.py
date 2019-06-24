@@ -5,12 +5,14 @@ from os import remove
 import math
 import pandas as pd
 import sys
+import vtk
 # import cProfile
 # import pstats
 
 from pysurf import pysurf_io as io
 from pysurf import (
-    TriangleGraph, PointGraph, normals_directions_and_curvature_estimation)
+    TriangleGraph, PointGraph, normals_directions_and_curvature_estimation,
+    nice_acos, nice_asin)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
@@ -67,8 +69,8 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
     """
     sin = math.sin
     cos = math.cos
-    asin = math.asin
-    acos = math.acos
+    asin = nice_asin
+    acos = nice_acos
     pi = math.pi
 
     # Find v angle around the small circle, origin at outer torus side,
@@ -286,7 +288,7 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
         assert error <= 0.3
 
 
-@pytest.mark.parametrize("radius_hit", range(5, 10))
+@pytest.mark.parametrize("radius_hit", range(4, 10))
 @pytest.mark.parametrize("radius,eb,inverse,methods,area2,voxel,vertex_based", [
     pytest.param(10, 0, False, ['VV'], True, True, False,
                  marks=pytest.mark.xfail(reason="too high errors")),  # AVV
@@ -412,7 +414,6 @@ def test_cylinder_directions_curvatures(
         cg = CylinderGenerator()
         if voxel:
             cylinder = cg.generate_voxel_cylinder_surface(radius)
-            io.save_vtp(cylinder, surf_file)
         else:
             if res == 0:  # generate surface from a smooth mask
                 cylinder = cg.generate_gauss_cylinder_surface(radius)
@@ -422,7 +423,7 @@ def test_cylinder_directions_curvatures(
             if noise > 0:
                 cylinder = add_gaussian_noise_to_surface(cylinder,
                                                          percent=noise)
-            io.save_vtp(cylinder, surf_file)
+        io.save_vtp(cylinder, surf_file)
 
     # Reading in the surface and transforming it into a triangle graph
     surf, sg = surface_to_graph(surf_file, inverse=inverse,
@@ -860,28 +861,31 @@ def test_sphere_curvatures(
             assert error <= allowed_error
 
 
-# @pytest.mark.parametrize("radius_hit", [4, 12])
+@pytest.mark.parametrize("radius_hit", range(5, 12))
+@pytest.mark.parametrize(
+    "rr,csr,subdivisions,methods,area2,voxel,runtimes,cores,vertex_based", [
+        (25, 10, 0, ['VV'], True, True, '', 4, False),  # AVV, voxel
+    ])
 # @pytest.mark.parametrize("cores", range(1, 9))
 # @pytest.mark.parametrize("rr,csr,methods,area2,runtimes", [
 #     (25, 10, ['VV'], True,
 #      "{}torus/files4plotting/torus_rr25_csr10_runtimes_VV2_cores.csv".format(
 #          FOLD)),
 # ])
-# @pytest.mark.parametrize("radius_hit", range(5, 10))
 @pytest.mark.xfail(reason="too high errors")
-@pytest.mark.parametrize(
-    "rr,csr,subdivisions,radius_hit,methods,area2,runtimes,cores,vertex_based", [
-        (25, 10, 0, 9, ['VV'], False, '', 4, False),  # RVV
-        (25, 10, 0, 9, ['VV'], True, '', 4, False),  # AVV
-        (25, 10, 0, 5, ['SSVV'], False, '', 4, False),
-        # (25, 10, 0, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex
-        # (25, 10, 0, 9, ['VV'], False, '', 4, True),  # RVV, vertex
-        # (25, 10, 100, 5, ['SSVV'], False, '', 4, True),  # SSVV, vertex, finer
-        # (25, 10, 100, 9, ['VV'], False, '', 4, True),  # RVV, vertex, finer
-    ])
+# @pytest.mark.parametrize(
+#     "rr,csr,subdivisions,radius_hit,methods,area2,voxel,runtimes,cores,vertex_based", [
+#         (25, 10, 0, 9, ['VV'], False, False, '', 4, False),  # RVV
+#         (25, 10, 0, 9, ['VV'], True, False, '', 4, False),  # AVV
+#         (25, 10, 0, 5, ['SSVV'], False, False, '', 4, False),
+#         # (25, 10, 0, 5, ['SSVV'], False, False, '', 4, True),  # SSVV, vertex
+#         # (25, 10, 0, 9, ['VV'], False, False, '', 4, True),  # RVV, vertex
+#         # (25, 10, 100, 5, ['SSVV'], False, False, '', 4, True),  # SSVV, vertex, finer
+#         # (25, 10, 100, 9, ['VV'], False, False, '', 4, True),  # RVV, vertex, finer
+#     ])
 def test_torus_directions_curvatures(
-        rr, csr, subdivisions, radius_hit, methods, area2, runtimes, cores,
-        vertex_based, page_curvature_formula=False, full_dist_map=False):
+        rr, csr, subdivisions, radius_hit, methods, area2, voxel, runtimes,
+        cores, vertex_based, page_curvature_formula=False, full_dist_map=False):
     """
     Runs all the steps needed to calculate curvatures for a test torus
     with given radii using normal vector voting (VV) or VV combined with
@@ -902,6 +906,8 @@ def test_torus_directions_curvatures(
         area2 (boolean): if True (default), votes are weighted by triangle area
             also in the second step (principle directions and curvatures
             estimation; not possible if vertex_based is True)
+        voxel (boolean): if True, a voxel torus is generated (ignoring
+            subdivisions parameter)
         runtimes (str): if given, runtimes and some parameters are added to
             this file (otherwise '')
         cores (int): number of cores to run VV in parallel
@@ -920,7 +926,10 @@ def test_torus_directions_curvatures(
     Returns:
         None
     """
-    fold = '{}torus/'.format(FOLD)
+    if voxel:
+        fold = '{}torus/voxel/'.format(FOLD)
+    else:
+        fold = '{}torus/noise0/'.format(FOLD)
     if not os.path.exists(fold):
         os.makedirs(fold)
     if subdivisions > 0:
@@ -951,8 +960,11 @@ def test_torus_directions_curvatures(
           "radius {} and cross-section radius {}***".format(rr, csr))
     # If the .vtp file with the test surface does not exist, create it:
     if not os.path.isfile(surf_file):
-        sg = SaddleGenerator()
-        torus = sg.generate_parametric_torus(rr, csr, subdivisions)
+        sgen = SaddleGenerator()
+        if voxel:
+            torus = sgen.generate_voxel_torus_surface(rr, csr)
+        else:
+            torus = sgen.generate_parametric_torus(rr, csr, subdivisions)
         io.save_vtp(torus, surf_file)
 
     # Reading in the surface and transforming it into a triangle graph
@@ -967,13 +979,37 @@ def test_torus_directions_curvatures(
     sg.graph.vp.true_T_1 = sg.graph.new_vertex_property("vector<float>")
     sg.graph.vp.true_T_2 = sg.graph.new_vertex_property("vector<float>")
 
+    if voxel:
+        # Map the noisy coordinates to coordinates on smooth torus surface:
+        # generate the smooth torus surface
+        sgen = SaddleGenerator()
+        smooth_torus = sgen.generate_parametric_torus(rr, csr, subdivisions=0)
+        # make point locator on the smooth torus surface
+        pointLocator = vtk.vtkPointLocator()
+        pointLocator.SetDataSet(smooth_torus)
+        pointLocator.SetNumberOfPointsPerBucket(10)
+        pointLocator.BuildLocator()
+
     # Calculate and fill the properties
     true_kappa_1 = 1.0 / csr  # constant for the whole torus surface
     xyz = sg.graph.vp.xyz
     for v in sg.graph.vertices():
         x, y, z = xyz[v]  # coordinates of graph vertex v
-        true_kappa_2, true_T_1, true_T_2 = torus_curvatures_and_directions(
-            rr, csr, x, y, z)
+        if voxel:
+            # correct the coordinates to have (0,0,0) in the middle
+            x = x - (rr+csr)
+            y = y - (rr+csr)
+            z = z - csr
+            xyz[v] = [x, y, z]
+            # find the closest point on the smooth surface
+            closest_point_id = pointLocator.FindClosestPoint([x, y, z])
+            closest_true_xyz = np.zeros(shape=3)
+            smooth_torus.GetPoint(closest_point_id, closest_true_xyz)
+            true_kappa_2, true_T_1, true_T_2 = torus_curvatures_and_directions(
+                rr, csr, *closest_true_xyz)
+        else:
+            true_kappa_2, true_T_1, true_T_2 = torus_curvatures_and_directions(
+                rr, csr, x, y, z)
         sg.graph.vp.true_kappa_1[v] = true_kappa_1
         sg.graph.vp.true_kappa_2[v] = true_kappa_2
         sg.graph.vp.true_T_1[v] = true_T_1

@@ -6,7 +6,7 @@ import numpy as np
 from pysurf import pysurf_io as io
 from pysurf import (pexceptions, surface_graphs, run_gen_surface,
                     reverse_sense_and_normals)
-from synthetic_volumes import SphereMask, CylinderMask, ConeMask
+from synthetic_volumes import SphereMask, CylinderMask, TorusMask, ConeMask
 
 """
 A set of functions and classes for generating artificial surfaces of
@@ -591,6 +591,28 @@ class SaddleGenerator(object):
         torus_surface = remove_non_triangle_cells(torus_surface)
 
         return torus_surface
+
+    @staticmethod
+    def generate_voxel_torus_surface(rr, csr):
+        """
+        Generates a torus surface with a given radii using a filled voxel
+        torus mask and the Marching Cubes method. The resulting surface tends
+        to follow the sharp voxels outline.
+
+        Args:
+            rr (int or float): ring radius = c
+            csr (int or float): cross-section radius = a
+
+        Returns:
+            a torus surface (vtk.vtkPolyData)
+        """
+        # Generate a torus mask with the given radii
+        box = int(2 * rr + 2 * csr + 1)
+        tm = TorusMask()
+        mask_np = tm.generate_torus_mask(c=rr, a=csr, box=box)
+
+        # Generate iso-surface from the mask
+        return isosurface_from_mask(mask_np)
 
 
 class ConeGenerator(object):

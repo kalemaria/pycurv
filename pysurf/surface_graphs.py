@@ -828,7 +828,7 @@ class PointGraph(SurfaceGraph):
             for prop_key in self.graph.vp.keys():
                 data_type = self.graph.vp[prop_key].value_type()
                 if (data_type != 'string' and data_type != 'python::object' and
-                        prop_key != 'points' and prop_key != 'xyz'):
+                        prop_key != 'points'):  # and prop_key != 'xyz'
                     if verbose:
                         print('\nvertex property key: {}'.format(prop_key))
                         print('value type: {}'.format(data_type))
@@ -1389,7 +1389,7 @@ class TriangleGraph(SurfaceGraph):
             for prop_key in self.graph.vp.keys():
                 data_type = self.graph.vp[prop_key].value_type()
                 if (data_type != 'string' and data_type != 'python::object' and
-                        prop_key != 'points' and prop_key != 'xyz'):
+                        prop_key != 'points'):  # and prop_key != 'xyz'
                     if verbose:
                         print('\nvertex property key: {}'.format(prop_key))
                         print('value type: {}'.format(data_type))

@@ -174,7 +174,7 @@ def nice_acos(cos_theta):
     Returns the angle in radians given a cosine of the angle without ValueError.
 
     Args:
-        cos_theta (float): cos of an angle
+        cos_theta (float): cosine of an angle
 
     Returns:
         angle in radians
@@ -182,11 +182,32 @@ def nice_acos(cos_theta):
     try:
         theta = math.acos(cos_theta)
     except ValueError:
-        if cos_theta > 1:
+        if cos_theta > 1.0:
             cos_theta = 1.0
-        elif cos_theta < 0:
-            cos_theta = 0.0
+        elif cos_theta < -1.0:  # was 0 before!
+            cos_theta = -1.0  # was 0 before!
         theta = math.acos(cos_theta)
+    return theta
+
+
+def nice_asin(sin_theta):
+    """
+    Returns the angle in radians given a sine of the angle without ValueError.
+
+    Args:
+        sin_theta (float): sine of an angle
+
+    Returns:
+        angle in radians
+    """
+    try:
+        theta = math.asin(sin_theta)
+    except ValueError:
+        if sin_theta > 1.0:
+            sin_theta = 1.0
+        elif sin_theta < -1.0:
+            sin_theta = -1.0
+        theta = math.asin(sin_theta)
     return theta
 
 

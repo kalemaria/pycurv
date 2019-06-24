@@ -2240,11 +2240,11 @@ if __name__ == "__main__":
     #             curvature=curvature, csv=n_area_csv_file, **kwargs)
 
     best_ns = [5, 8, 4, 2]  # for mean curvature
-    avv_errors_csv_files = ["torus/files4plotting/torus_rr25_csr10.AVV_rh9.csv",
+    avv_errors_csv_files = ["torus/noise0/files4plotting/torus_rr25_csr10.AVV_rh9.csv",
                             "sphere/noise0/files4plotting/sphere_r10.AVV_rh9.csv",
                             "sphere/voxel/files4plotting/sphere_r10.AVV_rh10.csv",
                             "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.AVV_rh5.csv"]
-    vtk_errors_csv_files = ["torus/files4plotting/torus_rr25_csr10.VTK.csv",
+    vtk_errors_csv_files = ["torus/noise0/files4plotting/torus_rr25_csr10.VTK.csv",
                             "sphere/noise0/files4plotting/sphere_r10.VTK.csv",
                             "sphere/voxel/files4plotting/sphere_r10.VTK.csv",
                             "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.VTK.csv"]
