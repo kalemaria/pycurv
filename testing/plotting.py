@@ -160,7 +160,7 @@ def plot_line_hist(values, weights=None, num_bins=20, title=None,
 
 def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
                   label=None, ls='-', marker='^', c='b', normalize=False,
-                  cumulative=False):
+                  cumulative=False, zorder=None):
     """
     Plots a line histogram of the values with the given number of bins and plot
     title.
@@ -181,6 +181,8 @@ def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
             frequencies instead of frequencies will be plotted
         cumulative (boolean, optional): if True (default False), cumulative
             counts or frequencies will be plotted
+        zorder (int, optional): integer indicating the order of the data line
+            on the plot
 
     Returns:
         hist_area, if cumulative, else None
@@ -211,7 +213,7 @@ def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
         hist_area = calculate_histogram_area(counts, bin_edges)
     bincenters = 0.5 * (bin_edges[1:] + bin_edges[:-1])
     plt.plot(bincenters, counts, ls=ls, marker=marker, c=c, label=label,
-             linewidth=LINEWIDTH, clip_on=False)
+             linewidth=LINEWIDTH, clip_on=False, zorder=zorder)
     return hist_area
 
 
@@ -221,7 +223,7 @@ def plot_composite_line_hist(
         data_arrays=None, data_files=None, weights_arrays=None,
         num_bins=20, x_range=None, y_range=None, max_val=None,
         normalize=False, cumulative=False, outfile=None, legend_loc='best',
-        num_x_values=0):
+        num_x_values=0, zorders=None):
     """
     Plots several data sets as line histograms in one plot.
     Args:
@@ -252,6 +254,8 @@ def plot_composite_line_hist(
         legend_loc (str, optional): legend location (default 'best')
         num_x_values (int, optional): if > 0 (default 0), plot this number of
             ticks on X axis
+        zorders (list, optional): list of integers indicating the order of data
+            lines on the plot
 
     Returns:
         hist_areas: list of histogram areas, values are Null in not cumulative
@@ -263,7 +267,7 @@ def plot_composite_line_hist(
     fig, ax = plt.subplots()
 
     hist_areas = []
-    if data_files is not None:
+    if data_files is not None:  # TODO simplify
         for i, data_file in enumerate(data_files):
             # Reading in the error values from files:
             if not os.path.exists(data_file):
@@ -274,11 +278,16 @@ def plot_composite_line_hist(
                 weights_array = None
             else:
                 weights_array = weights_arrays[i]
+            if zorders is None:
+                zorder = None
+            else:
+                zorder = zorders[i]
             hist_area = add_line_hist(
                 errors, weights=weights_array, num_bins=num_bins,
                 x_range=x_range, max_val=max_val,
                 label=labels[i], ls=line_styles[i], marker=markers[i],
-                c=colors[i], normalize=normalize, cumulative=cumulative)
+                c=colors[i], normalize=normalize, cumulative=cumulative,
+                zorder=zorder)
             hist_areas.append(hist_area)
     elif data_arrays is not None:
         for i, data_array in enumerate(data_arrays):
@@ -286,11 +295,16 @@ def plot_composite_line_hist(
                 weights_array = None
             else:
                 weights_array = weights_arrays[i]
+            if zorders is None:
+                zorder = None
+            else:
+                zorder = zorders[i]
             hist_area = add_line_hist(
                 data_array, weights=weights_array, num_bins=num_bins,
                 x_range=x_range, max_val=max_val,
                 label=labels[i], ls=line_styles[i], marker=markers[i],
-                c=colors[i], normalize=normalize, cumulative=cumulative)
+                c=colors[i], normalize=normalize, cumulative=cumulative,
+                zorder=zorder)
             hist_areas.append(hist_area)
     if title is not None:
         ax.set_title(title, fontweight="bold", fontsize=30)  # 23 for two plots
@@ -423,17 +437,19 @@ def plot_cylinder_kappa_1_diff_rh(n=0, x_range=None, num_bins=20):
         )
 
 
-def plot_cylinder_kappa_1_errors_diff_rh(
-        methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10),
+def plot_cylinder_curvature_errors_diff_rh(
+        methods=["RVV", "AVV", "SSVV"], curvature="kappa1", rhs=range(5, 10),
         x_range=None, y_range=(0, 1), num_bins=20,
-        legend_loc="lower right", csv=None):
+        legend_loc="lower right", csv=None, voxel=False):
     """
-    Plots estimated kappa_1 and kappa_2 errors histograms on a cylinder surface
+    Plots estimated curvature errors histograms on a cylinder surface
     for different methods and RadiusHit.
 
     Args:
         methods (list, optional): tells which method(s) should be used
             (default=["RVV", "AVV", "SSVV"])
+        curvature (str, optional): "kappa1" (default), "kappa2" or
+            "mean_curvature"
         rhs (list, optional): wanted RadiusHit parameter values (default 5-9)
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
@@ -442,8 +458,12 @@ def plot_cylinder_kappa_1_errors_diff_rh(
         num_bins (int, optional): number of bins for the histogram (default 20)
         legend_loc (str, optional): legend location (default 'lower right')
         csv (str, optional): csv file for saving cumulative histogram areas
+        voxel (boolean, optional): if noisy cylinder should be plotted
     """
-    subfolds = "cylinder/noise0/"
+    if voxel:
+        subfolds = "cylinder/voxel/"
+    else:
+        subfolds = "cylinder/noise0/"
     fold = ("{}{}files4plotting/".format(FOLD, subfolds))
     plot_fold = ("{}{}plots/".format(FOLD, subfolds))
     if not os.path.exists(plot_fold):
@@ -453,49 +473,58 @@ def plot_cylinder_kappa_1_errors_diff_rh(
 
     method_col = []
     rh_col = []
-    hist_area_kappa1_col = []
+    hist_area_curv_col = []
     for i, method in enumerate(methods):
         print(method)
-        kappa_1_arrays = []
+        curv_arrays = []
         labels = []
         for rh in rhs:
             df = pd.read_csv("{}{}.{}_rh{}.csv".format(
                 fold, basename, method, rh), sep=';')
-            kappa_1_array = df["kappa1RelErrors"].tolist()
-            kappa_1_arrays.append(kappa_1_array)
+            curv_array = df["{}RelErrors".format(curvature)].tolist()
+            curv_arrays.append(curv_array)
             label = r"$\it RadiusHit$={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find the maximal value to set the X-range:
-            max_value = max([max(d) for d in kappa_1_arrays])
-            x_range_1 = (0, max_value)
+            max_value = max([max(d) for d in curv_arrays])
+            x_range = (0, max_value)
+        data_size = len(curv_arrays)
+        line_styles = ['-'] * data_size
+        markers_iter = cycle(MARKERS)
+        markers = [next(markers_iter) for i in range(data_size)]
+        colors_iter = cycle(COLORS)
+        colors = [next(colors_iter) for i in range(data_size)]
+        if curvature == "kappa1":
+            formatted_curvature = r"$\kappa_1$"
+        elif curvature == "kappa2":
+            formatted_curvature = r"$\kappa_2$"
         else:
-            x_range_1 = x_range
-        hist_areas_1 = plot_composite_line_hist(
-            data_arrays=kappa_1_arrays,
-            labels=labels,
-            line_styles=['-', '-', '-', '-', '-', '-', '-', '-', '-', '-'],
-            markers=['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*'],
-            colors=['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r'],
+            formatted_curvature = "mean curvature"
+
+        hist_areas = plot_composite_line_hist(
+            data_arrays=curv_arrays, labels=labels,
+            line_styles=line_styles, markers=markers, colors=colors,
             title=method,
-            x_label=r"$\kappa_1\ relative\ error$",
+            x_label="Relative {} error".format(formatted_curvature),
             y_label=y_label,
-            outfile="{}{}.{}_rh{}-{}.kappa_1_errors_range{}-{}.png".format(
-                plot_fold, basename, method, rhs[0], rhs[-1], x_range_1[0],
-                x_range_1[1]),
-            num_bins=num_bins, x_range=x_range_1, y_range=y_range,
+            outfile="{}{}.{}_rh{}-{}.{}_errors_range{}-{}.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1], curvature,
+                x_range[0], x_range[1]),
+            num_bins=num_bins, x_range=x_range, y_range=y_range,
             normalize=True, cumulative=True, legend_loc=legend_loc
         )
-        method_col += [method for i in rhs]
+        method_col += [method] * data_size
         rh_col += rhs
-        hist_area_kappa1_col += hist_areas_1
-        i = hist_areas_1.index(max(hist_areas_1))
-        print("Best performance for kappa_1 is for RadiusHit={}".format(rhs[i]))
+        hist_area_curv_col += hist_areas
+        i = hist_areas.index(max(hist_areas))
+        print("Best performance for {} is for RadiusHit={}".format(
+            curvature, rhs[i]))
     if csv is not None:
         df = pd.DataFrame(index=None)
         df["method"] = method_col
         df["RadiusHit"] = rh_col
-        df["hist_area_kappa1"] = hist_area_kappa1_col
+        df["hist_area_{}".format(curvature)] = hist_area_curv_col
         df.to_csv(csv, sep=';')
 
 
@@ -832,18 +861,20 @@ def plot_sphere_kappa_1_and_2_diff_rh(
         )
 
 
-def plot_sphere_kappa_1_and_2_errors_diff_rh(
-        r=10, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10), n=0, ico=0,
-        voxel=False, x_range=None, y_range=(0, 1), num_bins=20,
-        legend_loc="lower right", csv=None):
+def plot_sphere_curvature_errors_diff_rh(
+        r=10, methods=["RVV", "AVV", "SSVV"], curvature="both",
+        rhs=range(5, 10), n=0, ico=0, voxel=False, x_range=None, y_range=(0, 1),
+        num_bins=20, legend_loc="lower right", csv=None):
     """
-    Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+    Plots estimated curvature errors histograms on a sphere surface
     for different methods and RadiusHit.
 
     Args:
         r (int, optional): radius of the sphere in voxels (default 10)
         methods (list, optional): tells which method(s) should be used
             (default=["RVV", "AVV", "SSVV"])
+        curvature (str, optional): "kappa1", "kappa2", "both" (default) or
+            "mean_curvature"
         rhs (list, optional): wanted RadiusHit parameter values (default 5-9)
         n (int, optional): noise in % (default 0)
         ico (int, optional): if > 0 (e.g. 1280), icosahedron results with so
@@ -873,103 +904,65 @@ def plot_sphere_kappa_1_and_2_errors_diff_rh(
 
     method_col = []
     rh_col = []
-    hist_area_kappa1_col = []
-    hist_area_kappa2_col = []
-    hist_area_kappa1_and_kappa2_col = []
+    hist_area_curv_col = []
     for i, method in enumerate(methods):
         print(method)
-        kappa_1_arrays = []
-        kappa_2_arrays = []
-        kappas_arrays = []
+        curv_arrays = []
         labels = []
         for rh in rhs:
             df = pd.read_csv("{}{}.{}_rh{}.csv".format(
                 fold, basename, method, rh), sep=';')
-            kappa_1_array = df["kappa1RelErrors"].tolist()
-            kappa_2_array = df["kappa2RelErrors"].tolist()
-            kappa_1_arrays.append(kappa_1_array)
-            kappa_2_arrays.append(kappa_2_array)
-            kappas_arrays.append(kappa_1_array + kappa_2_array)
+            if curvature == "both":
+                kappa_1_array = df["kappa1RelErrors"].tolist()
+                kappa_2_array = df["kappa2RelErrors"].tolist()
+                curv_arrays.append(kappa_1_array + kappa_2_array)
+            else:
+                curv_array = df["{}RelErrors".format(curvature)].tolist()
+                curv_arrays.append(curv_array)
             label = r"$\it RadiusHit$={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find the maximal value to set the X-range:
-            max_value = max([max(d) for d in kappa_1_arrays])
-            x_range_1 = (0, max_value)
+            max_value = max([max(d) for d in curv_arrays])
+            x_range = (0, max_value)
+        data_size = len(curv_arrays)
+        line_styles = ['-'] * data_size
+        markers_iter = cycle(MARKERS)
+        markers = [next(markers_iter) for i in range(data_size)]
+        colors_iter = cycle(COLORS)
+        colors = [next(colors_iter) for i in range(data_size)]
+        if curvature == "kappa1":
+            formatted_curvature = r"$\kappa_1$"
+        elif curvature == "kappa2":
+            formatted_curvature = r"$\kappa_2$"
+        elif curvature == "mean_curvature":
+            formatted_curvature = "mean curvature"
         else:
-            x_range_1 = x_range
-        hist_areas_1 = plot_composite_line_hist(
-            data_arrays=kappa_1_arrays,
-            labels=labels,
-            line_styles=['-', '-', '-', '-', '-', '-', '-', '-', '-', '-'],
-            markers=['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*'],
-            colors=['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r'],
+            formatted_curvature = r"$\kappa_1 and \kappa_2$"
+
+        hist_areas = plot_composite_line_hist(
+            data_arrays=curv_arrays, labels=labels,
+            line_styles=line_styles, markers=markers, colors=colors,
             title=method,
-            x_label=r"$\kappa_1\ relative\ error$",
+            x_label="Relative {} error".format(formatted_curvature),
             y_label=y_label,
-            outfile="{}{}.{}_rh{}-{}.kappa_1_errors_range{}-{}.png".format(
-                plot_fold, basename, method, rhs[0], rhs[-1], x_range_1[0],
-                x_range_1[1]),
-            num_bins=num_bins, x_range=x_range_1, y_range=y_range,
+            outfile="{}{}.{}_rh{}-{}.{}_errors_range{}-{}.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1], curvature,
+                x_range[0], x_range[1]),
+            num_bins=num_bins, x_range=x_range, y_range=y_range,
             normalize=True, cumulative=True, legend_loc=legend_loc
         )
-        if x_range is None:
-            # Find the maximal value to set the X-range:
-            max_value = max([max(d) for d in kappa_2_arrays])
-            x_range_2 = (0, max_value)
-        else:
-            x_range_2 = x_range
-        hist_areas_2 = plot_composite_line_hist(
-            data_arrays=kappa_2_arrays,
-            labels=labels,
-            line_styles=['-', '-', '-', '-', '-', '-', '-', '-', '-', '-'],
-            markers=['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*'],
-            colors=['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r'],
-            title=method,
-            x_label=r"$\kappa_2\ relative\ error$",
-            y_label=y_label,
-            outfile="{}{}.{}_rh{}-{}.kappa_2_errors_range{}-{}.png".format(
-                plot_fold, basename, method, rhs[0], rhs[-1], x_range_2[0],
-                x_range_2[1]),
-            num_bins=num_bins, x_range=x_range_2, y_range=y_range,
-            normalize=True, cumulative=True, legend_loc=legend_loc
-        )
-        if x_range is None:
-            # Find the maximal value to set the X-range:
-            max_value = max([max(d) for d in kappas_arrays])
-            x_range_1_2 = (0, max_value)
-        else:
-            x_range_1_2 = x_range
-        hist_areas_1_2 = plot_composite_line_hist(
-            data_arrays=kappas_arrays,
-            labels=labels,
-            line_styles=['-', '-', '-', '-', '-', '-', '-', '-', '-', '-'],
-            markers=['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*'],
-            colors=['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r'],
-            title=method,
-            x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
-            y_label=y_label,
-            outfile="{}{}.{}_rh{}-{}.kappa_1_and_2_errors_range{}-{}.png".format(
-                plot_fold, basename, method, rhs[0], rhs[-1], x_range_1_2[0],
-                x_range_1_2[1]),
-            num_bins=num_bins, x_range=x_range_1_2, y_range=y_range,
-            normalize=True, cumulative=True, legend_loc=legend_loc
-        )
-        method_col += [method for i in rhs]
+        method_col += [method] * data_size
         rh_col += rhs
-        hist_area_kappa1_col += hist_areas_1
-        hist_area_kappa2_col += hist_areas_2
-        hist_area_kappa1_and_kappa2_col += hist_areas_1_2
-        i = hist_areas_1_2.index(max(hist_areas_1_2))
-        print("Best performance for kappa_1 and kappa_2 is for RadiusHit={}"
-              .format(rhs[i]))
+        hist_area_curv_col += hist_areas
+        i = hist_areas.index(max(hist_areas))
+        print("Best performance for {} is for RadiusHit={}".format(
+            curvature, rhs[i]))
     if csv is not None:
         df = pd.DataFrame(index=None)
         df["method"] = method_col
         df["RadiusHit"] = rh_col
-        df["hist_area_kappa1"] = hist_area_kappa1_col
-        df["hist_area_kappa2"] = hist_area_kappa2_col
-        df["hist_area_kappa1_and_kappa2"] = hist_area_kappa1_and_kappa2_col
+        df["hist_area_{}".format(curvature)] = hist_area_curv_col
         df.to_csv(csv, sep=';')
 
 
@@ -1382,17 +1375,19 @@ def plot_torus_kappa_1_and_2_diff_rh(
         )
 
 
-def plot_torus_kappa_1_and_2_errors_diff_rh(
-        methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10),
+def plot_torus_curvature_errors_diff_rh(
+        methods=["RVV", "AVV", "SSVV"], curvature="kappa1", rhs=range(5, 10),
         x_range=None, y_range=(0, 1), num_bins=20,
-        legend_loc="lower right", csv=None):
+        legend_loc="lower right", csv=None, voxel=False):
     """
-    Plots estimated kappa_1 and kappa_2 errors histograms on a torus surface
+    Plots estimated curvature errors histograms on a torus surface
     for different methods and RadiusHit.
 
     Args:
         methods (list, optional): tells which method(s) should be used
             (default=["RVV", "AVV", "SSVV"])
+        curvature (str, optional): "kappa1" (default), "kappa2" or
+            "mean_curvature"
         rhs (list, optional): wanted RadiusHit parameter values (default 5-9)
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
@@ -1401,8 +1396,12 @@ def plot_torus_kappa_1_and_2_errors_diff_rh(
         num_bins (int, optional): number of bins for the histogram (default 20)
         legend_loc (str, optional): legend location (default 'lower right')
         csv (str, optional): csv file for saving cumulative histogram areas
+        voxel (boolean, optional): if noisy cylinder should be plotted
     """
-    subfolds = "torus/"
+    if voxel:
+        subfolds = "torus/voxel/"
+    else:
+        subfolds = "torus/noise0/"
     fold = ("{}{}files4plotting/".format(FOLD, subfolds))
     plot_fold = ("{}{}plots/".format(FOLD, subfolds))
     if not os.path.exists(plot_fold):
@@ -1412,84 +1411,64 @@ def plot_torus_kappa_1_and_2_errors_diff_rh(
 
     method_col = []
     rh_col = []
-    hist_area_kappa1_col = []
-    hist_area_kappa2_col = []
+    hist_area_curv_col = []
     for i, method in enumerate(methods):
         print(method)
-        kappa_1_arrays = []
-        kappa_2_arrays = []
+        curv_arrays = []
         labels = []
         for rh in rhs:
             df = pd.read_csv("{}{}.{}_rh{}.csv".format(
                 fold, basename, method, rh), sep=';')
-            kappa_1_array = df["kappa1RelErrors"].tolist()
-            kappa_2_array = df["kappa2RelErrors"].tolist()
-            kappa_1_arrays.append(kappa_1_array)
-            kappa_2_arrays.append(kappa_2_array)
+            curv_array = df["{}RelErrors".format(curvature)].tolist()
+            curv_arrays.append(curv_array)
             label = r"$\it RadiusHit$={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find the maximal value to set the X-range:
-            max_value = max([max(d) for d in kappa_1_arrays])
-            x_range_1 = (0, max_value)
+            max_value = max([max(d) for d in curv_arrays])
+            x_range = (0, max_value)
+        data_size = len(curv_arrays)
+        line_styles = ['-'] * data_size
+        markers_iter = cycle(MARKERS)
+        markers = [next(markers_iter) for i in range(data_size)]
+        colors_iter = cycle(COLORS)
+        colors = [next(colors_iter) for i in range(data_size)]
+        if curvature == "kappa1":
+            formatted_curvature = r"$\kappa_1$"
+        elif curvature == "kappa2":
+            formatted_curvature = r"$\kappa_2$"
         else:
-            x_range_1 = x_range
-        hist_areas_1 = plot_composite_line_hist(
-            data_arrays=kappa_1_arrays,
-            labels=labels,
-            line_styles=['-', '-', '-', '-', '-', '-', '-', '-', '-', '-'],
-            markers=['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*'],
-            colors=['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r'],
+            formatted_curvature = "mean curvature"
+
+        hist_areas = plot_composite_line_hist(
+            data_arrays=curv_arrays, labels=labels,
+            line_styles=line_styles, markers=markers, colors=colors,
             title=method,
-            x_label=r"$\kappa_1\ relative\ error$",
+            x_label="Relative {} error".format(formatted_curvature),
             y_label=y_label,
-            outfile="{}{}.{}_rh{}-{}.kappa_1_errors_range{}-{}.png".format(
-                plot_fold, basename, method, rhs[0], rhs[-1], x_range_1[0],
-                x_range_1[1]),
-            num_bins=num_bins, x_range=x_range_1, y_range=y_range,
+            outfile="{}{}.{}_rh{}-{}.{}_errors_range{}-{}.png".format(
+                plot_fold, basename, method, rhs[0], rhs[-1], curvature,
+                x_range[0], x_range[1]),
+            num_bins=num_bins, x_range=x_range, y_range=y_range,
             normalize=True, cumulative=True, legend_loc=legend_loc
         )
-        if x_range is None:
-            # Find the maximal value to set the X-range:
-            max_value = max([max(d) for d in kappa_2_arrays])
-            x_range_2 = (0, max_value)
-        else:
-            x_range_2 = x_range
-        hist_areas_2 = plot_composite_line_hist(
-            data_arrays=kappa_2_arrays,
-            labels=labels,
-            line_styles=['-', '-', '-', '-', '-', '-', '-', '-', '-', '-'],
-            markers=['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*'],
-            colors=['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r'],
-            title=method,
-            x_label=r"$\kappa_2\ relative\ error$",
-            y_label=y_label,
-            outfile="{}{}.{}_rh{}-{}.kappa_2_errors_range{}-{}.png".format(
-                plot_fold, basename, method, rhs[0], rhs[-1], x_range_2[0],
-                x_range_2[1]),
-            num_bins=num_bins, x_range=x_range_2, y_range=y_range,
-            normalize=True, cumulative=True, legend_loc=legend_loc
-        )
-        method_col += [method for i in rhs]
+        method_col += [method] * data_size
         rh_col += rhs
-        hist_area_kappa1_col += hist_areas_1
-        hist_area_kappa2_col += hist_areas_2
-        i = hist_areas_1.index(max(hist_areas_1))
-        j = hist_areas_2.index(max(hist_areas_2))
-        print("Best performance for kappa_1 is for RadiusHit={}".format(rhs[i]))
-        print("Best performance for kappa_2 is for RadiusHit={}".format(rhs[j]))
+        hist_area_curv_col += hist_areas
+        i = hist_areas.index(max(hist_areas))
+        print("Best performance for {} is for RadiusHit={}".format(
+            curvature, rhs[i]))
     if csv is not None:
         df = pd.DataFrame(index=None)
         df["method"] = method_col
         df["RadiusHit"] = rh_col
-        df["hist_area_kappa1"] = hist_area_kappa1_col
-        df["hist_area_kappa2"] = hist_area_kappa2_col
+        df["hist_area_{}".format(curvature)] = hist_area_curv_col
         df.to_csv(csv, sep=';')
 
 
 def plot_torus_kappa_1_and_2_T_1_and_2_errors(
         rhVV=9, rhSSVV=5, subdivisions=0, x_range_T=None, x_range_kappa=None,
-        y_range=(0, 1), RorAVV="AVV", vertex_based=False):
+        y_range=(0, 1), RorAVV="AVV", vertex_based=False, voxel=False):
     """
     Plots estimated kappa_1 and kappa_2 as well as T_1 and T_2 errors histograms
     on a torus surface for different methods (VV and SSVV) and an optimal
@@ -1511,8 +1490,12 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
             directions and curvatures estimation)
         vertex_based (boolean, optional): if True (default False), curvature is
             calculated per triangle vertex instead of triangle center
+        voxel (boolean, optional): if noisy torus should be plotted
     """
-    fold = ("{}torus/files4plotting/".format(FOLD))
+    if voxel:
+        fold = ("{}torus/voxel/files4plotting/".format(FOLD))
+    else:
+        fold = ("{}torus/noise0/files4plotting/".format(FOLD))
     plot_fold = ("{}torus/plots/".format(FOLD))
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
@@ -1582,7 +1565,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
 
 
 def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-        rhVV=9, rhSSVV=5, x_range_T=None, x_range_kappa=None, y_range=(0, 1)):
+        rhVV=9, rhSSVV=5, x_range_T=None, x_range_kappa=None, y_range=(0, 1),
+        voxel=False):
     """
     Plots estimated kappa_1 and kappa_2 as well as T_1 and T_2 errors histograms
     on a torus surface for different methods (RVV, AVV and SSVV) and an
@@ -1597,8 +1581,12 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
             range at X axis of principal curvatures plots (default None)
         y_range (tuple, optional): a tuple of two values to limit the range
             at Y axis (default (0, 1))
+        voxel (boolean, optional): if noisy torus should be plotted
     """
-    fold = ("{}torus/files4plotting/".format(FOLD))
+    if voxel:
+        fold = ("{}torus/voxel/files4plotting/".format(FOLD))
+    else:
+        fold = ("{}torus/noise0/files4plotting/".format(FOLD))
     plot_fold = ("{}torus/plots/".format(FOLD))
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
@@ -1670,10 +1658,27 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
 def plot_mindboggle_errors_different_n(
         mb_errors_csv_file_template, ns, plot_fold, curvature="kappa1",
         x_range=None, y_range=(0, 1), title=None, csv=None, *args, **kwargs):
-    # TODO docstring:
-    # X instead of n in mb_errors_csv_file_template
-    # curvature="kappa1", "kappa2" or "mean_curvature"
-    # csv (str, optional): csv file for saving cumulative histogram areas
+    """
+
+    Args:
+        mb_errors_csv_file_template: Mindboggle errors CSV file template with
+            'X' instead of n parameter value
+        ns (list): wanted n parameter values
+        plot_fold (str): output folder
+        curvature (str, optional): "kappa1" (default), "kappa2" or
+            "mean_curvature"
+        x_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default (0, 1))
+        title (str, optional): plot title (default None - no title)
+        csv (str, optional): csv file for saving cumulative histogram areas
+        *args: other arguments passed to plot_composite_line_hist
+        **kwargs: other keyword arguments passed to plot_composite_line_hist
+
+    Returns:
+        None
+    """
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
 
@@ -1723,7 +1728,7 @@ def plot_mindboggle_errors_different_n(
         *args, **kwargs
     )
     i = hist_areas.index(max(hist_areas))
-    print("Best performance for kappa_1 is for n={}".format(ns[i]))
+    print("Best performance for {} is for n={}".format(curvature, ns[i]))
 
     if csv is not None:
         df = pd.DataFrame(index=None)
@@ -1736,8 +1741,27 @@ def plot_mindboggle_errors(
         mb_errors_csv_file, avv_errors_csv_file, vtk_errors_csv_file, plot_fold,
         curvature="kappa1", x_range=None, y_range=(0, 1), title=None,
         *args, **kwargs):
-    # TODO docstring:
-    # curvature="kappa1", "kappa2" or "mean_curvature"
+    """
+    Plots relative curvature errors for Mindboggle, AVV and VTK.
+
+    Args:
+        mb_errors_csv_file (str): Mindboggle errors CSV file
+        avv_errors_csv_file (str): AVV errors CSV file
+        vtk_errors_csv_file (str): VTK errors CSV file
+        plot_fold (str): output folder
+        curvature (str, optional): "kappa1" (default), "kappa2" or
+            "mean_curvature"
+        x_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default (0, 1))
+        title (str, optional): plot title (default None - no title)
+        *args: other arguments passed to plot_composite_line_hist
+        **kwargs: other keyword arguments passed to plot_composite_line_hist
+
+    Returns:
+        None
+    """
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     # read in the curvature errors from the CSV files:
@@ -1769,6 +1793,7 @@ def plot_mindboggle_errors(
 
     plot_composite_line_hist(
         data_arrays=data, labels=["AVV", "Mindboggle", "VTK"],
+        zorders=[2, 3, 1],
         line_styles=['-', '-', '-'], markers=['o', '*', 's'],
         colors=['orange', 'g', 'r'],
         title=title,
@@ -2128,16 +2153,23 @@ if __name__ == "__main__":
     #
     # # torus
     # # plot_torus_kappa_1_and_2_diff_rh()
-    # # plot_torus_kappa_1_and_2_errors_diff_rh(
-    # #     x_range=(0, 0.5), methods=["RVV", "AVV"], rhs=range(5, 12),
-    # #     csv=str(PurePath(FOLD,
-    # #                      "torus/files4plotting/"
-    # #                      "torus_rr25_csr10_RVV_AVV_RadiusHit5-11_xmax0.5.csv")))
-    # # plot_torus_kappa_1_and_2_errors_diff_rh(
-    # #     x_range=(0, 0.5), methods=["SSVV"], rhs=range(1, 11),
-    # #     csv=str(PurePath(FOLD,
-    # #                      "torus/files4plotting/"
-    # #                      "torus_rr25_csr10_SSVV_RadiusHit1-10_xmax0.5.csv")))
+    # plot_torus_curvature_errors_diff_rh(
+    #     x_range=(0, 0.5), methods=["RVV", "AVV"], rhs=range(5, 12),
+    #     csv=join(FOLD, "torus/noise0/files4plotting",
+    #              "torus_rr25_csr10_RVV_AVV_RadiusHit5-11_xmax0.5.csv"))
+    # plot_torus_curvature_errors_diff_rh(
+    #     x_range=(0, 0.5), methods=["SSVV"], rhs=range(1, 11),
+    #     csv=join(FOLD, "torus/noise0/files4plotting/",
+    #              "torus_rr25_csr10_SSVV_RadiusHit1-10_xmax0.5.csv"))
+    # plot_torus_curvature_errors_diff_rh(
+    #     methods=["AVV"], curvature="mean_curvature", rhs=range(4, 10),
+    #     csv=join(FOLD, "torus/noise0/files4plotting",
+    #              "torus_rr25_csr10_AVV_RadiusHit4-9_mean_curvature_area.csv"))
+    # plot_torus_curvature_errors_diff_rh(
+    #     methods=["AVV"], curvature="mean_curvature", rhs=range(4, 12),
+    #     csv=join(FOLD, "torus/voxel/files4plotting",
+    #              "torus_rr25_csr10_AVV_RadiusHit4-11_mean_curvature_area.csv"),
+    #     voxel=True)
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
     # plot_torus_kappa_1_and_2_T_1_and_2_errors(
     #     rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True,
@@ -2148,16 +2180,21 @@ if __name__ == "__main__":
     # # smooth sphere
     # # plot_sphere_kappa_1_and_2_diff_rh(
     # #     r=10, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10))
-    # # plot_sphere_kappa_1_and_2_errors_diff_rh(
-    # #     x_range=(0, 0.25), methods=["RVV", "AVV", "SSVV"],
-    # #     rhs=range(5, 12), csv=str(PurePath(
-    # #         FOLD, "sphere/noise0/files4plotting/"
-    # #         "sphere_r10_RVV_AVV_SSVV_RadiusHit5-11_xmax0.25.csv")))
-    # # plot_sphere_kappa_1_and_2_errors_diff_rh(
-    # #     x_range=(0, 0.25), methods=["RVV", "AVV"],
-    # #     rhs=range(12, 21), csv=str(PurePath(
-    # #         FOLD, "sphere/noise0/files4plotting/"
-    # #               "sphere_r10_RVV_AVV_RadiusHit12-20_xmax0.25.csv")))
+    # plot_sphere_curvature_errors_diff_rh(
+    #     x_range=(0, 0.25), methods=["RVV", "AVV", "SSVV"],
+    #     rhs=range(5, 12), csv=join(
+    #         FOLD, "sphere/noise0/files4plotting",
+    #         "sphere_r10_RVV_AVV_SSVV_RadiusHit5-11_xmax0.25.csv"))
+    # plot_sphere_curvature_errors_diff_rh(
+    #     x_range=(0, 0.25), methods=["RVV", "AVV"],
+    #     rhs=range(12, 21), csv=join(
+    #         FOLD, "sphere/noise0/files4plotting",
+    #         "sphere_r10_RVV_AVV_RadiusHit12-20_xmax0.25.csv"))
+    # plot_sphere_curvature_errors_diff_rh(
+    #     methods=["AVV"], curvature="mean_curvature",
+    #     rhs=range(5, 11), csv=join(
+    #         FOLD, "sphere/noise0/files4plotting",
+    #         "sphere_r10_AVV_RadiusHit5-10_mean_curvature_area.csv"))
     # for r in [10, 20]:  # remove label for r=10, because overlapping
     #     plot_sphere_kappa_1_and_2_errors_allVV(
     #         r=r, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18))
@@ -2170,16 +2207,22 @@ if __name__ == "__main__":
     # # plot_sphere_kappa_1_and_2_diff_rh(
     # #     r=10, voxel=True, methods=["RVV", "AVV", "SSVV"], rhs=range(5, 10),
     # #     x_range=(0.03, 0.12), y_range=(0, 0.7), legend_loc='upper left')
-    # # plot_sphere_kappa_1_and_2_errors_diff_rh(
-    # #     voxel=True, x_range=(0, 0.5), methods=["RVV", "AVV", "SSVV"],
-    # #     rhs=range(5, 12), csv=str(PurePath(
-    # #         FOLD,
-    # #         "sphere/voxel/files4plotting/sphere_r10_SSVV_AVV_RadiusHit5-11_xmax0.5.csv")))
-    # # plot_sphere_kappa_1_and_2_errors_diff_rh(
-    # #     voxel=True, x_range=(0, 0.5), methods=["RVV"],
-    # #     rhs=range(9, 18), csv=str(PurePath(
-    # #         FOLD,
-    # #         "sphere/voxel/files4plotting/sphere_r10_RVV_RadiusHit9-17_xmax0.5.csv")))
+    # plot_sphere_curvature_errors_diff_rh(
+    #     voxel=True, x_range=(0, 0.5), methods=["RVV", "AVV", "SSVV"],
+    #     rhs=range(5, 12), csv=join(
+    #         FOLD, "sphere/voxel/files4plotting",
+    #         "sphere_r10_SSVV_AVV_RadiusHit5-11_xmax0.5.csv"))
+    # plot_sphere_curvature_errors_diff_rh(
+    #     voxel=True, x_range=(0, 0.5), methods=["RVV"],
+    #     rhs=range(9, 18), csv=join(
+    #         FOLD, "sphere/voxel/files4plotting",
+    #         "sphere_r10_RVV_RadiusHit9-17_xmax0.5.csv"))
+    # plot_sphere_curvature_errors_diff_rh(
+    #     methods=["AVV"], curvature="mean_curvature",
+    #     rhs=range(5, 11), csv=join(
+    #         FOLD, "sphere/voxel/files4plotting",
+    #         "sphere_r10_AVV_RadiusHit5-10_mean_curvature_area.csv"),
+    #     voxel=True)
     # for r in [10, 30]:
     #     plot_sphere_kappa_1_and_2_errors_noVTK(
     #         r=r, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7))
@@ -2196,11 +2239,19 @@ if __name__ == "__main__":
     #
     # # cylinder
     # # plot_cylinder_kappa_1_diff_rh(num_bins=10)
-    # # plot_cylinder_kappa_1_errors_diff_rh(
-    # #     x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=range(2, 11),
-    # #     csv=str(PurePath(FOLD,
-    # #                      "cylinder/noise0/files4plotting/"
-    # #                      "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv")))
+    # plot_cylinder_curvature_errors_diff_rh(
+    #     x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=range(2, 11),
+    #     csv=join(FOLD, "cylinder/noise0/files4plotting",
+    #              "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv"))
+    # plot_cylinder_curvature_errors_diff_rh(
+    #     methods=["AVV"], curvature="mean_curvature", rhs=range(2, 10),
+    #     csv=join(FOLD, "cylinder/noise0/files4plotting",
+    #              "cylinder_r10_AVV_RadiusHit2-9_mean_curvature_area.csv"))
+    # plot_cylinder_curvature_errors_diff_rh(
+    #     methods=["AVV"], curvature="mean_curvature", rhs=range(4, 12),
+    #     csv=join(FOLD, "cylinder/voxel/files4plotting",
+    #              "cylinder_r10_AVV_RadiusHit4-11_mean_curvature_area.csv"),
+    #     voxel=True)
     # plot_cylinder_T_2_and_kappa_1_errors(
     #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
     #     rhVV=5, rhSSVV=6)
@@ -2216,15 +2267,19 @@ if __name__ == "__main__":
     test_mindboggle_output_fold = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
         "comparison_to_mindboggle/test_mindboggle_output/")
-    surface_bases = ['torus_rr25_csr10.surface.', 'smooth_sphere_r10.surface.',
-                     'noisy_sphere_r10.surface.', 'cylinder_r10_h25.surface.']
-    subfolds = ['torus', 'smooth_sphere', 'noisy_sphere', 'cylinder']
+    surface_bases = [
+        'torus_rr25_csr10.surface.', 'noisy_torus_rr25_csr10.surface.',
+        'smooth_sphere_r10.surface.', 'noisy_sphere_r10.surface.',
+        'cylinder_r10_h25.surface.', 'noisy_cylinder_r10_h25.surface.']
+    subfolds = ['smooth_torus', 'noisy_torus',
+                'smooth_sphere', 'noisy_sphere',
+                'smooth_cylinder', 'noisy_cylinder']
     m = 0
     # ns = range(1, 11)
     # plot_fold_n_choice = (
     #     "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
-    #     "comparison_to_mindboggle/plots/n_choice")
-    # for curvature in ["kappa1", "kappa2", "mean_curvature"]:
+    #     "comparison_to_mindboggle/plots/n_choice/n1-10")
+    # for curvature in ["mean_curvature"]:  # "kappa1", "kappa2",
     #     for surface_base, subfold in zip(surface_bases, subfolds):
     #         fold = join(test_mindboggle_output_fold, subfold)
     #         out_base = "{}mindboggle_m{}_nX".format(surface_base, m)
@@ -2233,28 +2288,36 @@ if __name__ == "__main__":
     #         n_area_csv_file = join(
     #             fold, "{}_{}_area.csv".format(out_base, curvature))
     #         kwargs = {}
-    #         if surface_base.startswith("torus"):
+    #         if surface_base.startswith("smooth_torus"):
     #             kwargs["num_x_values"] = 5
     #         plot_mindboggle_errors_different_n(
     #             mb_errors_csv_file_template, ns, plot_fold_n_choice,
     #             curvature=curvature, csv=n_area_csv_file, **kwargs)
 
-    best_ns = [5, 8, 4, 2]  # for mean curvature
-    avv_errors_csv_files = ["torus/noise0/files4plotting/torus_rr25_csr10.AVV_rh9.csv",
-                            "sphere/noise0/files4plotting/sphere_r10.AVV_rh9.csv",
-                            "sphere/voxel/files4plotting/sphere_r10.AVV_rh10.csv",
-                            "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.AVV_rh5.csv"]
-    vtk_errors_csv_files = ["torus/noise0/files4plotting/torus_rr25_csr10.VTK.csv",
-                            "sphere/noise0/files4plotting/sphere_r10.VTK.csv",
-                            "sphere/voxel/files4plotting/sphere_r10.VTK.csv",
-                            "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.VTK.csv"]
+    best_ns = [5, 10, 8, 4, 2, 8]  # for mean curvature
+    # best_radius_hits = [6, 9, 10, 9, 4, 8]
+    avv_errors_csv_files = [
+        "torus/noise0/files4plotting/torus_rr25_csr10.AVV_rh6.csv",
+        "torus/voxel/files4plotting/torus_rr25_csr10.AVV_rh9.csv",
+        "sphere/noise0/files4plotting/sphere_r10.AVV_rh10.csv",
+        "sphere/voxel/files4plotting/sphere_r10.AVV_rh9.csv",
+        "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.AVV_rh4.csv",
+        "cylinder/voxel/files4plotting/cylinder_r10_h25_eb0.AVV_rh8.csv"]
+    vtk_errors_csv_files = [
+        "torus/noise0/files4plotting/torus_rr25_csr10.VTK.csv",
+        "torus/voxel/files4plotting/torus_rr25_csr10.VTK.csv",
+        "sphere/noise0/files4plotting/sphere_r10.VTK.csv",
+        "sphere/voxel/files4plotting/sphere_r10.VTK.csv",
+        "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.VTK.csv",
+        "cylinder/voxel/files4plotting/cylinder_r10_h25_eb0.VTK.csv"]
     plot_fold = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
         "comparison_to_mindboggle/plots")
     for curvature in ["mean_curvature"]:
         for i, surface_base in enumerate(surface_bases):
             fold = join(test_mindboggle_output_fold, subfolds[i])
-            out_base = "{}mindboggle_m{}_n{}".format(surface_base, m, best_ns[i])
+            out_base = "{}mindboggle_m{}_n{}".format(
+                surface_base, m, best_ns[i])
             mb_errors_csv_file = join(
                 fold, "{}_curvature_errors.csv".format(out_base))
             avv_errors_csv_file = join(FOLD, avv_errors_csv_files[i])

@@ -218,11 +218,15 @@ if __name__ == '__main__':
     test_mindboggle_output_fold = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
         "comparison_to_mindboggle/test_mindboggle_output/")
-    surface_bases = ['torus_rr25_csr10.surface.', 'smooth_sphere_r10.surface.',
-                 'noisy_sphere_r10.surface.', 'cylinder_r10_h25.surface.']
-    subfolds = ['torus', 'smooth_sphere', 'noisy_sphere', 'cylinder']
+    surface_bases = [
+        'torus_rr25_csr10.surface.', 'noisy_torus_rr25_csr10.surface.',
+        'smooth_sphere_r10.surface.', 'noisy_sphere_r10.surface.',
+        'cylinder_r10_h25.surface.', 'noisy_cylinder_r10_h25.surface.']
+    subfolds = ['smooth_torus', 'noisy_torus',
+                'smooth_sphere', 'noisy_sphere',
+                'smooth_cylinder', 'noisy_cylinder']
     m = 0
-    ns = range(1, 10, 2)  # range(2, 21, 2)
+    ns = range(11, 16, 1)
     for surface_base, subfold in zip(surface_bases, subfolds):
         fold = join(test_mindboggle_output_fold, subfold)
         chdir(fold)
@@ -232,7 +236,10 @@ if __name__ == '__main__':
                 fold, "{}_curvatures.csv".format(out_base))
             errors_csv_file = join(
                 fold, "{}_curvature_errors.csv".format(out_base))
-            if out_base.startswith('torus'):
+            if 'noisy_torus' in out_base:
+                calculate_curvature_errors_torus(
+                    25, 10, curvatures_csv_file, errors_csv_file, voxel=True)
+            elif 'torus' in out_base:
                 calculate_curvature_errors_torus(
                     25, 10, curvatures_csv_file, errors_csv_file)
             elif 'sphere' in out_base:
