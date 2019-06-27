@@ -288,12 +288,20 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
         assert error <= 0.3
 
 
-@pytest.mark.parametrize("radius_hit", range(2, 10))
+@pytest.mark.parametrize("radius_hit", [10])  # range(3, 11)
 @pytest.mark.parametrize("radius,eb,inverse,methods,area2,voxel,vertex_based", [
     # pytest.param(10, 0, False, ['VV'], True, True, False,  # AVV, voxel
     #              marks=pytest.mark.xfail(reason="too high errors")),
+    # pytest.param(10, 0, False, ['VV'], False, True, False,  # RVV, voxel
+    #              marks=pytest.mark.xfail(reason="too high errors")),
+    # pytest.param(10, 0, False, ['SSVV'], False, True, False,  # RVV, voxel
+    #              marks=pytest.mark.xfail(reason="too high errors")),
     pytest.param(10, 0, False, ['VV'], True, False, False,  # AVV, smooth
                  marks=pytest.mark.xfail(reason="too high errors")),
+    # pytest.param(10, 0, False, ['VV'], False, False, False,  # RVV, smooth
+    #              marks=pytest.mark.xfail(reason="too high errors")),
+    # pytest.param(10, 0, False, ['SSVV'], False, False, False,  # RVV, smooth
+    #              marks=pytest.mark.xfail(reason="too high errors")),
 ])
 # @pytest.mark.parametrize(
 #     "radius,radius_hit,eb,inverse,methods,area2,voxel,vertex_based", [
@@ -581,50 +589,52 @@ def test_cylinder_directions_curvatures(
                 assert error <= allowed_error
 
 
-@pytest.mark.parametrize("radius_hit", range(5, 11))
-@pytest.mark.parametrize(
-    "radius,inverse,voxel,ico,methods,area2,runtimes,vertex_based", [
-        # (10, False, False, 1280, ['VV'], True, '', False),  # icosahedron
-        # (10, False, True, 0, ['VV'], False, '', False),  # voxel, RVV
-        (10, False, True, 0, ['VV'], True, '', False),  # voxel, AVV
-        # (10, False, True, 0, ['SSVV'], True, '', False),  # voxel, 'SSVV'
-        # "{}sphere/voxel/files4plotting/bin_spheres_runtimes.csv".format(FOLD)
-        # (10, False, False, 0, ['VV'], False, '', False),  # smooth, RVV
-        (10, False, False, 0, ['VV'], True, '', False),  # smooth, AVV
-        # (10, False, False, 0, ['SSVV'], True, '', False),  # smooth, SSVV
-        # (10, True, False, 0, ['VV', 'SSVV'], False, '', False), smooth inverse
-    ])
+# @pytest.mark.parametrize("radius_hit", range(5, 11))
 # @pytest.mark.parametrize(
-#     "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes,vertex_based", [
-#         # smooth, radius=10:
-#         (10, 9, False, False, 0, ['VV'], True, '', False),  # AVV
-#         # RVV and SSVV:
-#         (10, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
-#         # RVV and SSVV, vertex:
-#         # (10, 9, False, False, 0, ['SSVV', 'VV'], False, '', True),
-#         # smooth, radius=20:
-#         # (20, 9, False, False, 0, ['VV'], True, '', False),  # AVV
-#         # RVV and SSVV:
-#         # (20, 9, False, False, 0, ['VV', 'SSVV'], False, '', False),
-#         # voxel, radius=10:
-#         (10, 10, False, True, 0, ['VV'], True, '', False),  # AVV
-#         (10, 10, False, True, 0, ['VV'], False, '', False),  # RVV
-#         (10, 8, False, True, 0, ['SSVV'], False, '', False),
-#         # (10, 10, False, True, 0, ['VV'], False, '', True),  # RVV, vertex
-#         # (10, 8, False, True, 0, ['SSVV'], False, '', True),  # SSVV, vertex
-#         # voxel, radius=20:
-#         # (20, 10, False, True, 0, ['VV'], True, '', False),
-#         # pytest.param(20, 8, False, True, 0, ['SSVV'], True, '', False,
-#         #              marks=pytest.mark.xfail(reason="too high errors")),
-#         # voxel, radius=20, radius_hit=18, SSVV & AVV:
-#         # (20, 18, False, True, 0, ['SSVV', 'VV'], True, '', False),
-#         # voxel, radius=30:
-#         # pytest.param(30, 8, False, True, 0, ['SSVV'], False, '', False,
-#         #              marks=pytest.mark.xfail(reason="too high errors")),
-#         # (30, 10, False, True, 0, ['VV'], True, '', False),
-#         # voxel, radius=30, radius_hit=18, SSVV & AVV:
-#         # (30, 28, False, True, 0, ['SSVV', 'VV'], True, '', False),
+#     "radius,inverse,voxel,ico,methods,area2,runtimes,vertex_based", [
+#         # (10, False, False, 1280, ['VV'], True, '', False),  # icosahedron
+#         (10, False, True, 0, ['VV'], False, '', False),  # voxel, RVV
+#         (10, False, True, 0, ['VV'], True, '', False),  # voxel, AVV
+#         (10, False, True, 0, ['SSVV'], True, '', False),  # voxel, 'SSVV'
+#         # "{}sphere/voxel/files4plotting/bin_spheres_runtimes.csv".format(FOLD)
+#         (10, False, False, 0, ['VV'], False, '', False),  # smooth, RVV
+#         (10, False, False, 0, ['VV'], True, '', False),  # smooth, AVV
+#         (10, False, False, 0, ['SSVV'], True, '', False),  # smooth, SSVV
+#         # (10, True, False, 0, ['VV', 'SSVV'], False, '', False), smooth inverse
 #     ])
+@pytest.mark.parametrize(
+    "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes,vertex_based", [
+        # smooth, radius=10:
+        # (10, 10, False, False, 0, ['VV'], True, '', False),  # AVV
+        # (10, 10, False, False, 0, ['VV'], False, '', False),  # RVV
+        # (10, 9, False, False, 0, ['SSVV'], False, '', False),  # SSVV
+        # RVV and SSVV, vertex:
+        # (10, 9, False, False, 0, ['SSVV', 'VV'], False, '', True),
+        # smooth, radius=20:
+        (20, 10, False, False, 0, ['VV'], True, '', False),  # AVV
+        (20, 10, False, False, 0, ['VV'], False, '', False),  # RVV
+        (20, 9, False, False, 0, ['SSVV'], False, '', False),  # SSVV
+        # voxel, radius=10:
+        # (10, 9, False, True, 0, ['VV'], True, '', False),  # AVV
+        # (10, 10, False, True, 0, ['VV'], False, '', False),  # RVV
+        # (10, 8, False, True, 0, ['SSVV'], False, '', False),  # SSVV
+        # (10, 10, False, True, 0, ['VV'], False, '', True),  # RVV, vertex
+        # (10, 8, False, True, 0, ['SSVV'], False, '', True),  # SSVV, vertex
+        # voxel, radius=20:
+        # (20, 10, False, True, 0, ['VV'], True, '', False),
+        # pytest.param(20, 8, False, True, 0, ['SSVV'], True, '', False,
+        #              marks=pytest.mark.xfail(reason="too high errors")),
+        # voxel, radius=20, radius_hit=18, SSVV & AVV:
+        # (20, 18, False, True, 0, ['SSVV', 'VV'], True, '', False),
+        # voxel, radius=30:
+        (30, 9, False, True, 0, ['VV'], True, '', False),  # AVV
+        (30, 10, False, True, 0, ['VV'], False, '', False),  # RVV
+        pytest.param(30, 8, False, True, 0, ['SSVV'], False, '', False,  # SSVV
+                     marks=pytest.mark.xfail(reason="too high errors")),
+        # voxel, radius=30, radius_hit=18
+        (30, 28, False, True, 0, ['VV'], True, '', False),  # AVV
+        (30, 28, False, True, 0, ['SSVV', 'VV'], False, '', False), # SSVV & RVV
+    ])
 def test_sphere_curvatures(
         radius, radius_hit, inverse, methods, area2, voxel, ico, runtimes,
         vertex_based, res=0, noise=0, save_areas=False,
@@ -863,11 +873,15 @@ def test_sphere_curvatures(
             assert error <= allowed_error
 
 
-@pytest.mark.parametrize("radius_hit", range(4, 9))  # range(4, 12)
+@pytest.mark.parametrize("radius_hit", range(4, 11))
 @pytest.mark.parametrize(
     "rr,csr,subdivisions,methods,area2,voxel,runtimes,cores,vertex_based", [
         # (25, 10, 0, ['VV'], True, True, '', 4, False),  # AVV, voxel
+        # (25, 10, 0, ['VV'], False, True, '', 4, False),  # RVV, voxel
+        # (25, 10, 0, ['SSVV'], False, True, '', 4, False),  # SSVV, voxel
         (25, 10, 0, ['VV'], True, False, '', 4, False),  # AVV, smooth
+        # (25, 10, 0, ['VV'], False, False, '', 4, False),  # RVV, smooth
+        # (25, 10, 0, ['SSVV'], False, False, '', 4, False),  # SSVV, smooth
     ])
 # @pytest.mark.parametrize("cores", range(1, 9))
 # @pytest.mark.parametrize("rr,csr,methods,area2,runtimes", [
