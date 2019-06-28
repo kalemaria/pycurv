@@ -36,6 +36,10 @@ __author__ = 'kalemanov'
 FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
        'comparison_to_mindboggle/test_vector_voting_output/'
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
+FOLDMB = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
+         "comparison_to_mindboggle/test_mindboggle_output/"
+FOLDPLOTS = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
+            "comparison_to_mindboggle/plots/"
 LINEWIDTH = 4
 MARKERS = ['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*']
 COLORS = ['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r']
@@ -1580,16 +1584,18 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
 
 
 def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-        rhVV=9, rhSSVV=5, x_range_T=None, x_range_kappa=None, y_range=(0, 1),
-        voxel=False):
+        rhRVV=9, rhAVV=9, rhSSVV=5, n=4, x_range_T=None, x_range_kappa=None,
+        y_range=(0, 1), voxel=False):
     """
     Plots estimated kappa_1 and kappa_2 as well as T_1 and T_2 errors histograms
     on a torus surface for different methods (RVV, AVV and SSVV) and an
     optimal RadiusHit for each method. VTK is included for curvatures.
 
     Args:
-        rhVV (int, optional): radius_hit for VV (default 9)
+        rhRVV (int, optional): radius_hit for RVV (default 9)
+        rhAVV (int, optional): radius_hit for AVV (default 9)
         rhSSVV (int, optional): radius_hit for SSVV (default 5)
+        n (int, optional): n for Mindboggle (MB) -m 0 (default 4)
         x_range_T (tuple, optional): a tuple of two values to limit the
             range at X axis of principal directions plots (default None)
         x_range_kappa (tuple, optional): a tuple of two values to limit the
@@ -1599,10 +1605,17 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         voxel (boolean, optional): if noisy torus should be plotted
     """
     if voxel:
-        fold = ("{}torus/voxel/files4plotting/".format(FOLD))
+        fold = "{}torus/voxel/files4plotting/".format(FOLD)
+        mb_fold = "{}noisy_torus/".format(FOLDMB)
+        mb_csv = ("noisy_torus_rr25_csr10.surface.mindboggle_m0_n{}_"
+                  "curvature_errors.csv".format(n))
+        plot_fold = "{}noisy_torus/".format(FOLDPLOTS)
     else:
-        fold = ("{}torus/noise0/files4plotting/".format(FOLD))
-    plot_fold = ("{}torus/plots/".format(FOLD))
+        fold = "{}torus/noise0/files4plotting/".format(FOLD)
+        mb_fold = "{}smooth_torus/".format(FOLDMB)
+        mb_csv = ("torus_rr25_csr10.surface.mindboggle_m0_n{}_"
+                  "curvature_errors.csv".format(n))
+        plot_fold = "{}smooth_torus/".format(FOLDPLOTS)
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "torus_rr25_csr10"
@@ -1612,12 +1625,12 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         SSVV_T_errors = df["T{}Errors".format(i)].tolist()
         SSVV_kappa_errors = df["kappa{}RelErrors".format(i)].tolist()
 
-        df = pd.read_csv("{}{}.RVV_rh{}.csv".format(fold, basename, rhVV),
+        df = pd.read_csv("{}{}.RVV_rh{}.csv".format(fold, basename, rhRVV),
                          sep=';')
         RVV_T_errors = df["T{}Errors".format(i)].tolist()
         RVV_kappa_errors = df["kappa{}RelErrors".format(i)].tolist()
 
-        df = pd.read_csv("{}{}.AVV_rh{}.csv".format(fold, basename, rhVV),
+        df = pd.read_csv("{}{}.AVV_rh{}.csv".format(fold, basename, rhAVV),
                          sep=';')
         AVV_T_errors = df["T{}Errors".format(i)].tolist()
         AVV_kappa_errors = df["kappa{}RelErrors".format(i)].tolist()
@@ -1625,6 +1638,10 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         VTK_kappa_errors = pd.read_csv("{}{}.VTK.csv".format(
             fold, basename), sep=';')["kappa{}RelErrors".format(i)].tolist()
 
+        MB_kappa_errors = pd.read_csv("{}{}".format(
+            mb_fold, mb_csv), sep=';')["kappa{}RelErrors".format(i)].tolist()
+
+        # directions
         data = [RVV_T_errors, AVV_T_errors, SSVV_T_errors]
         if x_range_T is None:
             x_range = (0, max([max(d) for d in data]))
@@ -1632,38 +1649,43 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
             x_range = x_range_T
         plot_composite_line_hist(
             data_arrays=data,
-            labels=["RVV RadiusHit={}".format(rhVV),
-                    "AVV RadiusHit={}".format(rhVV),
+            labels=["RVV RadiusHit={}".format(rhRVV),
+                    "AVV RadiusHit={}".format(rhAVV),
                     "SSVV RadiusHit={}".format(rhSSVV)],
             line_styles=['-', '-', '-'], markers=['v', 'o', '^'],
             colors=['c', 'orange', 'b'],
             title=None,  # "Torus (major radius=25, minor radius=10)",
             x_label=r"$\vec t_{}\ error$".format(i),
             y_label="Cumulative relative frequency",
-            outfile="{}{}.RVV_AVVrh{}_vs_SSVVrh{}.T_{}_errors.png".format(
-                plot_fold, basename, rhVV, rhSSVV, i),
+            outfile="{}{}.RVVrh{}_AVVrh{}_vs_SSVVrh{}.T_{}_errors.png".format(
+                plot_fold, basename, rhRVV, rhAVV, rhSSVV, i),
             num_bins=20, normalize=True, cumulative=True,
             x_range=x_range,
             y_range=y_range
         )
+
+        # curvatures
         data = [RVV_kappa_errors, AVV_kappa_errors, SSVV_kappa_errors,
-                VTK_kappa_errors]
+                VTK_kappa_errors, MB_kappa_errors]
         if x_range_kappa is None:
             x_range = (0, max([max(d) for d in data]))
         else:
             x_range = x_range_kappa
         plot_composite_line_hist(
             data_arrays=data,
-            labels=["RVV RadiusHit={}".format(rhVV),
-                    "AVV RadiusHit={}".format(rhVV),
-                    "SSVV RadiusHit={}".format(rhSSVV), "VTK"],
-            line_styles=['-', '-', '-', '-'], markers=['v', 'o', '^', 's'],
-            colors=['c', 'orange', 'b', 'r'],
+            labels=["RVV RadiusHit={}".format(rhRVV),
+                    "AVV RadiusHit={}".format(rhAVV),
+                    "SSVV RadiusHit={}".format(rhSSVV),
+                    "VTK",
+                    "MB n={}".format(n)],
+            line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*'],
+            colors=['c', 'orange', 'b', 'r', 'purple'],
             title=None,  # "Torus (major radius=25, minor radius=10)",
             x_label=r"$\kappa_{}\ relative\ error$".format(i),
             y_label="Cumulative relative frequency",
-            outfile=("{}{}.RVV_AVVrh{}_SSVVrh{}_vs_VTK.kappa_{}_errors.png"
-                     .format(plot_fold, basename, rhVV, rhSSVV, i)),
+            outfile=(
+                "{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}.kappa_{}_errors.png"
+                    .format(plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, i)),
             num_bins=20, normalize=True, cumulative=True,
             x_range=x_range,
             y_range=y_range
@@ -2185,7 +2207,10 @@ if __name__ == "__main__":
     #                 FOLD, "torus/noise0/files4plotting",
     #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(rhVV=9, rhSSVV=5)
+    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
+        rhRVV=9, rhAVV=9, rhSSVV=5, n=2)  # best for kappa1
+    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
+        rhRVV=10, rhAVV=9, rhSSVV=6, n=4)  # best for kappa2
     # plot_torus_kappa_1_and_2_T_1_and_2_errors(
     #     rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True,
     #     x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
@@ -2195,7 +2220,7 @@ if __name__ == "__main__":
     # voxel torus
     kwargs = {}
     kwargs["num_x_values"] = 6
-    # for method in ["AVV", "RVV", "SSVV"]:
+    # for method in ["AVV", "RVV"]:
     #     for curvature in ["kappa1", "kappa2", "mean_curvature"]:
     #         plot_torus_curvature_errors_diff_rh(
     #             voxel=True, methods=[method], curvature=curvature,
@@ -2293,27 +2318,16 @@ if __name__ == "__main__":
     #     rhVV=5, rhSSVV=6)
 
     # voxel cylinder
-    for method in ["AVV", "RVV", "SSVV"]:
-        for curvature in ["kappa1", "kappa2", "mean_curvature"]:
-            plot_cylinder_curvature_errors_diff_rh(
-                voxel=True, methods=[method], curvature=curvature,
-                rhs=range(3, 11), csv=join(
-                    FOLD, "cylinder/voxel/files4plotting",
-                    "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
-                        method, curvature)), **kwargs)
-    # for method in ["SSVV"]:
+    # for method in ["AVV", "RVV", "SSVV"]:
     #     for curvature in ["kappa1", "kappa2", "mean_curvature"]:
     #         plot_cylinder_curvature_errors_diff_rh(
     #             voxel=True, methods=[method], curvature=curvature,
-    #             rhs=range(3, 10), csv=join(
+    #             rhs=range(3, 11), csv=join(
     #                 FOLD, "cylinder/voxel/files4plotting",
-    #                 "cylinder_r10_{}_RadiusHit3-9_{}_area.csv".format(
+    #                 "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
 
     # Mindboggle
-    test_mindboggle_output_fold = (
-        "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
-        "comparison_to_mindboggle/test_mindboggle_output/")
     surface_bases = [
         'torus_rr25_csr10.surface.', 'noisy_torus_rr25_csr10.surface.',
         'smooth_sphere_r10.surface.', 'noisy_sphere_r10.surface.',
@@ -2329,7 +2343,7 @@ if __name__ == "__main__":
         "comparison_to_mindboggle/plots/n_choice/n1-10")
 
     # for surface_base, subfold in zip(surface_bases, subfolds):
-    #     fold = join(test_mindboggle_output_fold, subfold)
+    #     fold = join(FOLDMB, subfold)
     #     out_base = "{}mindboggle_m{}_nX".format(surface_base, m)
     #     mb_errors_csv_file_template = join(
     #         fold, "{}_curvature_errors.csv".format(out_base))
@@ -2358,12 +2372,9 @@ if __name__ == "__main__":
         "sphere/voxel/files4plotting/sphere_r10.VTK.csv",
         "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.VTK.csv",
         "cylinder/voxel/files4plotting/cylinder_r10_h25_eb0.VTK.csv"]
-    plot_fold = (
-        "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
-        "comparison_to_mindboggle/plots")
 
     # for i, surface_base in enumerate(surface_bases):
-    #     fold = join(test_mindboggle_output_fold, subfolds[i])
+    #     fold = join(FOLDMB, subfolds[i])
     #     out_base = "{}mindboggle_m{}_n{}".format(
     #         surface_base, m, best_ns[i])
     #     mb_errors_csv_file = join(
@@ -2374,4 +2385,4 @@ if __name__ == "__main__":
     #         mb_errors_csv_file=mb_errors_csv_file,
     #         avv_errors_csv_file=avv_errors_csv_file,
     #         vtk_errors_csv_file=vtk_errors_csv_file,
-    #         plot_fold=plot_fold, curvature=curvature, x_range=(0, 4))
+    #         plot_fold=FOLDPLOTS, curvature=curvature, x_range=(0, 4))
