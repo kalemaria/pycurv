@@ -1058,9 +1058,9 @@ def plot_sphere_kappa_1_and_2_errors(
     )
 
 
-def plot_sphere_kappa_1_and_2_errors_allVV(
-        r=10, rhVV=9, rhSSVV=9, n=0, ico=0, voxel=False, x_range=None,
-        y_range=(0, 1)):
+def plot_sphere_curvature_errors_allVV(
+        r=10, rhVV=9, rhSSVV=9, n=8, voxel=False, curvature="mean_curvature",
+        x_range=None, y_range=(0, 1), *args, **kwargs):
     """
     Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
     for different methods (RVV, AVV, SSVV and VTK) and an optimal RadiusHit for
@@ -1070,69 +1070,87 @@ def plot_sphere_kappa_1_and_2_errors_allVV(
         r (int, optional): radius of the sphere in voxels (default 10)
         rhVV (int, optional): radius_hit for VV (default 9)
         rhSSVV (int, optional): radius_hit for SSVV (default 9)
-        n (int, optional): noise in % (default 0)
-        ico (int, optional): if > 0 (i.e. 1280), icosahedron results with so
-            many faces are used; if 0 (default), smooth sphere results are used
+        n (int, optional): n for Mindboggle (MB) -m 0 (default 8)
         voxel (boolean, optional): if True (default False), voxel sphere
             results are used (ignoring the other options)
+        curvature (str, optional): "kappa1" (default), "kappa2" or
+            "mean_curvature"
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis
         y_range (tuple, optional): a tuple of two values to limit the range
             at Y axis (default (0, 1))
+        *args: other arguments passed to plot_composite_line_hist
+        **kwargs: other keyword arguments passed to plot_composite_line_hist
     """
     if voxel:
         subfolds = "sphere/voxel/"
-    elif ico > 0:
-        subfolds = "sphere/ico{}_noise{}/".format(ico, n)
+        mb_fold = "{}noisy_sphere/".format(FOLDMB)
+        mb_csv = ("noisy_sphere_r10.surface.mindboggle_m0_n{}_"
+                  "curvature_errors.csv".format(n))
+        plot_fold = ("{}noisy_sphere/".format(FOLDPLOTS))
     else:
-        subfolds = "sphere/noise{}/".format(n)
+        subfolds = "sphere/noise0/"
+        mb_fold = "{}smooth_sphere/".format(FOLDMB)
+        mb_csv = ("smooth_sphere_r10.surface.mindboggle_m0_n{}_"
+                  "curvature_errors.csv".format(n))
+        plot_fold = ("{}smooth_sphere/".format(FOLDPLOTS))
     fold = ("{}{}files4plotting/".format(FOLD, subfolds))
-    plot_fold = ("{}{}plots/".format(FOLD, subfolds))
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "sphere_r{}".format(r)
 
-    df_SSVV = pd.read_csv("{}{}.SSVV_rh{}.csv".format(fold, basename, rhSSVV),
-                          sep=';')
-    SSVV_kappa_1_errors = df_SSVV["kappa1RelErrors"].tolist()
-    SSVV_kappa_2_errors = df_SSVV["kappa2RelErrors"].tolist()
+    SSVV_curv_errors = pd.read_csv("{}{}.SSVV_rh{}.csv".format(
+        fold, basename, rhSSVV), sep=';')[
+        "{}RelErrors".format(curvature)].tolist()
 
-    df_RVV = pd.read_csv("{}{}.RVV_rh{}.csv".format(fold, basename, rhVV),
-                         sep=';')
-    RVV_kappa_1_errors = df_RVV["kappa1RelErrors"].tolist()
-    RVV_kappa_2_errors = df_RVV["kappa2RelErrors"].tolist()
+    RVV_curv_errors = pd.read_csv("{}{}.RVV_rh{}.csv".format(
+        fold, basename, rhVV), sep=';')[
+        "{}RelErrors".format(curvature)].tolist()
 
-    df_AVV = pd.read_csv("{}{}.AVV_rh{}.csv".format(fold, basename, rhVV),
-                         sep=';')
-    AVV_kappa_1_errors = df_AVV["kappa1RelErrors"].tolist()
-    AVV_kappa_2_errors = df_AVV["kappa2RelErrors"].tolist()
+    AVV_curv_errors = pd.read_csv("{}{}.AVV_rh{}.csv".format(
+        fold, basename, rhVV), sep=';')[
+        "{}RelErrors".format(curvature)].tolist()
 
-    df_VTK = pd.read_csv("{}{}.VTK.csv".format(fold, basename), sep=';')
-    VTK_kappa_1_errors = df_VTK["kappa1RelErrors"].tolist()
-    VTK_kappa_2_errors = df_VTK["kappa2RelErrors"].tolist()
+    VTK_curv_errors = pd.read_csv("{}{}.VTK.csv".format(
+        fold, basename), sep=';')["{}RelErrors".format(curvature)].tolist()
 
-    data = [RVV_kappa_1_errors + RVV_kappa_2_errors,
-            AVV_kappa_1_errors + AVV_kappa_2_errors,
-            SSVV_kappa_1_errors + SSVV_kappa_2_errors,
-            VTK_kappa_1_errors + VTK_kappa_2_errors]
+    MB_curv_errors = pd.read_csv("{}{}".format(
+        mb_fold, mb_csv), sep=';')["{}RelErrors".format(curvature)].tolist()
+
+    data = [RVV_curv_errors, AVV_curv_errors, SSVV_curv_errors,
+            VTK_curv_errors, MB_curv_errors]
+
+    outfile = ("{}{}.RVV_AVVrh{}_SSVVrh{}_VTK_MBn{}.{}_errors.png".format(
+        plot_fold, basename, rhVV, rhSSVV, n, curvature))
     if x_range is None:
         x_range = (0, max([max(d) for d in data]))
-    plot_composite_line_hist(  # kappa_1 + kappa_2
+    else:
+        outfile = outfile.replace(
+            ".png", "{}-{}.png".format(x_range[0], x_range[1]))
+
+    if curvature == "kappa1":
+        formatted_curvature = r"$\kappa_1$"
+    elif curvature == "kappa2":
+        formatted_curvature = r"$\kappa_2$"
+    else:
+        formatted_curvature = "mean curvature"
+
+    plot_composite_line_hist(
         data_arrays=data,
         labels=["RVV RadiusHit={}".format(rhVV),
                 "AVV RadiusHit={}".format(rhVV),
-                "SSVV RadiusHit={}".format(rhSSVV), "VTK"],
-        line_styles=['-', '-', '-', '-'],
-        markers=['v', 'o', '^', 's'],
-        colors=['c', 'orange', 'b', 'r'],
+                "SSVV RadiusHit={}".format(rhSSVV),
+                "VTK",
+                "MB n={}".format(n)],
+        line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*'],
+        colors=['c', 'orange', 'b', 'r', 'purple'],
         title="Sphere radius={}".format(r),
-        x_label=r"$\kappa_1\ and\ \kappa_2\ relative\ error$",
+        x_label="Relative {} error".format(formatted_curvature),
         y_label="Cumulative relative frequency",
-        outfile=("{}{}.RVV_AVVrh{}_SSVVrh{}_vs_VTK."
-                 "kappa_1_and_2_errors.png".format(
-                    plot_fold, basename, rhVV, rhSSVV)),
+        outfile=outfile,
         num_bins=20, normalize=True, cumulative=True,
-        x_range=x_range, y_range=y_range
+        x_range=x_range, y_range=y_range,
+        *args, **kwargs
     )
 
 
@@ -1585,7 +1603,7 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors(
 
 def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         rhRVV=9, rhAVV=9, rhSSVV=5, n=4, x_range_T=None, x_range_kappa=None,
-        y_range=(0, 1), voxel=False):
+        y_range=(0, 1), voxel=False, *args, **kwargs):
     """
     Plots estimated kappa_1 and kappa_2 as well as T_1 and T_2 errors histograms
     on a torus surface for different methods (RVV, AVV and SSVV) and an
@@ -1603,6 +1621,8 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         y_range (tuple, optional): a tuple of two values to limit the range
             at Y axis (default (0, 1))
         voxel (boolean, optional): if noisy torus should be plotted
+        *args: other arguments passed to plot_composite_line_hist
+        **kwargs: other keyword arguments passed to plot_composite_line_hist
     """
     if voxel:
         fold = "{}torus/voxel/files4plotting/".format(FOLD)
@@ -1654,14 +1674,14 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
                     "SSVV RadiusHit={}".format(rhSSVV)],
             line_styles=['-', '-', '-'], markers=['v', 'o', '^'],
             colors=['c', 'orange', 'b'],
-            title=None,  # "Torus (major radius=25, minor radius=10)",
+            title=None,
             x_label=r"$\vec t_{}\ error$".format(i),
             y_label="Cumulative relative frequency",
             outfile="{}{}.RVVrh{}_AVVrh{}_vs_SSVVrh{}.T_{}_errors.png".format(
                 plot_fold, basename, rhRVV, rhAVV, rhSSVV, i),
             num_bins=20, normalize=True, cumulative=True,
-            x_range=x_range,
-            y_range=y_range
+            x_range=x_range, y_range=y_range,
+            *args, **kwargs
         )
 
         # curvatures
@@ -1680,15 +1700,14 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
                     "MB n={}".format(n)],
             line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*'],
             colors=['c', 'orange', 'b', 'r', 'purple'],
-            title=None,  # "Torus (major radius=25, minor radius=10)",
+            title=None,
             x_label=r"$\kappa_{}\ relative\ error$".format(i),
             y_label="Cumulative relative frequency",
             outfile=(
                 "{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}.kappa_{}_errors.png"
                     .format(plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, i)),
             num_bins=20, normalize=True, cumulative=True,
-            x_range=x_range,
-            y_range=y_range
+            x_range=x_range, y_range=y_range
         )
 
 
@@ -1814,12 +1833,11 @@ def plot_mindboggle_errors(
     base_filename = os.path.splitext(os.path.basename(mb_errors_csv_file))[0]
     outfile = str(os.path.join(plot_fold, base_filename)) + '.png'
     outfile = outfile.replace("curvature", curvature)
-    if x_range is not None:
-        outfile = outfile.replace(
-            ".png", "{}-{}.png".format(x_range[0], x_range[1]))
-
     if x_range is None:
         x_range = (0, max([max(d) for d in data]))
+    else:
+        outfile = outfile.replace(
+            ".png", "{}-{}.png".format(x_range[0], x_range[1]))
 
     if curvature == "kappa1":
         formatted_curvature = r"$\kappa_1$"
@@ -2207,10 +2225,11 @@ if __name__ == "__main__":
     #                 FOLD, "torus/noise0/files4plotting",
     #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-        rhRVV=9, rhAVV=9, rhSSVV=5, n=2)  # best for kappa1
-    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-        rhRVV=10, rhAVV=9, rhSSVV=6, n=4)  # best for kappa2
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
+    #     rhRVV=9, rhAVV=9, rhSSVV=5, n=2)  # best for kappa1
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
+    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4)  # best for kappa2
+    # vertex-based
     # plot_torus_kappa_1_and_2_T_1_and_2_errors(
     #     rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True,
     #     x_range_T=(0, 0.003), x_range_kappa=(0, 1.4))
@@ -2218,8 +2237,8 @@ if __name__ == "__main__":
     # #     rhVV=9, rhSSVV=5, subdivisions=100, RorAVV="RVV", vertex_based=True)
 
     # voxel torus
-    kwargs = {}
-    kwargs["num_x_values"] = 6
+    # kwargs = {}
+    # kwargs["num_x_values"] = 6
     # for method in ["AVV", "RVV"]:
     #     for curvature in ["kappa1", "kappa2", "mean_curvature"]:
     #         plot_torus_curvature_errors_diff_rh(
@@ -2236,6 +2255,10 @@ if __name__ == "__main__":
     #                 FOLD, "torus/voxel/files4plotting",
     #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
+    #     rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=True)  # best for kappa1
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
+    #     rhRVV=7, rhAVV=8, rhSSVV=4, n=2, voxel=True)  # best for kappa2
 
     # smooth sphere
     # kwargs = {}
@@ -2256,9 +2279,9 @@ if __name__ == "__main__":
     #                 FOLD, "sphere/noise0/files4plotting",
     #                 "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    # for r in [10, 20]:  # remove label for r=10, because overlapping
-    #     plot_sphere_kappa_1_and_2_errors_allVV(  # TODO mean curvature
-    #         r=r, rhVV=10, rhSSVV=9, voxel=False, x_range=(0, 0.18))
+    for r in [10, 20]:  # remove label for r=10, because overlapping
+        plot_sphere_curvature_errors_allVV(  # mean curvature
+            r=r, rhVV=9, rhSSVV=9, n=8, voxel=False, x_range=(0, 0.18))
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
     #     RorAVV="RVV", vertex_based=True)
@@ -2337,7 +2360,7 @@ if __name__ == "__main__":
                 'smooth_cylinder', 'noisy_cylinder']
     m = 0
     ns = range(1, 11)
-    curvature = "mean_curvature"
+    curvature = "mean_curvature"  # "kappa1", "kappa2"
     plot_fold_n_choice = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
         "comparison_to_mindboggle/plots/n_choice/n1-10")
