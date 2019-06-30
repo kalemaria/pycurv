@@ -288,39 +288,42 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
         assert error <= 0.3
 
 
-@pytest.mark.parametrize("radius_hit", [10])  # range(3, 11)
-@pytest.mark.parametrize("radius,eb,inverse,methods,area2,voxel,vertex_based", [
-    # pytest.param(10, 0, False, ['VV'], True, True, False,  # AVV, voxel
-    #              marks=pytest.mark.xfail(reason="too high errors")),
-    # pytest.param(10, 0, False, ['VV'], False, True, False,  # RVV, voxel
-    #              marks=pytest.mark.xfail(reason="too high errors")),
-    # pytest.param(10, 0, False, ['SSVV'], False, True, False,  # RVV, voxel
-    #              marks=pytest.mark.xfail(reason="too high errors")),
-    pytest.param(10, 0, False, ['VV'], True, False, False,  # AVV, smooth
-                 marks=pytest.mark.xfail(reason="too high errors")),
-    # pytest.param(10, 0, False, ['VV'], False, False, False,  # RVV, smooth
-    #              marks=pytest.mark.xfail(reason="too high errors")),
-    # pytest.param(10, 0, False, ['SSVV'], False, False, False,  # RVV, smooth
-    #              marks=pytest.mark.xfail(reason="too high errors")),
-])
-# @pytest.mark.parametrize(
-#     "radius,radius_hit,eb,inverse,methods,area2,voxel,vertex_based", [
-#         # smooth cylinder
-#         # (10, 5, 5, False, ['VV'], True, False, False),  # AVV
-#         # (10, 5, 5, False, ['VV'], False, False, False),  # RVV
-#         # (10, 6, 5, False, ['SSVV'], False, False, False),
-#         # pytest.param(10, 5, 0, False, ['VV'], True, False, False,
-#         #              marks=pytest.mark.xfail(reason="too high errors")),  # AVV
-#         # pytest.param(10, 5, 0, False, ['VV'], False, False, False,
-#         #              marks=pytest.mark.xfail(reason="too high errors")),  # RVV
-#         # (10, 6, 0, False, ['SSVV'], False, False, False),
-#         # pytest.param(10, 5, 0, False, ['VV'], False, False, True,  # RVV, vertex
-#         #              marks=pytest.mark.xfail(reason="too high errors")),
-#         # (10, 6, 0, False, ['SSVV'], False, False, True),  # SSVV, vertex
-#         # noisy cylinder
-#         pytest.param(10, 5, 0, False, ['VV'], True, True, False,
-#                      marks=pytest.mark.xfail(reason="too high errors")),  # AVV
-#     ])
+# @pytest.mark.parametrize("radius_hit", range(3, 11))
+# @pytest.mark.parametrize("radius,eb,inverse,methods,area2,voxel,vertex_based", [
+#     # pytest.param(10, 0, False, ['VV'], True, True, False,  # AVV, voxel
+#     #              marks=pytest.mark.xfail(reason="too high errors")),
+#     # pytest.param(10, 0, False, ['VV'], False, True, False,  # RVV, voxel
+#     #              marks=pytest.mark.xfail(reason="too high errors")),
+#     # pytest.param(10, 0, False, ['SSVV'], False, True, False,  # RVV, voxel
+#     #              marks=pytest.mark.xfail(reason="too high errors")),
+#     pytest.param(10, 0, False, ['VV'], True, False, False,  # AVV, smooth
+#                  marks=pytest.mark.xfail(reason="too high errors")),
+#     # pytest.param(10, 0, False, ['VV'], False, False, False,  # RVV, smooth
+#     #              marks=pytest.mark.xfail(reason="too high errors")),
+#     # pytest.param(10, 0, False, ['SSVV'], False, False, False,  # RVV, smooth
+#     #              marks=pytest.mark.xfail(reason="too high errors")),
+# ])
+@pytest.mark.parametrize(
+    "radius,radius_hit,eb,inverse,methods,area2,voxel,vertex_based", [
+        # smooth cylinder
+        # (10, 4, 5, False, ['VV'], True, False, False),  # AVV
+        # (10, 4, 5, False, ['VV'], False, False, False),  # RVV
+        # (10, 6, 5, False, ['SSVV'], False, False, False),
+        # pytest.param(10, 5, 0, False, ['VV'], True, False, False,
+        #              marks=pytest.mark.xfail(reason="too high errors")),  # AVV
+        # pytest.param(10, 5, 0, False, ['VV'], False, False, False,
+        #              marks=pytest.mark.xfail(reason="too high errors")),  # RVV
+        # (10, 6, 0, False, ['SSVV'], False, False, False),
+        # pytest.param(10, 5, 0, False, ['VV'], False, False, True,  # RVV, vertex
+        #              marks=pytest.mark.xfail(reason="too high errors")),
+        # (10, 6, 0, False, ['SSVV'], False, False, True),  # SSVV, vertex
+        # noisy cylinder
+        # pytest.param(10, 9, 0, False, ['VV'], True, True, False,
+        #              marks=pytest.mark.xfail(reason="too high errors")),  # AVV
+        (10, 9, 5, False, ['VV'], True, True, False),  # AVV
+        (10, 8, 5, False, ['SSVV'], False, True, False),  # SSVV
+        (10, 10, 5, False, ['VV'], False, True, False),  # RVV
+    ])
 def test_cylinder_directions_curvatures(
         radius, radius_hit, eb, inverse, methods, area2, voxel, vertex_based,
         res=0, h=0, noise=0, page_curvature_formula=False, full_dist_map=False,
