@@ -311,7 +311,7 @@ def plot_composite_line_hist(
                 zorder=zorder)
             hist_areas.append(hist_area)
     if title is not None:
-        ax.set_title(title, fontweight="bold", fontsize=30)  # 23 for two plots
+        ax.set_title(title, fontweight="bold", fontsize=30)  # 23 for two plots (noisy sphere RadiusHit, smooth sphere), 30 for others
         ttl = ax.title
         ttl.set_position([.5, 1.05])
     plt.xlabel(x_label)
@@ -382,7 +382,8 @@ def plot_plane_normals(
         x_range_1 = x_range
     plot_composite_line_hist(
         data_arrays=data,
-        labels=["VTK", "VV RadiusHit=4", "VV RadiusHit=8"],
+        labels=["Initial normals", r"VV $\it RadiusHit$=4",
+                r"VV $\it RadiusHit$=8"],
         line_styles=['-', '-', '-'], markers=['s', 'v', '^'],
         colors=['r', 'c', 'b'],
         title=None,  # "Plane ({}% noise)".format(n),
@@ -2362,10 +2363,11 @@ if __name__ == "__main__":
     #                 FOLD, "sphere/noise0/files4plotting",
     #                 "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    # for r in [10, 20]:
-    #     plot_sphere_curvature_errors_allVV(  # both curvatures
-    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
-    #         x_range=(0, 0.25))
+    for r in [10, 20]:
+        plot_sphere_curvature_errors_allVV(  # both curvatures
+            r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
+            # x_range=(0, 0.25)
+        )
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
     #     RorAVV="RVV", vertex_based=True)
@@ -2411,12 +2413,12 @@ if __name__ == "__main__":
     #                 FOLD, "cylinder/noise0/files4plotting",
     #                 "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    plot_cylinder_T_2_and_kappa_1_errors(
-        #x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-        exclude_borders=0, rhVV=5, rhSSVV=6, n=2)
-    plot_cylinder_T_2_and_kappa_1_errors(
-        #x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-        exclude_borders=5, rhVV=5, rhSSVV=6)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
+    #     exclude_borders=0, rhVV=5, rhSSVV=6, n=2)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
+    #     exclude_borders=5, rhVV=5, rhSSVV=6)
     # plot_cylinder_T_2_and_kappa_1_errors(
     #    x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
     #    rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
@@ -2430,12 +2432,12 @@ if __name__ == "__main__":
     #                 FOLD, "cylinder/voxel/files4plotting",
     #                 "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    plot_cylinder_T_2_and_kappa_1_errors(
-        #x_range_T=(0, 0.01), x_range_kappa=(0, 4.0),
-        voxel=True, exclude_borders=0, rhVV=9, rhSSVV=8, n=2)
-    plot_cylinder_T_2_and_kappa_1_errors(
-        #x_range_T=(0, 0.01), x_range_kappa=(0, 4.0),
-        voxel=True, exclude_borders=5, rhVV=9, rhSSVV=8)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.01), x_range_kappa=(0, 4.0),
+    #     voxel=True, exclude_borders=0, rhVV=9, rhSSVV=8, n=2)
+    # plot_cylinder_T_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.01), x_range_kappa=(0, 4.0),
+    #     voxel=True, exclude_borders=5, rhVV=9, rhSSVV=8)
 
     # Mindboggle
     surface_bases = [
