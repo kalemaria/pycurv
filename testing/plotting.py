@@ -1098,7 +1098,7 @@ def plot_sphere_kappa_1_and_2_errors(
 
 def plot_sphere_curvature_errors_allVV(
         r=10, rhRVV=9, rhAVV=9, rhSSVV=9, n=8, voxel=False,
-        curvature="both", x_range=None, y_range=(0, 1),
+        curvature="both", x_range=None, y_range=(0, 1), onlyVV=False,
         *args, **kwargs):
     """
     Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
@@ -1125,14 +1125,14 @@ def plot_sphere_curvature_errors_allVV(
     if voxel:
         subfolds = "sphere/voxel/"
         mb_fold = "{}noisy_sphere/".format(FOLDMB)
-        mb_csv = ("noisy_sphere_r10.surface.mindboggle_m0_n{}_"
-                  "curvature_errors.csv".format(n))
+        mb_csv = ("noisy_sphere_r{}.surface.mindboggle_m0_n{}_"
+                  "curvature_errors.csv".format(r, n))
         plot_fold = ("{}noisy_sphere/".format(FOLDPLOTS))
     else:
         subfolds = "sphere/noise0/"
         mb_fold = "{}smooth_sphere/".format(FOLDMB)
-        mb_csv = ("smooth_sphere_r10.surface.mindboggle_m0_n{}_"
-                  "curvature_errors.csv".format(n))
+        mb_csv = ("smooth_sphere_r{}.surface.mindboggle_m0_n{}_"
+                  "curvature_errors.csv".format(r, n))
         plot_fold = ("{}smooth_sphere/".format(FOLDPLOTS))
     fold = ("{}{}files4plotting/".format(FOLD, subfolds))
     if not os.path.exists(plot_fold):
@@ -1182,44 +1182,82 @@ def plot_sphere_curvature_errors_allVV(
     else:
         MB_curv_errors = df["{}RelErrors".format(curvature)].tolist()
 
-    data = [RVV_curv_errors, AVV_curv_errors, SSVV_curv_errors,
-            VTK_curv_errors, MB_curv_errors]
+    if onlyVV is False:
+        data = [RVV_curv_errors, AVV_curv_errors, SSVV_curv_errors,
+                VTK_curv_errors, MB_curv_errors]
 
-    outfile = ("{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}.{}_errors.png".format(
-        plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, curvature))
-    if x_range is None:
-        x_range = (0, max([max(d) for d in data]))
+        outfile = ("{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}.{}_errors.png".format(
+            plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, curvature))
+        if x_range is None:
+            x_range = (0, max([max(d) for d in data]))
+        else:
+            outfile = outfile.replace(
+                ".png", "{}-{}.png".format(x_range[0], x_range[1]))
+
+        if curvature == "kappa1":
+            formatted_curvature = r"$\kappa_1$"
+        elif curvature == "kappa2":
+            formatted_curvature = r"$\kappa_2$"
+        elif curvature == "mean_curvature":
+            formatted_curvature = "mean curvature"
+        else:
+            formatted_curvature = r"$\kappa_1\ and\ \kappa_2$"
+
+        plot_composite_line_hist(
+            data_arrays=data,
+            labels=["RVV RadiusHit={}".format(rhRVV),
+                    "AVV RadiusHit={}".format(rhAVV),
+                    "SSVV RadiusHit={}".format(rhSSVV),
+                    "VTK",
+                    "MB n={}".format(n)],
+            zorders=[2, 4, 3, 1, 5],
+            line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*'],
+            colors=['c', 'orange', 'b', 'r', 'purple'],
+            title="Sphere radius={}".format(r),
+            x_label="Relative {} error".format(formatted_curvature),
+            y_label="Cumulative relative frequency",
+            outfile=outfile,
+            num_bins=20, normalize=True, cumulative=True,
+            x_range=x_range, y_range=y_range,
+            *args, **kwargs
+        )
     else:
-        outfile = outfile.replace(
-            ".png", "{}-{}.png".format(x_range[0], x_range[1]))
+        data = [RVV_curv_errors, AVV_curv_errors, SSVV_curv_errors]
 
-    if curvature == "kappa1":
-        formatted_curvature = r"$\kappa_1$"
-    elif curvature == "kappa2":
-        formatted_curvature = r"$\kappa_2$"
-    elif curvature == "mean_curvature":
-        formatted_curvature = "mean curvature"
-    else:
-        formatted_curvature = r"$\kappa_1\ and\ \kappa_2$"
+        outfile = (
+        "{}{}.RVVrh{}_AVVrh{}_SSVVrh{}.{}_errors.png".format(
+            plot_fold, basename, rhRVV, rhAVV, rhSSVV, curvature))
+        if x_range is None:
+            x_range = (0, max([max(d) for d in data]))
+        else:
+            outfile = outfile.replace(
+                ".png", "{}-{}.png".format(x_range[0], x_range[1]))
 
-    plot_composite_line_hist(
-        data_arrays=data,
-        labels=["RVV RadiusHit={}".format(rhRVV),
-                "AVV RadiusHit={}".format(rhAVV),
-                "SSVV RadiusHit={}".format(rhSSVV),
-                "VTK",
-                "MB n={}".format(n)],
-        zorders=[2, 4, 3, 1, 5],
-        line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*'],
-        colors=['c', 'orange', 'b', 'r', 'purple'],
-        title="Sphere radius={}".format(r),
-        x_label="Relative {} error".format(formatted_curvature),
-        y_label="Cumulative relative frequency",
-        outfile=outfile,
-        num_bins=20, normalize=True, cumulative=True,
-        x_range=x_range, y_range=y_range,
-        *args, **kwargs
-    )
+        if curvature == "kappa1":
+            formatted_curvature = r"$\kappa_1$"
+        elif curvature == "kappa2":
+            formatted_curvature = r"$\kappa_2$"
+        elif curvature == "mean_curvature":
+            formatted_curvature = "mean curvature"
+        else:
+            formatted_curvature = r"$\kappa_1\ and\ \kappa_2$"
+
+        plot_composite_line_hist(
+            data_arrays=data,
+            labels=["RVV RadiusHit={}".format(rhRVV),
+                    "AVV RadiusHit={}".format(rhAVV),
+                    "SSVV RadiusHit={}".format(rhSSVV)],
+            zorders=[1, 3, 2],
+            line_styles=['-'] * len(data), markers=['v', 'o', '^'],
+            colors=['c', 'orange', 'b'],
+            title="Sphere radius={}".format(r),
+            x_label="Relative {} error".format(formatted_curvature),
+            y_label="Cumulative relative frequency",
+            outfile=outfile,
+            num_bins=20, normalize=True, cumulative=True,
+            x_range=x_range, y_range=y_range,
+            *args, **kwargs
+        )
 
 
 def plot_sphere_kappa_1_and_2_errors_noVTK(
@@ -2363,11 +2401,11 @@ if __name__ == "__main__":
     #                 FOLD, "sphere/noise0/files4plotting",
     #                 "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    for r in [10, 20]:
-        plot_sphere_curvature_errors_allVV(  # both curvatures
-            r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
-            # x_range=(0, 0.25)
-        )
+    # for r in [10, 20]:
+    #     plot_sphere_curvature_errors_allVV(  # both curvatures
+    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
+    #         x_range=(0, 0.25)
+    #     )
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
     #     RorAVV="RVV", vertex_based=True)
@@ -2391,11 +2429,15 @@ if __name__ == "__main__":
     #                 FOLD, "sphere/voxel/files4plotting",
     #                 "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    # for r in [10, 30]:
-    #     plot_sphere_curvature_errors_allVV(  # both curvatures
-    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True, x_range=(0, 0.7))
-    # plot_sphere_curvature_errors_allVV(  # both curvatures
-    #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, x_range=(0, 0.7))
+    for r in [10, 30]:
+        plot_sphere_curvature_errors_allVV(  # both curvatures
+            r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
+            x_range=(0, 0.7)
+        )
+    plot_sphere_curvature_errors_allVV(  # both curvatures
+        r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
+        x_range=(0, 0.7)
+    )
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
     #     RorAVV="RVV", vertex_based=True)

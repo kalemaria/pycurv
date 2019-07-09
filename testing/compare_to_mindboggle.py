@@ -226,7 +226,7 @@ if __name__ == '__main__':
                 'smooth_sphere', 'noisy_sphere',
                 'smooth_cylinder', 'noisy_cylinder']
     m = 0
-    ns = range(11, 16, 1)
+    ns = range(1, 11, 1)
     for surface_base, subfold in zip(surface_bases, subfolds):
         fold = join(test_mindboggle_output_fold, subfold)
         chdir(fold)
@@ -248,3 +248,29 @@ if __name__ == '__main__':
             else:  # cylinder
                 calculate_curvature_errors_cylinder(
                     10, curvatures_csv_file, errors_csv_file)
+
+    surface_base = 'smooth_sphere_r20.surface.'
+    subfold = 'smooth_sphere'
+    n = 2
+    fold = join(test_mindboggle_output_fold, subfold)
+    chdir(fold)
+    out_base = "{}mindboggle_m{}_n{}".format(surface_base, m, n)
+    curvatures_csv_file = join(
+        fold, "{}_curvatures.csv".format(out_base))
+    errors_csv_file = join(
+        fold, "{}_curvature_errors.csv".format(out_base))
+    calculate_curvature_errors_sphere(
+        20, curvatures_csv_file, errors_csv_file)
+
+    surface_base = 'noisy_sphere_r30.surface.'
+    subfold = 'noisy_sphere'
+    n = 2
+    fold = join(test_mindboggle_output_fold, subfold)
+    chdir(fold)
+    out_base = "{}mindboggle_m{}_n{}".format(surface_base, m, n)
+    curvatures_csv_file = join(
+        fold, "{}_curvatures.csv".format(out_base))
+    errors_csv_file = join(
+        fold, "{}_curvature_errors.csv".format(out_base))
+    calculate_curvature_errors_sphere(
+        30, curvatures_csv_file, errors_csv_file)
