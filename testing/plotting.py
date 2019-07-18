@@ -2434,10 +2434,10 @@ if __name__ == "__main__":
             r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
             x_range=(0, 0.7)
         )
-    plot_sphere_curvature_errors_allVV(  # both curvatures
-        r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
-        x_range=(0, 0.7)
-    )
+    # plot_sphere_curvature_errors_allVV(  # both curvatures
+    #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
+    #     x_range=(0, 0.7)
+    # )
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
     #     RorAVV="RVV", vertex_based=True)
@@ -2498,36 +2498,36 @@ if __name__ == "__main__":
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
         "comparison_to_mindboggle/plots/n_choice/n1-10")
 
-    # for surface_base, subfold in zip(surface_bases, subfolds):
-    #     fold = join(FOLDMB, subfold)
-    #     out_base = "{}mindboggle_m{}_nX".format(surface_base, m)
-    #     mb_errors_csv_file_template = join(
-    #         fold, "{}_curvature_errors.csv".format(out_base))
-    #     n_area_csv_file = join(
-    #         fold, "{}_{}_area.csv".format(out_base, curvature))
-    #     kwargs = {}
-    #     if surface_base.startswith("smooth_torus"):
-    #         kwargs["num_x_values"] = 5
-    #     plot_mindboggle_errors_different_n(
-    #         mb_errors_csv_file_template, ns, plot_fold_n_choice,
-    #         curvature=curvature, csv=n_area_csv_file, **kwargs)
+    for surface_base, subfold in zip(surface_bases, subfolds):
+        fold = join(FOLDMB, subfold)
+        out_base = "{}mindboggle_m{}_nX".format(surface_base, m)
+        mb_errors_csv_file_template = join(
+            fold, "{}_curvature_errors.csv".format(out_base))
+        n_area_csv_file = join(
+            fold, "{}_{}_area.csv".format(out_base, curvature))
+        kwargs = {}
+        if surface_base.startswith("smooth_torus"):
+            kwargs["num_x_values"] = 5
+        plot_mindboggle_errors_different_n(
+            mb_errors_csv_file_template, ns, plot_fold_n_choice,
+            curvature=curvature, csv=n_area_csv_file, **kwargs)
 
-    best_ns = [5, 10, 8, 4, 2, 8]  # for mean curvature
-    # best_radius_hits = [6, 9, 10, 9, 4, 8]
-    avv_errors_csv_files = [
-        "torus/noise0/files4plotting/torus_rr25_csr10.AVV_rh6.csv",
-        "torus/voxel/files4plotting/torus_rr25_csr10.AVV_rh9.csv",
-        "sphere/noise0/files4plotting/sphere_r10.AVV_rh10.csv",
-        "sphere/voxel/files4plotting/sphere_r10.AVV_rh9.csv",
-        "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.AVV_rh4.csv",
-        "cylinder/voxel/files4plotting/cylinder_r10_h25_eb0.AVV_rh8.csv"]
-    vtk_errors_csv_files = [
-        "torus/noise0/files4plotting/torus_rr25_csr10.VTK.csv",
-        "torus/voxel/files4plotting/torus_rr25_csr10.VTK.csv",
-        "sphere/noise0/files4plotting/sphere_r10.VTK.csv",
-        "sphere/voxel/files4plotting/sphere_r10.VTK.csv",
-        "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.VTK.csv",
-        "cylinder/voxel/files4plotting/cylinder_r10_h25_eb0.VTK.csv"]
+    # best_ns = [5, 10, 8, 4, 2, 8]  # for mean curvature
+    # # best_radius_hits = [6, 9, 10, 9, 4, 8]
+    # avv_errors_csv_files = [
+    #     "torus/noise0/files4plotting/torus_rr25_csr10.AVV_rh6.csv",
+    #     "torus/voxel/files4plotting/torus_rr25_csr10.AVV_rh9.csv",
+    #     "sphere/noise0/files4plotting/sphere_r10.AVV_rh10.csv",
+    #     "sphere/voxel/files4plotting/sphere_r10.AVV_rh9.csv",
+    #     "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.AVV_rh4.csv",
+    #     "cylinder/voxel/files4plotting/cylinder_r10_h25_eb0.AVV_rh8.csv"]
+    # vtk_errors_csv_files = [
+    #     "torus/noise0/files4plotting/torus_rr25_csr10.VTK.csv",
+    #     "torus/voxel/files4plotting/torus_rr25_csr10.VTK.csv",
+    #     "sphere/noise0/files4plotting/sphere_r10.VTK.csv",
+    #     "sphere/voxel/files4plotting/sphere_r10.VTK.csv",
+    #     "cylinder/noise0/files4plotting/cylinder_r10_h25_eb0.VTK.csv",
+    #     "cylinder/voxel/files4plotting/cylinder_r10_h25_eb0.VTK.csv"]
 
     # for i, surface_base in enumerate(surface_bases):
     #     fold = join(FOLDMB, subfolds[i])
