@@ -35,7 +35,7 @@ def get_freesurfer_curvatures(mean_curv_file, max_curv_file, min_curv_file, curv
 
 
 if __name__ == '__main__':
-    test_freesurfer_output_fold = "/fs/pool/pool-ruben/Maria/curvature/freesurfer/curv_test"
+    test_freesurfer_output_fold = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/comparison_to_others/test_freesurfer_output"
     subfolds = [#'smooth_torus', 'smooth_cylinder', 'smooth_sphere',
             'noisy_sphere', #'noisy_torus', 'noisy_cylinder'
             ]

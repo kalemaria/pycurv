@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export SUBJECTS_DIR=/fs/pool/pool-ruben/Maria/curvature/freesurfer/curv_test
+export SUBJECTS_DIR=/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/comparison_to_others/test_freesurfer_output
 cd $SUBJECTS_DIR
 
 for SUBJECT in noisy_sphere  # is a folder
