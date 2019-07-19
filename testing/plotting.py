@@ -34,12 +34,12 @@ __author__ = 'kalemanov'
 
 # FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
 FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
-       'comparison_to_mindboggle/test_vector_voting_output/'
+       'comparison_to_others/test_vector_voting_output/'
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 FOLDMB = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
-         "comparison_to_mindboggle/test_mindboggle_output/"
+         "comparison_to_others/test_mindboggle_output/"
 FOLDPLOTS = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
-            "comparison_to_mindboggle/plots/"
+            "comparison_to_others/plots/"
 LINEWIDTH = 4
 MARKERS = ['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*']
 COLORS = ['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r']
@@ -2496,7 +2496,7 @@ if __name__ == "__main__":
     curvature = "kappa1"  # "kappa2", "both", "mean_curvature"
     plot_fold_n_choice = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
-        "comparison_to_mindboggle/plots/n_choice/n1-10")
+        "comparison_to_others/plots/n_choice/n1-10")
 
     for surface_base, subfold in zip(surface_bases, subfolds):
         fold = join(FOLDMB, subfold)

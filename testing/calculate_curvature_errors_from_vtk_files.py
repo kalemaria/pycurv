@@ -217,7 +217,10 @@ def calculate_curvature_errors_torus(
 if __name__ == '__main__':
     test_mindboggle_output_fold = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
-        "comparison_to_mindboggle/test_mindboggle_output/")
+        "comparison_to_others/test_mindboggle_output/")
+    test_freesurfer_output_fold = (
+        "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
+        "comparison_to_others/test_freesurfer_output/")
     surface_bases = [
         'torus_rr25_csr10.surface.', 'noisy_torus_rr25_csr10.surface.',
         'smooth_sphere_r10.surface.', 'noisy_sphere_r10.surface.',
