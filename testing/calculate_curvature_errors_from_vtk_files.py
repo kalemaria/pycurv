@@ -290,7 +290,7 @@ if __name__ == '__main__':
     test_freesurfer_output_fold = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
         "comparison_to_others/test_freesurfer_output/")
-    a_s = range(1, 11, 1)
+    a_s = range(0, 11, 1)
     for surface_base, subfold in zip(surface_bases, subfolds):
         # fold = join(test_mindboggle_output_fold, subfold)
         fold = join(test_freesurfer_output_fold, subfold, "csv")

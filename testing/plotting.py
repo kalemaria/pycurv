@@ -38,6 +38,8 @@ FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
 FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 FOLDMB = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
          "comparison_to_others/test_mindboggle_output/"
+FOLDFS = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
+         "comparison_to_others/test_freesurfer_output/"
 FOLDPLOTS = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
             "comparison_to_others/plots/"
 LINEWIDTH = 4
@@ -1825,15 +1827,17 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         )
 
 
-def plot_mindboggle_errors_different_n(
-        mb_errors_csv_file_template, ns, plot_fold, curvature="kappa1",
-        x_range=None, y_range=(0, 1), title=None, csv=None, *args, **kwargs):
+def plot_errors_different_parameter(
+        errors_csv_file_template, parameter_name, parameter_values, plot_fold,
+        curvature="kappa1", x_range=None, y_range=(0, 1), title=None, csv=None,
+        *args, **kwargs):
     """
 
     Args:
-        mb_errors_csv_file_template: Mindboggle errors CSV file template with
-            'X' instead of n parameter value
-        ns (list): wanted n parameter values
+        errors_csv_file_template: errors CSV file template with
+            'X' instead of the parameter value
+        parameter_name (str): parameter name
+        parameter_values (list): wanted parameter values
         plot_fold (str): output folder
         curvature (str, optional): "kappa1" (default), "kappa2",
             "mean_curvature" or "both" for kappa1 and kappa2
@@ -1853,27 +1857,28 @@ def plot_mindboggle_errors_different_n(
         os.makedirs(plot_fold)
 
     base_filename = os.path.splitext(
-        os.path.basename(mb_errors_csv_file_template))[0]
+        os.path.basename(errors_csv_file_template))[0]
     outfile = str(os.path.join(plot_fold, base_filename)) + '.png'
     outfile = outfile.replace("curvature", curvature)
-    outfile = outfile.replace("X", "{}-{}".format(ns[0], ns[-1]))
+    outfile = outfile.replace("X", "{}-{}".format(
+        parameter_values[0], parameter_values[-1]))
 
     data = []
     labels = []
-    for n in ns:
-        mb_errors_csv_file = mb_errors_csv_file_template.replace('X', str(n))
+    for i in parameter_values:
+        errors_csv_file = errors_csv_file_template.replace('X', str(i))
 
         # read in the curvature errors from the CSV file:
-        mb_df = pd.read_csv(mb_errors_csv_file, sep=';')
+        df = pd.read_csv(errors_csv_file, sep=';')
         if curvature == "both":
-            mb_rel_kappa_1_errors = mb_df["kappa1RelErrors"].tolist()
-            mb_rel_kappa_2_errors = mb_df["kappa2RelErrors"].tolist()
-            data.append(mb_rel_kappa_1_errors + mb_rel_kappa_2_errors)
+            rel_kappa_1_errors = df["kappa1RelErrors"].tolist()
+            rel_kappa_2_errors = df["kappa2RelErrors"].tolist()
+            data.append(rel_kappa_1_errors + rel_kappa_2_errors)
         else:
-            mb_rel_curv_errors = mb_df["{}RelErrors".format(curvature)].values
-            data.append(mb_rel_curv_errors)
+            rel_curv_errors = df["{}RelErrors".format(curvature)].values
+            data.append(rel_curv_errors)
 
-        labels.append("n={}".format(n))
+        labels.append("{}={}".format(parameter_name, i))
 
     if x_range is None:
         x_range = (0, max([max(d) for d in data]))
@@ -1905,11 +1910,12 @@ def plot_mindboggle_errors_different_n(
         *args, **kwargs
     )
     i = hist_areas.index(max(hist_areas))
-    print("Best performance for {} is for n={}".format(curvature, ns[i]))
+    print("Best performance for {} is for n={}".format(
+        curvature, parameter_values[i]))
 
     if csv is not None:
         df = pd.DataFrame(index=None)
-        df["n"] = ns
+        df["n"] = parameter_values
         df["hist_area_{}".format(curvature)] = hist_areas
         df.to_csv(csv, sep=';')
 
@@ -2429,11 +2435,11 @@ if __name__ == "__main__":
     #                 FOLD, "sphere/voxel/files4plotting",
     #                 "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    for r in [10, 30]:
-        plot_sphere_curvature_errors_allVV(  # both curvatures
-            r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
-            x_range=(0, 0.7)
-        )
+    # for r in [10, 30]:
+    #     plot_sphere_curvature_errors_allVV(  # both curvatures
+    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
+    #         x_range=(0, 0.7)
+    #     )
     # plot_sphere_curvature_errors_allVV(  # both curvatures
     #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
     #     x_range=(0, 0.7)
@@ -2482,35 +2488,33 @@ if __name__ == "__main__":
     #     voxel=True, exclude_borders=5, rhVV=9, rhSSVV=8)
 
     # Mindboggle
-    surface_bases = [
-        'torus_rr25_csr10.surface.', 'noisy_torus_rr25_csr10.surface.',
-        'smooth_sphere_r10.surface.', 'noisy_sphere_r10.surface.',
-        'cylinder_r10_h25.surface.', 'noisy_cylinder_r10_h25.surface.'
-        ]
-    subfolds = ['smooth_torus', 'noisy_torus',
-                'smooth_sphere', 'noisy_sphere',
-                'smooth_cylinder', 'noisy_cylinder'
-                ]
-    m = 0
-    ns = range(1, 11)
-    curvature = "kappa1"  # "kappa2", "both", "mean_curvature"
-    plot_fold_n_choice = (
-        "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
-        "comparison_to_others/plots/n_choice/n1-10")
-
-    for surface_base, subfold in zip(surface_bases, subfolds):
-        fold = join(FOLDMB, subfold)
-        out_base = "{}mindboggle_m{}_nX".format(surface_base, m)
-        mb_errors_csv_file_template = join(
-            fold, "{}_curvature_errors.csv".format(out_base))
-        n_area_csv_file = join(
-            fold, "{}_{}_area.csv".format(out_base, curvature))
-        kwargs = {}
-        if surface_base.startswith("smooth_torus"):
-            kwargs["num_x_values"] = 5
-        plot_mindboggle_errors_different_n(
-            mb_errors_csv_file_template, ns, plot_fold_n_choice,
-            curvature=curvature, csv=n_area_csv_file, **kwargs)
+    # surface_bases = [
+    #     'torus_rr25_csr10.surface.', 'noisy_torus_rr25_csr10.surface.',
+    #     'smooth_sphere_r10.surface.', 'noisy_sphere_r10.surface.',
+    #     'cylinder_r10_h25.surface.', 'noisy_cylinder_r10_h25.surface.'
+    #     ]
+    # subfolds = ['smooth_torus', 'noisy_torus',
+    #             'smooth_sphere', 'noisy_sphere',
+    #             'smooth_cylinder', 'noisy_cylinder'
+    #             ]
+    # m = 0
+    # ns = range(1, 11)
+    # curvature = "kappa1"  # "kappa2", "both", "mean_curvature"
+    # plot_fold_n_choice = FOLDPLOTS + "/mindboggle_n_choice/n1-10"
+    #
+    # for surface_base, subfold in zip(surface_bases, subfolds):
+    #     fold = join(FOLDMB, subfold)
+    #     out_base = "{}mindboggle_m{}_nX".format(surface_base, m)
+    #     mb_errors_csv_file_template = join(
+    #         fold, "{}_curvature_errors.csv".format(out_base))
+    #     n_area_csv_file = join(
+    #         fold, "{}_{}_area.csv".format(out_base, curvature))
+    #     kwargs = {}
+    #     if surface_base.startswith("smooth_torus"):
+    #         kwargs["num_x_values"] = 5
+    #     plot_errors_different_parameter(
+    #         mb_errors_csv_file_template, 'n', ns, plot_fold_n_choice,
+    #         curvature=curvature, csv=n_area_csv_file, **kwargs)
 
     # best_ns = [5, 10, 8, 4, 2, 8]  # for mean curvature
     # # best_radius_hits = [6, 9, 10, 9, 4, 8]
@@ -2542,3 +2546,33 @@ if __name__ == "__main__":
     #         avv_errors_csv_file=avv_errors_csv_file,
     #         vtk_errors_csv_file=vtk_errors_csv_file,
     #         plot_fold=FOLDPLOTS, curvature=curvature, x_range=(0, 4))
+
+    # FreeSurfer
+    surface_bases = [
+        # 'torus_rr25_csr10.', 'noisy_torus_rr25_csr10.',
+        # 'smooth_sphere_r10.',
+        'noisy_sphere_r10.',
+        # 'cylinder_r10_h25.surface.', 'noisy_cylinder_r10_h25.surface.'
+        ]
+    subfolds = [# 'smooth_torus', 'noisy_torus',
+                # 'smooth_sphere',
+                'noisy_sphere',
+                # 'smooth_cylinder', 'noisy_cylinder'
+                ]
+    a_s = range(0, 11)
+    curvature = "both"  # "kappa1", "kappa2", "mean_curvature"
+    plot_fold_a_choice = join(FOLDPLOTS, "freesurfer_a_choice/a0-10")
+
+    for surface_base, subfold in zip(surface_bases, subfolds):
+        fold = join(FOLDFS, subfold, "csv")
+        out_base = "{}freesurfer_aX".format(surface_base)
+        fs_errors_csv_file_template = join(
+            fold, "{}_curvature_errors.csv".format(out_base))
+        a_area_csv_file = join(
+            fold, "{}_{}_area.csv".format(out_base, curvature))
+        kwargs = {}
+        if surface_base.startswith("smooth_torus"):
+            kwargs["num_x_values"] = 5
+        plot_errors_different_parameter(
+            fs_errors_csv_file_template, 'a', a_s, plot_fold_a_choice,
+            curvature=curvature, csv=a_area_csv_file, **kwargs)
