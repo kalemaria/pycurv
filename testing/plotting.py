@@ -1134,7 +1134,7 @@ def plot_sphere_curvature_errors_allVV(
     mb_csv = ("{}_r{}.surface.mindboggle_m0_n{}_"
               "curvature_errors.csv".format(which_sphere, r, n))
     fs_fold = join(FOLDFS, which_sphere, "csv")
-    fs_csv = "{}_r{}.freesurfer_a0_curvature_errors.csv".format(which_sphere, r)
+    fs_csv = "{}_r{}.freesurfer_curvature_errors.csv".format(which_sphere, r)
     plot_fold = join(FOLDPLOTS, which_sphere)
     fold = join(FOLD, subfolds, "files4plotting")
     if not os.path.exists(plot_fold):
@@ -1746,11 +1746,17 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
         mb_fold = "{}noisy_torus/".format(FOLDMB)
         mb_csv = ("noisy_torus_rr25_csr10.surface.mindboggle_m0_n{}_"
                   "curvature_errors.csv".format(n))
+        fs_fold = "{}noisy_torus/csv/".format(FOLDFS)
+        fs_csv = ("noisy_torus_rr25_csr10.freesurfer_"
+                  "curvature_errors.csv".format(n))
         plot_fold = "{}noisy_torus/".format(FOLDPLOTS)
     else:
         fold = "{}torus/noise0/files4plotting/".format(FOLD)
         mb_fold = "{}smooth_torus/".format(FOLDMB)
         mb_csv = ("torus_rr25_csr10.surface.mindboggle_m0_n{}_"
+                  "curvature_errors.csv".format(n))
+        fs_fold = "{}smooth_torus/csv/".format(FOLDFS)
+        fs_csv = ("smooth_torus_rr25_csr10.freesurfer_"
                   "curvature_errors.csv".format(n))
         plot_fold = "{}smooth_torus/".format(FOLDPLOTS)
     if not os.path.exists(plot_fold):
@@ -1777,6 +1783,9 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
 
         MB_kappa_errors = pd.read_csv("{}{}".format(
             mb_fold, mb_csv), sep=';')["kappa{}RelErrors".format(i)].tolist()
+
+        FS_kappa_errors = pd.read_csv("{}{}".format(
+            fs_fold, fs_csv), sep=';')["kappa{}RelErrors".format(i)].tolist()
 
         # directions
         data = [RVV_T_errors, AVV_T_errors, SSVV_T_errors]
@@ -1807,9 +1816,9 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
 
         # curvatures
         data = [RVV_kappa_errors, AVV_kappa_errors, SSVV_kappa_errors,
-                VTK_kappa_errors, MB_kappa_errors]
+                VTK_kappa_errors, MB_kappa_errors, FS_kappa_errors]
         outfile = (
-            "{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}.kappa_{}_errors.png"
+            "{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}_FS.kappa_{}_errors.png"
             .format(plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, i))
         if x_range_kappa is None:
             x_range = (0, max([max(d) for d in data]))
@@ -1823,10 +1832,11 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
                     r"AVV $\it RadiusHit$={}".format(rhAVV),
                     r"SSVV $\it RadiusHit$={}".format(rhSSVV),
                     "VTK",
-                    "MB n={}".format(n)],
-            zorders=[2, 4, 3, 1, 5],
-            line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*'],
-            colors=['c', 'orange', 'b', 'r', 'purple'],
+                    "Mindboggle n={}".format(n),
+                    "FreeSurfer"],
+            zorders=[2, 4, 3, 1, 5, 6],
+            line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*', '.'],
+            colors=['c', 'orange', 'b', 'r', 'purple', 'g'],
             title=None,
             x_label=r"$Relative\ \kappa_{}\ error$".format(i),
             y_label="Cumulative relative frequency",
@@ -2362,9 +2372,9 @@ if __name__ == "__main__":
     #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-    #     rhRVV=9, rhAVV=9, rhSSVV=5, n=2, x_range_kappa=(0, 0.07))  # best for kappa1
+    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 0.08))  # range for kappa1
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 1.4))  # best for kappa2
+    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 1.4))  # range for kappa2
     # vertex-based
     # plot_torus_kappa_1_and_2_T_1_and_2_errors(
     #     rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True,
@@ -2391,9 +2401,9 @@ if __name__ == "__main__":
     #                 FOLD, "torus/voxel/files4plotting",
     #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-    #     # best for kappa1, no legend, because overlaps
-    #     rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=True, x_range_kappa=(0, 4))
+    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
+        # best for kappa1, no legend, because overlaps
+        rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=True)  # , x_range_kappa=(0, 4)
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
     #     rhRVV=7, rhAVV=8, rhSSVV=4, n=2, voxel=True)  # best for kappa2
 
@@ -2419,7 +2429,7 @@ if __name__ == "__main__":
     # for r in [10, 20]:
     #     plot_sphere_curvature_errors_allVV(  # both curvatures
     #         r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
-    #         x_range=(0, 0.25)
+    #         # x_range=(0, 0.25)
     #     )
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
@@ -2444,11 +2454,11 @@ if __name__ == "__main__":
     #                 FOLD, "sphere/voxel/files4plotting",
     #                 "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    for r in [10]:  # 30
-        plot_sphere_curvature_errors_allVV(  # both curvatures
-            r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
-            x_range=(0, 0.7)
-        )
+    # for r in [10, 30]:
+    #     plot_sphere_curvature_errors_allVV(  # both curvatures
+    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
+    #         # x_range=(0, 0.7)
+    #     )
     # plot_sphere_curvature_errors_allVV(  # both curvatures
     #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
     #     x_range=(0, 0.7)
