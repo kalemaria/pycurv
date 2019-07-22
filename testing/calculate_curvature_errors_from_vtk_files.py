@@ -3,6 +3,7 @@ import numpy as np
 from os.path import join
 from os import chdir
 import vtk
+import re
 
 from errors_calculation import relative_error_scalar
 from test_vector_voting import torus_curvatures_and_directions
@@ -277,39 +278,39 @@ if __name__ == '__main__':
 
     # FreeSurfer
     surface_bases = [
-        # 'torus_rr25_csr10.', 'noisy_torus_rr25_csr10.',
-        # 'smooth_sphere_r10.',
-        'noisy_sphere_r10.',
-        # 'cylinder_r10_h25.', 'noisy_cylinder_r10_h25.'
+        'smooth_sphere_r10.', 'noisy_sphere_r10.',
+        'smooth_sphere_r20.', 'noisy_sphere_r30.',
+        'smooth_torus_rr25_csr10.', 'noisy_torus_rr25_csr10.',
+        # 'smooth_cylinder_r10_h25.', 'noisy_cylinder_r10_h25.'
     ]
-    subfolds = [  # 'smooth_torus', 'noisy_torus',
-        # 'smooth_sphere',
-        'noisy_sphere',
-        # 'smooth_cylinder', 'noisy_cylinder'
-    ]
+    subfolds = ['smooth_sphere', 'noisy_sphere',
+                'smooth_sphere', 'noisy_sphere',
+                'smooth_torus', 'noisy_torus',
+                # 'smooth_cylinder', 'noisy_cylinder'
+                ]
     test_freesurfer_output_fold = (
         "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/"
         "comparison_to_others/test_freesurfer_output/")
-    a_s = range(0, 11, 1)
     for surface_base, subfold in zip(surface_bases, subfolds):
-        # fold = join(test_mindboggle_output_fold, subfold)
         fold = join(test_freesurfer_output_fold, subfold, "csv")
         chdir(fold)
-        for a in a_s:
-            out_base = "{}freesurfer_a{}".format(surface_base, a)
-            curvatures_csv_file = join(
-                fold, "{}_curvatures.csv".format(out_base))
-            errors_csv_file = join(
-                fold, "{}_curvature_errors.csv".format(out_base))
-            if 'noisy_torus' in out_base:
-                calculate_curvature_errors_torus(
-                    25, 10, curvatures_csv_file, errors_csv_file, voxel=True)
-            elif 'torus' in out_base:
-                calculate_curvature_errors_torus(
-                    25, 10, curvatures_csv_file, errors_csv_file)
-            elif 'sphere' in out_base:
-                calculate_curvature_errors_sphere(
-                    10, curvatures_csv_file, errors_csv_file)
-            else:  # cylinder
-                calculate_curvature_errors_cylinder(
-                    10, curvatures_csv_file, errors_csv_file)
+        out_base = "{}freesurfer".format(surface_base)
+        curvatures_csv_file = join(
+            fold, "{}_curvatures.csv".format(out_base))
+        errors_csv_file = join(
+            fold, "{}_curvature_errors.csv".format(out_base))
+        if 'noisy_torus' in surface_base:
+            calculate_curvature_errors_torus(
+                25, 10, curvatures_csv_file, errors_csv_file, voxel=True)
+        elif 'torus' in surface_base:
+            calculate_curvature_errors_torus(
+                25, 10, curvatures_csv_file, errors_csv_file)
+        elif 'sphere' in surface_base:
+            # get the radius from surface_base with pattern matching
+            m = re.search('(?<=_r)\d+', surface_base)
+            r = int(m.group(0))
+            calculate_curvature_errors_sphere(
+                r, curvatures_csv_file, errors_csv_file)
+        else:  # cylinder
+            calculate_curvature_errors_cylinder(
+                10, curvatures_csv_file, errors_csv_file)

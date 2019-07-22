@@ -35,27 +35,32 @@ def get_freesurfer_curvatures(mean_curv_file, max_curv_file, min_curv_file, curv
 
 
 if __name__ == '__main__':
-    test_freesurfer_output_fold = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/comparison_to_others/test_freesurfer_output"
-    subfolds = [#'smooth_torus', 'smooth_cylinder', 'smooth_sphere',
-            'noisy_sphere', #'noisy_torus', 'noisy_cylinder'
-            ]
-    output_templates = [#'smooth_torus_rr25_csr10.aA.CURV.vtk', 'smooth_cylinder_r10_h25.aA.CURV.vtk', 'smooth_sphere_r10.aA.CURV.vtk',
-            'noisy_sphere_r10.aA.CURV.vtk', #'noisy_torus_rr25_csr10.aA.CURV.vtk', 'noisy_cylinder_r10_h25.aA.CURV.vtk'
-            ]
-    a_s = range(0, 11)
+    test_freesurfer_output_fold = (
+        "/fs/pool/pool-ruben/Maria/workspace/github/"
+        "my_tests_output/comparison_to_others/test_freesurfer_output")
+    subfolds = ['smooth_sphere', 'noisy_sphere',
+                'smooth_sphere', 'noisy_sphere',
+                'smooth_torus', 'noisy_torus',
+                'smooth_cylinder', 'noisy_cylinder'
+                ]
+    output_templates = [
+        'smooth_sphere_r10.CURV.vtk', 'noisy_sphere_r10.CURV.vtk',
+        'smooth_sphere_r20.CURV.vtk', 'noisy_sphere_r30.CURV.vtk',
+        'smooth_torus_rr25_csr10.CURV.vtk', 'noisy_torus_rr25_csr10.CURV.vtk',
+        'smooth_cylinder_r10_h25.CURV.vtk', 'noisy_cylinder_r10_h25.CURV.vtk'
+        ]
     for subfold, output_template in zip(subfolds, output_templates):
         vtk_fold = os.path.join(test_freesurfer_output_fold, subfold, "surf")
         csv_fold = os.path.join(test_freesurfer_output_fold, subfold, "csv")
         if not os.path.exists(csv_fold):
             os.makedirs(csv_fold)
-        for a in a_s:
-            mean_curv_file = os.path.join(vtk_fold, output_template.replace(
-                "A", str(a)).replace("CURV", "H"))
-            max_curv_file = os.path.join(vtk_fold, output_template.replace(
-                "A", str(a)).replace("CURV", "K1"))
-            min_curv_file = os.path.join(vtk_fold, output_template.replace(
-                "A", str(a)).replace("CURV", "K2"))
-            curvatures_file = os.path.join(csv_fold, output_template.replace(
-                "aA.CURV.vtk", "freesurfer_a{}_curvatures.csv".format(a)))
-            get_freesurfer_curvatures(
-                mean_curv_file, max_curv_file, min_curv_file, curvatures_file)
+        mean_curv_file = os.path.join(vtk_fold, output_template.replace(
+            "CURV", "H"))
+        max_curv_file = os.path.join(vtk_fold, output_template.replace(
+            "CURV", "K1"))
+        min_curv_file = os.path.join(vtk_fold, output_template.replace(
+            "CURV", "K2"))
+        curvatures_file = os.path.join(csv_fold, output_template.replace(
+            "CURV.vtk", "freesurfer_curvatures.csv"))
+        get_freesurfer_curvatures(
+            mean_curv_file, max_curv_file, min_curv_file, curvatures_file)
