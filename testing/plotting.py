@@ -1126,22 +1126,22 @@ def plot_sphere_curvature_errors_allVV(
     """
     if voxel:
         subfolds = "sphere/voxel/"
-        mb_fold = "{}noisy_sphere/".format(FOLDMB)
-        mb_csv = ("noisy_sphere_r{}.surface.mindboggle_m0_n{}_"
-                  "curvature_errors.csv".format(r, n))
-        plot_fold = ("{}noisy_sphere/".format(FOLDPLOTS))
+        which_sphere = "noisy_sphere"
     else:
         subfolds = "sphere/noise0/"
-        mb_fold = "{}smooth_sphere/".format(FOLDMB)
-        mb_csv = ("smooth_sphere_r{}.surface.mindboggle_m0_n{}_"
-                  "curvature_errors.csv".format(r, n))
-        plot_fold = ("{}smooth_sphere/".format(FOLDPLOTS))
-    fold = ("{}{}files4plotting/".format(FOLD, subfolds))
+        which_sphere = "smooth_sphere"
+    mb_fold = join(FOLDMB, which_sphere)
+    mb_csv = ("{}_r{}.surface.mindboggle_m0_n{}_"
+              "curvature_errors.csv".format(which_sphere, r, n))
+    fs_fold = join(FOLDFS, which_sphere, "csv")
+    fs_csv = "{}_r{}.freesurfer_a0_curvature_errors.csv".format(which_sphere, r)
+    plot_fold = join(FOLDPLOTS, which_sphere)
+    fold = join(FOLD, subfolds, "files4plotting")
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
     basename = "sphere_r{}".format(r)
 
-    df = pd.read_csv("{}{}.SSVV_rh{}.csv".format(
+    df = pd.read_csv("{}/{}.SSVV_rh{}.csv".format(
         fold, basename, rhSSVV), sep=';')
     if curvature == "both":
         SSVV_kappa_1_errors = df["kappa1RelErrors"].tolist()
@@ -1152,7 +1152,7 @@ def plot_sphere_curvature_errors_allVV(
     else:
         SSVV_curv_errors = df["{}RelErrors".format(curvature)].tolist()
 
-    df = pd.read_csv("{}{}.RVV_rh{}.csv".format(fold, basename, rhRVV), sep=';')
+    df = pd.read_csv("{}/{}.RVV_rh{}.csv".format(fold, basename, rhRVV), sep=';')
     if curvature == "both":
         RVV_kappa_1_errors = df["kappa1RelErrors"].tolist()
         RVV_kappa_2_errors = df["kappa2RelErrors"].tolist()
@@ -1160,7 +1160,7 @@ def plot_sphere_curvature_errors_allVV(
     else:
         RVV_curv_errors = df["{}RelErrors".format(curvature)].tolist()
 
-    df = pd.read_csv("{}{}.AVV_rh{}.csv".format(fold, basename, rhAVV), sep=';')
+    df = pd.read_csv("{}/{}.AVV_rh{}.csv".format(fold, basename, rhAVV), sep=';')
     if curvature == "both":
         AVV_kappa_1_errors = df["kappa1RelErrors"].tolist()
         AVV_kappa_2_errors = df["kappa2RelErrors"].tolist()
@@ -1168,7 +1168,7 @@ def plot_sphere_curvature_errors_allVV(
     else:
         AVV_curv_errors = df["{}RelErrors".format(curvature)].tolist()
 
-    df = pd.read_csv("{}{}.VTK.csv".format(fold, basename), sep=';')
+    df = pd.read_csv("{}/{}.VTK.csv".format(fold, basename), sep=';')
     if curvature == "both":
         VTK_kappa_1_errors = df["kappa1RelErrors"].tolist()
         VTK_kappa_2_errors = df["kappa2RelErrors"].tolist()
@@ -1176,7 +1176,7 @@ def plot_sphere_curvature_errors_allVV(
     else:
         VTK_curv_errors = df["{}RelErrors".format(curvature)].tolist()
 
-    df = pd.read_csv("{}{}".format(mb_fold, mb_csv), sep=';')
+    df = pd.read_csv("{}/{}".format(mb_fold, mb_csv), sep=';')
     if curvature == "both":
         MB_kappa_1_errors = df["kappa1RelErrors"].tolist()
         MB_kappa_2_errors = df["kappa2RelErrors"].tolist()
@@ -1184,12 +1184,20 @@ def plot_sphere_curvature_errors_allVV(
     else:
         MB_curv_errors = df["{}RelErrors".format(curvature)].tolist()
 
+    df = pd.read_csv("{}/{}".format(fs_fold, fs_csv), sep=';')
+    if curvature == "both":
+        FS_kappa_1_errors = df["kappa1RelErrors"].tolist()
+        FS_kappa_2_errors = df["kappa2RelErrors"].tolist()
+        FS_curv_errors = FS_kappa_1_errors + FS_kappa_2_errors
+    else:
+        FS_curv_errors = df["{}RelErrors".format(curvature)].tolist()
+
     if onlyVV is False:
         data = [RVV_curv_errors, AVV_curv_errors, SSVV_curv_errors,
-                VTK_curv_errors, MB_curv_errors]
+                VTK_curv_errors, MB_curv_errors, FS_curv_errors]
 
-        outfile = ("{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}.{}_errors.png".format(
-            plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, curvature))
+        outfile = ("{}/{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}_FS.{}_errors.png"
+            .format(plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, curvature))
         if x_range is None:
             x_range = (0, max([max(d) for d in data]))
         else:
@@ -1211,10 +1219,11 @@ def plot_sphere_curvature_errors_allVV(
                     "AVV RadiusHit={}".format(rhAVV),
                     "SSVV RadiusHit={}".format(rhSSVV),
                     "VTK",
-                    "MB n={}".format(n)],
-            zorders=[2, 4, 3, 1, 5],
-            line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*'],
-            colors=['c', 'orange', 'b', 'r', 'purple'],
+                    "Mindboggle n={}".format(n),
+                    "FreeSurfer"],
+            zorders=[2, 4, 3, 1, 5, 6],
+            line_styles=['-']*len(data), markers=['v', 'o', '^', 's', '*', '.'],
+            colors=['c', 'orange', 'b', 'r', 'purple', 'g'],
             title="Sphere radius={}".format(r),
             x_label="Relative {} error".format(formatted_curvature),
             y_label="Cumulative relative frequency",
@@ -1227,7 +1236,7 @@ def plot_sphere_curvature_errors_allVV(
         data = [RVV_curv_errors, AVV_curv_errors, SSVV_curv_errors]
 
         outfile = (
-        "{}{}.RVVrh{}_AVVrh{}_SSVVrh{}.{}_errors.png".format(
+        "{}/{}.RVVrh{}_AVVrh{}_SSVVrh{}.{}_errors.png".format(
             plot_fold, basename, rhRVV, rhAVV, rhSSVV, curvature))
         if x_range is None:
             x_range = (0, max([max(d) for d in data]))
@@ -2435,11 +2444,11 @@ if __name__ == "__main__":
     #                 FOLD, "sphere/voxel/files4plotting",
     #                 "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    # for r in [10, 30]:
-    #     plot_sphere_curvature_errors_allVV(  # both curvatures
-    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
-    #         x_range=(0, 0.7)
-    #     )
+    for r in [10]:  # 30
+        plot_sphere_curvature_errors_allVV(  # both curvatures
+            r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
+            x_range=(0, 0.7)
+        )
     # plot_sphere_curvature_errors_allVV(  # both curvatures
     #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
     #     x_range=(0, 0.7)
@@ -2548,31 +2557,31 @@ if __name__ == "__main__":
     #         plot_fold=FOLDPLOTS, curvature=curvature, x_range=(0, 4))
 
     # FreeSurfer
-    surface_bases = [
-        # 'torus_rr25_csr10.', 'noisy_torus_rr25_csr10.',
-        # 'smooth_sphere_r10.',
-        'noisy_sphere_r10.',
-        # 'cylinder_r10_h25.surface.', 'noisy_cylinder_r10_h25.surface.'
-        ]
-    subfolds = [# 'smooth_torus', 'noisy_torus',
-                # 'smooth_sphere',
-                'noisy_sphere',
-                # 'smooth_cylinder', 'noisy_cylinder'
-                ]
-    a_s = range(0, 11)
-    curvature = "both"  # "kappa1", "kappa2", "mean_curvature"
-    plot_fold_a_choice = join(FOLDPLOTS, "freesurfer_a_choice/a0-10")
-
-    for surface_base, subfold in zip(surface_bases, subfolds):
-        fold = join(FOLDFS, subfold, "csv")
-        out_base = "{}freesurfer_aX".format(surface_base)
-        fs_errors_csv_file_template = join(
-            fold, "{}_curvature_errors.csv".format(out_base))
-        a_area_csv_file = join(
-            fold, "{}_{}_area.csv".format(out_base, curvature))
-        kwargs = {}
-        if surface_base.startswith("smooth_torus"):
-            kwargs["num_x_values"] = 5
-        plot_errors_different_parameter(
-            fs_errors_csv_file_template, 'a', a_s, plot_fold_a_choice,
-            curvature=curvature, csv=a_area_csv_file, **kwargs)
+    # surface_bases = [
+    #     # 'torus_rr25_csr10.', 'noisy_torus_rr25_csr10.',
+    #     # 'smooth_sphere_r10.',
+    #     'noisy_sphere_r10.',
+    #     # 'cylinder_r10_h25.surface.', 'noisy_cylinder_r10_h25.surface.'
+    #     ]
+    # subfolds = [# 'smooth_torus', 'noisy_torus',
+    #             # 'smooth_sphere',
+    #             'noisy_sphere',
+    #             # 'smooth_cylinder', 'noisy_cylinder'
+    #             ]
+    # a_s = range(0, 11)
+    # curvature = "both"  # "kappa1", "kappa2", "mean_curvature"
+    # plot_fold_a_choice = join(FOLDPLOTS, "freesurfer_a_choice/a0-10")
+    #
+    # for surface_base, subfold in zip(surface_bases, subfolds):
+    #     fold = join(FOLDFS, subfold, "csv")
+    #     out_base = "{}freesurfer_aX".format(surface_base)
+    #     fs_errors_csv_file_template = join(
+    #         fold, "{}_curvature_errors.csv".format(out_base))
+    #     a_area_csv_file = join(
+    #         fold, "{}_{}_area.csv".format(out_base, curvature))
+    #     kwargs = {}
+    #     if surface_base.startswith("smooth_torus"):
+    #         kwargs["num_x_values"] = 5
+    #     plot_errors_different_parameter(
+    #         fs_errors_csv_file_template, 'a', a_s, plot_fold_a_choice,
+    #         curvature=curvature, csv=a_area_csv_file, **kwargs)
