@@ -196,6 +196,8 @@ def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
     if max_val is not None:
         values = [max_val if val > max_val else val for val in values]
 
+    print("maximal value: {}".format(max(values)))
+
     params = {}
     if x_range is not None:
         if isinstance(x_range, tuple) and len(x_range) == 2:
