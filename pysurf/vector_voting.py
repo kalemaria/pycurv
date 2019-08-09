@@ -403,8 +403,17 @@ def curvature_estimation(
     else:
         full_dist_map = None
 
+    if method == 'VV':
+        if page_curvature_formula:
+            method_print = 'NVV'
+        elif area2:
+            method_print = 'AVV'
+        else:
+            method_print = 'RVV'
+    if method == 'SSVV':
+        method_print = 'SSVV'
     print("\nSecond pass: estimating principle curvatures and directions for "
-          "surface patches using {}...".format(method))
+          "surface patches using {}...".format(method_print))
     t_begin2 = time.time()
 
     g_max = math.pi * radius_hit / 2.0

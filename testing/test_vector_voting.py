@@ -217,8 +217,7 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
     vtk_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
         base_filename, radius_hit)
-    log_file = '{}.SSVV_rh{}.log'.format(
-        base_filename, radius_hit)
+    log_file = '{}.SSVV_rh{}.log'.format(base_filename, radius_hit)
     sys.stdout = open(log_file, 'w')
 
     print("\n*** Generating a surface and a graph for a plane with "
@@ -306,9 +305,9 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
 @pytest.mark.parametrize(
     "radius,radius_hit,eb,inverse,methods,area2,voxel,vertex_based", [
         # smooth cylinder
-        # (10, 4, 5, False, ['VV'], True, False, False),  # AVV
-        # (10, 4, 5, False, ['VV'], False, False, False),  # RVV
-        # (10, 6, 5, False, ['SSVV'], False, False, False),
+        (10, 4, 5, False, ['VV'], True, False, False),  # AVV
+        (10, 4, 5, False, ['VV'], False, False, False),  # RVV
+        (10, 6, 5, False, ['SSVV'], False, False, False),
         # pytest.param(10, 5, 0, False, ['VV'], True, False, False,
         #              marks=pytest.mark.xfail(reason="too high errors")),  # AVV
         # pytest.param(10, 5, 0, False, ['VV'], False, False, False,
@@ -320,9 +319,9 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
         # noisy cylinder
         # pytest.param(10, 9, 0, False, ['VV'], True, True, False,
         #              marks=pytest.mark.xfail(reason="too high errors")),  # AVV
-        (10, 9, 5, False, ['VV'], True, True, False),  # AVV
-        (10, 8, 5, False, ['SSVV'], False, True, False),  # SSVV
-        (10, 10, 5, False, ['VV'], False, True, False),  # RVV
+        # (10, 9, 5, False, ['VV'], True, True, False),  # AVV
+        # (10, 8, 5, False, ['SSVV'], False, True, False),  # SSVV
+        # (10, 10, 5, False, ['VV'], False, True, False),  # RVV
     ])
 def test_cylinder_directions_curvatures(
         radius, radius_hit, eb, inverse, methods, area2, voxel, vertex_based,
@@ -412,7 +411,17 @@ def test_cylinder_directions_curvatures(
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
         base_filename, radius_hit)
-    log_file = '{}.{}_rh{}.log'.format(base_filename, methods[0], radius_hit)
+    methods_str = ""
+    for method in methods:
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
+        methods_str += (method + '_')
+    log_file = '{}.{}rh{}.log'.format(base_filename, methods_str, radius_hit)
     sys.stdout = open(log_file, 'w')
 
     if inverse:
@@ -723,7 +732,17 @@ def test_sphere_curvatures(
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
         base_filename, radius_hit)
-    log_file = '{}.{}_rh{}.log'.format(base_filename, methods[0], radius_hit)
+    methods_str = ""
+    for method in methods:
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
+        methods_str += (method + '_')
+    log_file = '{}.{}rh{}.log'.format(base_filename, methods_str, radius_hit)
     sys.stdout = open(log_file, 'w')
 
     if inverse:
@@ -972,8 +991,17 @@ def test_torus_directions_curvatures(
     VTK_eval_file = '{}.VTK.csv'.format(base_filename)
     temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
         base_filename, radius_hit)
-    log_file = '{}.{}_rh{}.log'.format(
-        base_filename, methods[0], radius_hit)
+    methods_str = ""
+    for method in methods:
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
+        methods_str += (method + '_')
+    log_file = '{}.{}rh{}.log'.format(base_filename, methods_str, radius_hit)
     sys.stdout = open(log_file, 'w')
 
     print("\n*** Generating a surface and a graph for a torus with ring "
@@ -1285,7 +1313,17 @@ def run_cylinder_with_creases(
                max_area_str, decim_str, vertex_based_str, epsilon, eta))
     temp_normals_graph_file = '{}.VV_rh{}_normals.gt'.format(
         base_filename, radius_hit)
-    log_file = '{}.{}_rh{}.log'.format(base_filename, methods[0], radius_hit)
+    methods_str = ""
+    for method in methods:
+        if method == 'VV':
+            if page_curvature_formula:
+                method = 'NVV'
+            elif area2:
+                method = 'AVV'
+            else:
+                method = 'RVV'
+        methods_str += (method + '_')
+    log_file = '{}.{}rh{}.log'.format(base_filename, methods_str, radius_hit)
     sys.stdout = open(log_file, 'w')
 
     if inverse:
