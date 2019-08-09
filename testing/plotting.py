@@ -609,8 +609,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
 
     # directions
     data = [VV_T_2_errors, SSVV_T_2_errors]
-    outfile = "{}{}_noise{}.{}_rh{}_SSVV_rh{}.T_2_errors.png".format(
-        plot_fold, basename, n, RorAVV, rhVV, rhSSVV)
+    outfile = "{}{}.{}_rh{}_SSVV_rh{}.T_2_errors.png".format(
+        plot_fold, basename, RorAVV, rhVV, rhSSVV)
     if RorAVV == "AVV":
         markers = ['o']
         colors = ['orange']
@@ -643,8 +643,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
 
     # curvatures
     data = [VV_kappa_1_errors, SSVV_kappa_1_errors, VTK_kappa_1_errors]
-    outfile = ("{}{}_noise{}.{}_rh{}_SSVV_rh{}_vs_VTK.kappa_1_errors.png"
-               .format(plot_fold, basename, n, RorAVV, rhVV, rhSSVV))
+    outfile = "{}{}.{}_rh{}_SSVV_rh{}_VTK.kappa_1_errors.png".format(
+        plot_fold, basename, RorAVV, rhVV, rhSSVV)
     markers.append('s')  # VTK
     colors.append('r')
     labels = [r"{} $\it RadiusHit$={}".format(RorAVV, rhVV),
@@ -656,6 +656,7 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         colors.append('purple')
         labels.append("MB n={}".format(n))
         zorders.append(4)
+        outfile = outfile.replace("VTK", "VTK_MB")
     if x_range_kappa is None:
         x_range_kappa = (0, max([max(d) for d in data]))
     else:
@@ -2403,9 +2404,9 @@ if __name__ == "__main__":
     #                 FOLD, "torus/voxel/files4plotting",
     #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-        # best for kappa1, no legend, because overlaps
-        rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=True)  # , x_range_kappa=(0, 4)
+    # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
+    #     # best for kappa1, no legend, because overlaps
+    #     rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=True)  # , x_range_kappa=(0, 4)
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
     #     rhRVV=7, rhAVV=8, rhSSVV=4, n=2, voxel=True)  # best for kappa2
 
@@ -2482,12 +2483,12 @@ if __name__ == "__main__":
     #                 FOLD, "cylinder/noise0/files4plotting",
     #                 "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-    #     exclude_borders=0, rhVV=5, rhSSVV=6, n=2)
-    # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-    #     exclude_borders=5, rhVV=5, rhSSVV=6)
+    plot_cylinder_T_2_and_kappa_1_errors(
+        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
+        exclude_borders=0, rhVV=5, rhSSVV=6, n=2)
+    plot_cylinder_T_2_and_kappa_1_errors(
+        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
+        exclude_borders=5, rhVV=5, rhSSVV=6)
     # plot_cylinder_T_2_and_kappa_1_errors(
     #    x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
     #    rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
