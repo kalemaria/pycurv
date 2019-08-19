@@ -417,6 +417,20 @@ class SurfaceGraph(graphs.SegmentationGraph):
         return (T_1, T_2, kappa_1, kappa_2,
                 gauss_curvature, mean_curvature, shape_index, curvedness)
 
+    def second_pass(self, vertex_v_ind, g_max, sigma, full_dist_map=None,
+            page_curvature_formula=False, A_max=0.0):
+        # TODO docsting
+        # Curvature votes collection for VV:
+        # None is returned if v does not have any neighbor belonging to
+        # a surface patch, then estimate_curvature will return Nones as well
+        B_v = self.collect_curvature_votes(
+            vertex_v_ind, g_max, sigma, full_dist_map,
+            page_curvature_formula, A_max)
+        # Curvature estimation for VV:
+        # returns: T_1, T_2, kappa_1, kappa_2, gauss_curvature,
+        # mean_curvature, shape_index, curvedness
+        return self.estimate_curvature(vertex_v_ind, B_v)
+
     def gen_curv_vote(self, poly_surf, vertex_v, radius_hit):
         """
         Implements the third pass of the method of Tong & Tang et al., 2005,
@@ -1924,3 +1938,11 @@ class TriangleGraph(SurfaceGraph):
             V_v += w_i * V_i
 
         return len(neighbor_idx_to_dist), V_v
+
+    def first_pass(self, vertex_v_ind, g_max, A_max, sigma, full_dist_map=None):
+        # TODO docsting
+        num_neighbors, V_v = self.collect_normal_votes(
+            vertex_v_ind, g_max, A_max, sigma, full_dist_map)
+        class_v, N_v, T_v = self.estimate_normal(
+            vertex_v_ind, V_v, epsilon=0, eta=0)
+        return num_neighbors, class_v, N_v, T_v

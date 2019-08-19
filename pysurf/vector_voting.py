@@ -230,6 +230,7 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
 
     collect_normal_votes = sg.collect_normal_votes
     estimate_normal = sg.estimate_normal
+    first_pass = sg.first_pass
     num_v = sg.graph.num_vertices()
     print("number of vertices: {}".format(num_v))
     classes_counts = {}
@@ -239,51 +240,23 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     vp_T_v = sg.graph.vp.T_v
 
     if cores > 1:  # parallel processing
-        t_begin1_1 = time.time()
         p = pp.ProcessPool(cores)
         print('Opened a pool with {} processes'.format(cores))
-
-        # output is a list with 2 columns:
-        # column 0 = num_neighbors (int)
-        # column 1 = V_v (3x3 float array)
-        # each row i is of vertex v, its index == i
-        if sg.__class__.__name__ == "TriangleGraph":
-            results1_list = p.map(partial(collect_normal_votes,
-                                          g_max=g_max, A_max=A_max, sigma=sigma,
-                                          full_dist_map=full_dist_map),
-                                  range(num_v))  # a list of vertex v indices
-        else:  # PointGraph
-            results1_list = p.map(partial(collect_normal_votes,
-                                          g_max=g_max, A_max=A_max, sigma=sigma),
-                                  range(num_v))  # a list of vertex v indices
-        results1_array = np.array(results1_list, dtype=object)
-        # Calculating average neighbors number:
-        num_neighbors_array = results1_array[:, 0]
-        avg_num_neighbors = np.mean(num_neighbors_array)
-        # Input of the next parallel calculation:
-        V_v_array = results1_array[:, 1]
-        t_end1_1 = time.time()
-        duration1_1 = t_end1_1 - t_begin1_1
-
-        t_begin1_2 = time.time()
-        # output is a list with 3 columns:
-        # column 0 = orientation class of the vertex (int)
-        # column 1 = N_v (3x1 float array, zeros if class=2 or 3)
-        # column 2 = T_v (3x1 float array, zeros if class=1 or 3)
-        # each row i is of vertex v, its index == i
-        results2_list = p.map(
-            partial(estimate_normal, epsilon=epsilon, eta=eta),
-            range(num_v), V_v_array)
+        results_list = p.map(partial(first_pass,
+                                     g_max=g_max, A_max=A_max, sigma=sigma,
+                                     full_dist_map=full_dist_map),
+                             range(num_v))  # a list of vertex v indices
         p.close()
         p.clear()
-        results2_array = np.array(results2_list, dtype=object)
-        class_v_array = results2_array[:, 0]
-        N_v_array = results2_array[:, 1]
-        T_v_array = results2_array[:, 2]
-        t_end1_2 = time.time()
-        duration1_2 = t_end1_2 - t_begin1_2
 
-        t_begin1_3 = time.time()
+        results_array = np.array(results_list, dtype=object)
+        # Calculating average neighbors number:
+        num_neighbors_array = results_array[:, 0]
+        avg_num_neighbors = np.mean(num_neighbors_array)
+        class_v_array = results_array[:, 1]
+        N_v_array = results_array[:, 2]
+        T_v_array = results_array[:, 3]
+
         # Adding the estimated properties to the graph and counting classes:
         for i in range(num_v):
             v = vertex(i)
@@ -294,8 +267,6 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
                 classes_counts[class_v_array[i]] += 1
             except KeyError:
                 classes_counts[class_v_array[i]] = 1
-        t_end1_3 = time.time()
-        duration1_3 = t_end1_3 - t_begin1_3
 
     else:  # cores == 1, sequential processing
         sum_num_neighbors = 0
@@ -318,9 +289,6 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
             except KeyError:
                 classes_counts[class_v] = 1
         avg_num_neighbors = float(sum_num_neighbors) / float(num_v)
-        duration1_1 = "NA"
-        duration1_2 = "NA"
-        duration1_3 = "NA"
 
     # Printing out some numbers concerning the first pass:
     print("Average number of geodesic neighbors for all vertices: {}".format(
@@ -338,9 +306,8 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
 
     if runtimes != '':
         with open(runtimes, 'a') as f:
-            f.write("{};{};{};{};{};{};{};{};{};".format(
-                num_v, radius_hit, g_max, avg_num_neighbors, cores, duration1,
-                duration1_1, duration1_2, duration1_3))
+            f.write("{};{};{};{};{};{};".format(
+                num_v, radius_hit, g_max, avg_num_neighbors, cores, duration1))
 
     # Save the graph to a file for use by different methods in the second run:
     sg.graph.save(graph_file)
@@ -464,6 +431,7 @@ def curvature_estimation(
     collect_curvature_votes = sg.collect_curvature_votes
     gen_curv_vote = sg.gen_curv_vote
     estimate_curvature = sg.estimate_curvature
+    second_pass = sg.second_pass
     orientation_class = sg.graph.vp.orientation_class
     add_curvature_descriptors_to_vertex = sg.add_curvature_descriptors_to_vertex
     graph_to_triangle_poly = sg.graph_to_triangle_poly
@@ -486,30 +454,19 @@ def curvature_estimation(
 
     if method == "VV":
         if cores > 1:  # parallel processing
-            t_begin2_1 = time.time()
             p = pp.ProcessPool(cores)
             print('Opened a pool with {} processes'.format(cores))
-
-            # Curvature votes collection for VV:
-            # None is returned if v does not have any neighbor belonging to
-            # a surface patch, then estimate_curvature will return Nones as well
-            B_v_list = p.map(partial(
-                collect_curvature_votes, g_max=g_max, sigma=sigma,
-                page_curvature_formula=page_curvature_formula, A_max=A_max,
-                full_dist_map=full_dist_map),
-                good_vertices_ind)
-            t_end2_1 = time.time()
-            duration2_1 = t_end2_1 - t_begin2_1
-
-            t_begin2_2 = time.time()
-            # Curvature estimation for VV:
             # results_list has same length as good_vertices_ind
             # columns: T_1, T_2, kappa_1, kappa_2, gauss_curvature,
             # mean_curvature, shape_index, curvedness
-            results_list = p.map(partial(estimate_curvature),
-                                 good_vertices_ind, B_v_list)
+            results_list = p.map(partial(
+                second_pass, g_max=g_max, sigma=sigma,
+                page_curvature_formula=page_curvature_formula, A_max=A_max,
+                full_dist_map=full_dist_map),
+                good_vertices_ind)
             p.close()
             p.clear()
+
             results_array = np.array(results_list, dtype=object)
             T_1_array = results_array[:, 0]
             T_2_array = results_array[:, 1]
@@ -519,10 +476,7 @@ def curvature_estimation(
             mean_curvature_array = results_array[:, 5]
             shape_index_array = results_array[:, 6]
             curvedness_array = results_array[:, 7]
-            t_end2_2 = time.time()
-            duration2_2 = t_end2_2 - t_begin2_2
 
-            t_begin2_3 = time.time()
             # Add the curvature descriptors as properties to the graph:
             # (v_ind is vertex v index, i is v_ind index in results arrays)
             for i, v_ind in enumerate(good_vertices_ind):
@@ -532,8 +486,6 @@ def curvature_estimation(
                     kappa_2_array[i], gauss_curvature_array[i],
                     mean_curvature_array[i], shape_index_array[i],
                     curvedness_array[i])
-            t_end2_3 = time.time()
-            duration2_3 = t_end2_3 - t_begin2_3
 
         else:  # cores == 1, sequential processing
             # Curvature votes collection and estimation for VV:
@@ -546,9 +498,6 @@ def curvature_estimation(
                 # Add the properties to the graph:
                 v = vertex(v_ind)
                 add_curvature_descriptors_to_vertex(v, *results)
-            duration2_1 = "NA"
-            duration2_2 = "NA"
-            duration2_3 = "NA"
 
     # Transforming the resulting graph to a surface with triangles:
     surface_curv = graph_to_triangle_poly(verbose=False)
@@ -563,7 +512,6 @@ def curvature_estimation(
     # - duration2
     if runtimes != '':
         with open(runtimes, 'a') as f:
-            f.write("{};{};{};{};{}\n".format(
-                method, duration2, duration2_1, duration2_2, duration2_3))
+            f.write("{};{}\n".format(method, duration2))
 
     return sg, surface_curv

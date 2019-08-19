@@ -905,16 +905,15 @@ def test_sphere_curvatures(
 #         # (25, 10, 0, ['VV'], False, False, '', 4, False),  # RVV, smooth
 #         # (25, 10, 0, ['SSVV'], False, False, '', 4, False),  # SSVV, smooth
 #     ])
-@pytest.mark.xfail(reason="too high errors")
 @pytest.mark.parametrize("cores", range(1, 21))
 @pytest.mark.parametrize(
     "rr,csr,subdivisions,radius_hit,methods,area2,voxel,vertex_based,runtimes",
     [
         (25, 10, 0, 9, ['VV'], True, False, False,
-         "{}torus/noise0/files4plotting/torus_rr25_csr10_AVV_runtimes.csv".format(
-             FOLD))
+         "{}torus/noise0/files4plotting/"
+         "torus_rr25_csr10_AVV_runtimes_joined_pass1_and_2.csv".format(FOLD))
     ])
-# @pytest.mark.xfail(reason="too high errors")
+@pytest.mark.xfail(reason="too high errors")
 # @pytest.mark.parametrize(
 #     "rr,csr,subdivisions,radius_hit,methods,area2,voxel,runtimes,cores,vertex_based", [
 #         (25, 10, 0, 9, ['VV'], False, False, '', 4, False),  # RVV
@@ -1080,9 +1079,8 @@ def test_torus_directions_curvatures(
     # Running the modified Normal Vector Voting algorithm:
     if runtimes != '' and not os.path.isfile(runtimes):
         with open(runtimes, 'w') as f:
-            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;"
-                    "duration1;duration1_1;duration1_2;duration1_3;"
-                    "method;duration2;duration2_1;duration2_2;duration2_3\n")
+            f.write("num_v;radius_hit;g_max;avg_num_neighbors;cores;duration1;"
+                    "method;duration2\n")
     method_sg_surf_dict = normals_directions_and_curvature_estimation(
         sg, radius_hit, methods=methods,
         page_curvature_formula=page_curvature_formula,
