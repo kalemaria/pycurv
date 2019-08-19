@@ -247,10 +247,15 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         # column 0 = num_neighbors (int)
         # column 1 = V_v (3x3 float array)
         # each row i is of vertex v, its index == i
-        results1_list = p.map(
-            partial(collect_normal_votes, g_max=g_max, A_max=A_max, sigma=sigma,
-                    full_dist_map=full_dist_map),
-            range(num_v))  # a list of vertex v indices
+        if sg.__class__.__name__ == "TriangleGraph":
+            results1_list = p.map(partial(collect_normal_votes,
+                                          g_max=g_max, A_max=A_max, sigma=sigma,
+                                          full_dist_map=full_dist_map),
+                                  range(num_v))  # a list of vertex v indices
+        else:  # PointGraph
+            results1_list = p.map(partial(collect_normal_votes,
+                                          g_max=g_max, A_max=A_max, sigma=sigma),
+                                  range(num_v))  # a list of vertex v indices
         results1_array = np.array(results1_list, dtype=object)
         # Calculating average neighbors number:
         num_neighbors_array = results1_array[:, 0]
@@ -295,8 +300,12 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     else:  # cores == 1, sequential processing
         sum_num_neighbors = 0
         for i in range(num_v):
-            num_neighbors, V_v = collect_normal_votes(
-                i, g_max, A_max, sigma, full_dist_map=full_dist_map)
+            if sg.__class__.__name__ == "TriangleGraph":
+                num_neighbors, V_v = collect_normal_votes(
+                    i, g_max, A_max, sigma, full_dist_map=full_dist_map)
+            else:  # PointGraph
+                num_neighbors, V_v = collect_normal_votes(
+                    i, g_max, A_max, sigma)
             sum_num_neighbors += num_neighbors
             class_v, N_v, T_v = estimate_normal(i, V_v, epsilon, eta)
             # Adding the estimated properties to the graph and counting classes:
