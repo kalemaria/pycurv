@@ -30,7 +30,7 @@ __author__ = 'kalemanov'
 def normals_directions_and_curvature_estimation(
         sg, radius_hit, epsilon=0, eta=0, methods=['VV'],
         page_curvature_formula=False, full_dist_map=False, graph_file='temp.gt',
-        area2=True, only_normals=False, poly_surf=None, cores=4, runtimes=''):
+        area2=True, only_normals=False, poly_surf=None, cores=6, runtimes=''):
     """
     Runs the modified Normal Vector Voting algorithm (with different options for
     the second pass) to estimate surface orientation, principle curvatures and
@@ -120,7 +120,7 @@ def normals_directions_and_curvature_estimation(
 
 
 def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
-                       cores=4, runtimes='', graph_file='temp.gt'):
+                       cores=6, runtimes='', graph_file='temp.gt'):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation (classification in surface patch with normal, crease junction
@@ -153,7 +153,8 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
             and estimate_normal) in parallel (default 8)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default '')
-        graph_file (str, optional): file path to save the graph
+        graph_file (str, optional): file path to save the graph, default file
+            'temp.gt'
 
     Returns:
         None
@@ -197,28 +198,29 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     # vertex (if the vertex belongs to class 2):
     sg.graph.vp.T_v = sg.graph.new_vertex_property("vector<float>")
 
-    t_end0 = time.time()
-    duration0 = t_end0 - t_begin0
-    minutes, seconds = divmod(duration0, 60)
-    print('Preparation took: {} min {} s' .format(minutes, seconds))
-
     if full_dist_map is True and sg.__class__.__name__ == "TriangleGraph":
         # * Distance map between all pairs of vertices *
-        t_begin0 = time.time()
+        t_begin0_2 = time.time()
         print("\nCalculating the full distance map...")
         full_dist_map = shortest_distance(  # <class 'graph_tool.PropertyMap'>
             sg.graph, weights=sg.graph.ep.distance)
-        t_end0 = time.time()
-        duration0 = t_end0 - t_begin0
-        minutes, seconds = divmod(duration0, 60)
+        t_end0_2 = time.time()
+        duration0_2 = t_end0_2 - t_begin0_2
+        minutes, seconds = divmod(duration0_2, 60)
         print('Calculation of the full distance map took: {} min {} s'.format(
             minutes, seconds))
     else:
         full_dist_map = None
 
+    t_end0 = time.time()
+    duration0 = t_end0 - t_begin0
+    minutes, seconds = divmod(duration0, 60)
+    print('Preparation took: {} min {} s'.format(minutes, seconds))
+
     # * For all vertices, collecting normal vector votes, calculating
     # average number of the geodesic neighbors and classifying the orientation
     # of each vertex *
+    t_begin1 = time.time()
     print("\nRunning modified Vector Voting for all vertices...")
 
     if eta == 0 and epsilon == 0:
@@ -226,7 +228,6 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     else:
         print("\nFirst pass: classifying orientation and estimating normals for"
               " surface patches and tangents for creases...")
-    t_begin1 = time.time()
 
     collect_normal_votes = sg.collect_normal_votes
     estimate_normal = sg.estimate_normal
@@ -299,6 +300,9 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     if 3 in classes_counts:
         print("{} no preferred orientation".format(classes_counts[3]))
 
+    # Save the graph to a file for use by different methods in the second run:
+    sg.graph.save(graph_file)
+
     t_end1 = time.time()
     duration1 = t_end1 - t_begin1
     minutes, seconds = divmod(duration1, 60)
@@ -309,14 +313,11 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
             f.write("{};{};{};{};{};{};".format(
                 num_v, radius_hit, g_max, avg_num_neighbors, cores, duration1))
 
-    # Save the graph to a file for use by different methods in the second run:
-    sg.graph.save(graph_file)
-
 
 def curvature_estimation(
         radius_hit, graph_file='temp.gt', method='VV',
         page_curvature_formula=False, area2=True, poly_surf=None,
-        full_dist_map=False, cores=4, runtimes='', vertex_based=False, sg=None):
+        full_dist_map=False, cores=6, runtimes='', vertex_based=False, sg=None):
     """
     Runs the second pass of the modified Normal Vector Voting algorithm with
     the given method to estimate principle curvatures and directions for a
@@ -357,6 +358,8 @@ def curvature_estimation(
         vtkPolyData surface of triangles with classified orientation and
         estimated normals or tangents, principle curvatures and directions
     """
+    # Preparation (calculations that are the same for the whole graph)
+    t_begin0 = time.time()
     if sg is None:
         if vertex_based:
             sg = PointGraph()
@@ -370,30 +373,17 @@ def curvature_estimation(
 
     if full_dist_map is True and sg.__class__.__name__ == "TriangleGraph":
         # * Distance map between all pairs of vertices *
-        t_begin0 = time.time()
+        t_begin0_2 = time.time()
         print("\nCalculating the full distance map...")
         full_dist_map = shortest_distance(  # <class 'graph_tool.PropertyMap'>
             sg.graph, weights=sg.graph.ep.distance)
-        t_end0 = time.time()
-        duration0 = t_end0 - t_begin0
-        minutes, seconds = divmod(duration0, 60)
+        t_end0_2 = time.time()
+        duration0_2 = t_end0_2 - t_begin0_2
+        minutes, seconds = divmod(duration0_2, 60)
         print('Calculation of the full distance map took: {} min {} s'.format(
             minutes, seconds))
     else:
         full_dist_map = None
-
-    if method == 'VV':
-        if page_curvature_formula:
-            method_print = 'NVV'
-        elif area2:
-            method_print = 'AVV'
-        else:
-            method_print = 'RVV'
-    else:  # method == 'SSVV'
-        method_print = 'SSVV'
-    print("\nSecond pass: estimating principle curvatures and directions for "
-          "surface patches using {}...".format(method_print))
-    t_begin2 = time.time()
 
     g_max = math.pi * radius_hit / 2.0
     sigma = g_max / 3.0
@@ -424,6 +414,24 @@ def curvature_estimation(
     # vertex property for storing the curvedness calculated from kappa_1 and
     # kappa_2 at the corresponding triangle:
     sg.graph.vp.curvedness_VV = sg.graph.new_vertex_property("float")
+
+    t_end0 = time.time()
+    duration0 = t_end0 - t_begin0
+    minutes, seconds = divmod(duration0, 60)
+    print('Preparation took: {} min {} s'.format(minutes, seconds))
+
+    t_begin2 = time.time()
+    if method == 'VV':
+        if page_curvature_formula:
+            method_print = 'NVV'
+        elif area2:
+            method_print = 'AVV'
+        else:
+            method_print = 'RVV'
+    else:  # method == 'SSVV'
+        method_print = 'SSVV'
+    print("\nSecond pass: estimating principle curvatures and directions for "
+          "surface patches using {}...".format(method_print))
 
     # shortcuts
     vertices = sg.graph.vertices
