@@ -9,7 +9,7 @@ from graph_tool.topology import (shortest_distance, label_largest_component,
 
 import graphs
 import pexceptions
-from pysurf_io import TypesConverter
+from curvaturia_io import TypesConverter
 from curvature_definitions import *
 from surface import (add_point_normals_to_vtk_surface,
                      add_curvature_to_vtk_surface, rescale_surface)

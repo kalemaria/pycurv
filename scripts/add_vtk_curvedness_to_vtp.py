@@ -1,8 +1,8 @@
 from graph_tool import load_graph
 import os
 
-from pysurf import TriangleGraph, calculate_curvedness
-from pysurf import pysurf_io as io
+from curvaturia import TriangleGraph, calculate_curvedness
+from curvaturia import curvaturia_io as io
 
 # Read in graph GT file
 tg_file = '/fs/gpfs03/lv04/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/' \

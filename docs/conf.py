@@ -138,7 +138,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pysurf', u'PySurf Documentation',
+    (master_doc, 'curvaturia', u'PySurf Documentation',
      [author], 1)
 ]
 
@@ -171,7 +171,7 @@ texinfo_documents = [
 # would mean that specific document would be compressed
 # regardless of the global pdf_compressed setting.
 pdf_documents = [
-    (master_doc, u'pysurf', u'PySurf', author),
+    (master_doc, u'curvaturia', u'PySurf', author),
 ]
 # A comma-separated list of custom stylesheets. Example:
 pdf_stylesheets = ['sphinx','kerning','a4']

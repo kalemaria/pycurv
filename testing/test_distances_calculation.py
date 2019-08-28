@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import shutil
 
-from pysurf import pysurf_io as io
+from curvaturia import curvaturia_io as io
 from scripts import distances_and_thicknesses_calculation
 
 """

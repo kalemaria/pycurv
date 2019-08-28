@@ -1,8 +1,8 @@
 from graph_tool import load_graph
 import os
 
-from pysurf import TriangleGraph
-from pysurf import pysurf_io as io
+from curvaturia import TriangleGraph
+from curvaturia import curvaturia_io as io
 
 tg_file = '/fs/gpfs03/lv04/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/' \
           '180830_TITAN_l2_t2half/TCB_180830_l2_t2half.cER.AVV_rh10.gt'

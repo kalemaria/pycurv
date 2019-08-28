@@ -1,4 +1,4 @@
-# polyqIB
+# curvaturia
 This software was developed to analyze the membrane-bound ribosome density and curvature of ER membranes in cryo-electron tomograms.
 
 # ribosome_centers_mapping folder

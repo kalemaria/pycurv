@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(
-    name='PySurf',
+    name='curvaturia',
     version='1.0',
-    packages=['pysurf', 'scripts', 'testing'],
+    packages=['curvaturia', 'scripts', 'testing'],
     url='',
     license='',
     author='Maria Kalemanov, Antonio Martinez-Sanchez',

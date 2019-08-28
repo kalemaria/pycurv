@@ -10,11 +10,11 @@ from scipy import ndimage
 import vtk  # for Anna's workflow
 import os
 
-from pysurf import (
+from curvaturia import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
     TriangleGraph, PointGraph,
     curvature_estimation)
-from pysurf import pysurf_io as io
+from curvaturia import curvaturia_io as io
 
 """
 A script with an example application of the PySurf package for estimation of

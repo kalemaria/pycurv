@@ -2,7 +2,7 @@ from pathlib2 import PurePath
 import numpy as np
 from curvature_calculation import (new_workflow,
                                    extract_curvatures_after_new_workflow)
-from pysurf import pysurf_io as io
+from curvaturia import curvaturia_io as io
 
 """
 Runs for curvature paper.

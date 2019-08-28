@@ -5,7 +5,7 @@ import pandas as pd
 from pathlib2 import PurePath
 from itertools import cycle
 
-from pysurf import pexceptions
+from curvaturia import pexceptions
 from errors_calculation import calculate_histogram_area
 
 import matplotlib.pyplot as plt

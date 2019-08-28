@@ -9,8 +9,8 @@ import vtk
 # import cProfile
 # import pstats
 
-from pysurf import pysurf_io as io
-from pysurf import (
+from curvaturia import curvaturia_io as io
+from curvaturia import (
     TriangleGraph, PointGraph, normals_directions_and_curvature_estimation,
     nice_acos, nice_asin)
 from synthetic_surfaces import (

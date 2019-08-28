@@ -3,9 +3,9 @@ import math
 import numpy as np
 # import os
 
-from pysurf import pysurf_io as io
-from pysurf import (pexceptions, surface_graphs, run_gen_surface,
-                    reverse_sense_and_normals)
+from curvaturia import curvaturia_io as io
+from curvaturia import (pexceptions, surface_graphs, run_gen_surface,
+                        reverse_sense_and_normals)
 from synthetic_volumes import SphereMask, CylinderMask, TorusMask, ConeMask
 
 """

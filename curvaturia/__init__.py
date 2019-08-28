@@ -14,7 +14,7 @@ The following modules are exported by the package:
 """
 
 from pexceptions import *
-from pysurf_io import *
+from curvaturia_io import *
 from graphs import SegmentationGraph
 from ribosome_density import *
 from surface_graphs import *

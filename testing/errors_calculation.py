@@ -1,6 +1,6 @@
 import numpy as np
 
-from pysurf import nice_acos
+from curvaturia import nice_acos
 
 
 def absolute_error_scalar(true_value, estimated_value):
