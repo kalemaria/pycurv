@@ -1,10 +1,10 @@
 """
-PySurf package can be used to analyze the membrane-bound ribosome density and
+curvaturia package can be used to analyze the membrane-bound ribosome density and
 curvature of ER membranes in cryo-electron tomograms.
 
 The following modules are exported by the package:
     - pexceptions
-    - pysurf_io
+    - curvaturia_io
     - graphs
     - ribosome_density
     - run_gen_surface

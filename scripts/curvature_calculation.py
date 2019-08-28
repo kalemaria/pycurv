@@ -17,7 +17,7 @@ from curvaturia import (
 from curvaturia import curvaturia_io as io
 
 """
-A script with an example application of the PySurf package for estimation of
+A script with an example application of the curvaturia package for estimation of
 membrane curvature.
 
 Author: Maria Kalemanov (Max Planck Institute for Biochemistry)

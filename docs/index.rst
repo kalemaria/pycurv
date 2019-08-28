@@ -1,14 +1,14 @@
-.. PySurf documentation master file, created by
+.. curvaturia documentation master file, created by
    sphinx-quickstart on Fri Jul 28 17:36:44 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to PySurf's documentation!
+Welcome to curvaturia's documentation!
 ==================================
 
 This is a Python package developed for calculation of ribosome density on ER and vesicle membranes and for estimation of membrane curvature.
 
-Why PySurf?
+Why curvaturia?
 +++++++++++
 
 Because it can be used for the following two analyses:

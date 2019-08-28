@@ -1,9 +1,9 @@
 :orphan:
 
-pysurf
+curvaturia
 ======
 
 .. toctree::
    :maxdepth: 4
 
-   pysurf
+   curvaturia

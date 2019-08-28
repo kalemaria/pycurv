@@ -7,7 +7,7 @@ from curvaturia import (read_in_mask, get_target_voxels_in_membrane_mask,
 from curvaturia import curvaturia_io as io
 
 """
-A script with an example application of the PySurf package for calculation of
+A script with an example application of the curvaturia package for calculation of
 membrane-bound ribosome density.
 
 Author: Maria Kalemanov (Max Planck Institute for Biochemistry)

@@ -1,10 +1,10 @@
-pysurf package
+curvaturia package
 ==============
 
 Package contents
 ----------------
 
-.. automodule:: pysurf
+.. automodule:: curvaturia
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,66 +12,66 @@ Package contents
 Modules
 -------
 
-pysurf.pexceptions module
+curvaturia.pexceptions module
 -------------------------
 
-.. automodule:: pysurf.pexceptions
+.. automodule:: curvaturia.pexceptions
     :members:
     :undoc-members:
     :show-inheritance:
 
-pysurf.pysurf_io module
+curvaturia.curvaturia_io module
 -----------------------
 
-.. automodule:: pysurf.pysurf_io
+.. automodule:: curvaturia.curvaturia_io
     :members:
     :undoc-members:
     :show-inheritance:
 
-pysurf.graphs module
+curvaturia.graphs module
 --------------------
 
-.. automodule:: pysurf.graphs
+.. automodule:: curvaturia.graphs
     :members:
     :undoc-members:
     :show-inheritance:
 
-pysurf.ribosome_density module
+curvaturia.ribosome_density module
 ------------------------------
 
-.. automodule:: pysurf.ribosome_density
+.. automodule:: curvaturia.ribosome_density
     :members:
     :undoc-members:
     :show-inheritance:
 
-pysurf.run_gen_surface module
+curvaturia.run_gen_surface module
 -----------------------------
 
-.. automodule:: pysurf.run_gen_surface
+.. automodule:: curvaturia.run_gen_surface
     :members:
     :undoc-members:
     :show-inheritance:
 
-pysurf.surface_graphs module
+curvaturia.surface_graphs module
 ----------------------------
 
-.. automodule:: pysurf.surface_graphs
+.. automodule:: curvaturia.surface_graphs
     :members:
     :undoc-members:
     :show-inheritance:
 
-pysurf.vector_voting module
+curvaturia.vector_voting module
 ---------------------------
 
-.. automodule:: pysurf.vector_voting
+.. automodule:: curvaturia.vector_voting
     :members:
     :undoc-members:
     :show-inheritance:
 
-pysurf.tomogram_batch_processing module
+curvaturia.tomogram_batch_processing module
 ---------------------------------------
 
-.. automodule:: pysurf.tomogram_batch_processing
+.. automodule:: curvaturia.tomogram_batch_processing
     :members:
     :undoc-members:
     :show-inheritance:

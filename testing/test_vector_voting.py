@@ -769,7 +769,7 @@ def test_sphere_curvatures(
                 print("Sorry, you have to generate the icosahedron\n"
                       "sphere beforehand e.g. with Blender, export it as\n"
                       "STL file and convert it to VTP file using the\n"
-                      "function pysurf_io.stl_file_to_vtp_file,\n"
+                      "function curvaturia_io.stl_file_to_vtp_file,\n"
                       "optionally add noise with\n"
                       "add_gaussian_noise_to_surface and save it as\n{}"
                       .format(surf_file))
