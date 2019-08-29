@@ -15,8 +15,9 @@ particles mapped on a membrane, e.g. membrane-bound ribosomes.
 
 The software output is mostly in VTP format (triangle-mesh surfaces with
 numerical properties like curvatures, distances or densities), which can be
-visualized and further analysed in 3D using an external tool, ParaView.
-Also CSV table data for plotting the results is produced and many plotting
+visualized and further analysed in 3D using an external tool,
+[ParaView](https://www.paraview.org/).
+Also CSV table files for plotting the results are produced and many plotting
 functions are included.
 
 ## curvaturia package
@@ -30,19 +31,21 @@ for the following analyses:
   The workflow consists of the following three main steps:
   1. signed surface generation from a segmentation
   2. surface graph generation and surface cleaning
-  3. i) estimation of normal vectors of the true surface per triangle
-     ii) principle directions and curvatures estimation per triangle.
+  3. estimation of normal vectors of the true surface per triangle
+  4. principle directions and curvatures estimation per triangle.
+
   The main parameter of our methods, _RadiusHit_ (borrowed from Tong and Tang
-  2005) should be set to the radius of the smallest feature of interest on the
+  2005 ) should be set to the radius of the smallest feature of interest on the
   input surface (in the target units, e.g. nanometers). It is used to define a
-  geodesic neighborhood of triangles for each .
+  geodesic neighborhood of triangles for each central triangle.
+
   Our method of choice is AVV (augmented vector voting), because it proved to be
-  the most robust to noisy and irregularly triangulated surface and to the
+  the most robust to noisy and irregularly triangulated surface and to variable
   feature size.
 
 - Calculation of distances between two adjacent membranes and thicknesses of a
   membrane organelle, using the membrane surfaces and outgoing normal vectors
-  (estimated as in step 1. i) in the curvature estimation workflow) from the
+  (estimated as in step iii. in the curvature estimation workflow) from the
   first, flat membrane surface.
 
 - Calculation of ribosome density on ER and vesicle membranes using a mask with
@@ -61,7 +64,9 @@ combining different functions into the workflows described above, the main are:
 ## testing package
 This package contains:
  - code used to generate synthetic test volumes and surfaces for testing our and
-   external curvature estimation methods (FreeSurfer and Mindboggle)
+   external curvature estimation methods from FreeSurfer (Pienaar et al. 2008,
+   International Journal of Imaging Systems and Technology) and Mindboggle
+   (Klein et al. 2017, PLoS Computational Biology)
  - error calculation module
  - integration and unit tests for the main curvaturia workflows and functions
  - scripts for running the external software, getting curvatures and calculating
@@ -90,20 +95,18 @@ installed for free, also in a virtual machine on other operating systems
 `sudo apt install python-minimal`)
 2. Install graph-tool (Peixoto, 2014; [https://git.skewed.de/count0/graph-tool])
 for Ubuntu according to [instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu),
-`DISTRIBUTION=bionic`, but before running apt-get update add the public key:
+`DISTRIBUTION=bionic`, but before running `apt-get update` add the public key:
 ```
 apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
 ```
 The graph-tool package does not work with anaconda python.
-
 3. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
 DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
 (See [https://stackoverflow.com/questions/19917492/how-to-use-pythonpath]
 [https://docs.python.org/3.6/tutorial/modules.html])
-
-4. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/,
-includes setuptools), [venv](https://docs.python.org/3/library/venv.html, from
-python version 3.3 on, recommended from version 3.5 on) in ~/workspace:
+4. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/)
+(includes setuptools), [venv](https://docs.python.org/3/library/venv.html) (from
+python version 3.3 on, recommended from version 3.5 on) in e.g. ~/workspace:
 ```
 python3 -m venv ./venv –system-site-packages
 ```
@@ -126,12 +129,11 @@ source venv2/bin/activate
 ```
 install ipython(2):
 `sudo apt install ipython`)
-
 5. Install dependencies from the setup.py provided in this folder:
 ```
 sudo pythonX setup.py install
 ```
-X=2 or 3 for python2 or 3 and try to import pysurf
+X=2 or 3 for python2 or 3 and try to import pysurf.
 6. To re-create the environment on another computer or after
 re-installation, freeze the current state of the environment packages:
 ```
