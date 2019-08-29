@@ -1,32 +1,144 @@
 # curvaturia
-This software was developed to analyze the membrane-bound ribosome density and curvature of ER membranes in cryo-electron tomograms.
+This Python-based software was developed mainly to analyse curvature of
+membranes in 3D originating from high-resolution, noisy cryo-electron tomograms.
+Additionally, the software was also applied to other volumetric data with
+segmented structures or directly surface data, e.g. brain or organs from MRI and
+cells from confocal light microscopy.
+Accepted image data formats are: MRC, EM, VTI, NII.
+Accepted surface data formats are: VTP, VTK, STL, PLY.
 
-# ribosome_centers_mapping folder
-This folder contains MATLAB scripts used to map ribosome center coordinates obtained by template matching onto a membrane mask from tomogram segmentation. Usage details can be found in the
-README file inside this folder.
+Moreover, the software can be used to calculate distances between two adjacent
+membranes and thicknesses of a membrane organelle.
 
-Please note that TOM MATLAB package (Hrabe et al., 2012; http://www.biochem.mpg.de/tom) is required for reading and writing EM and MRC files and generating a mask from a motive list.
-MATLAB/2015b version was used to run these scripts.
+Furthermore, the software enables to calculate density distribution of
+particles mapped on a membrane, e.g. membrane-bound ribosomes.
 
-# curvaturia folder
-This is a Python package used for the following two analyses:
+The software output is mostly in VTP format (triangle-mesh surfaces with
+numerical properties like curvatures, distances or densities), which can be
+visualized and further analysed in 3D using an external tool, ParaView.
+Also CSV table data for plotting the results is produced and many plotting
+functions are included.
 
-- Calculation of ribosome density on ER and vesicle membranes using a mask with ribosome coordinates on the membranes (obtained using the scripts in 'ribosome_centers_mapping' folder) and
-the membrane mask.
+## curvaturia package
+This is the main Python package containing modules, classes and functions used
+for the following analyses:
 
-- Estimation of membrane curvature using our implementation of Normal Vector Voting algorithm (Page et al., 2002). The workflow consists of the following three main steps:
-    1. signed surface generation
-    2. surface cleaning using a graph
-    3. curvature calculation using a graph generated from the clean surface.
+- Estimation of membrane curvature using our several tensor voting-based methods
+  based on (Page et al. 2002, Graphical Models) and (Tong and Tang 2005, IEEE
+  Transactions on Pattern Analysis and Machine Intelligence), details available
+  in the pre-print (Kalemanov et al. 2019, bioRxiv).
+  The workflow consists of the following three main steps:
+  1. signed surface generation from a segmentation
+  2. surface graph generation and surface cleaning
+  3. i) estimation of normal vectors of the true surface per triangle
+     ii) principle directions and curvatures estimation per triangle.
+  The main parameter of our methods, _RadiusHit_ (borrowed from Tong and Tang
+  2005) should be set to the radius of the smallest feature of interest on the
+  input surface (in the target units, e.g. nanometers). It is used to define a
+  geodesic neighborhood of triangles for each .
+  Our method of choice is AVV (augmented vector voting), because it proved to be
+  the most robust to noisy and irregularly triangulated surface and to the
+  feature size.
 
-Please note that the following Python packages are required and have to be installed:
-- Pyto ImageIO (Lučić et al., 2016, PMID: 27742578 DOI: 10.1016/j.jsb.2016.10.004)
-- VTK (http://www.vtk.org)
-- graph-tool (Peixoto, 2014; https://git.skewed.de/count0/graph-tool)
+- Calculation of distances between two adjacent membranes and thicknesses of a
+  membrane organelle, using the membrane surfaces and outgoing normal vectors
+  (estimated as in step 1. i) in the curvature estimation workflow) from the
+  first, flat membrane surface.
 
-The package can be run using Python 2.7 versions.
+- Calculation of ribosome density on ER and vesicle membranes using a mask with
+  ribosome coordinates on the membranes and the membrane mask.
 
-# scripts folder
-This folder contains two Python scripts using curvaturia package:
-- ribosome_density_calculation.py script contains functions for running the ribosome density calculation.
-- curvature_calculation.py script contains functions for running the curvature calculation.
+## scripts package
+This package contains Python scripts applying the curvaturia package and
+combining different functions into the workflows described above, the main are:
+- curvature_calculation.py script for membrane curvature calculation workflows
+  used in (Bäuerlein et al. 2017, Cell) and (Collado et al. 2019, bioRxiv)
+- distances_calculation.py script for membrane distances and thicknesses
+  calculation used in (Collado et al. 2019, bioRxiv)
+- ribosome_density_calculation.py script for ribosome density calculation used
+  in (Bäuerlein et al. 2017, Cell).
+
+## testing package
+This package contains:
+ - code used to generate synthetic test volumes and surfaces for testing our and
+   external curvature estimation methods (FreeSurfer and Mindboggle)
+ - error calculation module
+ - integration and unit tests for the main curvaturia workflows and functions
+ - scripts for running the external software, getting curvatures and calculating
+   errors from their output VTK files
+ - a collection of plotting functions.
+
+
+# Installing curvaturia
+Please note that curvaturia depends on one not publicly available Python package,
+pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
+has to be requested from its author, Dr. Vladan Lučić.
+
+The code can currently be run using Python 2.7 versions, but since Python 2 will
+not longer be supported from the beginning of 2020 and pyto package has been
+recently made compatible with Python 3, we plan to upgrade our code to Python 3
+soon. Installation instructions are already provided for Python 3, with Python 2
+in parentheses.
+
+## Installation instructions for Ubuntu 18.04
+The following instruction were tested on Ubuntu 18.04, but the process should be
+equivalent for other version and other Linux-based systems. Ubuntu can be
+installed for free, also in a virtual machine on other operating systems
+(Windows or Mac).
+
+1. Ubuntu 18.04 has python3 version 3.6.7 preinstalled. (Install python2:
+`sudo apt install python-minimal`)
+2. Install graph-tool (Peixoto, 2014; [https://git.skewed.de/count0/graph-tool])
+for Ubuntu according to [instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu),
+`DISTRIBUTION=bionic`, but before running apt-get update add the public key:
+```
+apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
+```
+The graph-tool package does not work with anaconda python.
+
+3. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
+DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
+(See [https://stackoverflow.com/questions/19917492/how-to-use-pythonpath]
+[https://docs.python.org/3.6/tutorial/modules.html])
+
+4. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/,
+includes setuptools), [venv](https://docs.python.org/3/library/venv.html, from
+python version 3.3 on, recommended from version 3.5 on) in ~/workspace:
+```
+python3 -m venv ./venv –system-site-packages
+```
+and activate:
+```
+source venv/bin/activate
+```
+ipython3 should be present and graph_tool should be imported:
+```python
+from graph_tool.all import *
+```
+(python2: install [virtualenv](https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref)
+in ~/workspace/venv2:
+```
+virtualenv -p /usr/bin/python2.7 --system-site-packages venv2
+```
+and activate:
+```
+source venv2/bin/activate
+```
+install ipython(2):
+`sudo apt install ipython`)
+
+5. Install dependencies from the setup.py provided in this folder:
+```
+sudo pythonX setup.py install
+```
+X=2 or 3 for python2 or 3 and try to import pysurf
+6. To re-create the environment on another computer or after
+re-installation, freeze the current state of the environment packages:
+```
+pip freeze > requirementsX.txt
+```
+X=2 or 3 for python2 or 3.
+To re-create the environment:
+```
+pip install -r requirementsX.txt
+```
