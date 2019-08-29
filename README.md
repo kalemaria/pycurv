@@ -92,55 +92,60 @@ installed for free, also in a virtual machine on other operating systems
 (Windows or Mac).
 
 1. Ubuntu 18.04 has python3 version 3.6.7 preinstalled. (Install python2:
-`sudo apt install python-minimal`)
-2. Install graph-tool (Peixoto, 2014; [https://git.skewed.de/count0/graph-tool])
-for Ubuntu according to [instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu),
-`DISTRIBUTION=bionic`, but before running `apt-get update` add the public key:
-```
-apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
-```
-The graph-tool package does not work with anaconda python.
+   `sudo apt install python-minimal`)
+
+2. Install graph-tool (Peixoto, 2014; https://git.skewed.de/count0/graph-tool)
+   for Ubuntu according to [instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu),
+   `DISTRIBUTION=bionic`, but before running `apt-get update` add the public key:
+   ```
+   apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
+   ```
+   The graph-tool package does not work with anaconda python.
+
 3. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
-DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
-(See [https://stackoverflow.com/questions/19917492/how-to-use-pythonpath]
-[https://docs.python.org/3.6/tutorial/modules.html])
+   DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
+   (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
+   https://docs.python.org/3.6/tutorial/modules.html)
+
 4. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/)
-(includes setuptools), [venv](https://docs.python.org/3/library/venv.html) (from
-python version 3.3 on, recommended from version 3.5 on) in e.g. ~/workspace:
-```
-python3 -m venv ./venv –system-site-packages
-```
-and activate:
-```
-source venv/bin/activate
-```
-ipython3 should be present and graph_tool should be imported:
-```python
-from graph_tool.all import *
-```
-(python2: install [virtualenv](https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref)
-in ~/workspace/venv2:
-```
-virtualenv -p /usr/bin/python2.7 --system-site-packages venv2
-```
-and activate:
-```
-source venv2/bin/activate
-```
-install ipython(2):
-`sudo apt install ipython`)
+   (includes setuptools), [venv](https://docs.python.org/3/library/venv.html) (from
+   python version 3.3 on, recommended from version 3.5 on) in e.g. ~/workspace:
+   ```
+   python3 -m venv ./venv –system-site-packages
+   ```
+   and activate:
+   ```
+   source venv/bin/activate
+   ```
+   ipython3 should be present and graph_tool should be imported:
+   ```python
+   from graph_tool.all import *
+   ```
+   (python2: install [virtualenv](https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref)
+   in ~/workspace/venv2:
+   ```
+   virtualenv -p /usr/bin/python2.7 --system-site-packages venv2
+   ```
+   and activate:
+   ```
+   source venv2/bin/activate
+   ```
+   install ipython(2):
+   `sudo apt install ipython`)
+
 5. Install dependencies from the setup.py provided in this folder:
-```
-sudo pythonX setup.py install
-```
-X=2 or 3 for python2 or 3 and try to import pysurf.
+   ```
+   sudo pythonX setup.py install
+   ```
+   X=2 or 3 for python2 or 3 and try to import pysurf.
+
 6. To re-create the environment on another computer or after
-re-installation, freeze the current state of the environment packages:
-```
-pip freeze > requirementsX.txt
-```
-X=2 or 3 for python2 or 3.
-To re-create the environment:
-```
-pip install -r requirementsX.txt
-```
+   re-installation, freeze the current state of the environment packages:
+   ```
+   pip freeze > requirementsX.txt
+   ```
+   X=2 or 3 for python2 or 3.
+   To re-create the environment:
+   ```
+   pip install -r requirementsX.txt
+   ```
