@@ -12,8 +12,7 @@ import os
 
 from curvaturia import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
-    TriangleGraph, PointGraph,
-    curvature_estimation)
+    TriangleGraph, PointGraph, curvature_estimation)
 from curvaturia import curvaturia_io as io
 
 """
@@ -1009,10 +1008,10 @@ def from_nii_workflow(
 
 def main_javier(membrane, radius_hit):
     """
-    Main function for running the new_workflow function for Javier's cER or PM.
+    Main function for running the new_workflow function for Javier's ER or PM.
 
     Args:
-        membrane (string): what membrane segmentation to use 'cER' or 'PM'
+        membrane (string): what membrane segmentation to use 'ER' or 'PM'
         radius_hit (int): RadiusHit parameter (in nm)
 
     Returns:
@@ -1020,59 +1019,13 @@ def main_javier(membrane, radius_hit):
     """
     t_begin = time.time()
 
-    base_fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/"
-
-    # The "famous" tcb (done cER RH=6, 10 and 15 + PM RH=6, PM RH=15)
-    # (~ 12 voxels diameter at the base of high curvature regions):
-    # fold = "{}tcb_t3_ny01/new_workflow/".format(base_fold)
-    # seg_file = "t3_ny01_lbl.Labels_cropped.mrc"
-    # base_filename = "t3_ny01_cropped_{}".format(membrane)
-    # pixel_size = 1.044  # from old data set!
-
-    # The huge one tcb (done cER RH=6, but many holes, surface splits):
-    # tomo = "tcb_170924_l1_t3_cleaned_pt_ny01"
-    # fold = "{}{}/".format(base_fold, tomo)
-    # seg_file = "{}_lbl.labels.mrc".format(tomo)
-    # base_filename = "{}_{}".format(tomo, membrane)
-
-    # The good one tcb (RadiusHit=10 and 15):
-    # fold = "{}TCB/170924_TITAN_l2_t2/".format(base_fold)
-    # seg_file = "t2_ny01_lbl.labels.mrc"
-    # base_filename = "TCBl2t2_{}".format(membrane)
-
-    # Another tcb with surface generation problems:
-    # fold = "{}TCB/170924_TITAN_l1_t1/smooth/".format(base_fold)
-    # seg_file = "t1_cleaned_pt_lbl.labels_FILLED.mrc"
-    # base_filename = "TCBl1t1_{}".format(membrane)
-
-    # tcb for Ruben:
-    fold = "{}TCB/180830_TITAN_l2_t2/smooth/".format(base_fold)
-    seg_file = "t2_ny01_lbl.labels_FILLED.mrc"
-    base_filename = "TCBl2t2_180830_{}".format(membrane)
-    size = (928, 928, 123)
-
-    # The "sheety" scs (done cER RH=6, but holes and ridges):
-    # tomo = "scs_171108_l2_t4_ny01"
-    # fold = "{}{}/cropped_ends/".format(base_fold, tomo)
-    # # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6, 10, 15, 20
-    # # lbl = 1
-    # fold = "{}SCS/171108_TITAN_l2_t4/smooth/".format(base_fold)
-    # seg_file = "t4_ny01_lbl.labels_FILLED.mrc"
-    # base_filename = "SCSl2t4_{}".format(membrane)
-
-    # The "good one" scs (done cER RH=6, RH=15 and RH=10;
-    # normals estimation for PM RH=15):
-    # tomo = "scs_171108_l1_t2_ny01"
-    # fold = "{}{}/".format(base_fold, tomo)
-    # # fold = "{}{}/small_cutout/".format(base_fold, tomo)  # RH=6,10,12,15,18
-    # # lbl = 1
-    # seg_file = "{}_lbl.labels.mrc".format(tomo)
-    # base_filename = "{}_{}".format(tomo, membrane)
-
-    # same for all:
-    pixel_size = 1.368  # same for whole new data set
-    holes = 3  # surface was better for the "sheety" one with 3 than with 0 or 5
+    fold = "../experimental_data_sets/ER/"
+    seg_file = "t2_ny01_lbl.labels_FILLED_half.mrc"
+    base_filename = "TCB_180830_l2_t2half.{}".format(membrane)
+    pixel_size = 1.368
+    holes = 3
     min_component = 100
+    runtimes_file = "{}{}_runtimes.csv".format(fold, base_filename)
 
     if membrane == "PM":
         lbl = 1
@@ -1080,14 +1033,16 @@ def main_javier(membrane, radius_hit):
         new_workflow(
             fold, base_filename, pixel_size, radius_hit, methods=['VV'],
             seg_file=seg_file, label=lbl, holes=holes,
-            min_component=min_component, only_normals=True)
-    elif membrane == "cER":
+            min_component=min_component, only_normals=True,
+            runtimes=runtimes_file)
+    elif membrane == "ER":
         lbl = 2
+        filled_lbl = 3  # ER lumen
         print("\nCalculating curvatures for {}".format(base_filename))
         new_workflow(
             fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-            seg_file=seg_file, label=lbl, holes=holes,
-            min_component=min_component)
+            seg_file=seg_file, label=lbl, filled_label=filled_lbl,
+            min_component=min_component, runtimes=runtimes_file)
 
         for b in range(0, 2):
             print("\nExtracting curvatures for {} without {} nm from border"
@@ -1096,13 +1051,13 @@ def main_javier(membrane, radius_hit):
                 fold, base_filename, radius_hit, methods=['VV'],
                 exclude_borders=b, categorize_shape_index=True)
 
-        surf_vtp_file = '{}{}.{}_rh{}.vtp'.format(
-            fold, base_filename, 'AVV', radius_hit)
-        outfile_base = '{}{}.{}_rh{}'.format(
-            fold, base_filename, 'AVV', radius_hit)
-        scale = (pixel_size, pixel_size, pixel_size)
-        convert_vtp_to_stl_surface_and_mrc_curvatures(
-            surf_vtp_file, outfile_base, scale, size)
+        # surf_vtp_file = '{}{}.{}_rh{}.vtp'.format(
+        #     fold, base_filename, 'AVV', radius_hit)
+        # outfile_base = '{}{}.{}_rh{}'.format(
+        #     fold, base_filename, 'AVV', radius_hit)
+        # scale = (pixel_size, pixel_size, pixel_size)
+        # convert_vtp_to_stl_surface_and_mrc_curvatures(
+        #     surf_vtp_file, outfile_base, scale, size)
     else:
         print("Membrane not known.")
         exit(0)
@@ -1126,19 +1081,24 @@ def main_felix():
     base_filename = "t74_vesicle3"
     pixel_size = 2.526
     radius_hit = 10  # nm
-    fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/'
-            'vesicle3_t74/')
-    tomo = "t74"
-    seg_file = "{}{}_vesicle3_bin6.Labels.mrc".format(fold, tomo)
+    fold = '../experimental_data_sets/vesicle/'
+    seg_file = "t74_vesicle3_bin6.Labels.mrc"
     lbl = 1
     min_component = 100
-    num_cores = 4
     runtimes_file = "{}{}_runtimes.csv".format(fold, base_filename)
+
+    print("\nCalculating curvatures for {}".format(base_filename))
     new_workflow(
-            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-            seg_file=seg_file, label=lbl, holes=0,
-            min_component=min_component, only_normals=False,
-            cores=num_cores, runtimes=runtimes_file)
+        fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+        seg_file=seg_file, label=lbl, holes=0, min_component=min_component,
+        runtimes=runtimes_file)
+
+    for b in range(0, 2):
+        print("\nExtracting curvatures for vesicle without {} nm from border"
+              .format(b))
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, radius_hit, methods=['VV'],
+            exclude_borders=b, categorize_shape_index=True)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -1244,7 +1204,8 @@ if __name__ == "__main__":
     # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
     # cProfile.run('main_felix()', stats_file)
 
-    # main_felix()
+    main_felix()
+    main_javier('ER', 10)
 
     # main_anna()
 
@@ -1260,16 +1221,16 @@ if __name__ == "__main__":
     #             "GroundTruthOutput",
     #     radius_hit=5)
 
-    vtk_file = sys.argv[1]
-    radius_hit = float(sys.argv[2])  # 2 mm, Mindboggle's default? "radius disk"
-    if len(sys.argv) > 3:
-        epsilon = float(sys.argv[3])
-    else:
-        epsilon = 0
-    if len(sys.argv) > 4:
-        eta = float(sys.argv[4])
-    else:
-        eta = 0
-    from_vtk_workflow(
-        vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
-        scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=False)
+    # vtk_file = sys.argv[1]
+    # radius_hit = float(sys.argv[2])  # 2 mm, Mindboggle's default? "radius disk"
+    # if len(sys.argv) > 3:
+    #     epsilon = float(sys.argv[3])
+    # else:
+    #     epsilon = 0
+    # if len(sys.argv) > 4:
+    #     eta = float(sys.argv[4])
+    # else:
+    #     eta = 0
+    # from_vtk_workflow(
+    #     vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
+    #     scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=False)
