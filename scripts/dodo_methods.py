@@ -48,7 +48,7 @@ def task_calculate_cER_curvatures():
                                 'filled_label': filled_lbl,
                                 'holes': holes,
                                 'min_component': min_component,
-                                'cores': 4
+                                'cores': 6
                             }),
                            (new_workflow,  # RVV
                             [subfold, base_filename, pixel_size, radius_hit], {
@@ -60,7 +60,7 @@ def task_calculate_cER_curvatures():
                                 'filled_label': filled_lbl,
                                 'holes': holes,
                                 'min_component': min_component,
-                                'cores': 4
+                                'cores': 6
                             }),
                            (new_workflow,  # SSVV
                             [subfold, base_filename, pixel_size, radius_hit], {
@@ -70,7 +70,7 @@ def task_calculate_cER_curvatures():
                                 'filled_label': filled_lbl,
                                 'holes': holes,
                                 'min_component': min_component,
-                                'cores': 4
+                                'cores': 6
                             }),
                            (new_workflow,  # AVV
                             [subfold, base_filename, pixel_size, radius_hit], {
@@ -82,7 +82,7 @@ def task_calculate_cER_curvatures():
                                 'filled_label': filled_lbl,
                                 'holes': holes,
                                 'min_component': min_component,
-                                'cores': 4
+                                'cores': 6
                             })
                         ],
                        'file_dep': [seg_file],

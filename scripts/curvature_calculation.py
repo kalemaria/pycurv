@@ -141,7 +141,7 @@ def new_workflow(
         page_curvature_formula=False, area2=True,
         seg_file=None, label=1, filled_label=None, unfilled_mask=None, holes=0,
         remove_wrong_borders=True, min_component=100, only_normals=False,
-        cores=4, runtimes=''):
+        cores=6, runtimes=''):
     """
     A script for running all processing steps to estimate membrane curvature.
 
@@ -190,7 +190,7 @@ def new_workflow(
         only_normals (boolean, optional): if True (default False), only normals
             are estimated, without principal directions and curvatures, only the
             graph with the orientations class, normals or tangents is returned.
-        cores (int, optional): number of cores to run VV in parallel (default 4)
+        cores (int, optional): number of cores to run VV in parallel (default 6)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default '')
 
@@ -360,7 +360,7 @@ def new_workflow(
             io.save_vtp(surf, surf_file)
 
 
-def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=4):
+def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=6):
     gt_file_normals = "{}{}.NVV_rh{}.gt".format(fold, base_filename, radius_hit)
     tg = TriangleGraph()
     tg.graph = load_graph(gt_file_normals)
@@ -567,7 +567,7 @@ def _shape_index_classifier(x):
 
 def annas_workflow(
         fold, base_filename, radius_hit, seg_file=None, pixel_size=1.368,
-        methods=['VV'], thr=0.4, cores=4):
+        methods=['VV'], thr=0.4, cores=6):
     """
     A script for running all processing steps to estimate membrane curvature.
 
@@ -592,7 +592,7 @@ def annas_workflow(
             and 'SSVV' are possible, default is 'VV')
         thr (float, optional): value threshold in the input segmentation where
             to generate the isosurface (default 0.4)
-        cores (int, optional): number of cores to run VV in parallel (default 4)
+        cores (int, optional): number of cores to run VV in parallel (default 6)
 
     Returns:
         None
@@ -699,7 +699,7 @@ def annas_workflow(
 
 def from_ply_workflow(
         ply_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False,
-        methods=["VV"], area2=True, cores=4):
+        methods=["VV"], area2=True, cores=6):
     """
     Estimates curvature for each triangle in a triangle mesh in PLY format.
 
@@ -718,7 +718,7 @@ def from_ply_workflow(
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
             curvatures estimation)
-        cores (int, optional): number of cores to run VV in parallel (default 4)
+        cores (int, optional): number of cores to run VV in parallel (default 6)
 
     Returns:
         None
@@ -773,7 +773,7 @@ def from_ply_workflow(
 
 def from_vtk_workflow(
         vtk_file, radius_hit, vertex_based, epsilon, eta, scale=(1, 1, 1),
-        page_curvature_formula=False, methods=["VV"], area2=True, cores=4,
+        page_curvature_formula=False, methods=["VV"], area2=True, cores=6,
         reverse_normals=False):
     """
     Estimates curvature for each triangle in a triangle mesh in VTK format.
@@ -800,7 +800,7 @@ def from_vtk_workflow(
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
             curvatures estimation; not possible if vertex_based is True)
-        cores (int, optional): number of cores to run VV in parallel (default 4)
+        cores (int, optional): number of cores to run VV in parallel (default 6)
         reverse_normals (boolean, optional): if True (default False), original
             surface normals will be reversed
 
@@ -903,7 +903,7 @@ def from_vtk_workflow(
 
 def from_nii_workflow(
         nii_file, outfold, radius_hit, page_curvature_formula=False,
-        methods=["VV"], area2=True, cores=4):
+        methods=["VV"], area2=True, cores=6):
     """
     Extracts surface for every label > 0 in the segmentation in NII format,
     after applying a Gaussian filter with sigma of 1.
@@ -923,7 +923,7 @@ def from_nii_workflow(
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
             curvatures estimation)
-        cores (int, optional): number of cores to run VV in parallel (default 4)
+        cores (int, optional): number of cores to run VV in parallel (default 6)
 
         Returns:
             None
@@ -1224,7 +1224,7 @@ if __name__ == "__main__":
     # new_workflow(subsubfold, base_filename, pixel_size, radius_hit,
     #              methods=['SSVV'], seg_file=seg_filename,
     #              label=lbl, filled_label=filled_lbl,
-    #              min_component=min_component, cores=4)
+    #              min_component=min_component, cores=6)
 
     # membrane = sys.argv[1]
     # rh = int(sys.argv[2])
@@ -1272,4 +1272,4 @@ if __name__ == "__main__":
         eta = 0
     from_vtk_workflow(
         vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
-        scale=(1, 1, 1), methods=["VV"], cores=4, reverse_normals=False)
+        scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=False)
