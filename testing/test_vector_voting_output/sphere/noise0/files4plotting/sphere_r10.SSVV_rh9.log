@@ -1,0 +1,45 @@
+
+*** Generating a surface and a graph for a sphere with radius 10 and 0% noise***
+
+Reading in the surface file to get a vtkPolyData surface...
+
+Building the TriangleGraph from the vtkPolyData surface with curvatures...
+TriangleGraph generation took: 0.0 min 6.27654218674 s
+<Graph object, undirected, with 3608 vertices and 22470 edges at 0x2b5fe64f4b50>
+Graph construction from surface took: 0.0 min 6.28131198883 s
+
+Preparing for running modified Vector Voting...
+radius_hit = 9
+g_max = 14.1371669412
+Maximal triangle area = 0.734539513584
+epsilon = 0
+eta = 0
+Preparation took: 0.0 min 0.000411033630371 s
+
+Running modified Vector Voting for all vertices...
+
+First pass: estimating normals...
+number of vertices: 3608
+Calling find_geodesic_neighbors
+Opened a pool with 6 processes
+Average number of geodesic neighbors for all vertices: 1478.37583149
+3608 surface patches
+First pass took: 2.0 min 48.1739649773 s
+Preparation took: 0.0 min 0.00065803527832 s
+
+Second pass: estimating principle curvatures and directions for surface patches using SSVV...
+3608 vertices to estimate curvature
+Second run of SSVV took: 0.0 min 11.8754818439 s
+Whole method took: 3.0 min 0.0537919998169 s
+
+Evaluating SSVV...
+3608 "kappa_1" values
+min = 0.0992229218677, max = 0.100606172147, mean = 0.0999982204896
+3608 "kappa_2" values
+min = 0.0988600508694, max = 0.100214891654, mean = 0.099532934251
+3608 "max_curvature" values
+min = -0.0194660411072, max = 0.300438706342, mean = 0.128772815988
+3608 "min_curvature" values
+min = -0.620921562112, max = 0.115293583957, mean = -0.0500214810891
+Testing the maximal principal curvature (kappa_1)...
+Testing the minimal principal curvature (kappa_2)...

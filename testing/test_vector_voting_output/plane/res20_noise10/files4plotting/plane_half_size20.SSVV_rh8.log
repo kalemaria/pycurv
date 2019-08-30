@@ -1,0 +1,33 @@
+
+*** Generating a surface and a graph for a plane with half-size 20 and 10% noise ***
+
+Reading in the surface file to get a vtkPolyData surface...
+
+Building the TriangleGraph from the vtkPolyData surface with curvatures...
+TriangleGraph generation took: 0.0 min 0.835392951965 s
+<Graph object, undirected, with 800 vertices and 4485 edges at 0x2b5fe5f594d0>
+Graph construction from surface took: 0.0 min 0.837791919708 s
+
+Preparing for running modified Vector Voting...
+radius_hit = 8
+g_max = 12.5663706144
+Maximal triangle area = 3.25621433712
+epsilon = 0
+eta = 0
+Preparation took: 0.0 min 0.0002760887146 s
+
+Running modified Vector Voting for all vertices...
+
+First pass: estimating normals...
+number of vertices: 800
+Calling find_geodesic_neighbors
+Opened a pool with 6 processes
+Average number of geodesic neighbors for all vertices: 171.9875
+800 surface patches
+First pass took: 0.0 min 9.27801704407 s
+Preparation took: 0.0 min 0.000478029251099 s
+
+Second pass: estimating principle curvatures and directions for surface patches using SSVV...
+800 vertices to estimate curvature
+Second run of SSVV took: 0.0 min 1.72546005249 s
+Whole method took: 0.0 min 11.0044379234 s

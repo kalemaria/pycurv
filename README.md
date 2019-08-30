@@ -72,7 +72,8 @@ This package contains:
  - scripts for running the external software, getting curvatures and calculating
    errors from their output VTK files
  - a collection of plotting functions.
- - folder with output of curvature tests ('test_vector_voting_output')
+ - folder with output of curvature tests ('test_vector_voting_output'), also
+   including the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'
 
 ## experimental_data_sets folder
 Some experimental data can be found here:
@@ -181,3 +182,5 @@ folder:
 ```
 python curvature_calculation.py
 ```
+The output will be generated in the respective subfolders of the input,
+'vesicle' and 'ER'.

@@ -1,0 +1,57 @@
+
+*** Generating a surface and a graph for a cylinder with radius 10, height 25 and 0% noise ***
+
+Reading in the surface file to get a vtkPolyData surface...
+
+Building the TriangleGraph from the vtkPolyData surface with curvatures...
+TriangleGraph generation took: 0.0 min 4.60813498497 s
+<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2b5fe5f595d0>
+Graph construction from surface took: 0.0 min 4.6124651432 s
+
+Preparing for running modified Vector Voting...
+radius_hit = 5
+g_max = 7.85398163397
+Maximal triangle area = 0.648083801724
+epsilon = 0
+eta = 0
+Preparation took: 0.0 min 0.00049901008606 s
+
+Running modified Vector Voting for all vertices...
+
+First pass: estimating normals...
+number of vertices: 3264
+Calling find_geodesic_neighbors
+Opened a pool with 6 processes
+Average number of geodesic neighbors for all vertices: 343.131127451
+3264 surface patches
+First pass took: 0.0 min 45.6529040337 s
+Preparation took: 0.0 min 0.000741958618164 s
+
+Second pass: estimating principle curvatures and directions for surface patches using RVV...
+3264 vertices to estimate curvature
+Calling find_geodesic_neighbors
+Opened a pool with 6 processes
+Second run of VV took: 0.0 min 55.9291899204 s
+Whole method took: 1.0 min 41.586578846 s
+Finding vertices at the graph border...
+136 vertices are at the graph border.
+For each graph border vertex, finding vertices within geodesic distance 5 to it...
+1496 vertices are within distance 5 to the graph border.
+Filtering out those vertices and their edges...
+
+Excluded triangles that are 5 to surface borders.
+<Graph object, undirected, with 1768 vertices and 10092 edges, edges filtered by (<PropertyMap object with key type 'Edge' and value type 'bool', for Graph 0x2b5fe5f595d0, at 0x2b5f91386e10, with values:
+[1 1 1 ..., 1 1 1]>, False), vertices filtered by (<PropertyMap object with key type 'Vertex' and value type 'bool', for Graph 0x2b5fe5f595d0, at 0x2b5fe6511a90, with values:
+[1 1 1 ..., 1 1 1]>, False) at 0x2b5fe5f595d0>
+
+Evaluating RVV...
+1768 "kappa_1" values
+min = 0.0926033212504, max = 0.107087615696, mean = 0.0995519789606
+1768 "kappa_2" values
+min = -0.00205911587197, max = 0.00654420464818, mean = 0.00191651754687
+1768 "max_curvature" values
+min = 0.0594121701328, max = 0.172598315031, mean = 0.112783912805
+1768 "min_curvature" values
+min = -0.137787588269, max = 3.82564350569e-15, mean = -0.0243153433806
+Testing the minimal principal directions (T_2)...
+Testing the maximal principal curvature (kappa_1)...

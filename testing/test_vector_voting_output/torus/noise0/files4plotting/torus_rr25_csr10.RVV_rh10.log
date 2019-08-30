@@ -1,0 +1,53 @@
+
+*** Generating a surface and a graph for a torus with ring radius 25 and cross-section radius 10***
+
+Reading in the surface file to get a vtkPolyData surface...
+
+Building the TriangleGraph from the vtkPolyData surface with curvatures...
+TriangleGraph generation took: 0.0 min 8.34121704102 s
+<Graph object, undirected, with 4802 vertices and 28812 edges at 0x2b5ff891bf50>
+Graph construction from surface took: 0.0 min 8.34605407715 s
+4802 "true_kappa_1" values
+min = 0.1, max = 0.1, mean = 0.1
+4802 "true_kappa_2" values
+min = -0.0666820616639, max = 0.0286200821707, mean = -0.00916383637282
+
+Preparing for running modified Vector Voting...
+radius_hit = 10
+g_max = 15.7079632679
+Maximal triangle area = 2.87347190056
+epsilon = 0
+eta = 0
+Preparation took: 0.0 min 0.00023078918457 s
+
+Running modified Vector Voting for all vertices...
+
+First pass: estimating normals...
+number of vertices: 4802
+Calling find_geodesic_neighbors
+Opened a pool with 6 processes
+Average number of geodesic neighbors for all vertices: 379.510204082
+4802 surface patches
+First pass took: 1.0 min 10.1902928352 s
+Preparation took: 0.0 min 0.000620126724243 s
+
+Second pass: estimating principle curvatures and directions for surface patches using RVV...
+4802 vertices to estimate curvature
+Calling find_geodesic_neighbors
+Opened a pool with 6 processes
+Second run of VV took: 1.0 min 29.5980069637 s
+Whole method took: 2.0 min 39.7952139378 s
+
+Evaluating RVV...
+4802 "kappa_1" values
+min = 0.0924552127898, max = 0.103795536724, mean = 0.0982089924226
+4802 "kappa_2" values
+min = -0.0626328967397, max = 0.0253191108483, mean = -0.00893216755679
+4802 "max_curvature" values
+min = 0.0997740585536, max = 0.100422181151, mean = 0.100146650097
+4802 "min_curvature" values
+min = -0.0663135529871, max = 0.0286030555198, mean = -0.00907372958911
+Testing the maximal principal directions (T_1)...
+Testing the minimal principal directions (T_2)...
+Testing the maximal principal curvature (kappa_1)...
+Testing the minimal principal curvature (kappa_2)...
