@@ -72,6 +72,12 @@ This package contains:
  - scripts for running the external software, getting curvatures and calculating
    errors from their output VTK files
  - a collection of plotting functions.
+ - folder with output of curvature tests ('test_vector_voting_output')
+
+## experimental_data_sets folder
+Some experimental data can be found here:
+- vesicle: unfilled segmentation of a vesicle from a cryo-electron tomogram
+- ER: filled segmentation of a ER membrane patch from a cryo-electron tomogram
 
 
 # Installing curvaturia
@@ -149,3 +155,29 @@ installed for free, also in a virtual machine on other operating systems
    ```
    pip install -r requirementsX.txt
    ```
+
+
+# Running curvaturia
+
+## Running the tests
+To run the integration tests of the curvature workflow on synthetic surfaces,
+execute from a terminal:
+```
+pytest -q test_vector_voting.py
+```
+a folder 'test_vector_voting_output' containing the test results will be created
+inside the current directory.
+
+In the same manner, you can run:
+- the integration tests of the distances and thicknesses workflow
+  (test_distances_calculation.py)
+- the unit test of histogram area calculation (test_histogram_are_calculation.py)
+- the unit test for some linear algebra functions (test_linalg.py)
+
+## Running the experimental data sets
+To run the curvature estimation workflow on the vesicle and ER segmentation in
+the 'experimental_data_sets' folder, just run in a terminal from the 'scripts'
+folder:
+```
+python curvature_calculation.py
+```
