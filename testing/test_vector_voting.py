@@ -12,7 +12,7 @@ import vtk
 from curvaturia import curvaturia_io as io
 from curvaturia import (
     TriangleGraph, PointGraph, normals_directions_and_curvature_estimation,
-    nice_acos, nice_asin)
+    nice_asin)
 from synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
@@ -27,7 +27,6 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 
 __author__ = 'kalemanov'
 
-# FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
 FOLD = './test_vector_voting_output/'
 
 
@@ -171,11 +170,11 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 
 
 @pytest.mark.parametrize("half_size,radius_hit,res,noise,vertex_based,cores", [
-    (20, 4, 20, 10, False, 4),
-    (20, 8, 20, 10, False, 4),
-    # pytest.param(20, 4, 20, 10, True, 4,
+    (20, 4, 20, 10, False, 6),
+    (20, 8, 20, 10, False, 6),
+    # pytest.param(20, 4, 20, 10, True, 6,
     #              marks=pytest.mark.xfail(reason="too high errors")),  # vertex
-    # (20, 8, 20, 10, True, 4),  # vertex
+    # (20, 8, 20, 10, True, 6),  # vertex
 ])
 def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
     """
@@ -305,14 +304,14 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
 @pytest.mark.parametrize(
     "radius,radius_hit,eb,inverse,methods,area2,voxel,vertex_based", [
         # smooth cylinder
-        (10, 4, 5, False, ['VV'], True, False, False),  # AVV
-        (10, 4, 5, False, ['VV'], False, False, False),  # RVV
+        (10, 5, 5, False, ['VV'], True, False, False),  # AVV
+        (10, 5, 5, False, ['VV'], False, False, False),  # RVV
         (10, 6, 5, False, ['SSVV'], False, False, False),
-        # pytest.param(10, 5, 0, False, ['VV'], True, False, False,
-        #              marks=pytest.mark.xfail(reason="too high errors")),  # AVV
-        # pytest.param(10, 5, 0, False, ['VV'], False, False, False,
-        #              marks=pytest.mark.xfail(reason="too high errors")),  # RVV
-        # (10, 6, 0, False, ['SSVV'], False, False, False),
+        pytest.param(10, 5, 0, False, ['VV'], True, False, False,
+                     marks=pytest.mark.xfail(reason="too high errors")),  # AVV
+        pytest.param(10, 5, 0, False, ['VV'], False, False, False,
+                     marks=pytest.mark.xfail(reason="too high errors")),  # RVV
+        (10, 6, 0, False, ['SSVV'], False, False, False),
         # pytest.param(10, 5, 0, False, ['VV'], False, False, True,  # RVV, vertex
         #              marks=pytest.mark.xfail(reason="too high errors")),
         # (10, 6, 0, False, ['SSVV'], False, False, True),  # SSVV, vertex
@@ -326,7 +325,7 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
 def test_cylinder_directions_curvatures(
         radius, radius_hit, eb, inverse, methods, area2, voxel, vertex_based,
         res=0, h=0, noise=0, page_curvature_formula=False, full_dist_map=False,
-        cores=4):
+        cores=6):
     """
     Tests whether minimal principal directions (T_2), as well as minimal and
     maximal principal curvatures are correctly estimated for an opened
@@ -372,7 +371,7 @@ def test_cylinder_directions_curvatures(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        cores (int): number of cores to run VV in parallel (default 4)
+        cores (int): number of cores to run VV in parallel (default 6)
 
     Returns:
         None
@@ -608,7 +607,6 @@ def test_cylinder_directions_curvatures(
 #         (10, False, True, 0, ['VV'], False, '', False),  # voxel, RVV
 #         (10, False, True, 0, ['VV'], True, '', False),  # voxel, AVV
 #         (10, False, True, 0, ['SSVV'], True, '', False),  # voxel, 'SSVV'
-#         # "{}sphere/voxel/files4plotting/bin_spheres_runtimes.csv".format(FOLD)
 #         (10, False, False, 0, ['VV'], False, '', False),  # smooth, RVV
 #         (10, False, False, 0, ['VV'], True, '', False),  # smooth, AVV
 #         (10, False, False, 0, ['SSVV'], True, '', False),  # smooth, SSVV
@@ -617,9 +615,9 @@ def test_cylinder_directions_curvatures(
 @pytest.mark.parametrize(
     "radius,radius_hit,inverse,voxel,ico,methods,area2,runtimes,vertex_based", [
         # smooth, radius=10:
-        # (10, 10, False, False, 0, ['VV'], True, '', False),  # AVV
-        # (10, 10, False, False, 0, ['VV'], False, '', False),  # RVV
-        # (10, 9, False, False, 0, ['SSVV'], False, '', False),  # SSVV
+        (10, 10, False, False, 0, ['VV'], True, '', False),  # AVV
+        (10, 10, False, False, 0, ['VV'], False, '', False),  # RVV
+        (10, 9, False, False, 0, ['SSVV'], False, '', False),  # SSVV
         # RVV and SSVV, vertex:
         # (10, 9, False, False, 0, ['SSVV', 'VV'], False, '', True),
         # smooth, radius=20:
@@ -627,9 +625,9 @@ def test_cylinder_directions_curvatures(
         (20, 10, False, False, 0, ['VV'], False, '', False),  # RVV
         (20, 9, False, False, 0, ['SSVV'], False, '', False),  # SSVV
         # voxel, radius=10:
-        # (10, 9, False, True, 0, ['VV'], True, '', False),  # AVV
-        # (10, 10, False, True, 0, ['VV'], False, '', False),  # RVV
-        # (10, 8, False, True, 0, ['SSVV'], False, '', False),  # SSVV
+        (10, 10, False, True, 0, ['VV'], True, '', False),  # AVV
+        (10, 10, False, True, 0, ['VV'], False, '', False),  # RVV
+        (10, 8, False, True, 0, ['SSVV'], False, '', False),  # SSVV
         # (10, 10, False, True, 0, ['VV'], False, '', True),  # RVV, vertex
         # (10, 8, False, True, 0, ['SSVV'], False, '', True),  # SSVV, vertex
         # voxel, radius=20:
@@ -639,18 +637,18 @@ def test_cylinder_directions_curvatures(
         # voxel, radius=20, radius_hit=18, SSVV & AVV:
         # (20, 18, False, True, 0, ['SSVV', 'VV'], True, '', False),
         # voxel, radius=30:
-        (30, 9, False, True, 0, ['VV'], True, '', False),  # AVV
+        (30, 10, False, True, 0, ['VV'], True, '', False),  # AVV
         (30, 10, False, True, 0, ['VV'], False, '', False),  # RVV
         pytest.param(30, 8, False, True, 0, ['SSVV'], False, '', False,  # SSVV
                      marks=pytest.mark.xfail(reason="too high errors")),
         # voxel, radius=30, radius_hit=18
         (30, 28, False, True, 0, ['VV'], True, '', False),  # AVV
-        (30, 28, False, True, 0, ['SSVV', 'VV'], False, '', False), # SSVV & RVV
+        (30, 28, False, True, 0, ['SSVV', 'VV'], False, '', False),  # SSVV, RVV
     ])
 def test_sphere_curvatures(
         radius, radius_hit, inverse, methods, area2, voxel, ico, runtimes,
         vertex_based, res=0, noise=0, save_areas=False,
-        page_curvature_formula=False, full_dist_map=False, cores=4):
+        page_curvature_formula=False, full_dist_map=False, cores=6):
     """
     Runs all the steps needed to calculate curvatures for a test sphere with a
     given radius. Tests whether the curvatures are correctly estimated using
@@ -695,7 +693,7 @@ def test_sphere_curvatures(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        cores (int): number of cores to run VV in parallel (default 4)
+        cores (int): number of cores to run VV in parallel (default 6)
 
     Returns:
         None
@@ -898,32 +896,34 @@ def test_sphere_curvatures(
 # @pytest.mark.parametrize("radius_hit", range(4, 11))
 # @pytest.mark.parametrize(
 #     "rr,csr,subdivisions,methods,area2,voxel,runtimes,cores,vertex_based", [
-#         # (25, 10, 0, ['VV'], True, True, '', 4, False),  # AVV, voxel
-#         # (25, 10, 0, ['VV'], False, True, '', 4, False),  # RVV, voxel
-#         # (25, 10, 0, ['SSVV'], False, True, '', 4, False),  # SSVV, voxel
-#         (25, 10, 0, ['VV'], True, False, '', 4, False),  # AVV, smooth
-#         # (25, 10, 0, ['VV'], False, False, '', 4, False),  # RVV, smooth
-#         # (25, 10, 0, ['SSVV'], False, False, '', 4, False),  # SSVV, smooth
+#         # (25, 10, 0, ['VV'], True, True, '', 6, False),  # AVV, voxel
+#         # (25, 10, 0, ['VV'], False, True, '', 6, False),  # RVV, voxel
+#         # (25, 10, 0, ['SSVV'], False, True, '', 6, False),  # SSVV, voxel
+#         (25, 10, 0, ['VV'], True, False, '', 6, False),  # AVV, smooth
+#         # (25, 10, 0, ['VV'], False, False, '', 6, False),  # RVV, smooth
+#         # (25, 10, 0, ['SSVV'], False, False, '', 6, False),  # SSVV, smooth
 #     ])
-@pytest.mark.parametrize("cores", range(1, 21))
-@pytest.mark.parametrize(
-    "rr,csr,subdivisions,radius_hit,methods,area2,voxel,vertex_based,runtimes",
-    [
-        (25, 10, 0, 9, ['VV'], True, False, False,
-         "{}torus/noise0/files4plotting/"
-         "torus_rr25_csr10_AVV_runtimes_joined_pass1_and_2.csv".format(FOLD))
-    ])
-@pytest.mark.xfail(reason="too high errors")
+# @pytest.mark.parametrize("cores", range(1, 21))
 # @pytest.mark.parametrize(
-#     "rr,csr,subdivisions,radius_hit,methods,area2,voxel,runtimes,cores,vertex_based", [
-#         (25, 10, 0, 9, ['VV'], False, False, '', 4, False),  # RVV
-#         (25, 10, 0, 9, ['VV'], True, False, '', 4, False),  # AVV
-#         (25, 10, 0, 5, ['SSVV'], False, False, '', 4, False),
-#         # (25, 10, 0, 5, ['SSVV'], False, False, '', 4, True),  # SSVV, vertex
-#         # (25, 10, 0, 9, ['VV'], False, False, '', 4, True),  # RVV, vertex
-#         # (25, 10, 100, 5, ['SSVV'], False, False, '', 4, True),  # SSVV, vertex, finer
-#         # (25, 10, 100, 9, ['VV'], False, False, '', 4, True),  # RVV, vertex, finer
+#     "rr,csr,subdivisions,radius_hit,methods,area2,voxel,vertex_based,runtimes",
+#     [
+#         (25, 10, 0, 9, ['VV'], True, False, False,
+#          "{}torus/noise0/files4plotting/"
+#          "torus_rr25_csr10_AVV_runtimes_joined_pass1_and_2.csv".format(FOLD))
 #     ])
+@pytest.mark.xfail(reason="too high errors")
+@pytest.mark.parametrize(
+    "rr,csr,subdivisions,radius_hit,methods,area2,voxel,runtimes,cores,"
+    "vertex_based", [
+        (25, 10, 0, 10, ['VV'], False, False, '', 6, False),  # RVV
+        (25, 10, 0, 9, ['VV'], True, False, '', 6, False),  # AVV
+        (25, 10, 0, 6, ['SSVV'], False, False, '', 6, False),
+        # (25, 10, 0, 5, ['SSVV'], False, False, '', 6, True),  # SSVV, vertex
+        # (25, 10, 0, 9, ['VV'], False, False, '', 6, True),  # RVV, vertex
+        # high subdivisions number:
+        # (25, 10, 100, 5, ['SSVV'], False, False, '', 6, True),  # SSVV, vertex
+        # (25, 10, 100, 9, ['VV'], False, False, '', 6, True),  # RVV, vertex
+    ])
 def test_torus_directions_curvatures(
         rr, csr, subdivisions, radius_hit, methods, area2, voxel, runtimes,
         cores, vertex_based, page_curvature_formula=False, full_dist_map=False):
@@ -1221,7 +1221,7 @@ def run_cylinder_with_creases(
         radius_hit, inverse, methods, area2, vertex_based, epsilon, eta,
         radius=10, h=25, res=10, subdivisions=3, max_edge=0, max_area=0,
         decimate=0, noise=0,
-        page_curvature_formula=False, full_dist_map=False, cores=4):
+        page_curvature_formula=False, full_dist_map=False, cores=6):
     """
     Tests whether surface is correctly classified for a cylinder surface with
     circular planes and that neighborhood search does not go over the creases
@@ -1269,7 +1269,7 @@ def run_cylinder_with_creases(
         full_dist_map (boolean, optional): if True, a full distance map is
             calculated for the whole graph, otherwise a local distance map
             is calculated for each vertex (default)
-        cores (int): number of cores to run VV in parallel (default 4)
+        cores (int): number of cores to run VV in parallel (default 6)
 
     Returns:
         None
@@ -1382,21 +1382,21 @@ if __name__ == "__main__":
     epsilon = 5
     run_cylinder_with_creases(
         radius_hit=5, res=res, inverse=False, methods=["VV"], area2=False,
-        vertex_based=True, epsilon=epsilon, eta=eta, cores=4)
+        vertex_based=True, epsilon=epsilon, eta=eta)
     run_cylinder_with_creases(
         radius_hit=5, res=res, inverse=False, methods=["VV"], area2=True,
-        vertex_based=False, epsilon=epsilon, eta=eta, cores=4)
+        vertex_based=False, epsilon=epsilon, eta=eta)
     # test_plane_normals(
     #     half_size=10, radius_hit=4, res=10, noise=10, vertex_based=True,
     #     cores=1)
     #     fold = '{}sphere/voxel/'.format(FOLD)
-#     stats_file = '{}sphere_r10.AVV_rh9.stats'.format(fold)
-#     cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
-#                  'inverse=False, voxel=True, ico=0, methods=[\'VV\'], '
-#                  'runtimes='', cores=1)', stats_file)
-#
-#     p = pstats.Stats(stats_file)
-#     # what algorithms are taking time:
-#     # p.strip_dirs().sort_stats('cumulative').print_stats(10)
-#     # what functions were looping a lot, and taking a lot of time:
-#     p.strip_dirs().sort_stats('time').print_stats(20)
+    # stats_file = '{}sphere_r10.AVV_rh9.stats'.format(fold)
+    # cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
+    #              'inverse=False, voxel=True, ico=0, methods=[\'VV\'], '
+    #              'runtimes='', cores=1)', stats_file)
+    #
+    # p = pstats.Stats(stats_file)
+    # # what algorithms are taking time:
+    # # p.strip_dirs().sort_stats('cumulative').print_stats(10)
+    # # what functions were looping a lot, and taking a lot of time:
+    # p.strip_dirs().sort_stats('time').print_stats(20)
