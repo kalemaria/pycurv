@@ -172,7 +172,7 @@ inside the current directory.
 In the same manner, you can run:
 - the integration tests of the distances and thicknesses workflow
   (test_distances_calculation.py)
-- the unit test of histogram area calculation (test_histogram_are_calculation.py)
+- the unit test of histogram area calculation (test_histogram_area_calculation.py)
 - the unit test for some linear algebra functions (test_linalg.py)
 
 ## Running the experimental data sets
@@ -183,4 +183,9 @@ folder:
 python curvature_calculation.py
 ```
 The output will be generated in the respective subfolders of the input,
-'vesicle' and 'ER'.
+'vesicle' and 'ER'. You can change the parameters in the script.
+
+
+# Reporting bugs
+If you have found a bug or have an issue with the software, please open an issue
+[here](https://github.com/kalemaria/curvaturia/issues).
