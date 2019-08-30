@@ -9,3 +9,4 @@ docs/_templates
 .doit*
 .cache
 dconf
+TCB_*
