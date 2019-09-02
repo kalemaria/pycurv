@@ -81,10 +81,10 @@ This package contains:
 - error calculation module
 - integration and unit tests for the main PyCurv workflows and functions
 - scripts for running the external software, getting curvatures and calculating
-errors from their output VTK files
+  errors from their output VTK files
 - a collection of plotting functions.
 - folder with output of curvature tests ('test_vector_voting_output'), also
-including the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'
+  including the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'
 
 experimental_data_sets folder
 +++++++++++++++++++++++++++++
@@ -115,7 +115,7 @@ installed for free, also in a virtual machine on other operating systems
 1. Ubuntu 18.04 has python3 version 3.6.7 preinstalled. (Install python2:
    `sudo apt install python-minimal`)
 
-2. Install graph-tool (Peixoto, 2014; ` <https://git.skewed.de/count0/graph-tool>`_)
+2. Install `graph-tool <https://graph-tool.skewed.de/>`_ (Peixoto, 2014)
    for Ubuntu according to `instructions <https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu>`_,
    `DISTRIBUTION=bionic`, but before running `apt-get update` add the public key:
    ```
