@@ -54,6 +54,7 @@ for the following analyses:
 ## scripts package
 This package contains Python scripts applying the PyCurv package and
 combining different functions into the workflows described above, the main are:
+
 - curvature_calculation.py script for membrane curvature calculation workflows
   used in (Bäuerlein et al. 2017, Cell) and (Collado et al. 2019, bioRxiv)
 - distances_calculation.py script for membrane distances and thicknesses
@@ -63,20 +64,22 @@ combining different functions into the workflows described above, the main are:
 
 ## testing package
 This package contains:
- - code used to generate synthetic test volumes and surfaces for testing our and
-   external curvature estimation methods from FreeSurfer (Pienaar et al. 2008,
-   International Journal of Imaging Systems and Technology) and Mindboggle
-   (Klein et al. 2017, PLoS Computational Biology)
- - error calculation module
- - integration and unit tests for the main PyCurv workflows and functions
- - scripts for running the external software, getting curvatures and calculating
-   errors from their output VTK files
- - a collection of plotting functions.
- - folder with output of curvature tests ('test_vector_voting_output'), also
-   including the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'
+
+- code used to generate synthetic test volumes and surfaces for testing our and
+  external curvature estimation methods from FreeSurfer (Pienaar et al. 2008,
+  International Journal of Imaging Systems and Technology) and Mindboggle
+  (Klein et al. 2017, PLoS Computational Biology)
+- error calculation module
+- integration and unit tests for the main PyCurv workflows and functions
+- scripts for running the external software, getting curvatures and calculating
+errors from their output VTK files
+- a collection of plotting functions.
+- folder with output of curvature tests ('test_vector_voting_output'), also
+including the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'
 
 ## experimental_data_sets folder
 Some experimental data can be found here:
+
 - vesicle: unfilled segmentation of a vesicle from a cryo-electron tomogram
 - ER: filled segmentation of a ER membrane patch from a cryo-electron tomogram
 
@@ -170,6 +173,7 @@ a folder 'test_vector_voting_output' containing the test results will be created
 inside the current directory.
 
 In the same manner, you can run:
+
 - the integration tests of the distances and thicknesses workflow
   (test_distances_calculation.py)
 - the unit test of histogram area calculation (test_histogram_area_calculation.py)

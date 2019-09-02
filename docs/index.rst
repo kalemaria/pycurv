@@ -22,7 +22,7 @@ particles mapped on a membrane, e.g. membrane-bound ribosomes.
 The software output is mostly in VTP format (triangle-mesh surfaces with
 numerical properties like curvatures, distances or densities), which can be
 visualized and further analysed in 3D using an external tool,
-`ParaView<https://www.paraview.org/>`_.
+`ParaView <https://www.paraview.org/>`_.
 Also CSV table files for plotting the results are produced and many plotting
 functions are included.
 
@@ -74,21 +74,22 @@ testing package
 +++++++++++++++
 This package contains:
 
- - code used to generate synthetic test volumes and surfaces for testing our and
-   external curvature estimation methods from FreeSurfer (Pienaar et al. 2008,
-   International Journal of Imaging Systems and Technology) and Mindboggle
-   (Klein et al. 2017, PLoS Computational Biology)
- - error calculation module
- - integration and unit tests for the main PyCurv workflows and functions
- - scripts for running the external software, getting curvatures and calculating
-   errors from their output VTK files
- - a collection of plotting functions.
- - folder with output of curvature tests ('test_vector_voting_output'), also
-   including the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'
+- code used to generate synthetic test volumes and surfaces for testing our and
+  external curvature estimation methods from FreeSurfer (Pienaar et al. 2008,
+  International Journal of Imaging Systems and Technology) and Mindboggle
+  (Klein et al. 2017, PLoS Computational Biology)
+- error calculation module
+- integration and unit tests for the main PyCurv workflows and functions
+- scripts for running the external software, getting curvatures and calculating
+errors from their output VTK files
+- a collection of plotting functions.
+- folder with output of curvature tests ('test_vector_voting_output'), also
+including the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'
 
 experimental_data_sets folder
 +++++++++++++++++++++++++++++
 Some experimental data can be found here:
+
 - vesicle: unfilled segmentation of a vesicle from a cryo-electron tomogram
 - ER: filled segmentation of a ER membrane patch from a cryo-electron tomogram
 
@@ -114,8 +115,8 @@ installed for free, also in a virtual machine on other operating systems
 1. Ubuntu 18.04 has python3 version 3.6.7 preinstalled. (Install python2:
    `sudo apt install python-minimal`)
 
-2. Install graph-tool (Peixoto, 2014; https://git.skewed.de/count0/graph-tool)
-   for Ubuntu according to `instructions<https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu>`_,
+2. Install graph-tool (Peixoto, 2014; ` <https://git.skewed.de/count0/graph-tool>`_)
+   for Ubuntu according to `instructions <https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu>`_,
    `DISTRIBUTION=bionic`, but before running `apt-get update` add the public key:
    ```
    apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
@@ -127,8 +128,8 @@ installed for free, also in a virtual machine on other operating systems
    (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
    https://docs.python.org/3.6/tutorial/modules.html)
 
-4. Install `pip3<https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/>`_
-   (includes setuptools), `venv<https://docs.python.org/3/library/venv.html>`_ (from
+4. Install `pip3 <https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/>`_
+   (includes setuptools), `venv <https://docs.python.org/3/library/venv.html>`_ (from
    python version 3.3 on, recommended from version 3.5 on) in e.g. ~/workspace:
    ```
    python3 -m venv ./venv –system-site-packages
@@ -141,7 +142,7 @@ installed for free, also in a virtual machine on other operating systems
    ```python
    from graph_tool.all import *
    ```
-   (python2: install `virtualenv<https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref>`_
+   (python2: install `virtualenv <https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref>`_
    in ~/workspace/venv2:
    ```
    virtualenv -p /usr/bin/python2.7 --system-site-packages venv2
@@ -204,7 +205,7 @@ The output will be generated in the respective subfolders of the input,
 Reporting bugs
 ++++++++++++++
 If you have found a bug or have an issue with the software, please open an issue
-`here<https://github.com/kalemaria/pycurv/issues>`_.
+`here <https://github.com/kalemaria/pycurv/issues>`_.
 
 
 .. toctree::
