@@ -1,8 +1,8 @@
 import math
 from graph_tool.topology import shortest_distance
 
-from curvaturia import TriangleGraph
-from curvaturia import curvaturia_io as io
+from pycurv import TriangleGraph
+from pycurv import pycurv_io as io
 
 """
 Functions that can be used for visualizing geodesic neighborhood.

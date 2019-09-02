@@ -6,7 +6,7 @@ from graph_tool import Graph
 from graph_tool.topology import shortest_distance
 from heapq import heappush, heappop
 
-from curvaturia_io import TypesConverter
+from pycurv_io import TypesConverter
 import pexceptions
 from linalg import nice_acos
 

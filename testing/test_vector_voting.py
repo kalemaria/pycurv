@@ -9,8 +9,8 @@ import vtk
 # import cProfile
 # import pstats
 
-from curvaturia import curvaturia_io as io
-from curvaturia import (
+from pycurv import pycurv_io as io
+from pycurv import (
     TriangleGraph, PointGraph, normals_directions_and_curvature_estimation,
     nice_asin)
 from synthetic_surfaces import (
@@ -767,7 +767,7 @@ def test_sphere_curvatures(
                 print("Sorry, you have to generate the icosahedron\n"
                       "sphere beforehand e.g. with Blender, export it as\n"
                       "STL file and convert it to VTP file using the\n"
-                      "function curvaturia_io.stl_file_to_vtp_file,\n"
+                      "function pycurv_io.stl_file_to_vtp_file,\n"
                       "optionally add noise with\n"
                       "add_gaussian_noise_to_surface and save it as\n{}"
                       .format(surf_file))

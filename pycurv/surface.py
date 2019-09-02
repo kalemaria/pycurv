@@ -1,7 +1,7 @@
 import vtk
 
 import pexceptions
-import curvaturia_io as io
+import pycurv_io as io
 import numpy as np
 from scipy.ndimage import binary_dilation
 from scipy.ndimage.morphology import distance_transform_edt

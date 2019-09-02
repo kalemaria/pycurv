@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(
-    name='curvaturia',
+    name='pycurv',
     version='1.0',
-    packages=['curvaturia', 'scripts', 'testing'],
+    packages=['pycurv', 'scripts', 'testing'],
     url='',
     license='',
     author='Maria Kalemanov, Antonio Martinez-Sanchez',

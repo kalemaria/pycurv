@@ -10,13 +10,13 @@ from scipy import ndimage
 import vtk  # for Anna's workflow
 import os
 
-from curvaturia import (
+from pycurv import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
     TriangleGraph, PointGraph, curvature_estimation)
-from curvaturia import curvaturia_io as io
+from pycurv import pycurv_io as io
 
 """
-A script with an example application of the curvaturia package for estimation of
+A script with an example application of the PyCurv package for estimation of
 membrane curvature.
 
 Author: Maria Kalemanov (Max Planck Institute for Biochemistry)

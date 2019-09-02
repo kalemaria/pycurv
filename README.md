@@ -1,4 +1,4 @@
-# curvaturia
+# PyCurv
 This Python-based software was developed mainly to analyse curvature of
 membranes in 3D originating from high-resolution, noisy cryo-electron tomograms.
 Additionally, the software was also applied to other volumetric data with
@@ -20,7 +20,7 @@ visualized and further analysed in 3D using an external tool,
 Also CSV table files for plotting the results are produced and many plotting
 functions are included.
 
-## curvaturia package
+## PyCurv package
 This is the main Python package containing modules, classes and functions used
 for the following analyses:
 
@@ -52,7 +52,7 @@ for the following analyses:
   ribosome coordinates on the membranes and the membrane mask.
 
 ## scripts package
-This package contains Python scripts applying the curvaturia package and
+This package contains Python scripts applying the PyCurv package and
 combining different functions into the workflows described above, the main are:
 - curvature_calculation.py script for membrane curvature calculation workflows
   used in (Bäuerlein et al. 2017, Cell) and (Collado et al. 2019, bioRxiv)
@@ -68,7 +68,7 @@ This package contains:
    International Journal of Imaging Systems and Technology) and Mindboggle
    (Klein et al. 2017, PLoS Computational Biology)
  - error calculation module
- - integration and unit tests for the main curvaturia workflows and functions
+ - integration and unit tests for the main PyCurv workflows and functions
  - scripts for running the external software, getting curvatures and calculating
    errors from their output VTK files
  - a collection of plotting functions.
@@ -81,8 +81,8 @@ Some experimental data can be found here:
 - ER: filled segmentation of a ER membrane patch from a cryo-electron tomogram
 
 
-# Installing curvaturia
-Please note that curvaturia depends on one not publicly available Python package,
+# Installing PyCurv
+Please note that PyCurv depends on one not publicly available Python package,
 pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
 has to be requested from its author, Dr. Vladan Lučić.
 
@@ -144,7 +144,7 @@ installed for free, also in a virtual machine on other operating systems
    ```
    sudo pythonX setup.py install
    ```
-   X=2 or 3 for python2 or 3 and try to import pysurf.
+   X=2 or 3 for python2 or 3 and try to import pycurv.
 
 6. To re-create the environment on another computer or after
    re-installation, freeze the current state of the environment packages:
@@ -158,7 +158,7 @@ installed for free, also in a virtual machine on other operating systems
    ```
 
 
-# Running curvaturia
+# Running PyCurv
 
 ## Running the tests
 To run the integration tests of the curvature workflow on synthetic surfaces,
@@ -188,4 +188,4 @@ The output will be generated in the respective subfolders of the input,
 
 # Reporting bugs
 If you have found a bug or have an issue with the software, please open an issue
-[here](https://github.com/kalemaria/curvaturia/issues).
+[here](https://github.com/kalemaria/pycurv/issues).

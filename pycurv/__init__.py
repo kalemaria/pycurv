@@ -1,20 +1,10 @@
 """
-curvaturia package can be used to analyze the membrane-bound ribosome density and
+PyCurv package can be used to analyze the membrane-bound ribosome density and
 curvature of ER membranes in cryo-electron tomograms.
-
-The following modules are exported by the package:
-    - pexceptions
-    - curvaturia_io
-    - graphs
-    - ribosome_density
-    - run_gen_surface
-    - surface_graphs
-    - vector_voting
-    - tomogram_batch_processing
 """
 
 from pexceptions import *
-from curvaturia_io import *
+from pycurv_io import *
 from graphs import SegmentationGraph
 from ribosome_density import *
 from surface_graphs import *

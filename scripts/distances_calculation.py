@@ -3,8 +3,8 @@ import pandas as pd
 from os.path import isfile
 import sys
 
-from curvaturia import (curvaturia_io as io, TriangleGraph, calculate_distances,
-                        calculate_thicknesses, normals_estimation, surface)
+from pycurv import (pycurv_io as io, TriangleGraph, calculate_distances,
+                    calculate_thicknesses, normals_estimation, surface)
 
 
 __author__ = 'kalemanov'

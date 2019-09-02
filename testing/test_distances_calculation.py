@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import shutil
 
-from curvaturia import curvaturia_io as io
+from pycurv import pycurv_io as io
 from scripts import distances_and_thicknesses_calculation
 
 """

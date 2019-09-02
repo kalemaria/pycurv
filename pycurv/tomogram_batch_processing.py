@@ -2,7 +2,7 @@ import numpy as np
 from skimage.measure import label, regionprops
 from os.path import isfile
 
-import curvaturia_io as io
+import pycurv_io as io
 
 """
 Contains a function for splitting a tomogram segmentation in connected regions

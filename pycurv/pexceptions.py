@@ -1,6 +1,6 @@
 """
 Set of classes for handling exceptions and warnings implemented for PySeg
-package and also used in the curvaturia package.
+package and also used in the PyCurv package.
 
 Author: Antonio Martinez-Sanchez (Max Planck Institute for Biochemistry), date:
 2014-04-02

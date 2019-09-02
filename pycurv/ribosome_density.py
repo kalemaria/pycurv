@@ -4,7 +4,7 @@ from scipy import spatial
 from datetime import datetime
 
 import graphs
-import curvaturia_io as io
+import pycurv_io as io
 import pexceptions
 
 """

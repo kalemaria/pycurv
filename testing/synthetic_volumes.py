@@ -3,8 +3,8 @@ import math
 import os
 from scipy import ndimage
 
-from curvaturia import curvaturia_io as io
-from curvaturia import pexceptions, run_gen_surface
+from pycurv import pycurv_io as io
+from pycurv import pexceptions, run_gen_surface
 
 """
 A set of functions and classes for generating artificial segmentation volumes

@@ -2,12 +2,12 @@ import time
 from datetime import datetime
 from graph_tool import load_graph
 
-from curvaturia import (read_in_mask, get_target_voxels_in_membrane_mask,
-                        VoxelGraph)
-from curvaturia import curvaturia_io as io
+from pycurv import (read_in_mask, get_target_voxels_in_membrane_mask,
+                    VoxelGraph)
+from pycurv import pycurv_io as io
 
 """
-A script with an example application of the curvaturia package for calculation of
+A script with an example application of the PyCurv package for calculation of
 membrane-bound ribosome density.
 
 Author: Maria Kalemanov (Max Planck Institute for Biochemistry)

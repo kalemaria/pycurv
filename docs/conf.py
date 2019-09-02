@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# curvaturia documentation build configuration file, created by
+# PyCurv documentation build configuration file, created by
 # sphinx-quickstart on Fri Jul 28 17:36:44 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -47,7 +47,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'curvaturia'
+project = u'PyCurv'
 copyright = u'2017, Maria Kalemanov, Antonio Martinez-Sanchez'
 author = u'Maria Kalemanov, Antonio Martinez-Sanchez'
 
@@ -101,7 +101,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'curvaturiadoc'
+htmlhelp_basename = 'PyCurvDoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -128,7 +128,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'curvaturia.tex', u'curvaturia Documentation',
+    (master_doc, 'PyCurv.tex', u'PyCurv Documentation',
      u'Maria Kalemanov, Antonio Martinez-Sanchez', 'manual'),
 ]
 
@@ -138,7 +138,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'curvaturia', u'curvaturia Documentation',
+    (master_doc, 'PyCurv', u'PyCurv Documentation',
      [author], 1)
 ]
 
@@ -149,8 +149,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'curvaturia', u'curvaturia Documentation',
-     author, 'curvaturia', 'One line description of project.',
+    (master_doc, 'PyCurv', u'PyCurv Documentation',
+     author, 'PyCurv', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -171,7 +171,7 @@ texinfo_documents = [
 # would mean that specific document would be compressed
 # regardless of the global pdf_compressed setting.
 pdf_documents = [
-    (master_doc, u'curvaturia', u'curvaturia', author),
+    (master_doc, u'PyCurv', u'PyCurv', author),
 ]
 # A comma-separated list of custom stylesheets. Example:
 pdf_stylesheets = ['sphinx','kerning','a4']
