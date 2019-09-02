@@ -22,7 +22,7 @@ particles mapped on a membrane, e.g. membrane-bound ribosomes.
 The software output is mostly in VTP format (triangle-mesh surfaces with
 numerical properties like curvatures, distances or densities), which can be
 visualized and further analysed in 3D using an external tool,
-[ParaView](https://www.paraview.org/).
+`ParaView<https://www.paraview.org/>`_.
 Also CSV table files for plotting the results are produced and many plotting
 functions are included.
 
@@ -62,6 +62,7 @@ scripts package
 +++++++++++++++
 This package contains Python scripts applying the PyCurv package and
 combining different functions into the workflows described above, the main are:
+
 - curvature_calculation.py script for membrane curvature calculation workflows
   used in (Bäuerlein et al. 2017, Cell) and (Collado et al. 2019, bioRxiv)
 - distances_calculation.py script for membrane distances and thicknesses
@@ -72,6 +73,7 @@ combining different functions into the workflows described above, the main are:
 testing package
 +++++++++++++++
 This package contains:
+
  - code used to generate synthetic test volumes and surfaces for testing our and
    external curvature estimation methods from FreeSurfer (Pienaar et al. 2008,
    International Journal of Imaging Systems and Technology) and Mindboggle
@@ -113,7 +115,7 @@ installed for free, also in a virtual machine on other operating systems
    `sudo apt install python-minimal`)
 
 2. Install graph-tool (Peixoto, 2014; https://git.skewed.de/count0/graph-tool)
-   for Ubuntu according to [instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu),
+   for Ubuntu according to `instructions<https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu>`_,
    `DISTRIBUTION=bionic`, but before running `apt-get update` add the public key:
    ```
    apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
@@ -125,8 +127,8 @@ installed for free, also in a virtual machine on other operating systems
    (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
    https://docs.python.org/3.6/tutorial/modules.html)
 
-4. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/)
-   (includes setuptools), [venv](https://docs.python.org/3/library/venv.html) (from
+4. Install `pip3<https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/>`_
+   (includes setuptools), `venv<https://docs.python.org/3/library/venv.html>`_ (from
    python version 3.3 on, recommended from version 3.5 on) in e.g. ~/workspace:
    ```
    python3 -m venv ./venv –system-site-packages
@@ -139,7 +141,7 @@ installed for free, also in a virtual machine on other operating systems
    ```python
    from graph_tool.all import *
    ```
-   (python2: install [virtualenv](https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref)
+   (python2: install `virtualenv<https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref>`_
    in ~/workspace/venv2:
    ```
    virtualenv -p /usr/bin/python2.7 --system-site-packages venv2
@@ -182,6 +184,7 @@ a folder 'test_vector_voting_output' containing the test results will be created
 inside the current directory.
 
 In the same manner, you can run:
+
 - the integration tests of the distances and thicknesses workflow
   (test_distances_calculation.py)
 - the unit test of histogram area calculation (test_histogram_area_calculation.py)
@@ -201,7 +204,7 @@ The output will be generated in the respective subfolders of the input,
 Reporting bugs
 ++++++++++++++
 If you have found a bug or have an issue with the software, please open an issue
-[here](https://github.com/kalemaria/pycurv/issues).
+`here<https://github.com/kalemaria/pycurv/issues>`_.
 
 
 .. toctree::
