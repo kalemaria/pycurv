@@ -9,10 +9,11 @@ import numpy as np
 from scipy import ndimage
 import vtk  # for Anna's workflow
 import os
+from pathlib2 import Path
 
 from pycurv import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
-    TriangleGraph, PointGraph, curvature_estimation)
+    TriangleGraph, PointGraph, curvature_estimation, merge_vtp_files)
 from pycurv import pycurv_io as io
 
 """
@@ -734,6 +735,9 @@ def from_ply_workflow(
     # Reading in the surface and transforming it into a triangle graph
     print('\nReading in the surface file to get a vtkPolyData surface...')
     surf = io.load_poly(surf_file)
+    if surf.GetNumberOfCells() == 0:
+        print('The surface is empty, exiting.')
+        return None
     print('\nBuilding a triangle graph from the surface...')
     tg = TriangleGraph()
     tg.build_graph_from_vtk_surface(surf, scale)
@@ -1159,6 +1163,49 @@ def main_anna():
     annas_workflow(fold, base_filename, radius_hit, seg_file)
 
 
+def main_light_microscopy_cells(timepoint=22):
+    """
+    Main function for running the ply workflow for the whole C.Elegans embryo
+    segmentation (by LimeSeg, of data coming from light microscopy) at a given
+    time point. The input data structure of PLY files was downloaded from here:
+    https://raw.githubusercontent.com/NicoKiaru/TestImages/master/LimeSegOutput/DubSeg.zip
+
+    Args:
+        timepoint (int): time point, 1-22 are possible for these data set
+            (default 22)
+
+    Returns:
+        None
+    """
+    # Input / output settings:
+    fold = "/fs/pool/pool-ruben/Maria/curvature/TestImages-LimeSeg/" \
+           "LimeSegOutput/DubSeg/"
+    cell_seg_file = "T_{}.ply".format(timepoint)
+    scale_microns = 0.133
+    radius_hit_microns = 3
+    cell_vtp_file = "T_{}.AVV_rh{}.vtp".format(timepoint, radius_hit_microns)
+    cell_vtp_file_paths_list = []
+    embryo_vtp = os.path.join(fold, "embryo_T_{}.AVV_rh{}.vtp".format(
+        timepoint, radius_hit_microns))
+
+    # Run the curvature workflow:
+    for subfold_p in [x for x in Path(fold).iterdir() if x.is_dir()]:
+        cell_seg_file_path = os.path.join(fold, subfold_p.name, cell_seg_file)
+        # As not all cells include every time point, check if the file exists
+        if os.path.isfile(cell_seg_file_path):
+            from_ply_workflow(
+                ply_file=cell_seg_file_path, radius_hit=radius_hit_microns,
+                scale=(scale_microns, scale_microns, scale_microns))
+            # Add the output file path to the list, if it was created
+            # (some surfaces were empty and skipped by the workflow):
+            out_file_path = os.path.join(fold, subfold_p.name, cell_vtp_file)
+            if os.path.isfile(out_file_path):
+                cell_vtp_file_paths_list.append(out_file_path)
+
+    # Merge the output VTP files to one:
+    merge_vtp_files(cell_vtp_file_paths_list, embryo_vtp)
+
+
 if __name__ == "__main__":
 
     # Get triangle areas from a scaled cleaned graph, excluding 1 nm from border
@@ -1209,10 +1256,7 @@ if __name__ == "__main__":
 
     # main_anna()
 
-    # from_ply_workflow(
-    #     ply_file="/fs/pool/pool-ruben/Maria/curvature/TestImages-LimeSeg/"
-    #              "LimeSegOutput/DubSeg/cell_11/T_10.ply",
-    #     radius_hit=10, scale=(1, 1, 1))
+    # main_light_microscopy_cells()
 
     # from_nii_workflow(
     #     nii_file="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
