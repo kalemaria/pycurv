@@ -506,29 +506,6 @@ def _extract_curvatures_from_graph(
     df.to_csv(csv_file, sep=';')
 
 
-def extract_areas_from_graph(
-        tg, csv_file, exclude_borders, gt_file=None, vtp_file=None):
-    # If don't want to include triangles near borders, filter out those
-    if exclude_borders > 0:
-        tg.find_vertices_near_border(exclude_borders, purge=True)
-
-    # Saving the changes into graph and surface files, if specified:
-    if gt_file is not None:
-        tg.graph.save(gt_file)
-    if vtp_file is not None:
-        # Transforming the resulting graph to a surface with triangles:
-        surf = tg.graph_to_triangle_poly()
-        io.save_vtp(surf, vtp_file)
-
-    # Getting areas from the graph:
-    triangle_areas = tg.get_vertex_property_array("area")
-
-    # Writing all the curvature values and errors into a csv file:
-    df = pd.DataFrame()
-    df["triangleAreas"] = triangle_areas
-    df.to_csv(csv_file, sep=';')
-
-
 def _shape_index_classifier(x):
     """
     Maps shape index value to the representative (middle) value of each shape
