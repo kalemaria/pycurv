@@ -150,7 +150,7 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
             otherwise a local distance map is calculated later for each vertex
             (default)
         cores (int, optional): number of cores to run VV (collect_normal_votes
-            and estimate_normal) in parallel (default 8)
+            and estimate_normal) in parallel (default 6)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default '')
         graph_file (str, optional): file path to save the graph, default file
