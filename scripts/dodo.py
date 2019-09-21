@@ -37,8 +37,12 @@ def task_calculate_cER_curvatures():
                 subfold_name = subfold_p.name
                 date, microscope, lamella, tomo = subfold_name.split('_')
                 if microscope == "POLARA":
-                    pixel_size = 1.4036
-                else:
+                    if (condition == "SMP" or condition == "C2d" or
+                            condition == "TCB3FULL"):
+                        pixel_size = 1.4036
+                    else:
+                        pixel_size = 2.088
+                else:  # "dTCB123", "dTCB3" or "dTCB1"
                     pixel_size = 1.368  # "TITAN"
                 base_filename = "{}_{}_{}_{}.cER".format(
                     condition, date, lamella, tomo)
