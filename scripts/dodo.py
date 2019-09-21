@@ -10,13 +10,13 @@ Runs for MCS paper.
 
 RADIUS_HIT = 10
 CONDITIONS = ["WT", "IST2", "SCS", "TCB", "dTCB1", "dTCB2", "dTCB3",
-              "dTCB1_dTCB2", "WT_HS", "dTCB123", "dTCB123_HS", "dtether"]
+              "dTCB1_dTCB2", "WT_HS", "dTCB123", "dTCB123_HS", "dtether",
+              "SMP", "C2d", "TCB3FULL"]
 
 
 def task_calculate_cER_curvatures():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/"
-    pixel_size = 1.368
     radius_hit = RADIUS_HIT
     methods = ["VV"]
     lbl = 2  # cER
@@ -35,7 +35,11 @@ def task_calculate_cER_curvatures():
                 seg_file = str(seg_file_p)
                 seg_filename = str(PurePath(seg_file_p).name)
                 subfold_name = subfold_p.name
-                date, _, lamella, tomo = subfold_name.split('_')
+                date, microscope, lamella, tomo = subfold_name.split('_')
+                if microscope == "POLARA":
+                    pixel_size = 1.4036
+                else:
+                    pixel_size = 1.368  # "TITAN"
                 base_filename = "{}_{}_{}_{}.cER".format(
                     condition, date, lamella, tomo)
                 subfold = str(subfold_p) + '/'
