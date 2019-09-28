@@ -397,12 +397,13 @@ def distances_and_thicknesses_calculation(
         mem1_tg.graph.save(mem1_normals_graph_file)
         mem1_surf = mem1_tg.graph_to_triangle_poly()
         io.save_vtp(mem1_surf, mem1_normals_surf_file)
-    print('Calculating and saving distances between {} and {}'.format(
-        mem1, mem2))
-    run_calculate_distances(
-        mem1_normals_graph_file, mem2_surf_file, mem2_graph_file,
-        mem2_dist_surf_file, mem2_dist_graph_file, distances_outfile,
-        maxdist, offset, both_directions, reverse_direction, mem1)
+    if not isfile(distances_outfile):
+        print('Calculating and saving distances between {} and {}'.format(
+            mem1, mem2))
+        run_calculate_distances(
+            mem1_normals_graph_file, mem2_surf_file, mem2_graph_file,
+            mem2_dist_surf_file, mem2_dist_graph_file, distances_outfile,
+            maxdist, offset, both_directions, reverse_direction, mem1)
     if maxthick > 0:
         inner_mem2_surf_file = '{}{}.inner{}.vtp'.format(fold, base_filename,
                                                          mem2)
@@ -420,9 +421,10 @@ def distances_and_thicknesses_calculation(
                 segmentation_file, pixel_size, inner_mem2_surf_file,
                 inner_mem2_graph_file, lbl_mem2, lbl_mem2_lumen, mem2,
                 smooth=smooth)
-        print('Calculating and saving {} thicknesses'.format(mem2))
-        run_calculate_thicknesses(
-            mem1_normals_graph_file, inner_mem2_surf_file, inner_mem2_graph_file,
-            inner_mem2_thick_surf_file, inner_mem2_thick_graph_file,
-            thicknesses_outfile, maxdist, maxthick, offset,
-            both_directions, reverse_direction, mem2)
+        if not isfile(thicknesses_outfile):
+            print('Calculating and saving {} thicknesses'.format(mem2))
+            run_calculate_thicknesses(
+                mem1_normals_graph_file, inner_mem2_surf_file,
+                inner_mem2_graph_file, inner_mem2_thick_surf_file,
+                inner_mem2_thick_graph_file, thicknesses_outfile, maxdist,
+                maxthick, offset, both_directions, reverse_direction, mem2)
