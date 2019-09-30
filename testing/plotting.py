@@ -1266,9 +1266,9 @@ def plot_sphere_curvature_errors_allVV(
 
         plot_composite_line_hist(
             data_arrays=data,
-            labels=["RVV RadiusHit={}".format(rhRVV),
-                    "AVV RadiusHit={}".format(rhAVV),
-                    "SSVV RadiusHit={}".format(rhSSVV)],
+            labels=[r"RVV $\it RH$={}".format(rhRVV),
+                    r"AVV $\it RH$={}".format(rhAVV),
+                    r"SSVV $\it RH$={}".format(rhSSVV)],
             zorders=[1, 3, 2],
             line_styles=['-'] * len(data), markers=['v', 'o', '^'],
             colors=['c', 'orange', 'b'],
@@ -2348,12 +2348,12 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
 
 if __name__ == "__main__":
     # Real data
-    read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
-                                     num_bins=25)
-    for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
-        # plot_excluding_borders(method=method)
-        read_in_and_plot_surface_curvatures(
-            num_bins=25, method=method, borders=0, x_range=(-0.1, 0.15))
+    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
+    #                                  num_bins=25)
+    # for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
+    #     # plot_excluding_borders(method=method)
+    #     read_in_and_plot_surface_curvatures(
+    #         num_bins=25, method=method, borders=0, x_range=(-0.1, 0.15))
 
     # Benchmark data
     # plot_plane_normals(vertex_based=False, x_range=(0, 0.4))
@@ -2461,12 +2461,12 @@ if __name__ == "__main__":
     # for r in [10, 30]:
     #     plot_sphere_curvature_errors_allVV(  # both curvatures
     #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
-    #         x_range=(0, 0.7)
+    #         x_range=(0, 0.7), legend_loc="center right"
     #     )
-    # plot_sphere_curvature_errors_allVV(  # both curvatures
-    #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
-    #     x_range=(0, 0.7)
-    # )
+    plot_sphere_curvature_errors_allVV(  # both curvatures
+        r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
+        x_range=(0, 0.7), legend_loc="center right"
+    )
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
     #     RorAVV="RVV", vertex_based=True)
