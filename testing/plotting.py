@@ -231,7 +231,7 @@ def plot_composite_line_hist(
         data_arrays=None, data_files=None, weights_arrays=None,
         num_bins=20, x_range=None, y_range=None, max_val=None,
         normalize=False, cumulative=False, outfile=None, legend_loc='best',
-        num_x_values=0, zorders=None, fontsize=30):
+        num_x_values=0, zorders=None, fontsize=30, ncol=1):
     """
     Plots several data sets as line histograms in one plot.
     Args:
@@ -265,6 +265,7 @@ def plot_composite_line_hist(
         zorders (list, optional): list of integers indicating the order of data
             lines on the plot
         fontsize (int, optional): fontsize (default 30)
+        ncol (int, optional): number of legend columns (default 1)
 
     Returns:
         hist_areas: list of histogram areas, values are Null in not cumulative
@@ -323,7 +324,8 @@ def plot_composite_line_hist(
     plt.ylabel(y_label)
     if y_range is not None:
         plt.ylim(y_range)
-    plt.legend(loc=legend_loc, fancybox=True, framealpha=0.5)
+    plt.legend(loc=legend_loc, fancybox=True, framealpha=0.5, fontsize=18,
+               ncol=ncol, columnspacing=1, handletextpad=0.2, borderpad=0.2)
     # plt.grid(True)
     plt.tight_layout()
     plt.tick_params(top='off', right='off', which='both')  # sns.despine()
@@ -2444,6 +2446,7 @@ if __name__ == "__main__":
     kwargs = {}
     kwargs["num_x_values"] = 6
     kwargs["fontsize"] = 23
+    kwargs["ncol"] = 2
     for method in ["AVV", "RVV", "SSVV"]:
         for curvature in ["both"]:
             plot_sphere_curvature_errors_diff_rh(
