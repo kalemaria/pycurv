@@ -330,6 +330,7 @@ def plot_composite_line_hist(
     plt.tight_layout()
     plt.tick_params(top='off', right='off', which='both')  # sns.despine()
     plt.tick_params(direction='in')
+    ax.tick_params(axis='x', which='major', pad=8)  # space to X-labels
     if num_x_values > 0:
         plt.locator_params(axis='x', nbins=num_x_values)
     if outfile is None:
