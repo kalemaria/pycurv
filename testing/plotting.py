@@ -32,10 +32,14 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 
 __author__ = 'kalemanov'
 
-# FOLD = '/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces_benchmarking/'
+FOLDPEAKS = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
+            "180830_TITAN_l2_t2peak/"
+FOLDCER = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
+          "180830_TITAN_l2_t2half/"
+FOLDPEAKSPLOTS = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
+                 'plots_peaks/'
 FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
        'comparison_to_others/test_vector_voting_output/'
-FOLD2 = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/'
 FOLDMB = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
          "comparison_to_others/test_mindboggle_output/"
 FOLDFS = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
@@ -2118,9 +2122,8 @@ def read_in_and_plot_peak_curvatures(x_range=None, y_range=None, num_bins=20,
     Returns:
         None
     """
-    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
-             "180830_TITAN_l2_t2peak/"
-    plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
+    folder = FOLDPEAKS
+    plot_fold = FOLDPEAKSPLOTS
     segmentations = ["unfilled_using_peakplus", "filled"]
     methods = ["AVV", "SSVV"]
     radius_hits = [2, 5, 10, 15, 20]
@@ -2173,9 +2176,8 @@ def read_in_and_plot_surface_curvature(
     Returns:
         None
     """
-    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
-             "180830_TITAN_l2_t2half/"
-    plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
+    folder = FOLDCER
+    plot_fold = FOLDPEAKSPLOTS
     method = "AVV"
     radius_hit = 10
     csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding1borders.csv".format(
@@ -2222,9 +2224,8 @@ def read_in_and_plot_surface_curvatures(
     Returns:
         None
     """
-    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
-             "180830_TITAN_l2_t2half/"
-    plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
+    folder = FOLDCER
+    plot_fold = FOLDPEAKSPLOTS
     if borders == 0:
         csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}.csv".format(
             folder, method, radius_hit)
@@ -2251,8 +2252,8 @@ def read_in_and_plot_surface_curvatures(
         curvatures_arrays.append(curvatures)
         weights_arrays.append(weights)
 
-    labels = [r"$\kappa_{1}$", r"$\kappa_{2}$", "curvedness"]
-    x_label = r"$Curvature\ (nm^{-1})$"
+    labels = [r"$\kappa_{1}$", r"$\kappa_{2}$", "Curvedness"]
+    x_label = r"$AVV\ curvature\ (nm^{-1})$"
     if x_range is None:
         # Find minimal and maximal value to set the X-range:
         min_value = min([min(d) for d in curvatures_arrays])
@@ -2282,9 +2283,8 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
     Returns:
         None
     """
-    folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
-             "180830_TITAN_l2_t2half/"
-    plot_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/plots_peaks/"
+    folder = FOLDCER
+    plot_fold = FOLDPEAKSPLOTS
     plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding_borders.png"\
         .format(plot_fold, method, radius_hit)
     csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}.csv".format(
@@ -2348,12 +2348,12 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
 
 if __name__ == "__main__":
     # Real data
-    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
-    #                                  num_bins=25)
-    # for method in ["NVV", "RVV", "SSVV"]:  # ,"AVV"
-    #     # plot_excluding_borders(method=method)
-    #     read_in_and_plot_surface_curvatures(
-    #         num_bins=25, method=method, borders=0)  # , x_range=(-0.1, 0.15)
+    read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
+                                     num_bins=25)
+    for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
+        # plot_excluding_borders(method=method)
+        read_in_and_plot_surface_curvatures(
+            num_bins=25, method=method, borders=0, x_range=(-0.1, 0.15))
 
     # Benchmark data
     # plot_plane_normals(vertex_based=False, x_range=(0, 0.4))
@@ -2379,9 +2379,11 @@ if __name__ == "__main__":
     #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 0.08))  # range for kappa1
+    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 0.08),
+    #     legend_loc="lower right")  # range for kappa1
     # plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
-    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 1.4))  # range for kappa2
+    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 1.4),
+    #     legend_loc="lower right")  # range for kappa2
     # vertex-based
     # plot_torus_kappa_1_and_2_T_1_and_2_errors(
     #     rhVV=9, rhSSVV=5, RorAVV="RVV", vertex_based=True,
@@ -2437,29 +2439,29 @@ if __name__ == "__main__":
     # for r in [10, 20]:
     #     plot_sphere_curvature_errors_allVV(  # both curvatures
     #         r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
-    #         # x_range=(0, 0.25)
+    #         x_range=(0, 0.25), **kwargs
     #     )
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=9, rhSSVV=9, voxel=False, x_range=(0, 0.18),
     #     RorAVV="RVV", vertex_based=True)
 
     # voxel sphere
-    kwargs = {}
-    kwargs["num_x_values"] = 6
-    kwargs["fontsize"] = 23
-    kwargs["ncol"] = 2
-    for method in ["AVV", "RVV", "SSVV"]:
-        for curvature in ["both"]:
-            plot_sphere_curvature_errors_diff_rh(
-                voxel=True, methods=[method], curvature=curvature,
-                rhs=range(5, 11), x_range=(0, 0.5), csv=join(
-                    FOLD, "sphere/voxel/files4plotting",
-                    "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
-                        method, curvature)), **kwargs)
+    # kwargs = {}
+    # kwargs["num_x_values"] = 6
+    # kwargs["fontsize"] = 23
+    # kwargs["ncol"] = 2
+    # for method in ["AVV", "RVV", "SSVV"]:
+    #     for curvature in ["both"]:
+    #         plot_sphere_curvature_errors_diff_rh(
+    #             voxel=True, methods=[method], curvature=curvature,
+    #             rhs=range(5, 11), x_range=(0, 0.5), csv=join(
+    #                 FOLD, "sphere/voxel/files4plotting",
+    #                 "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
+    #                     method, curvature)), **kwargs)
     # for r in [10, 30]:
     #     plot_sphere_curvature_errors_allVV(  # both curvatures
     #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
-    #         # x_range=(0, 0.7)
+    #         x_range=(0, 0.7)
     #     )
     # plot_sphere_curvature_errors_allVV(  # both curvatures
     #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
