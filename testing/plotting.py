@@ -628,7 +628,7 @@ def plot_cylinder_T_2_and_kappa_1_errors(
     markers.append('^')  # SSVV
     colors.append('b')
     title = ("Including borders" if exclude_borders == 0
-             else "Excluding borders ({} pixels)".format(exclude_borders))
+             else "Excluding borders ({} voxels)".format(exclude_borders))
     if x_range_T is None:
         x_range_T = (0, max([max(d) for d in data]))
     else:
@@ -2463,10 +2463,10 @@ if __name__ == "__main__":
     #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
     #         x_range=(0, 0.7), legend_loc="center right"
     #     )
-    plot_sphere_curvature_errors_allVV(  # both curvatures
-        r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
-        x_range=(0, 0.7), legend_loc="center right"
-    )
+    # plot_sphere_curvature_errors_allVV(  # both curvatures
+    #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
+    #     x_range=(0, 0.7), legend_loc="center right"
+    # )
     # plot_sphere_kappa_1_and_2_errors(
     #     r=10, rhVV=10, rhSSVV=8, voxel=True, x_range=(0, 0.7),
     #     RorAVV="RVV", vertex_based=True)
@@ -2487,9 +2487,9 @@ if __name__ == "__main__":
     # plot_cylinder_T_2_and_kappa_1_errors(
     #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
     #     exclude_borders=0, rhVV=5, rhSSVV=6, n=2)
-    # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-    #     exclude_borders=5, rhVV=5, rhSSVV=6)
+    plot_cylinder_T_2_and_kappa_1_errors(
+        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
+        exclude_borders=5, rhVV=5, rhSSVV=6)
     # plot_cylinder_T_2_and_kappa_1_errors(
     #    x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
     #    rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
