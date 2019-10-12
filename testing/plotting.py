@@ -2472,6 +2472,8 @@ if __name__ == "__main__":
     #     RorAVV="RVV", vertex_based=True)
 
     # smooth cylinder
+    kwargs = {}
+    kwargs["fontsize"] = 23
     # plot_cylinder_curvature_errors_diff_rh(
     #     x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=range(2, 11),
     #     csv=join(FOLD, "cylinder/noise0/files4plotting",
@@ -2484,12 +2486,12 @@ if __name__ == "__main__":
     #                 FOLD, "cylinder/noise0/files4plotting",
     #                 "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
-    # plot_cylinder_T_2_and_kappa_1_errors(
-    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-    #     exclude_borders=0, rhVV=5, rhSSVV=6, n=2)
     plot_cylinder_T_2_and_kappa_1_errors(
         x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-        exclude_borders=5, rhVV=5, rhSSVV=6)
+        exclude_borders=0, rhVV=5, rhSSVV=6, n=2, **kwargs)
+    plot_cylinder_T_2_and_kappa_1_errors(
+        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
+        exclude_borders=5, rhVV=5, rhSSVV=6, **kwargs)
     # plot_cylinder_T_2_and_kappa_1_errors(
     #    x_range_T=(0, 0.006), x_range_kappa=(0, 1.0), exclude_borders=0,
     #    rhVV=5, rhSSVV=6, vertex_based=True, RorAVV="RVV")
