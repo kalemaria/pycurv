@@ -199,7 +199,7 @@ def new_workflow(
     """
     log_file = '{}{}.{}_rh{}.log'.format(
                 fold, base_filename, methods[0], radius_hit)
-    sys.stdout = open(log_file, 'a')
+    sys.stdout = open(log_file, 'w')
 
     t_begin = time.time()
 
@@ -314,8 +314,7 @@ def new_workflow(
           .format(minutes, seconds))
 
     # Running the modified Normal Vector Voting algorithms:
-    gt_file1 = '{}{}.NVV_rh{}.gt'.format(
-            fold, base_filename, radius_hit)
+    gt_file1 = '{}{}.NVV_rh{}.gt'.format(fold, base_filename, radius_hit)
     method_tg_surf_dict = {}
     if not isfile(gt_file1):
         if runtimes != '':
@@ -1183,6 +1182,58 @@ def main_light_microscopy_cells(timepoint=22):
     merge_vtp_files(cell_vtp_file_paths_list, embryo_vtp)
 
 
+def main_pore(isosurface=False, radius_hit=2):
+    """
+    Main function for running the new_workflow function for a membrane pore.
+
+    Args:
+        isosurface (boolean): whether to generate isosurface or single-layered
+            surface (default)
+        radius_hit (int): RadiusHit parameter (in nm, default 2)
+
+    Returns:
+        None
+    """
+    t_begin = time.time()
+
+    fold = "../../../../curvature/4Antonio/"
+    seg_file = "binarymembraneAmira.mrc"
+    pixel_size = 0.26  # nm
+    holes = 0
+    min_component = 0
+    lbl = 1
+
+    if isosurface:
+        base_filename = "binarymembrane_isosurface"
+        runtimes_file = "{}{}_runtimes.csv".format(fold, base_filename)
+        filled_lbl = 1
+        print("\nCalculating curvatures for an isosurface")
+        new_workflow(
+            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+            seg_file=seg_file, label=lbl, filled_label=filled_lbl,
+            min_component=min_component, runtimes=runtimes_file)
+
+    else:
+        base_filename = "binarymembrane_single_layer_surface"
+        runtimes_file = "{}{}_runtimes.csv".format(fold, base_filename)
+        print("\nCalculating curvatures for a single-layer surface")
+        new_workflow(
+            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+            seg_file=seg_file, label=lbl, holes=holes,
+            min_component=min_component, runtimes=runtimes_file)
+
+    for b in range(0, 2):
+        print("\nExtracting curvatures without {} nm from border".format(b))
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, radius_hit, methods=['VV'],
+            exclude_borders=b, categorize_shape_index=True)
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    minutes, seconds = divmod(duration, 60)
+    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
+
+
 if __name__ == "__main__":
 
     # Get triangle areas from a scaled cleaned graph, excluding 1 nm from border
@@ -1255,3 +1306,6 @@ if __name__ == "__main__":
     # from_vtk_workflow(
     #     vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
     #     scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=False)
+
+    # main_pore(isosurface=True, radius_hit=2)
+    # main_pore(isosurface=False, radius_hit=2)
