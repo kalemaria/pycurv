@@ -1307,5 +1307,5 @@ if __name__ == "__main__":
     #     vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
     #     scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=False)
 
-    # main_pore(isosurface=True, radius_hit=2)
+    # main_pore(isosurface=True, radius_hit=4)
     # main_pore(isosurface=False, radius_hit=2)
