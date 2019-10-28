@@ -22,6 +22,7 @@ rcParams['axes.spines.right'] = False
 rcParams["axes.linewidth"] = 2
 rcParams['xtick.major.width'] = 2
 rcParams['ytick.major.width'] = 2
+rcParams['font.sans-serif'] = 'Arial'
 
 """
 Functions for plotting estimation errors of curvature estimation methods using
@@ -394,8 +395,7 @@ def plot_plane_normals(
         x_range_1 = x_range
     plot_composite_line_hist(
         data_arrays=data,
-        labels=["Initial normals", r"VV rh=4",
-                r"VV rh=8"],
+        labels=["Initial normals", r"VV rh=4", r"VV rh=8"],
         line_styles=['-', '-', '-'], markers=['s', 'v', '^'],
         colors=['r', 'c', 'b'],
         title=None,  # "Plane ({}% noise)".format(n),
