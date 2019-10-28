@@ -394,8 +394,8 @@ def plot_plane_normals(
         x_range_1 = x_range
     plot_composite_line_hist(
         data_arrays=data,
-        labels=["Initial normals", r"VV $\it RH$=4",
-                r"VV $\it RH$=8"],
+        labels=["Initial normals", r"VV rh=4",
+                r"VV rh=8"],
         line_styles=['-', '-', '-'], markers=['s', 'v', '^'],
         colors=['r', 'c', 'b'],
         title=None,  # "Plane ({}% noise)".format(n),
@@ -433,7 +433,7 @@ def plot_cylinder_kappa_1_diff_rh(n=0, x_range=None, num_bins=20):
             kappa_array = pd.read_csv("{}{}.{}_rh{}.csv".format(
                 fold, basename, method, rh), sep=';')["kappa1"].tolist()
             kappa_arrays.append(kappa_array)
-            label = r"$\it RH$={}".format(rh)
+            label = r"rh={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find minimal and maximal value to set the X-range:
@@ -502,7 +502,7 @@ def plot_cylinder_curvature_errors_diff_rh(
                 fold, basename, method, rh), sep=';')
             curv_array = df["{}RelErrors".format(curvature)].tolist()
             curv_arrays.append(curv_array)
-            label = r"$\it RH$={}".format(rh)
+            label = r"rh={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find the maximal value to set the X-range:
@@ -636,8 +636,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
             ".png", "{}-{}.png".format(x_range_T[0], x_range_T[1]))
     plot_composite_line_hist(
         data_arrays=data,
-        labels=[r"{} $\it RH$={}".format(RorAVV, rhVV),
-                r"SSVV $\it RH$={}".format(rhSSVV)],
+        labels=[r"{} rh={}".format(RorAVV, rhVV),
+                r"SSVV rh={}".format(rhSSVV)],
         zorders=[2, 1],
         line_styles=['-']*len(data), markers=markers, colors=colors,
         title=title,
@@ -655,8 +655,8 @@ def plot_cylinder_T_2_and_kappa_1_errors(
         plot_fold, basename, RorAVV, rhVV, rhSSVV)
     markers.append('s')  # VTK
     colors.append('r')
-    labels = [r"{} $\it RH$={}".format(RorAVV, rhVV),
-              r"SSVV $\it RH$={}".format(rhSSVV), "VTK"]
+    labels = [r"{} rh={}".format(RorAVV, rhVV),
+              r"SSVV rh={}".format(rhSSVV), "VTK"]
     zorders = [3, 2, 1]
     if n is not None:
         data.append(MB_kappa_errors)  # Mindboggle
@@ -854,7 +854,7 @@ def plot_sphere_kappa_1_and_2_diff_rh(
             kappa_1_arrays.append(kappa_1_array)
             kappa_2_arrays.append(kappa_2_array)
             kappas_arrays.append(kappa_1_array + kappa_2_array)
-            label = r"$\it RH$={}".format(rh)
+            label = r"rh={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find minimal and maximal value to set the X-range:
@@ -981,7 +981,7 @@ def plot_sphere_curvature_errors_diff_rh(
             else:
                 curv_array = df["{}RelErrors".format(curvature)].tolist()
                 curv_arrays.append(curv_array)
-            label = r"$\it RH$={}".format(rh)
+            label = r"rh={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find the maximal value to set the X-range:
@@ -1226,9 +1226,9 @@ def plot_sphere_curvature_errors_allVV(
 
         plot_composite_line_hist(
             data_arrays=data,
-            labels=[r"RVV $\it RH$={}".format(rhRVV),
-                    r"AVV $\it RH$={}".format(rhAVV),
-                    r"SSVV $\it RH$={}".format(rhSSVV),
+            labels=[r"RVV rh={}".format(rhRVV),
+                    r"AVV rh={}".format(rhAVV),
+                    r"SSVV rh={}".format(rhSSVV),
                     "VTK",
                     "MB n={}".format(n),
                     "FS"],
@@ -1266,9 +1266,9 @@ def plot_sphere_curvature_errors_allVV(
 
         plot_composite_line_hist(
             data_arrays=data,
-            labels=[r"RVV $\it RH$={}".format(rhRVV),
-                    r"AVV $\it RH$={}".format(rhAVV),
-                    r"SSVV $\it RH$={}".format(rhSSVV)],
+            labels=[r"RVV rh={}".format(rhRVV),
+                    r"AVV rh={}".format(rhAVV),
+                    r"SSVV rh={}".format(rhSSVV)],
             zorders=[1, 3, 2],
             line_styles=['-'] * len(data), markers=['v', 'o', '^'],
             colors=['c', 'orange', 'b'],
@@ -1512,7 +1512,7 @@ def plot_torus_kappa_1_and_2_diff_rh(
                 fold, basename, method, rh), sep=';')
             kappa_1_array = df["kappa1"].tolist()
             kappa_1_arrays.append(kappa_1_array)
-            label = r"$\it RH$={}".format(rh)
+            label = r"rh={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find minimal and maximal value to set the X-range:
@@ -1583,7 +1583,7 @@ def plot_torus_curvature_errors_diff_rh(
                 fold, basename, method, rh), sep=';')
             curv_array = df["{}RelErrors".format(curvature)].tolist()
             curv_arrays.append(curv_array)
-            label = r"$\it RH$={}".format(rh)
+            label = r"rh={}".format(rh)
             labels.append(label)
         if x_range is None:
             # Find the maximal value to set the X-range:
@@ -1810,9 +1810,9 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
                 ".png", "{}-{}.png".format(x_range[0], x_range[1]))
         plot_composite_line_hist(
             data_arrays=data,
-            labels=[r"RVV $\it RH$={}".format(rhRVV),
-                    r"AVV $\it RH$={}".format(rhAVV),
-                    r"SSVV $\it RH$={}".format(rhSSVV)],
+            labels=[r"RVV rh={}".format(rhRVV),
+                    r"AVV rh={}".format(rhAVV),
+                    r"SSVV rh={}".format(rhSSVV)],
             zorders=[1, 3, 2],
             line_styles=['-']*len(data), markers=['v', 'o', '^'],
             colors=['c', 'orange', 'b'],
@@ -1839,9 +1839,9 @@ def plot_torus_kappa_1_and_2_T_1_and_2_errors_allVV(
                 ".png", "{}-{}.png".format(x_range[0], x_range[1]))
         plot_composite_line_hist(
             data_arrays=data,
-            labels=[r"RVV $\it RH$={}".format(rhRVV),
-                    r"AVV $\it RH$={}".format(rhAVV),
-                    r"SSVV $\it RH$={}".format(rhSSVV),
+            labels=[r"RVV rh={}".format(rhRVV),
+                    r"AVV rh={}".format(rhAVV),
+                    r"SSVV rh={}".format(rhSSVV),
                     "VTK",
                     "MB n={}".format(n),
                     "FS"],
@@ -2075,7 +2075,7 @@ def plot_peak_curvature_diff_rh(
         curvatures = selection[curvature].values[0]
         curvatures_array = np.array(curvatures).astype(np.float)
         curvatures_arrays.append(curvatures_array)
-        label = r"$\it RH$={}".format(radius_hit)
+        label = r"rh={}".format(radius_hit)
         labels.append(label)
         if weights is not None:
             weights = selection[weights].values[0]
