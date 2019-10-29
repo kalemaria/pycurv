@@ -169,7 +169,11 @@ execute from a terminal:
 ```
 pytest -q test_vector_voting.py
 ```
-a folder 'test_vector_voting_output' containing the test results will be created
+To run a specific test, for example `test_sphere_curvatures`, run:
+```
+pytest -q test_vector_voting.py::test_sphere_curvatures
+```
+A folder 'test_vector_voting_output' containing the test results will be created
 inside the current directory.
 
 In the same manner, you can run:
