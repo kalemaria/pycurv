@@ -1,0 +1,18 @@
+smooth_cylinder_r10_h25.surface.vtk
+Saving surf/smooth_cylinder_r10_h25.surface as a surface
+                 Outputting results using filestem [ smooth_cylinder_r10_h25.stats ]
+             Toggling save flag on curvature files                       [ ok ]
+               Toggling 'signedPrincipals' flag ON                       [ ok ]
+             Toggling save flag on curvature files                       [ ok ]
+                                   Setting surface [ smooth_cylinder/smooth_cylinder_r10_h25.surface ]
+                                Reading surface...                       [ ok ]
+      Calculating Discrete Principal Curvatures...
+   Determining geometric order for vertex faces... [run_freesurfer_curvature.sh: line 10: 24318 Segmentation fault      (core dumped) mris_curvature_stats -f surface -m -o ${BASE}.stats -G --signedPrincipals --writeCurvatureFiles $SUBJECT $BASE
+MRISreadCurvature: could not open surf/unknown.smooth_cylinder_r10_h25.surface.K1.crv
+No such file or directory
+MRISreadCurvature: could not open surf/unknown.smooth_cylinder_r10_h25.surface.K2.crv
+No such file or directory
+MRISreadCurvature: could not open surf/unknown.smooth_cylinder_r10_h25.surface.H.crv
+No such file or directory
+mv: cannot stat ‘surf/unknown*’: No such file or directory
+

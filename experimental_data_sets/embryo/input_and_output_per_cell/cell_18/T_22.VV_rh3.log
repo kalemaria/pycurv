@@ -1,0 +1,47 @@
+
+Reading in the surface file to get a vtkPolyData surface...
+
+Building a triangle graph from the surface...
+TriangleGraph generation took: 0.0 min 1.47720694542 s
+The graph has 1222 vertices and 7429 edges
+
+Preparing for running modified Vector Voting...
+radius_hit = 3
+g_max = 4.71238898038
+Maximal triangle area = 0.316663415283
+epsilon = 0
+eta = 0
+Preparation took: 0.0 min 0.000252962112427 s
+
+Running modified Vector Voting for all vertices...
+
+First pass: estimating normals...
+number of vertices: 1222
+Calling find_geodesic_neighbors
+Opened a pool with 6 processes
+Average number of geodesic neighbors for all vertices: 468.433715221
+1222 surface patches
+First pass took: 0.0 min 22.2579329014 s
+Maximal triangle area = 0.316663415283
+Preparation took: 0.0 min 0.000582933425903 s
+
+Second pass: estimating principle curvatures and directions for surface patches using AVV...
+1222 vertices to estimate curvature
+Calling find_geodesic_neighbors
+Opened a pool with 6 processes
+Second run of VV took: 0.0 min 28.9061338902 s
+Whole method took: 0.0 min 51.1662621498 s
+1222 "kappa_1" values
+min = -0.539763122906, max = -0.0580486564741, mean = -0.2282222219
+1222 "kappa_2" values
+min = -0.598302973219, max = -0.191607433225, mean = -0.387689780076
+1222 "gauss_curvature_VV" values
+min = 0.0149285353, max = 0.305812707682, mean = 0.0937326562372
+1222 "mean_curvature_VV" values
+min = -0.553347838564, max = -0.146500802032, mean = -0.307956000988
+1222 "shape_index_VV" values
+min = -0.98820543187, max = -0.619066337299, mean = -0.831757034144
+1222 "curvedness_VV" values
+min = 0.156232764873, max = 0.553692110477, mean = 0.320290504107
+1222 "area" values
+min = 0.0351504397418, max = 0.316663415283, mean = 0.128463598607

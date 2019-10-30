@@ -1,0 +1,31 @@
+/fs/fs03/lv23/pool/bmsan/apps/antonio/app/soft/anaconda2/4.3.1/bin/python2.7 /fs/pool/pool-ruben/Maria/workspace/github/polyqIB/scripts/curvature_calculation.py
+
+Reading in the surface file to get a vtkPolyData surface...
+
+Building a triangle graph from the surface...
+Surface graph generation took: 0.0 min 1.0890109539 s
+The graph has 1240 vertices and 7505 edges
+
+Preparing for running modified Vector Voting...
+radius_hit = 10
+g_max = 15.7079632679
+Maximal triangle area = 18.1489665862
+Preparation took: 0.0 min 0.000591993331909 s
+
+Running modified Vector Voting for all vertices...
+
+First pass: estimating normals...
+number of vertices: 1240
+Opened a pool with 4 processes
+Average number of geodesic neighbors for all vertices: 88.1822580645
+First pass took: 0.0 min 12.7079751492 s
+
+Second pass: estimating principle curvatures and directions for surface patches using VV...
+Maximal triangle area = 18.1489665862
+1240 vertices to estimate curvature
+Opened a pool with 4 processes
+Second run of VV took: 0.0 min 11.4083080292 s
+Whole method took: 0.0 min 24.2899389267 s
+
+Process finished with exit code 0
+

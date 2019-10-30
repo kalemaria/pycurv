@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<LimeSegParameters>
+    <Version>0.2</Version>
+    <Optimizer>
+        <ka>0.009999999776482582</ka>
+        <pa>5.0</pa>
+        <pr>9.0</pr>
+        <kr>0.00555555522441864</kr>
+        <k_grad>0.029999999329447746</k_grad>
+        <k_bend>0.10000000149011612</k_bend>
+        <k_align>0.05000000074505806</k_align>
+        <d_0>3.9761905670166016</d_0>
+        <fillHoles>1.0</fillHoles>
+        <rmOutliers>1.0</rmOutliers>
+        <attractToMax>1.0</attractToMax>
+        <radiusTresholdInteract>1.75</radiusTresholdInteract>
+        <NStepPerR0>5000.0</NStepPerR0>
+        <maxDisplacementPerStep>0.30000001192092896</maxDisplacementPerStep>
+        <ageMinGenerate>10.0</ageMinGenerate>
+        <rmIfNeighborBelow>5.0</rmIfNeighborBelow>
+        <rmIfNeighborAbove>11.0</rmIfNeighborAbove>
+        <generateDotIfNeighborEquals>6.0</generateDotIfNeighborEquals>
+        <radiusSearch>7.952381134033203</radiusSearch>
+        <normalForce>0.0</normalForce>
+        <radiusRes>0.5</radiusRes>
+        <radiusDelta>2.0</radiusDelta>
+        <searchMode>NaN</searchMode>
+        <convergenceTimestepSampling>20.0</convergenceTimestepSampling>
+        <convergenceDistTreshold>0.10000000149011612</convergenceDistTreshold>
+        <convergenceNormTreshold>0.10000000149011612</convergenceNormTreshold>
+        <radiusRelaxed>1.0</radiusRelaxed>
+        <ZScale>4.0</ZScale>
+        <MinX>0.0</MinX>
+        <MaxX>383.0</MaxX>
+        <MinY>0.0</MinY>
+        <MaxY>255.0</MaxY>
+        <MinZ>0.0</MinZ>
+        <MaxZ>32.0</MaxZ>
+    </Optimizer>
+</LimeSegParameters>

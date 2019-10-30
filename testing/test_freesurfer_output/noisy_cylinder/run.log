@@ -1,0 +1,54 @@
+noisy_cylinder_r10_h25.surface.vtk
+Saving surf/noisy_cylinder_r10_h25.surface as a surface
+                 Outputting results using filestem [ noisy_cylinder_r10_h25.stats ]
+             Toggling save flag on curvature files                       [ ok ]
+               Toggling 'signedPrincipals' flag ON                       [ ok ]
+             Toggling save flag on curvature files                       [ ok ]
+                                   Setting surface [ noisy_cylinder/noisy_cylinder_r10_h25.surface ]
+                                Reading surface...                       [ ok ]
+      Calculating Discrete Principal Curvatures...
+   Determining geometric order for vertex faces... [#FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 94, faces = 4, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 106, faces = 4, packed = 2
+No such file or directory
+##################FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1344, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1346, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1347, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1348, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1350, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1351, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1352, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1354, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1356, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1389, faces = 4, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1393, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1394, faces = 3, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1395, faces = 4, packed = 2
+No such file or directory
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1398, faces = 3, packed = 2
+No such file or directory
+#] [ ok ]
+FACES_aroundVertex_reorder: packed / faces mismatch; vertex = 1399, faces = 3, packed = 2
+No such file or directory
+                      Determining KH curvatures... [FACES_Hcurvature_determineSign: During call 2, the passed faces do not share an edge
+No such file or directory
+MRISreadCurvature: could not open surf/unknown.noisy_cylinder_r10_h25.surface.K1.crv
+No such file or directory
+MRISreadCurvature: could not open surf/unknown.noisy_cylinder_r10_h25.surface.K2.crv
+No such file or directory
+MRISreadCurvature: could not open surf/unknown.noisy_cylinder_r10_h25.surface.H.crv
+No such file or directory
+mv: cannot stat ‘surf/unknown*’: No such file or directory
+

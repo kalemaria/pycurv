@@ -20,7 +20,7 @@ visualized and further analysed in 3D using an external tool,
 Also CSV table files for plotting the results are produced and many plotting
 functions are included.
 
-## PyCurv package
+## 'pycurv' package
 This is the main Python package containing modules, classes and functions used
 for the following analyses:
 
@@ -51,7 +51,7 @@ for the following analyses:
 - Calculation of ribosome density on ER and vesicle membranes using a mask with
   ribosome coordinates on the membranes and the membrane mask.
 
-## scripts package
+## 'scripts' package
 This package contains Python scripts applying the PyCurv package and
 combining different functions into the workflows described above, the main are:
 
@@ -62,27 +62,45 @@ combining different functions into the workflows described above, the main are:
 - ribosome_density_calculation.py script for ribosome density calculation used
   in (Bäuerlein et al. 2017, Cell).
 
-## testing package
-This package contains:
+## 'scripts_running_mindboggle_and_freesurfer' folder
+Python and bash scripts running Mindboggle (Klein et al. 2017, PLoS Computational
+Biology) and FreeSurfer (Pienaar et al. 2008, International Journal of Imaging
+Systems and Technology) curvature estimation functions,
 
-- code used to generate synthetic test volumes and surfaces for testing our and
-  external curvature estimation methods from FreeSurfer (Pienaar et al. 2008,
-  International Journal of Imaging Systems and Technology) and Mindboggle
-  (Klein et al. 2017, PLoS Computational Biology)
+## 'testing' package
+This package was used for testing our and external curvature estimation
+algorithms from VTK (Schroeder et al., 2006, Kitware), FreeSurfer and
+Mindboggle. It contains:
+
+- code used to generate synthetic surfaces
 - error calculation module
+- scripts getting FreeSurfer's and Mindboggle's curvatures and calculating
+  errors from their output VTK files.
 - integration and unit tests for the main PyCurv workflows and functions
-- scripts for running the external software, getting curvatures and calculating
-  errors from their output VTK files
 - a collection of plotting functions.
-- folder with output of curvature tests ('test_vector_voting_output'), also
-  including the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'
+- folders with output of curvature tests, e.g. 'test_vector_voting_output'),
+  and the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'.
 
-## experimental_data_sets folder
+## 'experimental_data_sets' folder
 Some experimental data can be found here:
 
-- vesicle: unfilled segmentation of a vesicle from a cryo-electron tomogram
-- ER: filled segmentation of a ER membrane patch from a cryo-electron tomogram
+- vesicle: membrane segmentation of a vesicle from a cryo-electron tomogram
+  (Bäuerlein et al. 2017, Cell)
+- vesicle: compartment segmentation of a cortical ER membrane from a cryo-electron
+  tomogram (Collado et al. 2019, BioRxiv)
+- embryo: surfaces of C. elegans embryo cells imaged by confocal light
+  microscopy and segmented by LimeSeg (Machado et al., BMC Bioinformatics 2019)
+- brain: cortical pial surfaces of both human brain hemispheres imaged by MRI
+  and segmented by FreeSurfer, taken from [Mindboggle example data](https://osf.io/8cf5z/).
 
+Output of the following curvature algorithms is included for experimental data
+(AVV and SSVV output also includes minimal and maximal principal curvatures
+calculated by VTK):
+
+- vesicle: AVV
+- ER: AVV, SSVV and Mindboggle
+- embryo: AVV
+- brain: AVV, Mindboggle, FreeSurfer
 
 # Installing PyCurv
 Please note that PyCurv depends on one not publicly available Python package,
