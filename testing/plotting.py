@@ -282,45 +282,32 @@ def plot_composite_line_hist(
     fig, ax = plt.subplots()
 
     hist_areas = []
-    if data_files is not None:  # TODO simplify
+    if data_files is not None:
+        data_arrays = []
         for i, data_file in enumerate(data_files):
             # Reading in the error values from files:
             if not os.path.exists(data_file):
                 print("File {} not found!".format(data_file))
                 exit(0)
             errors = np.loadtxt(data_file)
-            if weights_arrays is None:
-                weights_array = None
-            else:
-                weights_array = weights_arrays[i]
-            if zorders is None:
-                zorder = None
-            else:
-                zorder = zorders[i]
-            hist_area = add_line_hist(
-                errors, weights=weights_array, num_bins=num_bins,
-                x_range=x_range, max_val=max_val,
-                label=labels[i], ls=line_styles[i], marker=markers[i],
-                c=colors[i], normalize=normalize, cumulative=cumulative,
-                zorder=zorder)
-            hist_areas.append(hist_area)
-    elif data_arrays is not None:
-        for i, data_array in enumerate(data_arrays):
-            if weights_arrays is None:
-                weights_array = None
-            else:
-                weights_array = weights_arrays[i]
-            if zorders is None:
-                zorder = None
-            else:
-                zorder = zorders[i]
-            hist_area = add_line_hist(
-                data_array, weights=weights_array, num_bins=num_bins,
-                x_range=x_range, max_val=max_val,
-                label=labels[i], ls=line_styles[i], marker=markers[i],
-                c=colors[i], normalize=normalize, cumulative=cumulative,
-                zorder=zorder)
-            hist_areas.append(hist_area)
+            data_arrays.append(errors)
+
+    for i, data_array in enumerate(data_arrays):
+        if weights_arrays is None:
+            weights_array = None
+        else:
+            weights_array = weights_arrays[i]
+        if zorders is None:
+            zorder = None
+        else:
+            zorder = zorders[i]
+        hist_area = add_line_hist(
+            data_array, weights=weights_array, num_bins=num_bins,
+            x_range=x_range, max_val=max_val,
+            label=labels[i], ls=line_styles[i], marker=markers[i],
+            c=colors[i], normalize=normalize, cumulative=cumulative,
+            zorder=zorder)
+        hist_areas.append(hist_area)
     if title is not None:
         ax.set_title(title, fontweight="bold", fontsize=fontsize)
         ttl = ax.title
