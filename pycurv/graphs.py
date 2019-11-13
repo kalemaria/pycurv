@@ -154,7 +154,8 @@ class SegmentationGraph(object):
             target_ndarray_voxels = rd.tupel_list_to_ndarray_voxels(
                 target_voxels)
             # rescale to units, output an ndarray [[x1,y1,z1], [x2,y2,z2], ...]
-            target_ndarray_coordinates = (target_ndarray_voxels * scale)  # TODO test that it works!
+            target_ndarray_coordinates = (target_ndarray_voxels *
+                                          np.asarray(scale))
             # convert to a list of tuples, which are in units now
             target_coordinates = rd.ndarray_voxels_to_tupel_list(
                 target_ndarray_coordinates)
@@ -604,7 +605,7 @@ class SegmentationGraph(object):
         vertex = self.graph.vertex
         orientation_class = self.graph.vp.orientation_class
         distance_between_voxels = self.distance_between_voxels
-        calculate_geodesic_distance = self.calculate_geodesic_distance
+        calculate_geodesic_distance = self._calculate_geodesic_distance
         insert_geo_dist_vertex_id = self._insert_geo_dist_vertex_id
         # Initialization
         geo_dist_heap = []  # heap has the smallest geodesic distance first
@@ -697,7 +698,7 @@ class SegmentationGraph(object):
                                         old_geo_dist_c, new_geo_dist_c))
                                 vertex_id_to_geo_dist[int(c)] = new_geo_dist_c
                                 if old_geo_dist_c in geo_dist_heap:
-                                    # TODO check why is it sometimes not there
+                                    # check because it is sometimes not there
                                     geo_dist_heap.remove(old_geo_dist_c)
                                 heappush(geo_dist_heap, new_geo_dist_c)
                                 old_geo_dist_vertex_ids = geo_dist_to_vertex_ids[
@@ -732,9 +733,8 @@ class SegmentationGraph(object):
         return neighbor_id_to_dist
 
     # @profile
-    def calculate_geodesic_distance(
+    def _calculate_geodesic_distance(
             self, a, b, xyz_c, vertex_id_to_geo_dist, verbose=False):
-        # TODO docstring
         geo_dist_a = vertex_id_to_geo_dist[int(a)]
         geo_dist_b = vertex_id_to_geo_dist[int(b)]
         xyz_a = tuple(self.graph.vp.xyz[a])
