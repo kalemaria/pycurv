@@ -282,42 +282,6 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 # normals convention (point towards inside of a convex surface):
                 kappa_i_sign = -1 * signum(dot(T_i, n_i))
                 kappa_i *= kappa_i_sign
-            # # my test:
-            # if 5*pi/6 < theta < pi and kappa_i_sign == -1:
-            #     # if 150 < theta < 180 degrees and normal curvature is negative
-            #     # calculate everything using the original normals of v and v_i:
-            #     N_v_orig = array(vp_normal[vertex_v])
-            #     N_v_i_orig = array(vp_normal[vertex_v_i])
-            #     # tangent direction:
-            #     t_i_orig = vv_i - dot(N_v_orig, vv_i) * N_v_orig
-            #     t_i_orig_len = sqrt(dot(t_i_orig, t_i_orig))
-            #     T_i_orig = t_i_orig / t_i_orig_len
-            #     # vector perpendicular to the plane...
-            #     P_i_orig = cross(N_v_orig, T_i_orig)
-            #     # projection of N_v_i_orig on the plane...
-            #     n_i_orig = N_v_i_orig - dot(P_i_orig, N_v_i_orig) * P_i_orig
-            #     n_i_orig_len = sqrt(dot(n_i_orig, n_i_orig))
-            #     # turning angle:
-            #     cos_theta_orig = float(dot(N_v_orig, n_i_orig) / n_i_orig_len)
-            #     theta_orig = acos(cos_theta_orig)
-            #     # normal curvature:
-            #     kappa_i_orig = abs(2 * cos((pi - theta_orig) / 2)
-            #                        / sqrt(dot(vv_i, vv_i)))
-            #     kappa_i_orig_sign = -1 * signum(dot(T_i_orig, n_i_orig))
-            #     kappa_i_orig *= kappa_i_orig_sign
-            #     if (5*pi/6 < theta_orig < pi and
-            #             kappa_i_orig_sign != kappa_i_sign):
-            #         # if 150 < theta_orig < 180 but the kappa_i sign is opposite
-            #         print("(collect_curvature_votes) v index={} : theta={}, "
-            #               "theta_orig={}, kappa_i={}, kappa_i_orig={}".format(
-            #                 vertex_v_ind, theta, theta_orig,
-            #                 kappa_i, kappa_i_orig))
-            #         # # replace the vote components by the "original" values:
-            #         # kappa_i = kappa_i_orig
-            #         # T_i = T_i_orig
-            #         # -> leads to eigenvector decomposition error
-            #         # just invert the sign:
-            #         kappa_i *= -1
 
             # Finally, sum up the components of B_v:
             B_v += w_i * kappa_i * outer(T_i, T_i)
@@ -418,17 +382,39 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 gauss_curvature, mean_curvature, shape_index, curvedness)
 
     def second_pass(self, vertex_v_ind, g_max, sigma, full_dist_map=None,
-            page_curvature_formula=False, A_max=0.0):
-        # TODO docsting
-        # Curvature votes collection for VV:
-        # None is returned if v does not have any neighbor belonging to
-        # a surface patch, then estimate_curvature will return Nones as well
+                    page_curvature_formula=False, A_max=0.0):
+        """
+        Combines the two steps of the second pass: curvature votes collection
+        and curvature estimation. For more information, see SurfaceGraph
+        functions collect_curvature_votes() and estimate_curvature().
+
+        Args:
+            vertex_v_ind (int): index of the vertex v in the surface
+                triangle-graph for which the votes are collected
+            g_max (float): the maximal geodesic distance in units of the graph
+            sigma (float): sigma, defined as 3*sigma = g_max, so that votes
+                beyond the neighborhood can be ignored
+            full_dist_map (graph_tool.PropertyMap, optional): the full distance
+                map for the whole graph; if None, a local distance map is
+                calculated for this vertex (default)
+            page_curvature_formula (boolean, optional): if True (default False)
+                normal curvature definition from Page et al. is used:
+                the turning angle theta between N_v and the projection n_i of
+                the estimated normal of v_i (N_v_i) onto the arc plane (formed
+                by v, N_v and v_i) divided by the arc length (geodesic distance
+                between v and v_i).
+            A_max (float, optional): if given (default 0.0), votes are
+                weighted by triangle area like in the first pass (normals
+                estimation)
+
+        Returns:
+            T_1, T_2, kappa_1, kappa_2, gauss_curvature, mean_curvature,
+            shape_index, curvedness or Nones if vertex v does not have any
+            neighbor belonging to a surface patch
+        """
         B_v = self.collect_curvature_votes(
             vertex_v_ind, g_max, sigma, full_dist_map,
             page_curvature_formula, A_max)
-        # Curvature estimation for VV:
-        # returns: T_1, T_2, kappa_1, kappa_2, gauss_curvature,
-        # mean_curvature, shape_index, curvedness
         return self.estimate_curvature(vertex_v_ind, B_v)
 
     def gen_curv_vote(self, poly_surf, vertex_v, radius_hit):
@@ -960,7 +946,7 @@ class PointGraph(SurfaceGraph):
         outer = np.multiply.outer
         exp = math.exp
         point_in_triangles = self.graph.gp.point_in_triangles
-        calculate_geodesic_distance = self.calculate_geodesic_distance
+        calculate_geodesic_distance = self._calculate_geodesic_distance
         # acos = nice_acos
 
         # Get the coordinates of vertex v (as numpy array):
@@ -1940,7 +1926,31 @@ class TriangleGraph(SurfaceGraph):
         return len(neighbor_idx_to_dist), V_v
 
     def first_pass(self, vertex_v_ind, g_max, A_max, sigma, full_dist_map=None):
-        # TODO docsting
+        """
+        Combines the two steps of the first pass: normal votes collection
+        and normals estimation. For more information, see TriangleGraph
+        functions collect_normal_votes() and estimate_normal().
+
+        Args:
+            vertex_v_ind (int): index of the vertex v in the surface
+                triangle-graph for which the votes are collected
+            g_max (float): the maximal geodesic distance in units of the graph
+            A_max (float): the area of the largest triangle in the surface
+                triangle-graph
+            sigma (float): sigma, defined as 3*sigma = g_max, so that votes
+                beyond the neighborhood can be ignored
+            full_dist_map (graph_tool.PropertyMap, optional): the full distance
+                map for the whole graph; if None, a local distance map is
+                calculated for this vertex (default)
+
+        Returns:
+            - orientation of vertex v (int): 1 if it belongs to a surface patch,
+              2 if it belongs to a crease junction or 3 if it doesn't have a
+              preferred orientation
+            - estimated normal "N_v" (3x1 array) if class is 1, otherwise zeros
+            - the estimated_tangent "T_v" (3x1 array) if class is 2, otherwise
+              zeros
+        """
         num_neighbors, V_v = self.collect_normal_votes(
             vertex_v_ind, g_max, A_max, sigma, full_dist_map)
         class_v, N_v, T_v = self.estimate_normal(
