@@ -4,6 +4,11 @@ import vtk
 
 from surface_graphs import TriangleGraph
 
+"""
+Set of functions for intermembrane distances calculation.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
 
 __author__ = 'kalemanov'
 

@@ -1,6 +1,7 @@
 """
-PyCurv package can be used to analyze the membrane-bound ribosome density and
-curvature of ER membranes in cryo-electron tomograms.
+PyCurv package can be used to analyze the membrane-bound ribosome density,
+calculate intermembrane distances and estimate curvature of membranes in
+cryo-electron tomograms or other volumetric data sources.
 """
 
 from pexceptions import *

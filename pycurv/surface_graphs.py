@@ -188,7 +188,6 @@ class SurfaceGraph(graphs.SegmentationGraph):
         # To spare function referencing every time in the following for loop:
         vertex = self.graph.vertex
         vp_N_v = self.graph.vp.N_v
-        # vp_normal = self.graph.vp.normal  # for my test below
         exp = math.exp
         xyz = self.graph.vp.xyz
         array = np.array
@@ -271,7 +270,6 @@ class SurfaceGraph(graphs.SegmentationGraph):
             # 0 <= theta <= pi is the turning angle between n_i and N_v
             cos_theta = float(dot(N_v, n_i) / n_i_len)
             theta = acos(cos_theta)
-            # kappa_i_sign = 0  # initialize for my test below
             if page_curvature_formula:  # formula from Page et al. paper:
                 s = neighbor_idx_to_dist[idx_v_i]  # arc length s = g_i
                 kappa_i = theta / s
@@ -996,16 +994,6 @@ class PointGraph(SurfaceGraph):
             points_xyz = [array(xyz[vertex(idx_v_i)]) for idx_v_i in ids_v_i]
             ref_normal = array(normal[vertex(ids_v_i[0])])
             N_c_i = triangle_normal(ref_normal, *points_xyz)
-
-            # Calculate the angle alpha_i between N_v and N_c_i and skip c_i if
-            # alpha_i is above 150 degrees (my test):
-            # cos_alpha_i = float(dot(N_v, N_c_i))
-            # alpha_i = acos(cos_alpha_i)
-            # if alpha_i > 5*pi/6:
-            #     print("(collect_normal_votes) v index={} : triangle c_i {} "
-            #           "skipped because alpha_i={} radians >150 degrees".format(
-            #                 vertex_v_ind, idx_c_i, alpha_i))
-            #     continue
 
             # Calculate center of the triangle c_i and normalized vc_i vector:
             c_i = triangle_center(*points_xyz)
