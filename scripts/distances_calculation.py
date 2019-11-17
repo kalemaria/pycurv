@@ -6,6 +6,13 @@ import sys
 from pycurv import (pycurv_io as io, TriangleGraph, calculate_distances,
                     calculate_thicknesses, normals_estimation, surface)
 
+"""
+A script with example applications of the PyCurv package for measurement of
+distances between parallel membranes, e.g. plasma membrane (PM) and cortical
+endoplasmic reticulum (cER) and thicknesses of an organelle lumen, e.g. cER.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
 
 __author__ = 'kalemanov'
 

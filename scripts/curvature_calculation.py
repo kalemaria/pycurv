@@ -7,7 +7,6 @@ from os import remove
 import pandas as pd
 import numpy as np
 from scipy import ndimage
-import vtk  # for Anna's workflow
 import os
 from pathlib2 import Path
 
@@ -17,7 +16,7 @@ from pycurv import (
 from pycurv import pycurv_io as io
 
 """
-A script with an example application of the PyCurv package for estimation of
+A script with example applications of the PyCurv package for estimation of
 membrane curvature.
 
 Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
@@ -360,6 +359,22 @@ def new_workflow(
 
 
 def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=6):
+    """
+    Calculates plasma membrane curvatures with AVV using a pre-calculated
+    estimated normals file.
+
+    Args:
+        fold (str): path where the input membrane segmentation is and where the
+            output will be written
+        base_filename (str): base file name for saving the output files
+        radius_hit (float): radius in length unit of the graph, e.g. nanometers;
+            it should be chosen to correspond to radius of smallest features of
+            interest on the surface
+        cores (int, optional): number of cores to run VV in parallel (default 6)
+
+    Returns:
+        None
+    """
     gt_file_normals = "{}{}.NVV_rh{}.gt".format(fold, base_filename, radius_hit)
     tg = TriangleGraph()
     tg.graph = load_graph(gt_file_normals)
@@ -539,138 +554,6 @@ def _shape_index_classifier(x):
         return 1, 'Spherical cap'
     else:  # x > 1
         return None, None
-
-
-def annas_workflow(
-        fold, base_filename, radius_hit, seg_file=None, pixel_size=1.368,
-        methods=['VV'], thr=0.4, cores=6):
-    """
-    A script for running all processing steps to estimate membrane curvature.
-
-    The three steps are: 1. isosurface generation from a filled and smoothed
-    segmentation, 2. graph generation, 3. curvature calculation using the graph.
-
-    It was written for Dr. Anna Rast's data: filled and smoothed with a Gaussian
-    filter segmentation (with Matlab). Step 3. of VV, consisting of normals and
-    curvature calculations, can run in parallel on multiple cores.
-
-    Args:
-        fold (str): path where the input membrane segmentation is and where the
-            output will be written
-        base_filename (str): base file name for saving the output files
-        radius_hit (float): radius in length unit of the graph, here nanometers;
-            it should be chosen to correspond to radius of smallest features of
-            interest on the surface
-        seg_file (str, optional): membrane segmentation mask
-        pixel_size (float, optional): pixel size in nanometer of the
-            membrane mask (default 1.368)
-        methods (list, optional): all methods to run in the second pass ('VV'
-            and 'SSVV' are possible, default is 'VV')
-        thr (float, optional): value threshold in the input segmentation where
-            to generate the isosurface (default 0.4)
-        cores (int, optional): number of cores to run VV in parallel (default 6)
-
-    Returns:
-        None
-    """
-
-    t_begin = time.time()
-
-    surf_file = base_filename + ".surface.vtp"
-    if not isfile(fold + surf_file):
-        if seg_file is None or not isfile(fold + seg_file):
-            raise pexceptions.PySegInputError(
-                expr="new_workflow",
-                msg="The segmentation file {} not given or not found".format(
-                    fold + seg_file))
-
-        seg = io.load_tomo(fold + seg_file)
-        assert(isinstance(seg, np.ndarray))
-
-        print("\nGenerating a surface...")
-        # Generate isosurface from the smoothed segmentation
-        seg_vti = io.numpy_to_vti(seg)
-        surfaces = vtk.vtkMarchingCubes()
-        surfaces.SetInputData(seg_vti)
-        surfaces.ComputeNormalsOn()
-        surfaces.ComputeGradientsOn()
-        surfaces.SetValue(0, thr)
-        surfaces.Update()
-
-        # Sometimes the contouring algorithm can create a volume whose gradient
-        # vector and ordering of polygon (using the right hand rule) are
-        # inconsistent. vtkReverseSense cures this problem.
-        reverse = vtk.vtkReverseSense()
-        reverse.SetInputConnection(surfaces.GetOutputPort())
-        reverse.ReverseCellsOn()
-        reverse.ReverseNormalsOn()
-        reverse.Update()
-        surf = reverse.GetOutput()
-
-        # Writing the vtkPolyData surface into a VTP file
-        io.save_vtp(surf, fold + surf_file)
-        print('Surface was written to the file {}'.format(surf_file))
-
-    else:
-        print('\nReading in the surface from file...')
-        surf = io.load_poly(fold + surf_file)
-
-    clean_graph_file = '{}.scaled_cleaned.gt'.format(base_filename)
-    clean_surf_file = '{}.scaled_cleaned.vtp'.format(base_filename)
-    if not isfile(fold + clean_graph_file) or not isfile(fold + clean_surf_file):
-        print('\nBuilding a triangle graph from the surface...')
-        tg = TriangleGraph()
-        scale = (pixel_size, pixel_size, pixel_size)
-        tg.build_graph_from_vtk_surface(surf, scale)
-        print('The graph has {} vertices and {} edges'.format(
-            tg.graph.num_vertices(), tg.graph.num_edges()))
-
-        # Saving the scaled (and cleaned) graph and surface:
-        tg.graph.save(fold + clean_graph_file)
-        surf_clean = tg.graph_to_triangle_poly()
-        io.save_vtp(surf_clean, fold + clean_surf_file)
-    else:
-        print('\nReading in the cleaned graph and surface from files...')
-        surf_clean = io.load_poly(fold + clean_surf_file)
-        tg = TriangleGraph()
-        tg.graph = load_graph(fold + clean_graph_file)
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    minutes, seconds = divmod(duration, 60)
-    print('Surface and graph generation (and cleaning) took: {} min {} s'
-          .format(minutes, seconds))
-
-    gt_file = '{}{}.{}_rh{}.gt'.format(
-        fold, base_filename, 'AVV', radius_hit)
-    surf_file = '{}{}.{}_rh{}.vtp'.format(
-        fold, base_filename, 'AVV', radius_hit)
-    if not isfile(gt_file) or not isfile(surf_file):
-        # Running the modified Normal Vector Voting algorithms:
-        gt_file1 = '{}{}.NVV_rh{}.gt'.format(
-                fold, base_filename, radius_hit)
-        method_tg_surf_dict = {}
-        if not isfile(gt_file1):
-            method_tg_surf_dict = normals_directions_and_curvature_estimation(
-                tg, radius_hit, methods=methods, full_dist_map=False,
-                graph_file=gt_file1, area2=True, poly_surf=surf_clean,
-                cores=cores)
-
-        for method in method_tg_surf_dict.keys():
-            # Saving the output (graph and surface object) for later
-            # filtering or inspection in ParaView:
-            (tg, surf) = method_tg_surf_dict[method]
-            if method == 'VV':
-                method = 'AVV'
-            gt_file = '{}{}.{}_rh{}.gt'.format(
-                fold, base_filename, method, radius_hit)
-            tg.graph.save(gt_file)
-            surf_file = '{}{}.{}_rh{}.vtp'.format(
-                fold, base_filename, method, radius_hit)
-            io.save_vtp(surf, surf_file)
-    else:
-        print("\nOutput files {} and {} are already there.".format(
-            gt_file, surf_file))
 
 
 def from_ply_workflow(
@@ -1086,65 +969,13 @@ def main_felix():
     print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
 
 
-def main_missing_wedge():
-    """
-    Main function for running the new_workflow function for normal vs. missing
-    wedge containing sphere surface.
-
-    Returns:
-        None
-    """
-    t_begin = time.time()
-
-    fold = '/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/'
-    rh = 8
-
-    print("\nNormal sphere (control)")
-    base_filename = 'bin_sphere_r20_t1_thresh0.6'
-    new_workflow(
-        fold, base_filename, pixel_size=1, radius_hit=rh,
-        methods=['SSVV', 'VV'], remove_wrong_borders=False)
-    print("\nExtracting all curvatures")
-    extract_curvatures_after_new_workflow(
-        fold, base_filename, radius_hit=rh, methods=['SSVV', 'VV'],
-        exclude_borders=0)
-
-    print("\nSphere with missing wedge")
-    base_filename = 'bin_sphere_r20_t1_with_wedge30deg_thresh0.6'
-    new_workflow(fold, base_filename, pixel_size=1, radius_hit=rh,
-                 methods=['SSVV', 'VV'], remove_wrong_borders=True)
-    for b in range(0, 9):
-        print("\nExtracting curvatures without {} nm from border".format(b))
-        extract_curvatures_after_new_workflow(
-            fold, base_filename, radius_hit=rh, methods=['SSVV', 'VV'],
-            exclude_borders=b)
-
-    t_end = time.time()
-    duration = t_end - t_begin
-    minutes, seconds = divmod(duration, 60)
-    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
-
-
-def main_anna():
-    """
-    Main function for running the annas_workflow function for Anna's data.
-
-    Returns:
-        None
-    """
-    fold = "/fs/pool/pool-EMpub/4Maria/fromAnna/"
-    seg_file = "membrane_filter.mrc"
-    base_filename = "membrane_filter"
-    radius_hit = 15
-    annas_workflow(fold, base_filename, radius_hit, seg_file)
-
-
 def main_light_microscopy_cells(timepoint=22):
     """
     Main function for running the ply workflow for the whole C.Elegans embryo
     segmentation (by LimeSeg, of data coming from light microscopy) at a given
     time point. The input data structure of PLY files was downloaded from here:
-    https://raw.githubusercontent.com/NicoKiaru/TestImages/master/LimeSegOutput/DubSeg.zip
+    https://raw.githubusercontent.com/NicoKiaru/TestImages/master/LimeSegOutput/
+    DubSeg.zip
 
     Args:
         timepoint (int): time point, 1-22 are possible for these data set
@@ -1180,6 +1011,50 @@ def main_light_microscopy_cells(timepoint=22):
 
     # Merge the output VTP files to one:
     merge_vtp_files(cell_vtp_file_paths_list, embryo_vtp)
+
+
+def main_heart():
+    """
+    Runs "from_nii_workflow" on the MRI heart data from HVSMR2016 challenge
+    (http://segchd.csail.mit.edu/data.html).
+
+    Returns:
+     None
+    """
+
+    from_nii_workflow(
+        nii_file="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
+                 "GroundTruth/training_axial_full_pat0-label.nii.gz",
+        outfold="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
+                "GroundTruthOutput",
+        radius_hit=5)
+
+
+def main_brain():
+    """
+    Runs "from_vtk_workflow" with user-input parameters from a VTK surface file,
+    like MRI brain provided by Mindboggle (https://osf.io/36gdy/).
+    Comment it in below in the main and run from terminal like this:
+    python curvature_calculation.py vtk_file radius_hit [epsilon eta]
+    Either of the latter two parameters is optional and will be set to 0 if not
+    given.
+
+    Returns:
+        None
+    """
+    vtk_file = sys.argv[1]
+    radius_hit = float(sys.argv[2])  # Mindboggle's default "radius disk"=2 mm
+    if len(sys.argv) > 3:
+        radius_hit = float(sys.argv[3])
+    else:
+        epsilon = 0
+    if len(sys.argv) > 4:
+        eta = float(sys.argv[4])
+    else:
+        eta = 0
+    from_vtk_workflow(
+        vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
+        scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=False)
 
 
 def main_pore(isosurface=False, radius_hit=2):
@@ -1236,76 +1111,13 @@ def main_pore(isosurface=False, radius_hit=2):
 
 if __name__ == "__main__":
 
-    # Get triangle areas from a scaled cleaned graph, excluding 1 nm from border
-    # folder = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/" \
-    #          "WT_HS/181127_TITAN_l1_t2/"
-    # graph_file = "{}WT_HS_181127_l1_t2.cER.scaled_cleaned.gt".format(folder)
-    # csv_file = "{}WT_HS_181127_l1_t2.cER.areas_excluding1borders.csv".format(
-    #     folder)
-    # tg = TriangleGraph()
-    # tg.graph = load_graph(graph_file)
-    # extract_areas_from_graph(tg, csv_file, exclude_borders=1)
-
-    # One test peak run:
-    # subsubfold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/" \
-    #              "TCB/180830_TITAN_l2_t2peak/filled/"
-    # base_filename = "TCB_180830_l2_t2peak.cER"
-    # pixel_size = 1.368
-    # radius_hit = 2
-    # seg_filename = "t2_ny01_lbl.labels_FILLEDpeak.mrc"
-    # lbl = 2
-    # filled_lbl = 3
-    # min_component = 50
-    # new_workflow(subsubfold, base_filename, pixel_size, radius_hit,
-    #              methods=['SSVV'], seg_file=seg_filename,
-    #              label=lbl, filled_label=filled_lbl,
-    #              min_component=min_component, cores=6)
-
-    # membrane = sys.argv[1]
-    # rh = int(sys.argv[2])
-    # main_javier(membrane, rh)
-    # subfold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/WT/" \
-    #           "171002_TITAN_l2_t2/"
-    # base_filename = "WT_171002_l2_t2.PM"
-    # calculate_PM_curvatures(subfold, base_filename, radius_hit=10, cores=1)
-
-    # fold = "/fs/pool/pool-ruben/Maria/curvature/Javier/new_workflow/"
-    # stats_file = '{}t3_ny01_cropped_{}.SSVV_AVV_rh{}.stats'.format(
-    #     fold, membrane, rh)
-    # cProfile.run('main_javier(membrane, rh)', stats_file)
-
-    # fold = ('/fs/pool/pool-ruben/Maria/curvature/Felix/corrected_method/'
-    #         'vesicle3_t74/')
-    # stats_file = '{}t74_vesicle3.NVV_rh10.stats'.format(fold)
-    # cProfile.run('main_felix()', stats_file)
-
     main_felix()
     main_javier('ER', 10)
 
-    # main_anna()
-
     # main_light_microscopy_cells()
 
-    # from_nii_workflow(
-    #     nii_file="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
-    #              "GroundTruth/training_axial_full_pat0-label.nii.gz",
-    #     outfold="/fs/pool/pool-ruben/Maria/curvature/HVSMR2016_training_data/"
-    #             "GroundTruthOutput",
-    #     radius_hit=5)
+    # main_heart()
 
-    # vtk_file = sys.argv[1]
-    # radius_hit = float(sys.argv[2])  # 2 mm, Mindboggle's default? "radius disk"
-    # if len(sys.argv) > 3:
-    #     epsilon = float(sys.argv[3])
-    # else:
-    #     epsilon = 0
-    # if len(sys.argv) > 4:
-    #     eta = float(sys.argv[4])
-    # else:
-    #     eta = 0
-    # from_vtk_workflow(
-    #     vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
-    #     scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=False)
+    # main_brain()
 
     # main_pore(isosurface=True, radius_hit=4)
-    # main_pore(isosurface=False, radius_hit=2)
