@@ -48,8 +48,8 @@ def beautify_number(number, precision=15):
 
 def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
     """
-    Calculated true minimal principal curvature (kappa_2), maximal (T_1) and
-    minimal (T_2) principal directions at a point on the surface of a torus.
+    Calculated true minimal principal curvature (kappa_2), maximal (t_1) and
+    minimal (t_2) principal directions at a point on the surface of a torus.
 
     Args:
         c (int): major (ring) radius
@@ -61,7 +61,7 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
             information will be printed out
 
     Returns:
-        kappa_2, T_1, T_2
+        kappa_2, t_1, t_2
 
     Note:
         Maximal principal curvature (kappa_1) is always 1 / a.
@@ -101,24 +101,24 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
     # # normal to the surface
     # N = [cos(u) * cos(v), sin(u) * cos(v), sin(v)]
     # maximal and minimal principal directions
-    T_1 = [- cos(u) * sin(v), - sin(u) * sin(v), cos(v)]
-    # assert(round(math.sqrt(np.dot(T_1, T_1)), 5) == 1.0)
-    T_2 = [- sin(u), cos(u), 0]
-    # assert(round(math.sqrt(np.dot(T_2, T_2)), 5) == 1.0)
+    t_1 = [- cos(u) * sin(v), - sin(u) * sin(v), cos(v)]
+    # assert(round(math.sqrt(np.dot(t_1, t_1)), 5) == 1.0)
+    t_2 = [- sin(u), cos(u), 0]
+    # assert(round(math.sqrt(np.dot(t_2, t_2)), 5) == 1.0)
     # round almost 0 to 0 and remove minus before 0
     # N = [beautify_number(e) for e in N]
-    T_1 = [beautify_number(e) for e in T_1]
-    T_2 = [beautify_number(e) for e in T_2]
+    t_1 = [beautify_number(e) for e in t_1]
+    t_2 = [beautify_number(e) for e in t_2]
 
     if verbose:
         print("v = {}".format(v))
         print("u = {}".format(u))
         print("kappa_2 = {}".format(kappa_2))
         # print("N = ({}, {}, {})".format(N[0], N[1], N[2]))
-        print("T_1 = ({}, {}, {})".format(T_1[0], T_1[1], T_1[2]))
-        print("T_2 = ({}, {}, {})".format(T_2[0], T_2[1], T_2[2]))
+        print("t_1 = ({}, {}, {})".format(t_1[0], t_1[1], t_1[2]))
+        print("t_2 = ({}, {}, {})".format(t_2[0], t_2[1], t_2[2]))
 
-    return kappa_2, T_1, T_2
+    return kappa_2, t_1, t_2
 
 
 def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False,
@@ -249,7 +249,7 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
     # Getting the initial and the estimated normals
     pos = [0, 1, 2]  # vector-property value positions
     vtk_normals = sg.graph.vertex_properties["normal"].get_2d_array(pos)
-    vv_normals = sg.graph.vertex_properties["N_v"].get_2d_array(pos)
+    vv_normals = sg.graph.vertex_properties["n_v"].get_2d_array(pos)
     # The shape is (3, <num_vertices>) - have to transpose to group the
     # respective x, y, z components to sub-arrays
     vtk_normals = np.transpose(vtk_normals)  # shape (<num_vertices>, 3)
@@ -327,10 +327,10 @@ def test_cylinder_directions_curvatures(
         res=0, h=0, noise=0, page_curvature_formula=False, full_dist_map=False,
         cores=6):
     """
-    Tests whether minimal principal directions (T_2), as well as minimal and
+    Tests whether minimal principal directions (t_2), as well as minimal and
     maximal principal curvatures are correctly estimated for an opened
     cylinder surface (without the circular planes) with known
-    orientation (height, i.e. T_2, parallel to the Z axis) using normal
+    orientation (height, i.e. t_2, parallel to the Z axis) using normal
     vector voting (VV) or VV combined with curvature tensor voting (SSVV).
     Allowing error of +-30% of the maximal absolute true value.
 
@@ -499,9 +499,9 @@ def test_cylinder_directions_curvatures(
         # Getting the estimated principal directions along cylinder height:
         pos = [0, 1, 2]  # vector-property value positions
         if not inverse:  # it's the minimal direction
-            T_h = sg.graph.vertex_properties["T_2"].get_2d_array(pos)
+            T_h = sg.graph.vertex_properties["t_2"].get_2d_array(pos)
         else:  # it's the maximal direction
-            T_h = sg.graph.vertex_properties["T_1"].get_2d_array(pos)
+            T_h = sg.graph.vertex_properties["t_1"].get_2d_array(pos)
         # The shape is (3, <num_vertices>) - have to transpose to group the
         # respective x, y, z components to sub-arrays
         T_h = np.transpose(T_h)  # shape (<num_vertices>, 3)
@@ -581,9 +581,9 @@ def test_cylinder_directions_curvatures(
         # Asserting that all estimated T_h vectors are close to the true
         # vector, allowing error of 30%:
         if not inverse:
-            print("Testing the minimal principal directions (T_2)...")
+            print("Testing the minimal principal directions (t_2)...")
         else:
-            print("Testing the maximal principal directions (T_1)...")
+            print("Testing the maximal principal directions (t_1)...")
         for error in T_h_errors:
             assert error <= 0.3
 
@@ -1026,8 +1026,8 @@ def test_torus_directions_curvatures(
     # and the their directions of the corresponding triangle:
     sg.graph.vp.true_kappa_1 = sg.graph.new_vertex_property("float")
     sg.graph.vp.true_kappa_2 = sg.graph.new_vertex_property("float")
-    sg.graph.vp.true_T_1 = sg.graph.new_vertex_property("vector<float>")
-    sg.graph.vp.true_T_2 = sg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.true_t_1 = sg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.true_t_2 = sg.graph.new_vertex_property("vector<float>")
 
     if voxel:
         # Map the noisy coordinates to coordinates on smooth torus surface:
@@ -1055,24 +1055,24 @@ def test_torus_directions_curvatures(
             closest_point_id = pointLocator.FindClosestPoint([x, y, z])
             closest_true_xyz = np.zeros(shape=3)
             smooth_torus.GetPoint(closest_point_id, closest_true_xyz)
-            true_kappa_2, true_T_1, true_T_2 = torus_curvatures_and_directions(
+            true_kappa_2, true_t_1, true_t_2 = torus_curvatures_and_directions(
                 rr, csr, *closest_true_xyz)
         else:
-            true_kappa_2, true_T_1, true_T_2 = torus_curvatures_and_directions(
+            true_kappa_2, true_t_1, true_t_2 = torus_curvatures_and_directions(
                 rr, csr, x, y, z)
         sg.graph.vp.true_kappa_1[v] = true_kappa_1
         sg.graph.vp.true_kappa_2[v] = true_kappa_2
-        sg.graph.vp.true_T_1[v] = true_T_1
-        sg.graph.vp.true_T_2[v] = true_T_2
+        sg.graph.vp.true_t_1[v] = true_t_1
+        sg.graph.vp.true_t_2[v] = true_t_2
 
     # Getting the true principal directions and principal curvatures:
     pos = [0, 1, 2]  # vector-property value positions
     # The shape is (3, <num_vertices>) - have to transpose to group the
     # respective x, y, z components to sub-arrays
-    true_T_1 = np.transpose(
-        sg.graph.vertex_properties["true_T_1"].get_2d_array(pos))
-    true_T_2 = np.transpose(
-        sg.graph.vertex_properties["true_T_2"].get_2d_array(pos))
+    true_t_1 = np.transpose(
+        sg.graph.vertex_properties["true_t_1"].get_2d_array(pos))
+    true_t_2 = np.transpose(
+        sg.graph.vertex_properties["true_t_2"].get_2d_array(pos))
     true_kappa_1 = sg.get_vertex_property_array("true_kappa_1")
     true_kappa_2 = sg.get_vertex_property_array("true_kappa_2")
 
@@ -1108,18 +1108,18 @@ def test_torus_directions_curvatures(
         eval_file = '{}.{}_rh{}.csv'.format(base_filename, method, radius_hit)
 
         # Getting the estimated and true principal directions:
-        T_1 = np.transpose(sg.graph.vertex_properties["T_1"].get_2d_array(pos))
-        T_2 = np.transpose(sg.graph.vertex_properties["T_2"].get_2d_array(pos))
+        t_1 = np.transpose(sg.graph.vertex_properties["t_1"].get_2d_array(pos))
+        t_2 = np.transpose(sg.graph.vertex_properties["t_2"].get_2d_array(pos))
 
         # Computing errors of the estimated directions wrt the true ones:
-        T_1_errors = np.array(map(
-            lambda x, y: error_vector(x, y), true_T_1, T_1))
-        T_1_angular_errors = np.array(map(
-            lambda x, y: angular_error_vector(x, y), true_T_1, T_1))
-        T_2_errors = np.array(map(
-            lambda x, y: error_vector(x, y), true_T_2, T_2))
-        T_2_angular_errors = np.array(map(
-            lambda x, y: angular_error_vector(x, y), true_T_2, T_2))
+        t_1_errors = np.array(map(
+            lambda x, y: error_vector(x, y), true_t_1, t_1))
+        t_1_angular_errors = np.array(map(
+            lambda x, y: angular_error_vector(x, y), true_t_1, t_1))
+        t_2_errors = np.array(map(
+            lambda x, y: error_vector(x, y), true_t_2, t_2))
+        t_2_angular_errors = np.array(map(
+            lambda x, y: angular_error_vector(x, y), true_t_2, t_2))
 
         # Getting the estimated principal curvatures:
         kappa_1 = sg.get_vertex_property_array("kappa_1")
@@ -1176,10 +1176,10 @@ def test_torus_directions_curvatures(
         df['kappa1RelErrors'] = rel_kappa_1_errors
         df['kappa2AbsErrors'] = abs_kappa_2_errors
         df['kappa2RelErrors'] = rel_kappa_2_errors
-        df['T1Errors'] = T_1_errors
-        df['T1AngularErrors'] = T_1_angular_errors
-        df['T2Errors'] = T_2_errors
-        df['T2AngularErrors'] = T_2_angular_errors
+        df['T1Errors'] = t_1_errors
+        df['T1AngularErrors'] = t_1_angular_errors
+        df['T2Errors'] = t_2_errors
+        df['T2AngularErrors'] = t_2_angular_errors
         df['mean_curvatureAbsErrors'] = abs_mean_curv_errors
         df['mean_curvatureRelErrors'] = rel_mean_curv_errors
         df.to_csv(eval_file, sep=';')
@@ -1196,14 +1196,14 @@ def test_torus_directions_curvatures(
         df['mean_curvatureRelErrors'] = vtk_rel_mean_curv_errors
         df.to_csv(VTK_eval_file, sep=';')
 
-        # Asserting that all estimated T_1 and T_2 vectors are close to the
+        # Asserting that all estimated t_1 and t_2 vectors are close to the
         # corresponding true vector, allowing error of 30%:
         allowed_error = 0.3
-        print("Testing the maximal principal directions (T_1)...")
-        for error in T_1_errors:
+        print("Testing the maximal principal directions (t_1)...")
+        for error in t_1_errors:
             assert error <= allowed_error
-        print("Testing the minimal principal directions (T_2)...")
-        for error in T_2_errors:
+        print("Testing the minimal principal directions (t_2)...")
+        for error in t_2_errors:
             assert error <= allowed_error
         # Asserting that all estimated kappa_1 and kappa_2 values are close
         # to the corresponding true values, allowing error of 30% from the

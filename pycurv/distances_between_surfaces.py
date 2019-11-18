@@ -267,9 +267,9 @@ def calculate_distances(
         if verbose:
             print("I'm at vertex {}".format(int(v)))
 
-        # Get its center coordinate as p0 and corrected normal vector N_v:
+        # Get its center coordinate as p0 and corrected normal vector n_v:
         p0 = np.array(tg_mem1.graph.vp.xyz[v])
-        normal = np.array(tg_mem1.graph.vp.N_v[v])
+        normal = np.array(tg_mem1.graph.vp.n_v[v])
 
         # Look for distance d1 and intersected vertex v1 in the second graph:
         d1 = None
@@ -367,9 +367,9 @@ def calculate_thicknesses(
         if verbose:
             print("I'm at vertex {}".format(int(v)))
 
-        # Get its center coordinate as p0 and corrected normal vector N_v:
+        # Get its center coordinate as p0 and corrected normal vector n_v:
         p0 = np.array(tg_mem1.graph.vp.xyz[v])
-        normal = np.array(tg_mem1.graph.vp.N_v[v])
+        normal = np.array(tg_mem1.graph.vp.n_v[v])
 
         # Look for two distances and intersected vertices in the second graph:
         d1, d2 = None, None

@@ -875,7 +875,7 @@ def main_javier(membrane, radius_hit):
 
     Args:
         membrane (string): what membrane segmentation to use 'ER' or 'PM'
-        radius_hit (int): RadiusHit parameter (in nm)
+        radius_hit (int): neighborhood parameter (in nm)
 
     Returns:
         None
@@ -1064,7 +1064,7 @@ def main_pore(isosurface=False, radius_hit=2):
     Args:
         isosurface (boolean): whether to generate isosurface or single-layered
             surface (default)
-        radius_hit (int): RadiusHit parameter (in nm, default 2)
+        radius_hit (int): neighborhood parameter (in nm, default 2)
 
     Returns:
         None

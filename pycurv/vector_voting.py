@@ -126,11 +126,11 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     orientation (classification in surface patch with normal, crease junction
     with tangent or no preferred orientation) for a surface using its graph.
 
-    Adds the "orientation_class" (1-3), the estimated normal "N_v" (if class is
-    1) and the estimated_tangent "T_v" (if class is 2) as vertex properties
+    Adds the "orientation_class" (1-3), the estimated normal "n_v" (if class is
+    1) and the estimated_tangent "t_v" (if class is 2) as vertex properties
     into the graph.
 
-    Adds the estimated normal "N_v" as vertex property into the graph.
+    Adds the estimated normal "n_v" as vertex property into the graph.
 
     Args:
         sg (TriangleGraph or PointGraph): triangle or point graph generated
@@ -179,8 +179,8 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     sigma = g_max / 3.0
 
     # * Maximal triangle area *
-    A_max = sg.graph.gp.max_triangle_area
-    print("Maximal triangle area = {}".format(A_max))
+    a_max = sg.graph.gp.max_triangle_area
+    print("Maximal triangle area = {}".format(a_max))
 
     # * Orientation classification parameters *
     print("epsilon = {}".format(epsilon))
@@ -193,10 +193,10 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     sg.graph.vp.orientation_class = sg.graph.new_vertex_property("int")
     # vertex property for storing the estimated normal of the corresponding
     # vertex (if the vertex belongs to class 1):
-    sg.graph.vp.N_v = sg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.n_v = sg.graph.new_vertex_property("vector<float>")
     # vertex property for storing the estimated tangent of the corresponding
     # vertex (if the vertex belongs to class 2):
-    sg.graph.vp.T_v = sg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.t_v = sg.graph.new_vertex_property("vector<float>")
 
     if full_dist_map is True and sg.__class__.__name__ == "TriangleGraph":
         # * Distance map between all pairs of vertices *
@@ -237,14 +237,14 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     classes_counts = {}
     vertex = sg.graph.vertex
     vp_orientation_class = sg.graph.vp.orientation_class
-    vp_N_v = sg.graph.vp.N_v
-    vp_T_v = sg.graph.vp.T_v
+    vp_n_v = sg.graph.vp.n_v
+    vp_t_v = sg.graph.vp.t_v
 
     if cores > 1:  # parallel processing
         p = pp.ProcessPool(cores)
         print('Opened a pool with {} processes'.format(cores))
         results_list = p.map(partial(first_pass,
-                                     g_max=g_max, A_max=A_max, sigma=sigma,
+                                     g_max=g_max, a_max=a_max, sigma=sigma,
                                      full_dist_map=full_dist_map),
                              range(num_v))  # a list of vertex v indices
         p.close()
@@ -255,15 +255,15 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         num_neighbors_array = results_array[:, 0]
         avg_num_neighbors = np.mean(num_neighbors_array)
         class_v_array = results_array[:, 1]
-        N_v_array = results_array[:, 2]
-        T_v_array = results_array[:, 3]
+        n_v_array = results_array[:, 2]
+        t_v_array = results_array[:, 3]
 
         # Adding the estimated properties to the graph and counting classes:
         for i in range(num_v):
             v = vertex(i)
             vp_orientation_class[v] = class_v_array[i]
-            vp_N_v[v] = N_v_array[i]
-            vp_T_v[v] = T_v_array[i]
+            vp_n_v[v] = n_v_array[i]
+            vp_t_v[v] = t_v_array[i]
             try:
                 classes_counts[class_v_array[i]] += 1
             except KeyError:
@@ -274,17 +274,17 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         for i in range(num_v):
             if sg.__class__.__name__ == "TriangleGraph":
                 num_neighbors, V_v = collect_normal_votes(
-                    i, g_max, A_max, sigma, full_dist_map=full_dist_map)
+                    i, g_max, a_max, sigma, full_dist_map=full_dist_map)
             else:  # PointGraph
                 num_neighbors, V_v = collect_normal_votes(
-                    i, g_max, A_max, sigma)
+                    i, g_max, a_max, sigma)
             sum_num_neighbors += num_neighbors
-            class_v, N_v, T_v = estimate_normal(i, V_v, epsilon, eta)
+            class_v, n_v, t_v = estimate_normal(i, V_v, epsilon, eta)
             # Adding the estimated properties to the graph and counting classes:
             v = vertex(i)
             vp_orientation_class[v] = class_v
-            vp_N_v[v] = N_v
-            vp_T_v[v] = T_v
+            vp_n_v[v] = n_v
+            vp_t_v[v] = t_v
             try:
                 classes_counts[class_v] += 1
             except KeyError:
@@ -388,16 +388,16 @@ def curvature_estimation(
     g_max = math.pi * radius_hit / 2.0
     sigma = g_max / 3.0
     if method == "VV" and area2:
-        A_max = sg.graph.gp.max_triangle_area
-        print("Maximal triangle area = {}".format(A_max))
+        a_max = sg.graph.gp.max_triangle_area
+        print("Maximal triangle area = {}".format(a_max))
     else:
-        A_max = 0.0
+        a_max = 0.0
 
     # * Adding vertex properties to be filled by all curvature methods *
     # vertex properties for storing the estimated principal directions of the
     # maximal and minimal curvatures of the corresponding triangle:
-    sg.graph.vp.T_1 = sg.graph.new_vertex_property("vector<float>")
-    sg.graph.vp.T_2 = sg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.t_1 = sg.graph.new_vertex_property("vector<float>")
+    sg.graph.vp.t_2 = sg.graph.new_vertex_property("vector<float>")
     # vertex properties for storing the estimated maximal and minimal curvatures
     # of the corresponding triangle:
     sg.graph.vp.kappa_1 = sg.graph.new_vertex_property("float")
@@ -465,19 +465,19 @@ def curvature_estimation(
             p = pp.ProcessPool(cores)
             print('Opened a pool with {} processes'.format(cores))
             # results_list has same length as good_vertices_ind
-            # columns: T_1, T_2, kappa_1, kappa_2, gauss_curvature,
+            # columns: t_1, t_2, kappa_1, kappa_2, gauss_curvature,
             # mean_curvature, shape_index, curvedness
             results_list = p.map(partial(
                 second_pass, g_max=g_max, sigma=sigma,
-                page_curvature_formula=page_curvature_formula, A_max=A_max,
+                page_curvature_formula=page_curvature_formula, a_max=a_max,
                 full_dist_map=full_dist_map),
                 good_vertices_ind)
             p.close()
             p.clear()
 
             results_array = np.array(results_list, dtype=object)
-            T_1_array = results_array[:, 0]
-            T_2_array = results_array[:, 1]
+            t_1_array = results_array[:, 0]
+            t_2_array = results_array[:, 1]
             kappa_1_array = results_array[:, 2]
             kappa_2_array = results_array[:, 3]
             gauss_curvature_array = results_array[:, 4]
@@ -490,7 +490,7 @@ def curvature_estimation(
             for i, v_ind in enumerate(good_vertices_ind):
                 v = vertex(v_ind)
                 add_curvature_descriptors_to_vertex(
-                    v, T_1_array[i], T_2_array[i], kappa_1_array[i],
+                    v, t_1_array[i], t_2_array[i], kappa_1_array[i],
                     kappa_2_array[i], gauss_curvature_array[i],
                     mean_curvature_array[i], shape_index_array[i],
                     curvedness_array[i])
@@ -501,7 +501,7 @@ def curvature_estimation(
                 B_v = collect_curvature_votes(
                     v_ind, g_max, sigma,
                     page_curvature_formula=page_curvature_formula,
-                    A_max=A_max, full_dist_map=full_dist_map)
+                    a_max=a_max, full_dist_map=full_dist_map)
                 results = estimate_curvature(v_ind, B_v)
                 # Add the properties to the graph:
                 v = vertex(v_ind)
