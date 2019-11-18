@@ -5,7 +5,19 @@ from distances_calculation import (distances_and_thicknesses_calculation,
                                    extract_distances)
 
 """
-Runs for MCS paper.
+Runs for MCS paper (Collado et al. 2019, Developmental Cell).
+- Estimates curvature of a cER surface extracted using the compartment
+segmentation with radius_hit=10 nm and AVV.
+- Calculates distances between a PM surface extracted using the compartment
+segmentation and the closer cER surface and thicknesses between the two cER
+sides (using corrected normals going from the PM). The same for mitochondrion-ER
+and vacuole-nucleus.
+- Estimates curvature of the PM surface with radius_hit=10 nm and AVV.
+
+Run all unfinished tasks with X (integer) cores from terminal with: `doit -n X`.
+Run all unfinished tasks for one condition only, e.g. TCB: `doit *:TCB*`.
+Run a specific task for a specific segmentation, e.g.:
+calculate_cER_curvatures:TCB_170824_l1_t3*
 """
 
 RADIUS_HIT = 10
@@ -117,7 +129,7 @@ def task_extract_cER_curvatures():
                    }
 
 
-def task_calculate_distances():
+def task_calculate_PMcER_distances():
     # constant parameters for all conditions and segmentations:
     base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
     radius_hit = RADIUS_HIT
@@ -208,7 +220,7 @@ def task_extract_distances_without_borders():
 
 def task_calculate_PM_curvatures():
     """
-    Using lower surface and normals calculated by task_calculate_distances.
+    Using lower surface and normals calculated by task_calculate_PMcER_distances.
     Returns:
         None
     """
@@ -459,5 +471,3 @@ def task_extract_VacNuc_distances_without_borders():
                # target removed)
                'uptodate': [True]
                }
-
-# Note: to run one condition only, e.g. TCB: doit *:TCB*

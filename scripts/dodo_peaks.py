@@ -4,9 +4,12 @@ from curvature_calculation import (new_workflow,
 from pycurv import pycurv_io as io
 
 """
-Runs for curvature paper.
-Estimates curvature for a cER peak with two surface generation methods, two
-curvature estimation methods and several RadiusHit parameter values.
+Runs for the curvature methods paper (Kalemanov et al. 2019, BioRxiv).
+Estimates curvature for a cER peak with two surface generation algorithms, two
+curvature estimation algorithms and several radius_hit parameter values.
+
+Run the (unfinished) tasks with X (integer) cores from terminal with:
+`doit -f dodo_peaks.py -n X`.
 """
 
 # constant parameters for all tasks:

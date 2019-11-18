@@ -3,7 +3,13 @@ from curvature_calculation import (new_workflow,
                                    extract_curvatures_after_new_workflow)
 
 """
-Runs for the curvature methods paper.
+Runs for the curvature methods paper (Kalemanov et al. 2019, BioRxiv).
+Estimates curvature of a cER surface extracted using the compartment
+segmentation with radius_hit=10 nm and different algorithms: NVV, RVV, AVV and
+SSVV.
+
+Run the (unfinished) tasks with X (integer) cores from terminal with:
+`doit -f dodo_methods.py -n X`.
 """
 
 RADIUS_HIT = 10
