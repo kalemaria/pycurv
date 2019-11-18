@@ -4,7 +4,16 @@ import os
 from pycurv import TriangleGraph
 from pycurv import pycurv_io as io
 
-tg_file = '/fs/gpfs03/lv04/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/' \
+"""
+Contains a script getting triangle vertices and edges from a TriangleGraph and
+saving them in to separate VTP file s for visualization with ParaView.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
+tg_file = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/' \
           '180830_TITAN_l2_t2half/TCB_180830_l2_t2half.cER.AVV_rh10.gt'
 tg = TriangleGraph()
 tg.graph = load_graph(tg_file)

@@ -135,8 +135,8 @@ class SegmentationGraph(object):
             a 3D numpy ndarray with the densities + 1
 
         Note:
-            One of the first two parameters, mask or target_coordinates, has to
-            be given.
+            One of the two parameters, mask or target_coordinates, has to be
+            given.
         """
         import ribosome_density as rd
         # If a mask is given, find the set of voxels of ribosome centers mapped

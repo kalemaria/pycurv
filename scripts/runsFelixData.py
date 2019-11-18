@@ -55,8 +55,7 @@ def main(tomo):
         seg_file = "{}_final_ER1_notInHttContact2.Labels.mrc".format(tomo)
 
     new_workflow(
-        fold, base_filename, pixel_size, radius_hit,
-        epsilon=0, eta=0, methods=['VV'],
+        fold, base_filename, pixel_size, radius_hit, methods=['VV'],
         seg_file=seg_file, label=lbl, holes=cube_size,
         remove_wrong_borders=True, min_component=min_component)
 
@@ -64,8 +63,7 @@ def main(tomo):
         print("\nExtracting curvatures for ER without {} nm from border".format(
             b))
         extract_curvatures_after_new_workflow(
-            fold, base_filename, radius_hit,
-            epsilon=0, eta=0, methods=['VV'], exclude_borders=b)
+            fold, base_filename, radius_hit, methods=['VV'], exclude_borders=b)
 
     t_end = time.time()
     duration = t_end - t_begin

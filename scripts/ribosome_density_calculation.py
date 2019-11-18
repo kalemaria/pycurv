@@ -2,7 +2,7 @@ import time
 from datetime import datetime
 from graph_tool import load_graph
 
-from pycurv import (read_in_mask, get_target_voxels_in_membrane_mask,
+from pycurv import (read_in_mask,  # get_target_voxels_in_membrane_mask,
                     VoxelGraph)
 from pycurv import pycurv_io as io
 
@@ -69,7 +69,7 @@ def run_calculate_density(mem_graph_file, ribo_mask, scale_factor_to_nm=1,
             present at that membrane coordinate
         scale_factor_to_nm (float, optional): pixel size in nanometers, default
             1 (if the graph was not scaled to nanometers)
-        vtp_files_base (str, optional): If not None (default None), the
+        vtp_files_base (str, optional): if given (default None), the
             VoxelGraph is converted to VTK PolyData points and lines objects and
             written to '<vtp_files_base>.vertices.vtp' and
             '<vtp_files_base>.edges.vtp' files, respectively
@@ -102,8 +102,7 @@ def run_calculate_density(mem_graph_file, ribo_mask, scale_factor_to_nm=1,
           '{}-{}-{} {}:{}:{}'.format(
            now.year, now.month, now.day, now.hour, now.minute, now.second))
     densities = vg.calculate_density(
-        ribo_mask.shape[0], ribo_mask.shape[1], ribo_mask.shape[2],
-        scale_factor_to_nm, mask=ribo_mask, verbose=verbose)
+        ribo_mask.shape, scale_factor_to_nm, mask=ribo_mask, verbose=verbose)
     now = datetime.now()
     print('\nFinished calculating the shortest distances and density on: '
           '{}-{}-{} {}:{}:{}'.format(
@@ -177,8 +176,7 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
           '{}-{}-{} {}:{}:{}'.format(
            now.year, now.month, now.day, now.hour, now.minute, now.second))
     densities = vg.calculate_density(
-        mem_mask.shape[0], mem_mask.shape[1], mem_mask.shape[2],
-        scale_factor_to_nm, mask=ribo_mask, verbose=verbose)
+        mem_mask.shape, scale_factor_to_nm, mask=ribo_mask, verbose=verbose)
     now = datetime.now()
     print('\nFinished calculating the shortest distances and density on: '
           '{}-{}-{} {}:{}:{}'.format(now.year, now.month, now.day,
@@ -201,7 +199,7 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
 
 def main():
     """
-    Main function with an examplary calculation of ribosome density on
+    Main function with an exemplary calculation of ribosome density on
     ER-membranes for a tomogram.
 
     Ribosome coordinates had been rescaled from bin 3 to bin 6 and bin 6
@@ -252,8 +250,7 @@ def main():
     # To calculate the densities using the saved graph:
     ribosome_mask = read_in_mask(ribosome_mask_file)
     ribosome_densities = run_calculate_density(
-        membrane_graph_file, ribosome_mask, pixel_size_nm, vtp_files_base
-    )
+        membrane_graph_file, ribosome_mask, pixel_size_nm, vtp_files_base)
     io.save_numpy(ribosome_densities, ribosome_densities_file)
 
 

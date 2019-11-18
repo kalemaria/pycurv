@@ -6,9 +6,33 @@ from os import path
 from pycurv import TriangleGraph
 from pycurv import pycurv_io as io
 
+"""
+Contains a function extracting triangle areas from a TriangleGraph into a CSV
+file and its application on the membrane surfaces of ER-mitochondrion and
+vacuole-nucleus contacts.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 
 def extract_areas_from_graph(
-        tg, csv_file, exclude_borders, gt_file=None, vtp_file=None):
+        tg, csv_file, exclude_borders=1, gt_file=None, vtp_file=None):
+    """
+    Extract triangle areas from a TriangleGraph into a CSV file.
+
+    Args:
+        tg (TriangleGraph): graph object
+        csv_file (str): CSV file path to be saved
+        exclude_borders (int): if > 0 (default 1), exclude triangles within
+            1 nm to the triangles at surface border.
+        gt_file (str): if specified, saves changes into this graph file path.
+        vtp_file (str): if specified, saves changes into this surface file path.
+
+    Returns:
+        None
+    """
     # If don't want to include triangles near borders, filter out those
     if exclude_borders > 0:
         tg.find_vertices_near_border(exclude_borders, purge=True)
@@ -21,10 +45,10 @@ def extract_areas_from_graph(
         surf = tg.graph_to_triangle_poly()
         io.save_vtp(surf, vtp_file)
 
-    # Getting areas from the graph:
+    # Getting triangle areas from the graph:
     triangle_areas = tg.get_vertex_property_array("area")
 
-    # Writing all the curvature values and errors into a csv file:
+    # Writing the triangle areas into a CSV file:
     df = pd.DataFrame()
     df["triangleAreas"] = triangle_areas
     df.to_csv(csv_file, sep=';')
