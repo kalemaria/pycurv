@@ -20,21 +20,21 @@ visualized and further analysed in 3D using an external tool,
 Also CSV table files for plotting the results are produced and many plotting
 functions are included.
 
-## 'pycurv' package
+## `pycurv` package
 This is the main Python package containing modules, classes and functions used
 for the following analyses:
 
 - Estimation of membrane curvature using our several tensor voting-based methods
   based on (Page et al. 2002, Graphical Models) and (Tong and Tang 2005, IEEE
   Transactions on Pattern Analysis and Machine Intelligence), details available
-  in the pre-print (Kalemanov et al. 2019, bioRxiv).
+  in the pre-print ([Kalemanov et al. 2019, bioRxiv](https://www.biorxiv.org/content/10.1101/579060v1.full)).
   The workflow consists of the following three main steps:
   1. signed surface generation from a segmentation
   2. surface graph generation and surface cleaning
   3. estimation of normal vectors of the true surface per triangle
   4. principle directions and curvatures estimation per triangle.
 
-  The main parameter of our methods, _RadiusHit_ (borrowed from Tong and Tang
+  The main parameter of our methods, `radius_hit` (borrowed from Tong and Tang
   2005 ) should be set to the radius of the smallest feature of interest on the
   input surface (in the target units, e.g. nanometers). It is used to define a
   geodesic neighborhood of triangles for each central triangle.
@@ -51,24 +51,25 @@ for the following analyses:
 - Calculation of ribosome density on ER and vesicle membranes using a mask with
   ribosome coordinates on the membranes and the membrane mask.
 
-## 'scripts' package
+## `scripts` package
 This package contains Python scripts applying the PyCurv package and
 combining different functions into the workflows described above, the main are:
 
 - curvature_calculation.py script for membrane curvature calculation workflows
-  used in (Bäuerlein et al. 2017, Cell) and (Collado et al. 2019, bioRxiv)
+  used in ([Bäuerlein et al. 2017, Cell](https://www.cell.com/fulltext/S0092-8674(17)30934-0))
+  and ([Collado et al. 2019, Developmental Cell](https://www.cell.com/developmental-cell/fulltext/S1534-5807(19)30865-2))
 - distances_calculation.py script for membrane distances and thicknesses
-  calculation used in (Collado et al. 2019, bioRxiv)
+  calculation used in (Collado et al. 2019)
 - ribosome_density_calculation.py script for ribosome density calculation used
-  in (Bäuerlein et al. 2017, Cell).
+  in (Bäuerlein et al. 2017).
 
-## 'scripts_running_mindboggle_and_freesurfer' folder
+## `scripts_running_mindboggle_and_freesurfer`` folder
 Python and bash scripts running Mindboggle (Klein et al. 2017, PLoS Computational
 Biology) and FreeSurfer (Pienaar et al. 2008, International Journal of Imaging
 Systems and Technology) curvature estimation functions and extracting the values
 to CSV files.
 
-## 'testing' package
+## `testing` package
 This package was used for testing our and external curvature estimation
 algorithms from VTK (Schroeder et al., 2006, Kitware), FreeSurfer and
 Mindboggle. It contains:
@@ -79,23 +80,23 @@ Mindboggle. It contains:
   errors from their output VTK files.
 - integration and unit tests for the main PyCurv workflows and functions
 - a collection of plotting functions.
-- folders with output of curvature tests, e.g. 'test_vector_voting_output'),
-  and the test surfaces, e.g. 'torus/noise0/torus_rr25_csr10.surface.vtp'.
+- folders with output of curvature tests, e.g. `test_vector_voting_output`),
+  and the test surfaces, e.g. `torus/noise0/torus_rr25_csr10.surface.vtp`.
 
-## 'experimental_data_sets' folder
+## `experimental_data_sets` folder
 Some experimental data can be found here:
 
 - vesicle: membrane segmentation of a vesicle from a cryo-electron tomogram
-  (Bäuerlein et al. 2017, Cell)
+  (Bäuerlein et al. 2017)
 - vesicle: compartment segmentation of a cortical ER membrane from a cryo-electron
-  tomogram (Collado et al. 2019, BioRxiv)
+  tomogram (Collado et al. 2019)
 - embryo: surfaces of C. elegans embryo cells imaged by confocal light
   microscopy and segmented by LimeSeg (Machado et al., BMC Bioinformatics 2019)
 - brain: cortical pial surfaces of both human brain hemispheres imaged by MRI
   and segmented by FreeSurfer, taken from [Mindboggle example data](https://osf.io/8cf5z/).
 
 Output of the following curvature algorithms is included for experimental data
-(AVV and SSVV output also includes minimal and maximal principal curvatures
+(AVV and SSVV output also includes minimum and maximum principal curvatures
 calculated by VTK):
 
 - vesicle: AVV
@@ -120,7 +121,7 @@ equivalent for other version and other Linux-based systems. Ubuntu can be
 installed for free, also in a virtual machine on other operating systems
 (Windows or Mac).
 
-1. Ubuntu 18.04 has python3 version 3.6.7 preinstalled. (Install python2:
+1. Ubuntu 18.04 has `python3` version 3.6.7 preinstalled. (Install `python2`:
    `sudo apt install python-minimal`)
 
 2. Install [graph-tool](https://graph-tool.skewed.de/) (Peixoto, 2014)
@@ -138,7 +139,7 @@ installed for free, also in a virtual machine on other operating systems
 
 4. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/)
    (includes setuptools), [venv](https://docs.python.org/3/library/venv.html) (from
-   python version 3.3 on, recommended from version 3.5 on) in e.g. ~/workspace:
+   Python version 3.3 on, recommended from version 3.5 on) in e.g. ~/workspace:
    ```
    python3 -m venv ./venv –system-site-packages
    ```
@@ -146,12 +147,12 @@ installed for free, also in a virtual machine on other operating systems
    ```
    source venv/bin/activate
    ```
-   ipython3 should be present and graph_tool should be imported:
+   `ipython3` should be present and you should be able to import `graph_tool`:
    ```python
    from graph_tool.all import *
    ```
-   (python2: install [virtualenv](https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref)
-   in ~/workspace/venv2:
+   (`python2`: install [`virtualenv`](https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref)
+   in `~/workspace/venv2`:
    ```
    virtualenv -p /usr/bin/python2.7 --system-site-packages venv2
    ```
@@ -159,21 +160,21 @@ installed for free, also in a virtual machine on other operating systems
    ```
    source venv2/bin/activate
    ```
-   install ipython(2):
+   install `ipython(2)`:
    `sudo apt install ipython`)
 
-5. Install dependencies from the setup.py provided in this folder:
+5. Install dependencies from the `setup.py` provided in this folder:
    ```
    sudo pythonX setup.py install
    ```
-   X=2 or 3 for python2 or 3 and try to import pycurv.
+   X=2 or 3 for `python2` or `python3` and try to import `pycurv`.
 
 6. To re-create the environment on another computer or after
    re-installation, freeze the current state of the environment packages:
    ```
    pip freeze > requirementsX.txt
    ```
-   X=2 or 3 for python2 or 3.
+   X=2 or 3 for `python2` or `python3`.
    To re-create the environment:
    ```
    pip install -r requirementsX.txt
@@ -192,25 +193,26 @@ To run a specific test, for example `test_sphere_curvatures`, run:
 ```
 pytest -q test_vector_voting.py::test_sphere_curvatures
 ```
-A folder 'test_vector_voting_output' containing the test results will be created
+A folder `test_vector_voting_output` containing the test results will be created
 inside the current directory.
 
 In the same manner, you can run:
 
 - the integration tests of the distances and thicknesses workflow
-  (test_distances_calculation.py)
-- the unit test of histogram area calculation (test_histogram_area_calculation.py)
-- the unit test for some linear algebra functions (test_linalg.py)
+  (`test_distances_calculation.py`)
+- the unit test of histogram area calculation
+  (`test_histogram_area_calculation.py`)
+- the unit test for some linear algebra functions (`test_linalg.py`)
 
 ## Running the experimental data sets
 To run the curvature estimation workflow on the vesicle and ER segmentation in
-the 'experimental_data_sets' folder, just run in a terminal from the 'scripts'
+the `experimental_data_sets` folder, just run in a terminal from the `scripts`
 folder:
 ```
 python curvature_calculation.py
 ```
 The output will be generated in the respective subfolders of the input,
-'vesicle' and 'ER'. You can change the parameters in the script.
+`vesicle` and `ER`. You can change the parameters in the script.
 
 
 # Reporting bugs
