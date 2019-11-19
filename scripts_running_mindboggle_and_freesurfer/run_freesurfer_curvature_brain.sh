@@ -1,5 +1,12 @@
 #!/bin/bash
 
+
+# A bash script running FreeSurfer on the brain (pial cortex) surface. Requires
+# FreeSurfer to be installed and loaded on your system.
+#
+# Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+
+
 export SUBJECTS_DIR=/fs/pool/pool-ruben/Maria/curvature/freesurfer/brain
 cd $SUBJECTS_DIR
 

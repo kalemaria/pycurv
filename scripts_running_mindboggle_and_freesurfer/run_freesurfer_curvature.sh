@@ -1,9 +1,16 @@
 #!/bin/bash
 
+
+# A bash script running FreeSurfer on the synthetic surfaces. Requires
+# FreeSurfer to be installed and loaded on your system.
+#
+# Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+
+
 export SUBJECTS_DIR=/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/comparison_to_others/test_freesurfer_output
 cd $SUBJECTS_DIR
 
-for SUBJECT in noisy_sphere # smooth_sphere noisy_torus smooth_torus noisy_cylinder smooth_cylinder  # is a folder
+for SUBJECT in noisy_sphere smooth_sphere noisy_torus smooth_torus noisy_cylinder smooth_cylinder  # is a folder
 do
 	cd $SUBJECT
 	mkdir -p surf

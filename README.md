@@ -65,7 +65,8 @@ combining different functions into the workflows described above, the main are:
 ## 'scripts_running_mindboggle_and_freesurfer' folder
 Python and bash scripts running Mindboggle (Klein et al. 2017, PLoS Computational
 Biology) and FreeSurfer (Pienaar et al. 2008, International Journal of Imaging
-Systems and Technology) curvature estimation functions,
+Systems and Technology) curvature estimation functions and extracting the values
+to CSV files.
 
 ## 'testing' package
 This package was used for testing our and external curvature estimation

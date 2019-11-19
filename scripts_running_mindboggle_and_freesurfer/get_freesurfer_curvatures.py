@@ -1,23 +1,44 @@
 import os
 import numpy as np
 import pandas as pd
-# from mindboggle.mio.vtks import read_points, read_scalars
-from scripts_running_mindboggle_and_freesurfer.vtks import read_points, read_scalars
+from mindboggle.mio.vtks import read_points, read_scalars
+
+"""
+A function and a script extracting FreeSurfer curvatures from VTK files to a
+CSV file. Requires Mindboggle Docker container (then do not forget to set:
+DOCK=/home/jovyan/work) or Mindboggle Python package installed on your system.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
 
 
-def get_freesurfer_curvatures(mean_curv_file, max_curv_file, min_curv_file, curvatures_file):
+def get_freesurfer_curvatures(
+        mean_curv_file, max_curv_file, min_curv_file, curvatures_file):
+    """
+    Gets FreeSurfer curvatures from VTK files to a CSV file.
+
+    Args:
+        mean_curv_file (str): input mean curvature files path
+        max_curv_file (str): input maximum curvature files path
+        min_curv_file (str): input minimum curvature files path
+        curvatures_file (str): output CSV file with the curvature values
+
+    Returns:
+        None
+    """
     # Get the curvatures from VTK files
-    points = np.array(read_points(mean_curv_file))  # [[x1, y1, z1], [x2, y2, z2], ...]
+    # [[x1, y1, z1], [x2, y2, z2], ...]]
+    points = np.array(read_points(mean_curv_file))
     xyz = points.T  # transposed: [[x1, x2, ...], [y1, y2, ...], [z1, z2, ...]]
     mean_curv, scalar_name = read_scalars(
         mean_curv_file, return_first=True, return_array=True)
-    # print(scalar_name)
     try:
         assert(xyz.shape[1] == mean_curv.size)
     except AssertionError:
         print("number of points={} is not equal to number of scalars={}".format(
             xyz.shape[1], mean_curv.size))
-    # print('number of points: {}'.format(mean_curv.size))
     max_curv, _ = read_scalars(
         max_curv_file, return_first=True, return_array=True)
     min_curv, _ = read_scalars(
