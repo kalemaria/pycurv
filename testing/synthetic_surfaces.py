@@ -1,7 +1,6 @@
 import vtk
 import math
 import numpy as np
-# import os
 
 from pycurv import pycurv_io as io
 from pycurv import (pexceptions, surface_graphs, run_gen_surface,
@@ -141,26 +140,6 @@ def _compute_point_normals(surface):
     return surface
 
 
-def _copy_and_name_array(da, name):
-    """
-    Copies data array and gives it a new name.
-
-    Args:
-        da (vtkDataArray): data array
-        name (str): wanted name for the array
-
-    Returns:
-        copy of the data array with the name or None, if input was None
-    """
-    if da is not None:
-        outda = da.NewInstance()
-        outda.DeepCopy(da)
-        outda.SetName(name)
-        return outda
-    else:
-        return None
-
-
 def isosurface_from_mask(mask_np, threshold=1.0):
     """
     Generates a isosurface using the Marching Cubes method.
@@ -192,7 +171,7 @@ def is_coordinate_on_sphere_surface(x, y, z, r, error=0.0):
         y (float): y coordinate
         z (float): z coordinate
         r (int or float): smooth sphere radius
-        error (float): allowed relative +/- error of the radius
+        error (float): allowed relative +/- error of the radius (default=0.0)
 
     Returns:
         True if the coordinate is close to the sphere surface within the error,
@@ -205,8 +184,8 @@ def is_coordinate_on_sphere_surface(x, y, z, r, error=0.0):
         return False
 
 
-def are_triangle_vertices_on_smooth_sphere_surface(surface, r, center=[0, 0, 0],
-                                                   error=0.0):
+def are_triangle_vertices_on_smooth_sphere_surface(
+        surface, r, center=[0, 0, 0], error=0.0):
     """
     Checks and prints out how many triangle vertices (from total) of the given
     surface are on smooth sphere surface.
@@ -214,7 +193,8 @@ def are_triangle_vertices_on_smooth_sphere_surface(surface, r, center=[0, 0, 0],
         surface (vtk.vtkPolyData): sphere surface approximated by triangles
         r (int or float): smooth sphere radius
         center (float[3]): coordinates in the center of the sphere surface
-        error (float): allowed relative +/- error of the radius
+             (default=[0, 0, 0])
+        error (float): allowed relative +/- error of the radius (default=0.0)
 
     Returns:
         None
@@ -727,131 +707,131 @@ class ConeGenerator(object):
 
 def main():
     """
-    Main function generating some surfaces.
+    Code generating some surfaces.
 
     Returns:
         None
     """
-    # fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
-    fold = "/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/"
+    fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_surfaces/"
+    fold2 = "/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/"
 
-    # # Plane
-    # pg = PlaneGenerator()
-    # plane = pg.generate_plane_surface(half_size=10, res=30)
-    # # io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
-    # noisy_plane = add_gaussian_noise_to_surface(plane, percent=10)
-    # io.save_vtp(noisy_plane,
-    #             "{}plane_half_size10_res30_noise10.vtp".format(fold))
+    # Plane
+    pg = PlaneGenerator()
+    plane = pg.generate_plane_surface(half_size=10, res=30)
+    # io.save_vtp(plane, fold + "plane_half_size10_res30.vtp")
+    noisy_plane = add_gaussian_noise_to_surface(plane, percent=10)
+    io.save_vtp(noisy_plane,
+                "{}plane_half_size10_res30_noise10.vtp".format(fold))
 
     # UV Sphere
-    # sg = SphereGenerator()
-    # sphere = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
-    #                                        longitude_res=50)
-    # are_triangle_vertices_on_smooth_sphere_surface(sphere, r=10, error=0.001)
-    # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
-    # io.save_vtp(sphere_noise, fold + "sphere_r10_res50_noise10.vtp")
+    sg = SphereGenerator()
+    sphere = sg.generate_UV_sphere_surface(r=10, latitude_res=50,
+                                           longitude_res=50)
+    are_triangle_vertices_on_smooth_sphere_surface(sphere, r=10, error=0.001)
+    sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
+    io.save_vtp(sphere_noise, fold + "sphere_r10_res50_noise10.vtp")
 
-    # # Sphere from gauss mask
-    # sg = SphereGenerator()
-    # sphere = sg.generate_gauss_sphere_surface(r=10)
-    # io.save_vtp(sphere, "{}gauss_sphere_surf_r10.vtp".format(fold))
-    # are_triangle_vertices_on_smooth_sphere_surface(
-    #     sphere, r=10, center=[12, 12, 12], error=0.009)
-    # sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
-    # io.save_vtp(sphere_noise, "{}gauss_sphere_r10_noise10.vtp".format(fold))
+    # Sphere from gauss mask
+    sg = SphereGenerator()
+    sphere = sg.generate_gauss_sphere_surface(r=10)
+    io.save_vtp(sphere, "{}gauss_sphere_surf_r10.vtp".format(fold2))
+    are_triangle_vertices_on_smooth_sphere_surface(
+        sphere, r=10, center=[12, 12, 12], error=0.009)
+    sphere_noise = add_gaussian_noise_to_surface(sphere, percent=10)
+    io.save_vtp(sphere_noise, "{}gauss_sphere_r10_noise10.vtp".format(fold))
 
-    # # Sphere from gauss mask with missing wedge
-    # mask_mrc = "{}gauss_sphere_mask_r10_box25_with_wedge30deg.mrc".format(fold)
-    # surf_vtp = "{}gauss_sphere_surf_r10_with_wedge30deg.vtp".format(fold)
-    # sphere_wedge_30deg_mask = io.load_tomo(mask_mrc)
-    # sg = SphereGenerator()
-    # sphere_wedge_30deg_surf = sg.generate_gauss_sphere_surface(
-    #     r=10, mask=sphere_wedge_30deg_mask)
-    # io.save_vtp(sphere_wedge_30deg_surf, surf_vtp)
+    # Sphere from gauss mask with missing wedge
+    mask_mrc = "{}gauss_sphere_mask_r10_box25_with_wedge30deg.mrc".format(fold2)
+    surf_vtp = "{}gauss_sphere_surf_r10_with_wedge30deg.vtp".format(fold2)
+    sphere_wedge_30deg_mask = io.load_tomo(mask_mrc)
+    sg = SphereGenerator()
+    sphere_wedge_30deg_surf = sg.generate_gauss_sphere_surface(
+        r=10, mask=sphere_wedge_30deg_mask)
+    io.save_vtp(sphere_wedge_30deg_surf, surf_vtp)
 
     # Sphere from smoothed voxel mask without missing wedge
     r = 20
     box = int(2.5 * r)
     thresh = 0.6  # 0.3 for r=50, 0.45 for r=10, 0.4 for r=20 first
-    mask_mrc = "{}smooth_sphere_r{}_t1_box{}.mrc".format(fold, r, box)
+    mask_mrc = "{}smooth_sphere_r{}_t1_box{}.mrc".format(fold2, r, box)
     mask = io.load_tomo(mask_mrc)
     # Isosurface - generates a double surface:
     isosurf = isosurface_from_mask(mask, threshold=thresh)
     isosurf_vtp = "{}smooth_sphere_r{}_t1_isosurf_thresh{}.vtp".format(
-        fold, r, thresh)
+        fold2, r, thresh)
     io.save_vtp(isosurf, isosurf_vtp)
     # Turn to a voxel mask:
     bin_mask = (mask > thresh).astype(int)
     bin_mask_mrc = "{}bin_sphere_r{}_t1_box{}_thresh{}.mrc".format(
-        fold, r, box, thresh)
+        fold2, r, box, thresh)
     io.save_numpy(bin_mask, bin_mask_mrc)
     # and generate signed-surface:
-    surf_base = "{}bin_sphere_r{}_t1_thresh{}".format(fold, r, thresh)
+    surf_base = "{}bin_sphere_r{}_t1_thresh{}".format(fold2, r, thresh)
     run_gen_surface(bin_mask, surf_base, lbl=1, mask=True)  # r=10: 1856 cells
     # r= 20: 8134 cells
 
     # Sphere from smoothed voxel mask with missing wedge
     mask_mrc = "{}smooth_sphere_r{}_t1_box{}_with_wedge30deg.mrc".format(
-        fold, r, box)
+        fold2, r, box)
     mask = io.load_tomo(mask_mrc)
     # Isosurface - generates a double surface:
     isosurf = isosurface_from_mask(mask, threshold=thresh)
     isosurf_vtp = ("{}smooth_sphere_r{}_t1_with_wedge30deg_isosurf_thresh{}.vtp"
-                   .format(fold, r, thresh))
+                   .format(fold2, r, thresh))
     io.save_vtp(isosurf, isosurf_vtp)
     # Turn to a voxel mask:
     bin_mask = (mask > thresh).astype(int)
     bin_mask_mrc = ("{}bin_sphere_r{}_t1_box{}_with_wedge30deg_thresh{}.mrc"
-                    .format(fold, r, box, thresh))
+                    .format(fold2, r, box, thresh))
     io.save_numpy(bin_mask, bin_mask_mrc)
     # and generate signed-surface:
     surf_base = "{}bin_sphere_r{}_t1_with_wedge30deg_thresh{}".format(
-        fold, r, thresh)
+        fold2, r, thresh)
     run_gen_surface(bin_mask, surf_base, lbl=1, mask=True)  # r=10: 2446 cells
     # r= 20: 9065 cells with thresh 0.4, 9228 with thresh 0.6
 
-    # # Cylinder
-    # cg = CylinderGenerator()
-    # # cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
-    # # io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
-    # rad = 10
-    # cylinder = cg.generate_gauss_cylinder_surface(rad)
-    # io.save_vtp(cylinder, "{}gauss_cylinder_r{}.vtp".format(fold, rad))
+    # Cylinder
+    cg = CylinderGenerator()
+    # cylinder_r10_h20 = cg.generate_cylinder_surface(r=10, h=20, res=50)
+    # io.save_vtp(cylinder_r10_h20, fold + "cylinder_r10_h20_res50.vtp")
+    rad = 10
+    cylinder = cg.generate_gauss_cylinder_surface(rad)
+    io.save_vtp(cylinder, "{}gauss_cylinder_r{}.vtp".format(fold, rad))
 
-    # # icosphere noise addition
-    # os.chdir(fold)
-    # poly = io.load_poly("sphere/ico1280_noise0/sphere_r10.surface.vtp")
-    # poly_noise = add_gaussian_noise_to_surface(poly, percent=10)
-    # io.save_vtp(poly_noise, "sphere/ico1280_noise10/sphere_r10.surface.vtp")
+    # icosphere noise addition
+    os.chdir(fold)
+    poly = io.load_poly("sphere/ico1280_noise0/sphere_r10.surface.vtp")
+    poly_noise = add_gaussian_noise_to_surface(poly, percent=10)
+    io.save_vtp(poly_noise, "sphere/ico1280_noise10/sphere_r10.surface.vtp")
 
     # Torus
-    # sg = SaddleGenerator()
-    # rr = 25
-    # csr = 10
-    # torus = sg.generate_parametric_torus(rr, csr)
-    # io.save_vtp(torus, "{}torus_rr{}_csr{}.vtp".format(fold, rr, csr))
+    sg = SaddleGenerator()
+    rr = 25
+    csr = 10
+    torus = sg.generate_parametric_torus(rr, csr)
+    io.save_vtp(torus, "{}torus_rr{}_csr{}.vtp".format(fold, rr, csr))
 
     # Cone
-    # pg = ConeGenerator()
-    # r = 6
-    # h = 8
-    # res = 38
-    # # cone = pg.generate_cone(r, h, res)
-    # # io.save_vtp(cone, "{}cone/cone_r{}_h{}_res{}.vtp".format(fold, r, h, res))
-    # subdiv = 3
-    # decimate = 0.8
-    # iter = 0
-    # cone_smooth = pg.generate_cone(r, h, res, subdiv, decimate, iter,
-    #                                verbose=True)
-    # io.save_vtp(
-    #     cone_smooth,
-    #     "{}cone/cone_r{}_h{}_res{}_linear_subdiv{}_decimate{}_smooth_iter{}.vtp"
-    #     .format(fold, r, h, res, subdiv, decimate, iter))
+    pg = ConeGenerator()
+    r = 6
+    h = 8
+    res = 38
+    cone = pg.generate_cone(r, h, res)
+    io.save_vtp(cone, "{}cone/cone_r{}_h{}_res{}.vtp".format(fold, r, h, res))
+    subdiv = 3
+    decimate = 0.8
+    iter = 0
+    cone_smooth = pg.generate_cone(
+        r, h, res, subdiv, decimate, iter, verbose=True)
+    io.save_vtp(
+        cone_smooth,
+        "{}cone/cone_r{}_h{}_res{}_linear_subdiv{}_decimate{}_smooth_iter{}.vtp"
+        .format(fold, r, h, res, subdiv, decimate, iter))
 
-    # r = 6
-    # h = 6
-    # cone_voxel = pg.generate_voxel_cone_surface(r, h)
-    # io.save_vtp(cone_voxel, "{}cone/cone_r{}_h{}.vtp".format(fold, r, h))
+    r = 6
+    h = 6
+    cone_voxel = pg.generate_voxel_cone_surface(r, h)
+    io.save_vtp(cone_voxel, "{}cone/cone_r{}_h{}.vtp".format(fold, r, h))
 
 
 if __name__ == "__main__":

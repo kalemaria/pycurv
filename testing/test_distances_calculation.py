@@ -7,8 +7,9 @@ from pycurv import pycurv_io as io
 from scripts import distances_and_thicknesses_calculation
 
 """
-Scripts for testing methods calculating distances between membrane surfaces
-using "synthetic" benchmark segmentations.
+A function generating a synthetic segmentation and an integration test for
+testing the functions calculating distances and thicknesses between membrane
+surfaces.
 
 Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 """
@@ -35,8 +36,7 @@ def generate_pm_er_lumen_segmentation(
         lbl_er (int, optional): label of ER membrane (default 2)
         lbl_between_pm_er (int, optional): label of inter-membrane space
             (default 4)
-        lbl_er_lumen (int, optional): label of inter-membrane space
-            (default 3)
+        lbl_er_lumen (int, optional): label of inter-membrane space (default 3)
     Returns:
         segmentation (nd.array)
     """

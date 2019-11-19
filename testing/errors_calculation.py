@@ -2,6 +2,15 @@ import numpy as np
 
 from pycurv import nice_acos
 
+"""
+Functions calculating errors for scalars and vectors as well as normalized area
+of a cumulative histogram.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 
 def absolute_error_scalar(true_value, estimated_value):
     """

@@ -3,6 +3,14 @@ import numpy as np
 from pycurv import (triangle_center, triangle_area_cross_product,
                     triangle_area_heron, euclidean_distance)
 
+"""
+Unit tests for testing some linear algebra functions.
+
+Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+"""
+
+__author__ = 'kalemanov'
+
 
 def test_triangle_center():
     """

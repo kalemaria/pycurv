@@ -99,14 +99,14 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
         kappa_2 = cos(v) / r_xy
 
     # # normal to the surface
-    # N = [cos(u) * cos(v), sin(u) * cos(v), sin(v)]
+    # n = [cos(u) * cos(v), sin(u) * cos(v), sin(v)]
     # maximal and minimal principal directions
     t_1 = [- cos(u) * sin(v), - sin(u) * sin(v), cos(v)]
     # assert(round(math.sqrt(np.dot(t_1, t_1)), 5) == 1.0)
     t_2 = [- sin(u), cos(u), 0]
     # assert(round(math.sqrt(np.dot(t_2, t_2)), 5) == 1.0)
     # round almost 0 to 0 and remove minus before 0
-    # N = [beautify_number(e) for e in N]
+    # n = [beautify_number(e) for e in n]
     t_1 = [beautify_number(e) for e in t_1]
     t_2 = [beautify_number(e) for e in t_2]
 
@@ -114,7 +114,7 @@ def torus_curvatures_and_directions(c, a, x, y, z, verbose=False):
         print("v = {}".format(v))
         print("u = {}".format(u))
         print("kappa_2 = {}".format(kappa_2))
-        # print("N = ({}, {}, {})".format(N[0], N[1], N[2]))
+        # print("n = ({}, {}, {})".format(n[0], n[1], n[2]))
         print("t_1 = ({}, {}, {})".format(t_1[0], t_1[1], t_1[2]))
         print("t_2 = ({}, {}, {})".format(t_2[0], t_2[1], t_2[2]))
 

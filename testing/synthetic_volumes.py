@@ -1,6 +1,5 @@
 import numpy as np
 import math
-import os
 from scipy import ndimage
 
 from pycurv import pycurv_io as io
@@ -280,45 +279,43 @@ class ConeMask(object):
 
 def main():
     """
-    Main function generating some sphere and cylinder masks and from them signed
+    Code generating some sphere and cylinder masks and from them signed
     surfaces.
 
     Returns:
         None
     """
-    # fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
-    fold = "/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/"
-    if not os.path.exists(fold):
-        os.makedirs(fold)
+    fold = "/fs/pool/pool-ruben/Maria/curvature/synthetic_volumes/"
+    fold2 = "/fs/pool/pool-ruben/Maria/curvature/missing_wedge_sphere/"
 
-    # # Generate a gaussian sphere mask
-    # sm = SphereMask()
-    # r = 10
-    # sg = r / 3.0
-    # box = int(math.ceil(r * 2.5))
-    # gauss_sphere = sm.generate_gauss_sphere_mask(sg, box)
-    # io.save_numpy(gauss_sphere, "{}gauss_sphere_mask_r{}_box{}.mrc".format(
-    #     fold, r, box))
+    # Generate a gaussian sphere mask
+    sm = SphereMask()
+    r = 10
+    sg = r / 3.0
+    box = int(math.ceil(r * 2.5))
+    gauss_sphere = sm.generate_gauss_sphere_mask(sg, box)
+    io.save_numpy(gauss_sphere, "{}gauss_sphere_mask_r{}_box{}.mrc".format(
+        fold, r, box))
 
-    # # Generate a filled sphere mask
-    # sm = SphereMask()
-    # r = 10  # r=10: 2088 cells, r=15: 60 cells, r=20: 0 cells
-    # sphere = sm.generate_sphere_mask(r, box=(2 * r + 3))
-    # io.save_numpy(sphere, "{}sphere_r{}.mrc".format(fold, r))
-    #
-    # # From the mask, generate a surface (is correct)
-    # run_gen_surface(sphere, "{}sphere_r{}".format(fold, r))
+    # Generate a filled sphere mask
+    sm = SphereMask()
+    r = 10  # r=10: 2088 cells, r=15: 60 cells, r=20: 0 cells
+    sphere = sm.generate_sphere_mask(r, box=(2 * r + 3))
+    io.save_numpy(sphere, "{}sphere_r{}.mrc".format(fold, r))
+
+    # From the mask, generate a surface (is correct)
+    run_gen_surface(sphere, "{}sphere_r{}".format(fold, r))
 
     # Generate a hollow sphere mask
     sm = SphereMask()
-    r = 20  # r=10: 1856 cells, r=15: 4582 cells, r=20: 8134 cells, r=50
+    r = 20  # r=10: 1856 cells, r=15: 4582 cells, r=20: 8134 cells
     box = int(math.ceil(r * 2.5))
     thickness = 1
     sphere = sm.generate_sphere_mask(r, box, t=thickness)
     io.save_numpy(sphere, "{}sphere_r{}_t{}_box{}.mrc".format(
-        fold, r, thickness, box))
+        fold2, r, thickness, box))
     # From the mask, generate a surface
-    run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold, r, thickness))
+    run_gen_surface(sphere, "{}sphere_r{}_t{}".format(fold2, r, thickness))
     # Gaussian smoothing
     sigma = 0.2
     smooth_sphere = ndimage.filters.gaussian_filter(
@@ -326,59 +323,58 @@ def main():
     print(np.min(smooth_sphere))
     print(np.max(smooth_sphere))
     io.save_numpy(smooth_sphere, "{}smooth_sphere_r{}_t{}_box{}.mrc".format(
-        fold, r, thickness, box))
+        fold2, r, thickness, box))
 
-    # # Generate a gaussian cylinder mask
-    # cm = CylinderMask()
-    # r = 100
-    # sm_sg = 100 / 3.0
-    # sm_box = r * 2.5
-    # gauss_cylinder = cm.generate_gauss_cylinder_mask(sm_sg, sm_box)
-    # io.save_numpy(gauss_cylinder, "{}gauss_cylinder_sg{}_box{}.mrc".format(
-    #     fold, sm_sg, sm_box))
+    # Generate a gaussian cylinder mask
+    cm = CylinderMask()
+    r = 100
+    sm_sg = 100 / 3.0
+    sm_box = int(r * 2.5)
+    gauss_cylinder = cm.generate_gauss_cylinder_mask(sm_sg, sm_box)
+    io.save_numpy(gauss_cylinder, "{}gauss_cylinder_sg{}_box{}.mrc".format(
+        fold, sm_sg, sm_box))
 
-    # # Generate a filled cylinder mask
-    # r = 10
-    # h = 20
-    # t = 0
-    # surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
-    # cm = CylinderMask()
-    # box = max(2 * r + 1, h + 1) + 2
-    # cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t)
-    # io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
+    # Generate a filled cylinder mask
+    r = 10
+    h = 20
+    t = 0
+    surf_filebase = '{}cylinder_r{}_h{}'.format(fold, r, h)
+    cm = CylinderMask()
+    box = max(2 * r + 1, h + 1) + 2
+    cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t)
+    io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
 
-    # # Generate a hollow cylinder mask
-    # r = 10
-    # h = 20
-    # t = 1
-    # purge_ratio = 1
-    # surf_filebase = '{}cylinder_r{}_h{}_t{}'.format(fold, r, h, t)
-    # cm = CylinderMask()
-    # box = max(2 * r + 1, h + 1) + 2
-    # cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t, opened=True)
-    # io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
-    # # run_gen_surface(cylinder_mask, surf_filebase, purge_ratio=purge_ratio)
+    # Generate a hollow cylinder mask
+    r = 10
+    h = 20
+    t = 1
+    surf_filebase = '{}cylinder_r{}_h{}_t{}'.format(fold, r, h, t)
+    cm = CylinderMask()
+    box = max(2 * r + 1, h + 1) + 2
+    cylinder_mask = cm.generate_cylinder_mask(r, h, box, t=t, opened=True)
+    io.save_numpy(cylinder_mask, surf_filebase + ".mrc")
+    run_gen_surface(cylinder_mask, surf_filebase)
 
-    # # Generate a filled cone mask
-    # r = 6
-    # h = 8
-    # t = 0
-    # surf_filebase = '{}cone/cone_r{}_h{}'.format(fold, r, h)
-    # cm = ConeMask()
-    # box = max(2 * r + 1, h + 1) + 2
-    # cone_mask = cm.generate_cone_mask(r, h, box, t=t)
-    # io.save_numpy(cone_mask, surf_filebase + ".mrc")
+    # Generate a filled cone mask
+    r = 6
+    h = 8
+    t = 0
+    surf_filebase = '{}cone/cone_r{}_h{}'.format(fold, r, h)
+    cm = ConeMask()
+    box = max(2 * r + 1, h + 1) + 2
+    cone_mask = cm.generate_cone_mask(r, h, box, t=t)
+    io.save_numpy(cone_mask, surf_filebase + ".mrc")
 
-    # # Generate a hollow cone mask
-    # r = 6
-    # h = 6
-    # t = 1
-    # surf_filebase = '{}cone/cone_r{}_h{}_t{}'.format(fold, r, h, t)
-    # cm = ConeMask()
-    # box = max(2 * r + 1, h + 1) + 2
-    # cone_mask = cm.generate_cone_mask(r, h, box, t=t, opened=True)
-    # io.save_numpy(cone_mask, surf_filebase + ".mrc")
-    # run_gen_surface(cone_mask, surf_filebase, purge_ratio=1)
+    # Generate a hollow cone mask
+    r = 6
+    h = 6
+    t = 1
+    surf_filebase = '{}cone/cone_r{}_h{}_t{}'.format(fold, r, h, t)
+    cm = ConeMask()
+    box = max(2 * r + 1, h + 1) + 2
+    cone_mask = cm.generate_cone_mask(r, h, box, t=t, opened=True)
+    io.save_numpy(cone_mask, surf_filebase + ".mrc")
+    run_gen_surface(cone_mask, surf_filebase)
 
 
 if __name__ == "__main__":

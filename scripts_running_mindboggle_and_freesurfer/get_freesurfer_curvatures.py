@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 # from mindboggle.mio.vtks import read_points, read_scalars
-from vtks import read_points, read_scalars
+from scripts_running_mindboggle_and_freesurfer.vtks import read_points, read_scalars
 
 
 def get_freesurfer_curvatures(mean_curv_file, max_curv_file, min_curv_file, curvatures_file):
