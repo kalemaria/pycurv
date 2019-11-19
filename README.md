@@ -55,15 +55,15 @@ for the following analyses:
 This package contains Python scripts applying the PyCurv package and
 combining different functions into the workflows described above, the main are:
 
-- curvature_calculation.py script for membrane curvature calculation workflows
+- `curvature_calculation.py` script for membrane curvature calculation workflows
   used in ([Bäuerlein et al. 2017, Cell](https://www.cell.com/fulltext/S0092-8674(17)30934-0))
   and ([Collado et al. 2019, Developmental Cell](https://www.cell.com/developmental-cell/fulltext/S1534-5807(19)30865-2))
-- distances_calculation.py script for membrane distances and thicknesses
+- `distances_calculation.py` script for membrane distances and thicknesses
   calculation used in (Collado et al. 2019)
-- ribosome_density_calculation.py script for ribosome density calculation used
+- `ribosome_density_calculation.py` script for ribosome density calculation used
   in (Bäuerlein et al. 2017).
 
-## `scripts_running_mindboggle_and_freesurfer`` folder
+## `scripts_running_mindboggle_and_freesurfer` folder
 Python and bash scripts running Mindboggle (Klein et al. 2017, PLoS Computational
 Biology) and FreeSurfer (Pienaar et al. 2008, International Journal of Imaging
 Systems and Technology) curvature estimation functions and extracting the values
