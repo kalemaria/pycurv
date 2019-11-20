@@ -6,6 +6,7 @@ import math
 from graph_tool import GraphView, incident_edges_op
 from graph_tool.topology import (shortest_distance, label_largest_component,
                                  label_components)
+from memory_profiler import profile
 
 import graphs
 import pexceptions
@@ -1092,6 +1093,7 @@ class TriangleGraph(SurfaceGraph):
         """a list of all added triangle cell indices, whose indices correspond
         to graph vertex indices"""
 
+    @profile
     def build_graph_from_vtk_surface(self, surface, scale=(1, 1, 1),
                                      verbose=False, reverse_normals=False):
         """

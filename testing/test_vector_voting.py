@@ -1377,15 +1377,15 @@ def run_cylinder_with_creases(
 # py.test -n 4   # test on multiple CPUs
 
 if __name__ == "__main__":
-    res = 10
-    eta = 0
-    epsilon = 5
-    run_cylinder_with_creases(
-        radius_hit=5, res=res, inverse=False, methods=["VV"], area2=False,
-        vertex_based=True, epsilon=epsilon, eta=eta)
-    run_cylinder_with_creases(
-        radius_hit=5, res=res, inverse=False, methods=["VV"], area2=True,
-        vertex_based=False, epsilon=epsilon, eta=eta)
+    # res = 10
+    # eta = 0
+    # epsilon = 5
+    # run_cylinder_with_creases(
+    #     radius_hit=5, res=res, inverse=False, methods=["VV"], area2=False,
+    #     vertex_based=True, epsilon=epsilon, eta=eta)
+    # run_cylinder_with_creases(
+    #     radius_hit=5, res=res, inverse=False, methods=["VV"], area2=True,
+    #     vertex_based=False, epsilon=epsilon, eta=eta)
     # test_plane_normals(
     #     half_size=10, radius_hit=4, res=10, noise=10, vertex_based=True,
     #     cores=1)
@@ -1400,3 +1400,7 @@ if __name__ == "__main__":
     # # p.strip_dirs().sort_stats('cumulative').print_stats(10)
     # # what functions were looping a lot, and taking a lot of time:
     # p.strip_dirs().sort_stats('time').print_stats(20)
+    surf_file = "/fs/pool/pool-ruben/Maria/workspace/github/pycurv/" \
+                "experimental_data_sets/vesicle/t74_vesicle3.scaled_cleaned.vtp"
+    _, tg = surface_to_graph(surf_file)
+    tg.graph.save("t74_vesicle3.scaled_cleaned.gt")
