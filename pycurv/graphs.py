@@ -52,10 +52,9 @@ class SegmentationGraph(object):
         """dict: a dictionary mapping the vertex coordinates (x, y, z) to the
         vertex index.
         """
-        self.coordinates_pair_connected = {}  # TODO use a set to save space?
-        """dict: a dictionary storing pairs of vertex coordinates that are
-        connected by an edge as a key in a tuple form
-        ((x1, y1, z1), (x2, y2, z2)) with value True.
+        self.coordinates_pair_connected = set()
+        """set: a set storing pairs of vertex coordinates that are
+        connected by an edge in a tuple form ((x1, y1, z1), (x2, y2, z2)).
         """
 
     @staticmethod  # TODO replace by numpy array function in linalg.py (faster?)

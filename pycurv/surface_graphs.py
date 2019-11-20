@@ -775,7 +775,7 @@ class PointGraph(SurfaceGraph):
                             ed = self.graph.add_edge(vd1, vd2)
                             self.graph.ep.distance[ed] = \
                                 self.distance_between_voxels(p1, p2)
-                            self.coordinates_pair_connected[(p1, p2)] = True
+                            self.coordinates_pair_connected.add((p1, p2))
                             if verbose:
                                 print('\tThe neighbor points ({}, {}, {}) and '
                                       '({}, {}, {}) have been connected by an '
@@ -1316,7 +1316,7 @@ class TriangleGraph(SurfaceGraph):
                 if not (((p_i, p_x) in self.coordinates_pair_connected) or
                         ((p_x, p_i) in self.coordinates_pair_connected)):
                     ed = self.graph.add_edge(vd_i, vd_x)  # edge descriptor
-                    self.coordinates_pair_connected[(p_i, p_x)] = True
+                    self.coordinates_pair_connected.add((p_i, p_x))
 
                     # Add the distance of the edge
                     self.graph.ep.distance[ed] = \
