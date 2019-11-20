@@ -125,7 +125,7 @@ def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False,
                      vertex_based=False):
     """
     Reads in the .vtp file with the triangle mesh surface and transforms it
-    into a triangle graph.
+    into a SurfaceGraph graph (TriangleGraph or PointGraph).
 
     Args:
         surf_file (str): .vtp file with the triangle mesh surface
@@ -134,8 +134,8 @@ def surface_to_graph(surf_file, scale=(1, 1, 1), inverse=False,
         inverse (boolean, optional): if True, the graph will have normals
             pointing outwards (negative curvature), if False (default), the
             other way around
-        vertex_based (boolean, optional): if True (default False), curvature is
-            calculated per triangle vertex instead of triangle center.
+        vertex_based (boolean, optional): if True (default False), a PointGraph
+            is built instead of a TriangleGraph.
 
     Returns:
         surface (vtk.vtkPolyData) and triangle graph(TriangleGraph)
