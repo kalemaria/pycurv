@@ -573,7 +573,6 @@ class SegmentationGraph(object):
             print("{} neighbors".format(len(neighbor_id_to_dist)))
         return neighbor_id_to_dist
 
-    # @profile
     def find_geodesic_neighbors_exact(
             self, o, g_max, only_surface=False, verbose=False, debug=False):
         """
@@ -731,7 +730,6 @@ class SegmentationGraph(object):
             print("{} neighbors".format(len(neighbor_id_to_dist)))
         return neighbor_id_to_dist
 
-    # @profile
     def _calculate_geodesic_distance(
             self, a, b, xyz_c, vertex_id_to_geo_dist, verbose=False):
         geo_dist_a = vertex_id_to_geo_dist[int(a)]
