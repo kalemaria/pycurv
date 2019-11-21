@@ -1375,10 +1375,9 @@ def run_cylinder_with_creases(
 
 
 def to_profile():
-    surf_file = "/fs/pool/pool-ruben/Maria/workspace/github/pycurv/" \
-                "experimental_data_sets/vesicle/t74_vesicle3.scaled_cleaned.vtp"
-    _, tg = surface_to_graph(surf_file)
-    tg.graph.save("t74_vesicle3.scaled_cleaned.gt")
+    test_sphere_curvatures(
+        radius=10, radius_hit=9, inverse=False, area2=True, voxel=True, ico=0,
+        methods=['VV'], runtimes='', vertex_based=True, cores=1)
 
 
 # py.test -n 4   # test on multiple CPUs
@@ -1397,16 +1396,11 @@ if __name__ == "__main__":
     #     half_size=10, radius_hit=4, res=10, noise=10, vertex_based=True,
     #     cores=1)
     #     fold = '{}sphere/voxel/'.format(FOLD)
-    # stats_file = '{}sphere_r10.AVV_rh9.stats'.format(fold)
-    # cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
-    #              'inverse=False, voxel=True, ico=0, methods=[\'VV\'], '
-    #              'runtimes='', cores=1)', stats_file)
-
-    stats_file = 'cProfiler_tg_linalg_distance.stats'
+    stats_file = 'cProfiler-pg-sphere_curvature-graphs_distance.stats'
     cProfile.run('to_profile()', stats_file)
     p = pstats.Stats(stats_file)
     # what algorithms are taking time:
-    p.strip_dirs().sort_stats('cumulative').print_stats(20)
+    # p.strip_dirs().sort_stats('cumulative').print_stats(50)
     # what functions were looping a lot, and taking a lot of time:
-    p.strip_dirs().sort_stats('time').print_stats(20)
+    p.strip_dirs().sort_stats('time').print_stats(50)
 
