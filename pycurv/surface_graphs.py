@@ -6,7 +6,6 @@ import math
 from graph_tool import GraphView, incident_edges_op
 from graph_tool.topology import (shortest_distance, label_largest_component,
                                  label_components)
-from memory_profiler import profile
 
 import graphs
 import pexceptions
@@ -1093,7 +1092,6 @@ class TriangleGraph(SurfaceGraph):
         """a list of all added triangle cell indices, whose indices correspond
         to graph vertex indices"""
 
-    @profile
     def build_graph_from_vtk_surface(self, surface, scale=(1, 1, 1),
                                      verbose=False, reverse_normals=False):
         """
@@ -1319,8 +1317,8 @@ class TriangleGraph(SurfaceGraph):
                     self.coordinates_pair_connected.add((p_i, p_x))
 
                     # Add the distance of the edge
-                    self.graph.ep.distance[ed] = \
-                        self.distance_between_voxels(p_i, p_x)
+                    self.graph.ep.distance[ed] = self.distance_between_voxels(
+                        p_i, p_x)
 
                     # Assign the "strength" property to the edge as
                     # explained above:

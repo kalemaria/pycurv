@@ -6,8 +6,8 @@ import math
 import pandas as pd
 import sys
 import vtk
-# import cProfile
-# import pstats
+import cProfile
+import pstats
 
 from pycurv import pycurv_io as io
 from pycurv import (
@@ -1374,6 +1374,13 @@ def run_cylinder_with_creases(
         io.save_vtp(surf, surf_file)
 
 
+def to_profile():
+    surf_file = "/fs/pool/pool-ruben/Maria/workspace/github/pycurv/" \
+                "experimental_data_sets/vesicle/t74_vesicle3.scaled_cleaned.vtp"
+    _, tg = surface_to_graph(surf_file)
+    tg.graph.save("t74_vesicle3.scaled_cleaned.gt")
+
+
 # py.test -n 4   # test on multiple CPUs
 
 if __name__ == "__main__":
@@ -1394,13 +1401,12 @@ if __name__ == "__main__":
     # cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
     #              'inverse=False, voxel=True, ico=0, methods=[\'VV\'], '
     #              'runtimes='', cores=1)', stats_file)
-    #
-    # p = pstats.Stats(stats_file)
-    # # what algorithms are taking time:
-    # # p.strip_dirs().sort_stats('cumulative').print_stats(10)
-    # # what functions were looping a lot, and taking a lot of time:
-    # p.strip_dirs().sort_stats('time').print_stats(20)
-    surf_file = "/fs/pool/pool-ruben/Maria/workspace/github/pycurv/" \
-                "experimental_data_sets/vesicle/t74_vesicle3.scaled_cleaned.vtp"
-    _, tg = surface_to_graph(surf_file)
-    tg.graph.save("t74_vesicle3.scaled_cleaned.gt")
+
+    stats_file = 'cProfiler_tg_linalg_distance.stats'
+    cProfile.run('to_profile()', stats_file)
+    p = pstats.Stats(stats_file)
+    # what algorithms are taking time:
+    p.strip_dirs().sort_stats('cumulative').print_stats(20)
+    # what functions were looping a lot, and taking a lot of time:
+    p.strip_dirs().sort_stats('time').print_stats(20)
+

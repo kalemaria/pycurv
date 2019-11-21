@@ -57,7 +57,7 @@ class SegmentationGraph(object):
         connected by an edge in a tuple form ((x1, y1, z1), (x2, y2, z2)).
         """
 
-    @staticmethod  # TODO replace by numpy array function in linalg.py (faster?)
+    @staticmethod
     def distance_between_voxels(voxel1, voxel2):
         """
         Calculates and returns the Euclidean distance between two voxels.
@@ -741,6 +741,7 @@ class SegmentationGraph(object):
         ab = self.distance_between_voxels(xyz_a, xyz_b)
         ac = self.distance_between_voxels(xyz_a, xyz_c)
         bc = self.distance_between_voxels(xyz_b, xyz_c)
+        # maybe faster to use linalg.euclidean_distance directly on np.ndarrays
         alpha = nice_acos((ab ** 2 + ac ** 2 - bc ** 2) / (2 * ab * ac))
         beta = nice_acos((ab ** 2 + bc ** 2 - ac ** 2) / (2 * ab * bc))
         if alpha < (math.pi / 2) and beta < (math.pi / 2):
