@@ -379,6 +379,39 @@ class SurfaceGraph(graphs.SegmentationGraph):
         return (t_1, t_2, kappa_1, kappa_2,
                 gauss_curvature, mean_curvature, shape_index, curvedness)
 
+    def first_pass(self, vertex_v_ind, g_max, a_max, sigma, full_dist_map=None):
+        """
+        Combines the two steps of the first pass: normal votes collection
+        and normals estimation. For more information, see the functions
+        collect_normal_votes() (of TriangleGraph or PointGraph) and
+        estimate_normal() (of TriangleGraph).
+
+        Args:
+            vertex_v_ind (int): index of the vertex v in the surface
+                triangle-graph for which the votes are collected
+            g_max (float): the maximal geodesic distance in units of the graph
+            a_max (float): the area of the largest triangle in the surface
+                triangle-graph
+            sigma (float): sigma, defined as 3*sigma = g_max, so that votes
+                beyond the neighborhood can be ignored
+            full_dist_map (graph_tool.PropertyMap, optional): the full distance
+                map for the whole graph; if None, a local distance map is
+                calculated for this vertex (default)
+
+        Returns:
+            - orientation of vertex v (int): 1 if it belongs to a surface patch,
+              2 if it belongs to a crease junction or 3 if it doesn't have a
+              preferred orientation
+            - estimated normal "n_v" (3x1 array) if class is 1, otherwise zeros
+            - the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
+              zeros
+        """
+        num_neighbors, V_v = self.collect_normal_votes(
+            vertex_v_ind, g_max, a_max, sigma, full_dist_map)
+        class_v, n_v, t_v = self.estimate_normal(
+            vertex_v_ind, V_v, epsilon=0, eta=0)
+        return num_neighbors, class_v, n_v, t_v
+
     def second_pass(self, vertex_v_ind, g_max, sigma, full_dist_map=None,
                     page_curvature_formula=False, a_max=0.0):
         """
@@ -1912,35 +1945,3 @@ class TriangleGraph(SurfaceGraph):
             V_v += w_i * V_i
 
         return len(neighbor_idx_to_dist), V_v
-
-    def first_pass(self, vertex_v_ind, g_max, a_max, sigma, full_dist_map=None):
-        """
-        Combines the two steps of the first pass: normal votes collection
-        and normals estimation. For more information, see TriangleGraph
-        functions collect_normal_votes() and estimate_normal().
-
-        Args:
-            vertex_v_ind (int): index of the vertex v in the surface
-                triangle-graph for which the votes are collected
-            g_max (float): the maximal geodesic distance in units of the graph
-            a_max (float): the area of the largest triangle in the surface
-                triangle-graph
-            sigma (float): sigma, defined as 3*sigma = g_max, so that votes
-                beyond the neighborhood can be ignored
-            full_dist_map (graph_tool.PropertyMap, optional): the full distance
-                map for the whole graph; if None, a local distance map is
-                calculated for this vertex (default)
-
-        Returns:
-            - orientation of vertex v (int): 1 if it belongs to a surface patch,
-              2 if it belongs to a crease junction or 3 if it doesn't have a
-              preferred orientation
-            - estimated normal "n_v" (3x1 array) if class is 1, otherwise zeros
-            - the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
-              zeros
-        """
-        num_neighbors, V_v = self.collect_normal_votes(
-            vertex_v_ind, g_max, a_max, sigma, full_dist_map)
-        class_v, n_v, t_v = self.estimate_normal(
-            vertex_v_ind, V_v, epsilon=0, eta=0)
-        return num_neighbors, class_v, n_v, t_v
