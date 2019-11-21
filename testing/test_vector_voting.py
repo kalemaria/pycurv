@@ -1396,7 +1396,7 @@ if __name__ == "__main__":
     #     half_size=10, radius_hit=4, res=10, noise=10, vertex_based=True,
     #     cores=1)
     #     fold = '{}sphere/voxel/'.format(FOLD)
-    stats_file = 'cProfiler-pg-sphere_curvature-graphs_distance.stats'
+    stats_file = 'cProfiler-pg-sphere_curvature-linalg_distance.stats'
     cProfile.run('to_profile()', stats_file)
     p = pstats.Stats(stats_file)
     # what algorithms are taking time:

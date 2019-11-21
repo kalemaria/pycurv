@@ -8,7 +8,7 @@ from heapq import heappush, heappop
 
 from pycurv_io import TypesConverter
 import pexceptions
-from linalg import nice_acos
+from linalg import nice_acos, euclidean_distance
 
 """
 Contains an abstract class (SegmentationGraph) for representing a segmentation
@@ -678,9 +678,9 @@ class SegmentationGraph(object):
                     if tag[b] == "Alive":
                         if debug:
                             print("\tUsing vertex b={}".format(int(b)))
-                        xyz_c = tuple(xyz[c])
                         new_geo_dist_c = calculate_geodesic_distance(
-                            a, b, xyz_c, vertex_id_to_geo_dist, verbose=verbose)
+                            a, b, xyz[c].a, vertex_id_to_geo_dist,
+                            verbose=verbose)
                         if int(c) not in vertex_id_to_geo_dist:  # add c
                             if debug:
                                 print("\tadding new distance {}".format(
@@ -736,11 +736,11 @@ class SegmentationGraph(object):
             self, a, b, xyz_c, vertex_id_to_geo_dist, verbose=False):
         geo_dist_a = vertex_id_to_geo_dist[int(a)]
         geo_dist_b = vertex_id_to_geo_dist[int(b)]
-        xyz_a = tuple(self.graph.vp.xyz[a])
-        xyz_b = tuple(self.graph.vp.xyz[b])
-        ab = self.distance_between_voxels(xyz_a, xyz_b)
-        ac = self.distance_between_voxels(xyz_a, xyz_c)
-        bc = self.distance_between_voxels(xyz_b, xyz_c)
+        xyz_a = self.graph.vp.xyz[a].a
+        xyz_b = self.graph.vp.xyz[b].a
+        ab = euclidean_distance(xyz_a, xyz_b)
+        ac = euclidean_distance(xyz_a, xyz_c)
+        bc = euclidean_distance(xyz_b, xyz_c)
         # maybe faster to use linalg.euclidean_distance directly on np.ndarrays
         alpha = nice_acos((ab ** 2 + ac ** 2 - bc ** 2) / (2 * ab * ac))
         beta = nice_acos((ab ** 2 + bc ** 2 - ac ** 2) / (2 * ab * bc))

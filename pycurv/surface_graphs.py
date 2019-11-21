@@ -1061,7 +1061,7 @@ class PointGraph(SurfaceGraph):
             # Calculate g_c_i using these two vertices, a and b, forming an
             # imaginary triangle with vertices a, b and c_i:
             g_c_i = calculate_geodesic_distance(
-                v_a, v_b, tuple(c_i), neighbor_idx_to_dist, verbose=False)
+                v_a, v_b, c_i, neighbor_idx_to_dist, verbose=False)
             w_i = a_i / a_max * exp(- g_c_i / sigma)
 
             # Weigh V_i and add it to the weighted matrix sum:
