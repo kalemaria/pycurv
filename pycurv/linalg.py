@@ -303,9 +303,9 @@ def euclidean_distance(a, b):
 
     Args:
         a (np.ndarray): first voxel coordinates in form of an array of
-            integers of length 3 (x1, y1, z1)
+            integers of length 3 [x1, y1, z1]
         b (np.ndarray): second voxel coordinates in form of an array of
-            integers of length 3 (x2, y2, z2)
+            integers of length 3 [x2, y2, z2]
 
     Returns:
         the Euclidean distance between two voxels (float).

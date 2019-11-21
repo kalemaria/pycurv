@@ -6,8 +6,6 @@ import math
 import pandas as pd
 import sys
 import vtk
-# import cProfile
-# import pstats
 
 from pycurv import pycurv_io as io
 from pycurv import (
@@ -1372,31 +1370,3 @@ def run_cylinder_with_creases(
         surf_file = '{}.{}_rh{}.vtp'.format(
             base_filename, method, radius_hit)
         io.save_vtp(surf, surf_file)
-
-
-# py.test -n 4   # test on multiple CPUs
-
-if __name__ == "__main__":
-    res = 10
-    eta = 0
-    epsilon = 5
-    run_cylinder_with_creases(
-        radius_hit=5, res=res, inverse=False, methods=["VV"], area2=False,
-        vertex_based=True, epsilon=epsilon, eta=eta)
-    run_cylinder_with_creases(
-        radius_hit=5, res=res, inverse=False, methods=["VV"], area2=True,
-        vertex_based=False, epsilon=epsilon, eta=eta)
-    # test_plane_normals(
-    #     half_size=10, radius_hit=4, res=10, noise=10, vertex_based=True,
-    #     cores=1)
-    #     fold = '{}sphere/voxel/'.format(FOLD)
-    # stats_file = '{}sphere_r10.AVV_rh9.stats'.format(fold)
-    # cProfile.run('test_sphere_curvatures(radius=10, radius_hit=9, '
-    #              'inverse=False, voxel=True, ico=0, methods=[\'VV\'], '
-    #              'runtimes='', cores=1)', stats_file)
-    #
-    # p = pstats.Stats(stats_file)
-    # # what algorithms are taking time:
-    # # p.strip_dirs().sort_stats('cumulative').print_stats(10)
-    # # what functions were looping a lot, and taking a lot of time:
-    # p.strip_dirs().sort_stats('time').print_stats(20)

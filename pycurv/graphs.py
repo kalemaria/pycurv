@@ -8,7 +8,7 @@ from heapq import heappush, heappop
 
 from pycurv_io import TypesConverter
 import pexceptions
-from linalg import nice_acos
+from linalg import nice_acos, euclidean_distance
 
 """
 Contains an abstract class (SegmentationGraph) for representing a segmentation
@@ -52,13 +52,12 @@ class SegmentationGraph(object):
         """dict: a dictionary mapping the vertex coordinates (x, y, z) to the
         vertex index.
         """
-        self.coordinates_pair_connected = {}  # TODO use a set to save space?
-        """dict: a dictionary storing pairs of vertex coordinates that are
-        connected by an edge as a key in a tuple form
-        ((x1, y1, z1), (x2, y2, z2)) with value True.
+        self.coordinates_pair_connected = set()
+        """set: a set storing pairs of vertex coordinates that are
+        connected by an edge in a tuple form ((x1, y1, z1), (x2, y2, z2)).
         """
 
-    @staticmethod  # TODO replace by numpy array function in linalg.py (faster?)
+    @staticmethod
     def distance_between_voxels(voxel1, voxel2):
         """
         Calculates and returns the Euclidean distance between two voxels.
@@ -574,7 +573,6 @@ class SegmentationGraph(object):
             print("{} neighbors".format(len(neighbor_id_to_dist)))
         return neighbor_id_to_dist
 
-    # @profile
     def find_geodesic_neighbors_exact(
             self, o, g_max, only_surface=False, verbose=False, debug=False):
         """
@@ -679,9 +677,9 @@ class SegmentationGraph(object):
                     if tag[b] == "Alive":
                         if debug:
                             print("\tUsing vertex b={}".format(int(b)))
-                        xyz_c = tuple(xyz[c])
                         new_geo_dist_c = calculate_geodesic_distance(
-                            a, b, xyz_c, vertex_id_to_geo_dist, verbose=verbose)
+                            a, b, xyz[c].a, vertex_id_to_geo_dist,
+                            verbose=verbose)
                         if int(c) not in vertex_id_to_geo_dist:  # add c
                             if debug:
                                 print("\tadding new distance {}".format(
@@ -732,16 +730,16 @@ class SegmentationGraph(object):
             print("{} neighbors".format(len(neighbor_id_to_dist)))
         return neighbor_id_to_dist
 
-    # @profile
     def _calculate_geodesic_distance(
             self, a, b, xyz_c, vertex_id_to_geo_dist, verbose=False):
         geo_dist_a = vertex_id_to_geo_dist[int(a)]
         geo_dist_b = vertex_id_to_geo_dist[int(b)]
-        xyz_a = tuple(self.graph.vp.xyz[a])
-        xyz_b = tuple(self.graph.vp.xyz[b])
-        ab = self.distance_between_voxels(xyz_a, xyz_b)
-        ac = self.distance_between_voxels(xyz_a, xyz_c)
-        bc = self.distance_between_voxels(xyz_b, xyz_c)
+        xyz_a = self.graph.vp.xyz[a].a
+        xyz_b = self.graph.vp.xyz[b].a
+        ab = euclidean_distance(xyz_a, xyz_b)
+        ac = euclidean_distance(xyz_a, xyz_c)
+        bc = euclidean_distance(xyz_b, xyz_c)
+        # maybe faster to use linalg.euclidean_distance directly on np.ndarrays
         alpha = nice_acos((ab ** 2 + ac ** 2 - bc ** 2) / (2 * ab * ac))
         beta = nice_acos((ab ** 2 + bc ** 2 - ac ** 2) / (2 * ab * bc))
         if alpha < (math.pi / 2) and beta < (math.pi / 2):

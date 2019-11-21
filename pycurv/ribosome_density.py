@@ -454,9 +454,8 @@ class VoxelGraph(graphs.SegmentationGraph):
                             self.graph.ep.distance[
                                 ed] = self.distance_between_voxels(
                                 scaled_voxel_to_expand, scaled_neighbor_voxel)
-                            self.coordinates_pair_connected[(
-                                scaled_voxel_to_expand,
-                                scaled_neighbor_voxel)] = True
+                            self.coordinates_pair_connected.add((
+                                scaled_voxel_to_expand, scaled_neighbor_voxel))
                             if verbose:
                                 print('The neighbor voxels ({}, {}, {}) and '
                                       '({}, {}, {}) have been connected by an '
