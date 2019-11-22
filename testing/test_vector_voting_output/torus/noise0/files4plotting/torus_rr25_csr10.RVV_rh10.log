@@ -4,9 +4,9 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 8.75826311111 s
-<Graph object, undirected, with 4802 vertices and 28812 edges at 0x2baa65f24090>
-Graph construction from surface took: 0.0 min 8.76458907127 s
+TriangleGraph generation took: 0.0 min 8.10686516762 s
+<Graph object, undirected, with 4802 vertices and 28812 edges at 0x2b8df6a67bd0>
+Graph construction from surface took: 0.0 min 8.19023704529 s
 4802 "true_kappa_1" values
 min = 0.1, max = 0.1, mean = 0.1
 4802 "true_kappa_2" values
@@ -18,7 +18,7 @@ g_max = 15.7079632679
 Maximal triangle area = 2.87347190056
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.000261068344116 s
+Preparation took: 0.0 min 0.000237941741943 s
 
 Running modified Vector Voting for all vertices...
 
@@ -28,15 +28,15 @@ Calling find_geodesic_neighbors
 Opened a pool with 6 processes
 Average number of geodesic neighbors for all vertices: 379.510204082
 4802 surface patches
-First pass took: 1.0 min 11.756403923 s
-Preparation took: 0.0 min 0.000698089599609 s
+First pass took: 1.0 min 10.1979629993 s
+Preparation took: 0.0 min 0.000629901885986 s
 
 Second pass: estimating principle curvatures and directions for surface patches using RVV...
 4802 vertices to estimate curvature
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Second run of VV took: 1.0 min 31.4014239311 s
-Whole method took: 2.0 min 43.1639871597 s
+Second run of VV took: 1.0 min 25.3567459583 s
+Whole method took: 2.0 min 35.5600860119 s
 
 Evaluating RVV...
 4802 "kappa_1" values
@@ -47,7 +47,7 @@ min = -0.0626328967397, max = 0.0253191108483, mean = -0.00893216755679
 min = 0.0997740585536, max = 0.100422181151, mean = 0.100146650097
 4802 "min_curvature" values
 min = -0.0663135529871, max = 0.0286030555198, mean = -0.00907372958911
-Testing the maximal principal directions (T_1)...
-Testing the minimal principal directions (T_2)...
+Testing the maximal principal directions (t_1)...
+Testing the minimal principal directions (t_2)...
 Testing the maximal principal curvature (kappa_1)...
 Testing the minimal principal curvature (kappa_2)...

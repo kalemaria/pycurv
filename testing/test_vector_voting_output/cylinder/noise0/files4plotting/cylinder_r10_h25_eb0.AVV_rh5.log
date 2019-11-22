@@ -4,9 +4,9 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 4.70866894722 s
-<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2baa54695e90>
-Graph construction from surface took: 0.0 min 4.71413397789 s
+TriangleGraph generation took: 0.0 min 4.47357797623 s
+<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2b8de31993d0>
+Graph construction from surface took: 0.0 min 4.4777109623 s
 
 Preparing for running modified Vector Voting...
 radius_hit = 5
@@ -14,7 +14,7 @@ g_max = 7.85398163397
 Maximal triangle area = 0.648083801724
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.000447988510132 s
+Preparation took: 0.0 min 0.000282049179077 s
 
 Running modified Vector Voting for all vertices...
 
@@ -24,16 +24,16 @@ Calling find_geodesic_neighbors
 Opened a pool with 6 processes
 Average number of geodesic neighbors for all vertices: 343.131127451
 3264 surface patches
-First pass took: 0.0 min 45.5579309464 s
+First pass took: 0.0 min 41.7038359642 s
 Maximal triangle area = 0.648083801724
-Preparation took: 0.0 min 0.000607013702393 s
+Preparation took: 0.0 min 0.000627994537354 s
 
 Second pass: estimating principle curvatures and directions for surface patches using AVV...
 3264 vertices to estimate curvature
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Second run of VV took: 0.0 min 56.8397889137 s
-Whole method took: 1.0 min 42.4011058807 s
+Second run of VV took: 0.0 min 53.5079979897 s
+Whole method took: 1.0 min 35.2153561115 s
 Finding vertices at the graph border...
 136 vertices are at the graph border.
 For each graph border vertex, finding vertices within geodesic distance 0 to it...
@@ -41,9 +41,9 @@ For each graph border vertex, finding vertices within geodesic distance 0 to it.
 Filtering out those vertices and their edges...
 
 Excluded triangles that are 0 to surface borders.
-<Graph object, undirected, with 3128 vertices and 18252 edges, edges filtered by (<PropertyMap object with key type 'Edge' and value type 'bool', for Graph 0x2baa54695e90, at 0x2baa534ad410, with values:
-[1 1 1 ..., 1 1 1]>, False), vertices filtered by (<PropertyMap object with key type 'Vertex' and value type 'bool', for Graph 0x2baa54695e90, at 0x2baa534ad510, with values:
-[1 1 1 ..., 1 1 1]>, False) at 0x2baa54695e90>
+<Graph object, undirected, with 3128 vertices and 18252 edges, edges filtered by (<PropertyMap object with key type 'Edge' and value type 'bool', for Graph 0x2b8de31993d0, at 0x2b8df361cc90, with values:
+[1 1 1 ..., 1 1 1]>, False), vertices filtered by (<PropertyMap object with key type 'Vertex' and value type 'bool', for Graph 0x2b8de31993d0, at 0x2b8df361ca50, with values:
+[1 1 1 ..., 1 1 1]>, False) at 0x2b8de31993d0>
 
 Evaluating AVV...
 3128 "kappa_1" values
@@ -54,5 +54,5 @@ min = -0.00388405639534, max = 0.00559740933337, mean = 0.00246758333129
 min = 0.0483865259758, max = 0.172598315031, mean = 0.111149363344
 3128 "min_curvature" values
 min = -0.137787588269, max = 3.82564350569e-15, mean = -0.0239629470998
-Testing the minimal principal directions (T_2)...
+Testing the minimal principal directions (t_2)...
 Testing the maximal principal curvature (kappa_1)...

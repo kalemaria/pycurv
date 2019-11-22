@@ -4,9 +4,9 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 5.65801978111 s
-<Graph object, undirected, with 3608 vertices and 22470 edges at 0x2baa534ad090>
-Graph construction from surface took: 0.0 min 5.66355419159 s
+TriangleGraph generation took: 0.0 min 5.74636316299 s
+<Graph object, undirected, with 3608 vertices and 22470 edges at 0x2b8d8e179090>
+Graph construction from surface took: 0.0 min 5.75153398514 s
 
 Preparing for running modified Vector Voting...
 radius_hit = 9
@@ -14,7 +14,7 @@ g_max = 14.1371669412
 Maximal triangle area = 0.734539513584
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.00032901763916 s
+Preparation took: 0.0 min 0.000336885452271 s
 
 Running modified Vector Voting for all vertices...
 
@@ -24,13 +24,13 @@ Calling find_geodesic_neighbors
 Opened a pool with 6 processes
 Average number of geodesic neighbors for all vertices: 1478.37583149
 3608 surface patches
-First pass took: 2.0 min 48.4032640457 s
-Preparation took: 0.0 min 0.000669956207275 s
+First pass took: 2.0 min 38.1027901173 s
+Preparation took: 0.0 min 0.000691890716553 s
 
 Second pass: estimating principle curvatures and directions for surface patches using SSVV...
 3608 vertices to estimate curvature
-Second run of SSVV took: 0.0 min 11.5812938213 s
-Whole method took: 2.0 min 59.9873759747 s
+Second run of SSVV took: 0.0 min 10.8374919891 s
+Whole method took: 2.0 min 48.9430019855 s
 
 Evaluating SSVV...
 3608 "kappa_1" values
