@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='pycurv',
-    version='1.0.0',
+    version='2.0.0',
     author='Maria Kalemanov, Antonio Martinez-Sanchez',
     author_email='kalemanov@biochem.mpg.de',
     description='Reliable estimation of membrane curvature for cryo-electron '
