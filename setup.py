@@ -18,10 +18,10 @@ setup(
                       "matplotlib", "pathlib2", "vtk", "nibabel",
                       "pathos==0.2.2.1", "networkx==2.2"],
     classifiers=[
-        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Lesser General Public License v3 "
         "(LGPLv3)",
         "Operating System :: POSIX :: Linux",
     ],
-    python_requires='==2.7',
+    python_requires='==3',
 )
