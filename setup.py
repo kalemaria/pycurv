@@ -15,7 +15,7 @@ setup(
     url='https://github.com/kalemaria/pycurv',
     packages=find_packages(),
     install_requires=["numpy", "scipy", "scikit-image<0.15", "pandas", "pytest",
-                      "matplotlib", "pathlib2", "vtk", "nibabel",
+                      "matplotlib", "pathlib", "vtk", "nibabel",
                       "pathos==0.2.2.1", "networkx==2.2"],
     classifiers=[
         "Programming Language :: Python :: 3",

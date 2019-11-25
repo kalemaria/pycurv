@@ -1,6 +1,6 @@
-from pathlib2 import PurePath
-from .curvature_calculation import (new_workflow,
-                                   extract_curvatures_after_new_workflow)
+from pathlib import PurePath
+from .curvature_calculation import (
+    new_workflow, extract_curvatures_after_new_workflow)
 from pycurv import pycurv_io as io
 
 """

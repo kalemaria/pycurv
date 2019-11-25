@@ -2,7 +2,7 @@ import numpy as np
 import os
 from os.path import join
 import pandas as pd
-from pathlib2 import PurePath
+from pathlib import PurePath
 from itertools import cycle
 
 from pycurv import pexceptions

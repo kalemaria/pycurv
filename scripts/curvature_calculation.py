@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from scipy import ndimage
 import os
-from pathlib2 import Path
+from pathlib import Path
 
 from pycurv import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
