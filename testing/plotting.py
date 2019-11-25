@@ -6,7 +6,7 @@ from pathlib2 import PurePath
 from itertools import cycle
 
 from pycurv import pexceptions
-from errors_calculation import calculate_histogram_area
+from .errors_calculation import calculate_histogram_area
 
 import matplotlib.pyplot as plt
 plt.style.use('presentation')  # print(plt.style.available)
@@ -437,7 +437,7 @@ def plot_cylinder_kappa_1_diff_rh(n=0, x_range=None, num_bins=20):
 
 
 def plot_cylinder_curvature_errors_diff_rh(
-        methods=["RVV", "AVV", "SSVV"], curvature="kappa1", rhs=range(5, 10),
+        methods=["RVV", "AVV", "SSVV"], curvature="kappa1", rhs=list(range(5, 10)),
         x_range=None, y_range=(0, 1), num_bins=20,
         legend_loc="lower right", csv=None, voxel=False, *args, **kwargs):
     """
@@ -786,7 +786,7 @@ def plot_inverse_cylinder_t_1_and_kappa_2_errors(n=0):
 
 def plot_sphere_kappa_1_and_2_diff_rh(
         r=10, n=0, ico=0, voxel=False, methods=["RVV", "AVV", "SSVV"],
-        rhs=range(5, 10), x_range=None, y_range=None, num_bins=20,
+        rhs=list(range(5, 10)), x_range=None, y_range=None, num_bins=20,
         legend_loc='upper left'):
     """Plots estimated kappa_1 and kappa_2 values for a sphere surface
      by different methods (RVV, AVV and SSVV) using different radius_hit.
@@ -902,7 +902,7 @@ def plot_sphere_kappa_1_and_2_diff_rh(
 
 def plot_sphere_curvature_errors_diff_rh(
         r=10, methods=["AVV", "RVV", "SSVV"], curvature="both",
-        rhs=range(5, 10), n=0, ico=0, voxel=False, x_range=None, y_range=(0, 1),
+        rhs=list(range(5, 10)), n=0, ico=0, voxel=False, x_range=None, y_range=(0, 1),
         num_bins=20, legend_loc="lower right", csv=None, *args, **kwargs):
     """
     Plots estimated curvature errors histograms on a sphere surface
@@ -1454,7 +1454,7 @@ def plot_inverse_sphere_kappa_1_and_2_errors(n=0):
 
 def plot_torus_kappa_1_and_2_diff_rh(
         methods=["RVV", "AVV", "SSVV"],
-        rhs=range(5, 10), x_range=None, num_bins=20):
+        rhs=list(range(5, 10)), x_range=None, num_bins=20):
     """Plots estimated kappa_1 values for a torus surface
      by different methods (RVV, AVV and SSVV) using different radius_hit.
 
@@ -1512,7 +1512,7 @@ def plot_torus_kappa_1_and_2_diff_rh(
 
 
 def plot_torus_curvature_errors_diff_rh(
-        methods=["RVV", "AVV", "SSVV"], curvature="kappa1", rhs=range(5, 10),
+        methods=["RVV", "AVV", "SSVV"], curvature="kappa1", rhs=list(range(5, 10)),
         x_range=None, y_range=(0, 1), num_bins=20,
         legend_loc="lower right", csv=None, voxel=False, *args, **kwargs):
     """
@@ -2119,7 +2119,7 @@ def read_in_and_plot_peak_curvatures(x_range=None, y_range=None, num_bins=20,
                 csv = str(csv_p)
                 df = pd.read_csv(csv, sep=";", index_col=0)
                 row = [segmentation, method, radius_hit]
-                for key in df.keys():
+                for key in list(df.keys()):
                     row.append(df[key].tolist())
                 super_df.loc[i] = row  # explicit index, in this case the same
                 # as implicit one, starting from 0
@@ -2335,7 +2335,7 @@ if __name__ == "__main__":
         for curvature in ["kappa1", "kappa2", "both"]:
             plot_sphere_curvature_errors_diff_rh(
                 voxel=True, methods=[method], curvature=curvature,
-                rhs=range(5, 11), x_range=(0, 0.5), csv=join(
+                rhs=list(range(5, 11)), x_range=(0, 0.5), csv=join(
                     FOLD, "sphere/voxel/files4plotting",
                     "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
                         method, curvature)), **kwargs)
@@ -2357,7 +2357,7 @@ if __name__ == "__main__":
         for curvature in ["kappa1", "kappa2", "mean_curvature"]:
             plot_torus_curvature_errors_diff_rh(
                 methods=[method], curvature=curvature,
-                rhs=range(4, 11), csv=join(
+                rhs=list(range(4, 11)), csv=join(
                     FOLD, "torus/noise0/files4plotting",
                     "torus_rr25_csr10_{}_RadiusHit4-10_{}_area.csv".format(
                         method, curvature)), **kwargs)
@@ -2365,7 +2365,7 @@ if __name__ == "__main__":
         for curvature in ["kappa1", "kappa2", "mean_curvature"]:
             plot_torus_curvature_errors_diff_rh(
                 methods=[method], curvature=curvature,
-                rhs=range(4, 10), csv=join(
+                rhs=list(range(4, 10)), csv=join(
                     FOLD, "torus/noise0/files4plotting",
                     "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
                         method, curvature)), **kwargs)
@@ -2385,7 +2385,7 @@ if __name__ == "__main__":
         for curvature in ["kappa1", "kappa2", "both", "mean_curvature"]:
             plot_sphere_curvature_errors_diff_rh(
                 methods=[method], curvature=curvature,
-                rhs=range(5, 11), csv=join(
+                rhs=list(range(5, 11)), csv=join(
                     FOLD, "sphere/noise0/files4plotting",
                     "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
                         method, curvature)), **kwargs)
@@ -2393,7 +2393,7 @@ if __name__ == "__main__":
         for curvature in ["kappa1", "kappa2", "both", "mean_curvature"]:
             plot_sphere_curvature_errors_diff_rh(
                 methods=[method], curvature=curvature,
-                rhs=range(5, 10), csv=join(
+                rhs=list(range(5, 10)), csv=join(
                     FOLD, "sphere/noise0/files4plotting",
                     "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
                         method, curvature)), **kwargs)
@@ -2413,14 +2413,14 @@ if __name__ == "__main__":
     kwargs = {}
     kwargs["fontsize"] = 23
     plot_cylinder_curvature_errors_diff_rh(
-        x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=range(2, 11),
+        x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=list(range(2, 11)),
         csv=join(FOLD, "cylinder/noise0/files4plotting",
                  "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv"))
     for method in ["AVV", "RVV", "SSVV"]:
         for curvature in ["kappa1", "kappa2", "mean_curvature"]:
             plot_cylinder_curvature_errors_diff_rh(
                 methods=[method], curvature=curvature,
-                rhs=range(3, 11), csv=join(
+                rhs=list(range(3, 11)), csv=join(
                     FOLD, "cylinder/noise0/files4plotting",
                     "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
                         method, curvature)), **kwargs)

@@ -6,9 +6,9 @@ from graph_tool import Graph
 from graph_tool.topology import shortest_distance
 from heapq import heappush, heappop
 
-from pycurv_io import TypesConverter
-import pexceptions
-from linalg import nice_acos, euclidean_distance
+from .pycurv_io import TypesConverter
+from . import pexceptions
+from .linalg import nice_acos, euclidean_distance
 
 """
 Contains an abstract class (SegmentationGraph) for representing a segmentation
@@ -137,7 +137,7 @@ class SegmentationGraph(object):
             One of the two parameters, mask or target_coordinates, has to be
             given.
         """
-        import ribosome_density as rd
+        from . import ribosome_density as rd
         # If a mask is given, find the set of voxels of ribosome centers mapped
         # on the membrane, 'target_voxels', and rescale them to units,
         # 'target_coordinates':
@@ -304,7 +304,7 @@ class SegmentationGraph(object):
         vertex_arrays = list()
         edge_arrays = list()
         # Vertex property arrays
-        for prop_key in self.graph.vp.keys():
+        for prop_key in list(self.graph.vp.keys()):
             data_type = self.graph.vp[prop_key].value_type()
             if (data_type != 'string' and data_type != 'python::object' and
                     prop_key != 'xyz'):
@@ -323,7 +323,7 @@ class SegmentationGraph(object):
                 array.SetNumberOfComponents(num_components)
                 vertex_arrays.append(array)
         # Edge property arrays
-        for prop_key in self.graph.ep.keys():
+        for prop_key in list(self.graph.ep.keys()):
             data_type = self.graph.ep[prop_key].value_type()
             if data_type != 'string' and data_type != 'python::object':
                 if verbose:

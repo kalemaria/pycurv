@@ -88,7 +88,7 @@ if __name__ == '__main__':
                 'noisy_cylinder_r10_h25.surface.vtk']
     subfolds = ['smooth_torus', 'smooth_cylinder', 'smooth_sphere',
                 'noisy_sphere', 'noisy_torus', 'noisy_cylinder']
-    ns = range(11, 16, 1)  # range(2, 21, 2)
+    ns = list(range(11, 16, 1))  # range(2, 21, 2)
     for surface, subfold in zip(surfaces, subfolds):
         surface_file = os.path.join(vtk_test_surfaces_fold, surface)
         fold = os.path.join(test_mindboggle_output_fold, subfold)

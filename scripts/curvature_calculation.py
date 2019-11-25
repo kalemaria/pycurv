@@ -337,7 +337,7 @@ def new_workflow(
             method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
     if only_normals is False:
-        for method in method_tg_surf_dict.keys():
+        for method in list(method_tg_surf_dict.keys()):
             # Saving the output (graph and surface object) for later
             # filtering or inspection in ParaView:
             (tg, surf) = method_tg_surf_dict[method]
@@ -614,7 +614,7 @@ def from_ply_workflow(
         page_curvature_formula=page_curvature_formula, area2=area2,
         poly_surf=surf, cores=cores, graph_file=temp_normals_graph_file)
 
-    for method in method_tg_surf_dict.keys():
+    for method in list(method_tg_surf_dict.keys()):
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (tg, surf) = method_tg_surf_dict[method]
@@ -741,7 +741,7 @@ def from_vtk_workflow(
                 poly_surf=surf, cores=cores, vertex_based=vertex_based)
             method_tg_surf_dict[method] = (sg_curv, surface_curv)
 
-    for method in method_tg_surf_dict.keys():
+    for method in list(method_tg_surf_dict.keys()):
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (sg_curv, surface_curv) = method_tg_surf_dict[method]
@@ -849,7 +849,7 @@ def from_nii_workflow(
             page_curvature_formula=page_curvature_formula, area2=area2,
             poly_surf=surf, cores=cores, graph_file=temp_normals_graph_file)
 
-        for method in method_tg_surf_dict.keys():
+        for method in list(method_tg_surf_dict.keys()):
             # Saving the output (TriangleGraph object) for later inspection in
             # ParaView:
             (tg, surf) = method_tg_surf_dict[method]

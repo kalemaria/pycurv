@@ -7,13 +7,13 @@ from graph_tool import GraphView, incident_edges_op
 from graph_tool.topology import (shortest_distance, label_largest_component,
                                  label_components)
 
-import graphs
-import pexceptions
-from pycurv_io import TypesConverter
-from curvature_definitions import *
-from surface import (add_point_normals_to_vtk_surface,
+from . import graphs
+from . import pexceptions
+from .pycurv_io import TypesConverter
+from .curvature_definitions import *
+from .surface import (add_point_normals_to_vtk_surface,
                      add_curvature_to_vtk_surface, rescale_surface)
-from linalg import (
+from .linalg import (
     perpendicular_vector, rotation_matrix, rotate_vector, signum, nice_acos,
     triangle_normal, triangle_center, triangle_area_cross_product)
 
@@ -743,7 +743,7 @@ class PointGraph(SurfaceGraph):
         # 1. Iterate over all cells, adding their points as vertices to the
         # graph and connecting them by edges.
         triangle_i = -1  # initialize the triangle index counter
-        for i in xrange(surface.GetNumberOfCells()):
+        for i in range(surface.GetNumberOfCells()):
             if verbose:
                 print('Cell number {}:'.format(i))
 
@@ -856,7 +856,7 @@ class PointGraph(SurfaceGraph):
             points = vtk.vtkPoints()
             vertex_arrays = list()  # should become point's properties
             # Vertex property arrays
-            for prop_key in self.graph.vp.keys():
+            for prop_key in list(self.graph.vp.keys()):
                 data_type = self.graph.vp[prop_key].value_type()
                 if (data_type != 'string' and data_type != 'python::object' and
                         prop_key != 'points'):  # and prop_key != 'xyz'
@@ -1004,7 +1004,7 @@ class PointGraph(SurfaceGraph):
 
         # Find the neighboring triangles of vertex v:
         neighboring_triangles_of_v = {}  # triangle_idx -> vertex_ids
-        for idx_v_i in neighbor_idx_to_dist.keys():
+        for idx_v_i in list(neighbor_idx_to_dist.keys()):
             # Get neighboring vertex v_i and its coordinates (as numpy array):
             vertex_v_i = vertex(idx_v_i)
             v_i = array(xyz[vertex_v_i])
@@ -1016,13 +1016,13 @@ class PointGraph(SurfaceGraph):
                 else:
                     neighboring_triangles_of_v[triangle_idx_of_v_i] = [idx_v_i]
         # Exclude neighboring triangles of vertex v with less than 3 vertices
-        for triangle_idx, vertex_ids in neighboring_triangles_of_v.items():
+        for triangle_idx, vertex_ids in list(neighboring_triangles_of_v.items()):
             if len(vertex_ids) < 3:
                 del neighboring_triangles_of_v[triangle_idx]
 
         # Let each of the neighboring triangles c_i to cast a vote on vertex v:
         # except for those with almost opposite normals
-        for idx_c_i, ids_v_i in neighboring_triangles_of_v.items():
+        for idx_c_i, ids_v_i in list(neighboring_triangles_of_v.items()):
             # Calculate the normal of triangle c_i, n_c_i:
             points_xyz = [array(xyz[vertex(idx_v_i)]) for idx_v_i in ids_v_i]
             ref_normal = array(normal[vertex(ids_v_i[0])])
@@ -1190,7 +1190,7 @@ class TriangleGraph(SurfaceGraph):
 
         # 2. Add each triangle cell as a vertex to the graph. Ignore the
         # non-triangle cells and cell with area equal to zero.
-        for cell_id in xrange(surface.GetNumberOfCells()):
+        for cell_id in range(surface.GetNumberOfCells()):
             # Get the cell i and check if it's a triangle:
             cell = surface.GetCell(cell_id)
             if not isinstance(cell, vtk.vtkTriangle):
@@ -1407,7 +1407,7 @@ class TriangleGraph(SurfaceGraph):
             points = vtk.vtkPoints()
             vertex_arrays = list()
             # Vertex property arrays
-            for prop_key in self.graph.vp.keys():
+            for prop_key in list(self.graph.vp.keys()):
                 data_type = self.graph.vp[prop_key].value_type()
                 if (data_type != 'string' and data_type != 'python::object' and
                         prop_key != 'points'):  # and prop_key != 'xyz'
@@ -1912,7 +1912,7 @@ class TriangleGraph(SurfaceGraph):
         V_v = np.zeros(shape=(3, 3))
 
         # Let each of the neighboring vertices to cast a vote on vertex v:
-        for idx_c_i in neighbor_idx_to_dist.keys():
+        for idx_c_i in list(neighbor_idx_to_dist.keys()):
             # Get neighboring vertex c_i and its coordinates (as numpy array):
             vertex_c_i = vertex(idx_c_i)
             c_i = xyz[vertex_c_i]

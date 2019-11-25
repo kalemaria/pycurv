@@ -2,7 +2,7 @@ import numpy as np
 from skimage.measure import label, regionprops
 from os.path import isfile
 
-import pycurv_io as io
+from . import pycurv_io as io
 
 """
 Contains a function for splitting a tomogram segmentation in connected regions
@@ -85,7 +85,7 @@ def split_segmentation(infile, lbl=1, close=True, close_cube_size=5,
             # 2D array with 3 columns: x, y, z and number of rows corresponding
             # to the number of voxels in the region
             region_coords = region.coords
-            for i in xrange(region_coords.shape[0]):  # iterate over the rows
+            for i in range(region_coords.shape[0]):  # iterate over the rows
                 region_ndarray[region_coords[i, 0],
                                region_coords[i, 1],
                                region_coords[i, 2]] = 1

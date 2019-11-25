@@ -1,7 +1,7 @@
 from pathlib2 import Path, PurePath
-from curvature_calculation import (new_workflow, calculate_PM_curvatures,
+from .curvature_calculation import (new_workflow, calculate_PM_curvatures,
                                    extract_curvatures_after_new_workflow)
-from distances_calculation import (distances_and_thicknesses_calculation,
+from .distances_calculation import (distances_and_thicknesses_calculation,
                                    extract_distances)
 
 """

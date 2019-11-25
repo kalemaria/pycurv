@@ -11,10 +11,10 @@ from pycurv import pycurv_io as io
 from pycurv import (
     TriangleGraph, PointGraph, normals_directions_and_curvature_estimation,
     nice_asin)
-from synthetic_surfaces import (
+from .synthetic_surfaces import (
     PlaneGenerator, SphereGenerator, CylinderGenerator, SaddleGenerator,
     add_gaussian_noise_to_surface)
-from errors_calculation import *
+from .errors_calculation import *
 
 """
 Scripts for testing of validity of curvature estimation methods using
@@ -258,14 +258,10 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
 
     # Computing errors of the initial (VTK) and estimated (VV) normals wrt
     # the true normal:
-    vtk_normal_errors = np.array(map(
-        lambda x: error_vector(true_normal, x), vtk_normals))
-    vtk_normal_angular_errors = np.array(map(
-        lambda x: angular_error_vector(true_normal, x), vtk_normals))
-    vv_normal_errors = np.array(map(
-        lambda x: error_vector(true_normal, x), vv_normals))
-    vv_normal_angular_errors = np.array(map(
-        lambda x: angular_error_vector(true_normal, x), vv_normals))
+    vtk_normal_errors = np.array([error_vector(true_normal, x) for x in vtk_normals])
+    vtk_normal_angular_errors = np.array([angular_error_vector(true_normal, x) for x in vtk_normals])
+    vv_normal_errors = np.array([error_vector(true_normal, x) for x in vv_normals])
+    vv_normal_angular_errors = np.array([angular_error_vector(true_normal, x) for x in vv_normals])
 
     # Writing the errors into csv files:
     df = pd.DataFrame()
@@ -468,7 +464,7 @@ def test_cylinder_directions_curvatures(
         true_kappa_1 = 1.0 / radius
         true_kappa_2 = 0.0
 
-    for method in method_sg_surf_dict.keys():
+    for method in list(method_sg_surf_dict.keys()):
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (sg, surf) = method_sg_surf_dict[method]
@@ -505,9 +501,8 @@ def test_cylinder_directions_curvatures(
         T_h = np.transpose(T_h)  # shape (<num_vertices>, 3)
 
         # Computing errors of the estimated T_h vectors wrt the true one:
-        T_h_errors = np.array(map(lambda x: error_vector(true_T_h, x), T_h))
-        T_h_angular_errors = np.array(map(
-            lambda x: angular_error_vector(true_T_h, x), T_h))
+        T_h_errors = np.array([error_vector(true_T_h, x) for x in T_h])
+        T_h_angular_errors = np.array([angular_error_vector(true_T_h, x) for x in T_h])
 
         # Getting estimated and VTK principal curvatures from the output graph:
         kappa_1 = sg.get_vertex_property_array("kappa_1")
@@ -516,36 +511,24 @@ def test_cylinder_directions_curvatures(
         vtk_kappa_2 = sg.get_vertex_property_array("min_curvature")
 
         # Calculating errors of the principal curvatures:
-        abs_kappa_1_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_kappa_1, x), kappa_1))
-        rel_kappa_1_errors = np.array(map(
-            lambda x: relative_error_scalar(true_kappa_1, x), kappa_1))
-        vtk_abs_kappa_1_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_kappa_1, x), vtk_kappa_1))
-        vtk_rel_kappa_1_errors = np.array(map(
-            lambda x: relative_error_scalar(true_kappa_1, x), vtk_kappa_1))
-        abs_kappa_2_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_kappa_2, x), kappa_2))
-        rel_kappa_2_errors = np.array(map(
-            lambda x: relative_error_scalar(true_kappa_2, x), kappa_2))
-        vtk_abs_kappa_2_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_kappa_2, x), vtk_kappa_2))
-        vtk_rel_kappa_2_errors = np.array(map(
-            lambda x: relative_error_scalar(true_kappa_2, x), vtk_kappa_2))
+        abs_kappa_1_errors = np.array([absolute_error_scalar(true_kappa_1, x) for x in kappa_1])
+        rel_kappa_1_errors = np.array([relative_error_scalar(true_kappa_1, x) for x in kappa_1])
+        vtk_abs_kappa_1_errors = np.array([absolute_error_scalar(true_kappa_1, x) for x in vtk_kappa_1])
+        vtk_rel_kappa_1_errors = np.array([relative_error_scalar(true_kappa_1, x) for x in vtk_kappa_1])
+        abs_kappa_2_errors = np.array([absolute_error_scalar(true_kappa_2, x) for x in kappa_2])
+        rel_kappa_2_errors = np.array([relative_error_scalar(true_kappa_2, x) for x in kappa_2])
+        vtk_abs_kappa_2_errors = np.array([absolute_error_scalar(true_kappa_2, x) for x in vtk_kappa_2])
+        vtk_rel_kappa_2_errors = np.array([relative_error_scalar(true_kappa_2, x) for x in vtk_kappa_2])
 
         # Calculating estimated and VTK mean curvatures and their errors:
         true_mean_curv = (true_kappa_1 + true_kappa_2) / 2.0
         mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(kappa_1, kappa_2)]
         vtk_mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(
             vtk_kappa_1, vtk_kappa_2)]
-        abs_mean_curv_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_mean_curv, x), mean_curv))
-        rel_mean_curv_errors = np.array(map(
-            lambda x: relative_error_scalar(true_mean_curv, x), mean_curv))
-        vtk_abs_mean_curv_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_mean_curv, x), vtk_mean_curv))
-        vtk_rel_mean_curv_errors = np.array(map(
-            lambda x: relative_error_scalar(true_mean_curv, x), vtk_mean_curv))
+        abs_mean_curv_errors = np.array([absolute_error_scalar(true_mean_curv, x) for x in mean_curv])
+        rel_mean_curv_errors = np.array([relative_error_scalar(true_mean_curv, x) for x in mean_curv])
+        vtk_abs_mean_curv_errors = np.array([absolute_error_scalar(true_mean_curv, x) for x in vtk_mean_curv])
+        vtk_rel_mean_curv_errors = np.array([relative_error_scalar(true_mean_curv, x) for x in vtk_mean_curv])
 
         # Writing all the curvature values and errors into a csv file:
         df = pd.DataFrame()
@@ -799,7 +782,7 @@ def test_sphere_curvatures(
     if inverse:
         true_curvature *= -1
 
-    for method in method_sg_surf_dict.keys():
+    for method in list(method_sg_surf_dict.keys()):
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (sg, surf) = method_sg_surf_dict[method]
@@ -824,35 +807,23 @@ def test_sphere_curvatures(
         vtk_kappa_2 = sg.get_vertex_property_array("min_curvature")
 
         # Calculating errors of the principal curvatures:
-        abs_kappa_1_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x), kappa_1))
-        abs_kappa_2_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x), kappa_2))
-        rel_kappa_1_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x), kappa_1))
-        rel_kappa_2_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x), kappa_2))
-        vtk_abs_kappa_1_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x), vtk_kappa_1))
-        vtk_abs_kappa_2_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x), vtk_kappa_2))
-        vtk_rel_kappa_1_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x), vtk_kappa_1))
-        vtk_rel_kappa_2_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x), vtk_kappa_2))
+        abs_kappa_1_errors = np.array([absolute_error_scalar(true_curvature, x) for x in kappa_1])
+        abs_kappa_2_errors = np.array([absolute_error_scalar(true_curvature, x) for x in kappa_2])
+        rel_kappa_1_errors = np.array([relative_error_scalar(true_curvature, x) for x in kappa_1])
+        rel_kappa_2_errors = np.array([relative_error_scalar(true_curvature, x) for x in kappa_2])
+        vtk_abs_kappa_1_errors = np.array([absolute_error_scalar(true_curvature, x) for x in vtk_kappa_1])
+        vtk_abs_kappa_2_errors = np.array([absolute_error_scalar(true_curvature, x) for x in vtk_kappa_2])
+        vtk_rel_kappa_1_errors = np.array([relative_error_scalar(true_curvature, x) for x in vtk_kappa_1])
+        vtk_rel_kappa_2_errors = np.array([relative_error_scalar(true_curvature, x) for x in vtk_kappa_2])
 
         # Calculating estimated and VTK mean curvatures and their errors:
         mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(kappa_1, kappa_2)]
         vtk_mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(
             vtk_kappa_1, vtk_kappa_2)]
-        abs_mean_curv_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x), mean_curv))
-        rel_mean_curv_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x), mean_curv))
-        vtk_abs_mean_curv_errors = np.array(map(
-            lambda x: absolute_error_scalar(true_curvature, x), vtk_mean_curv))
-        vtk_rel_mean_curv_errors = np.array(map(
-            lambda x: relative_error_scalar(true_curvature, x), vtk_mean_curv))
+        abs_mean_curv_errors = np.array([absolute_error_scalar(true_curvature, x) for x in mean_curv])
+        rel_mean_curv_errors = np.array([relative_error_scalar(true_curvature, x) for x in mean_curv])
+        vtk_abs_mean_curv_errors = np.array([absolute_error_scalar(true_curvature, x) for x in vtk_mean_curv])
+        vtk_rel_mean_curv_errors = np.array([relative_error_scalar(true_curvature, x) for x in vtk_mean_curv])
 
         # Writing all the curvature values and errors into a csv file:
         df = pd.DataFrame()
@@ -1087,7 +1058,7 @@ def test_torus_directions_curvatures(
     # Remove the normals graph file, so the next test will start anew
     remove(temp_normals_graph_file)
 
-    for method in method_sg_surf_dict.keys():
+    for method in list(method_sg_surf_dict.keys()):
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (sg, surf) = method_sg_surf_dict[method]
@@ -1110,14 +1081,14 @@ def test_torus_directions_curvatures(
         t_2 = np.transpose(sg.graph.vertex_properties["t_2"].get_2d_array(pos))
 
         # Computing errors of the estimated directions wrt the true ones:
-        t_1_errors = np.array(map(
-            lambda x, y: error_vector(x, y), true_t_1, t_1))
-        t_1_angular_errors = np.array(map(
-            lambda x, y: angular_error_vector(x, y), true_t_1, t_1))
-        t_2_errors = np.array(map(
-            lambda x, y: error_vector(x, y), true_t_2, t_2))
-        t_2_angular_errors = np.array(map(
-            lambda x, y: angular_error_vector(x, y), true_t_2, t_2))
+        t_1_errors = np.array(list(map(
+            lambda x, y: error_vector(x, y), true_t_1, t_1)))
+        t_1_angular_errors = np.array(list(map(
+            lambda x, y: angular_error_vector(x, y), true_t_1, t_1)))
+        t_2_errors = np.array(list(map(
+            lambda x, y: error_vector(x, y), true_t_2, t_2)))
+        t_2_angular_errors = np.array(list(map(
+            lambda x, y: angular_error_vector(x, y), true_t_2, t_2)))
 
         # Getting the estimated principal curvatures:
         kappa_1 = sg.get_vertex_property_array("kappa_1")
@@ -1126,44 +1097,44 @@ def test_torus_directions_curvatures(
         vtk_kappa_2 = sg.get_vertex_property_array("min_curvature")
 
         # Computing errors of the estimated curvatures wrt the true ones:
-        abs_kappa_1_errors = np.array(map(
-            lambda x, y: absolute_error_scalar(x, y), true_kappa_1, kappa_1))
-        rel_kappa_1_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y), true_kappa_1, kappa_1))
-        abs_kappa_2_errors = np.array(map(
-            lambda x, y: absolute_error_scalar(x, y), true_kappa_2, kappa_2))
-        rel_kappa_2_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y), true_kappa_2, kappa_2))
-        vtk_abs_kappa_1_errors = np.array(map(
+        abs_kappa_1_errors = np.array(list(map(
+            lambda x, y: absolute_error_scalar(x, y), true_kappa_1, kappa_1)))
+        rel_kappa_1_errors = np.array(list(map(
+            lambda x, y: relative_error_scalar(x, y), true_kappa_1, kappa_1)))
+        abs_kappa_2_errors = np.array(list(map(
+            lambda x, y: absolute_error_scalar(x, y), true_kappa_2, kappa_2)))
+        rel_kappa_2_errors = np.array(list(map(
+            lambda x, y: relative_error_scalar(x, y), true_kappa_2, kappa_2)))
+        vtk_abs_kappa_1_errors = np.array(list(map(
             lambda x, y: absolute_error_scalar(x, y),
-            true_kappa_1, vtk_kappa_1))
-        vtk_rel_kappa_1_errors = np.array(map(
+            true_kappa_1, vtk_kappa_1)))
+        vtk_rel_kappa_1_errors = np.array(list(map(
             lambda x, y: relative_error_scalar(x, y),
-            true_kappa_1, vtk_kappa_1))
-        vtk_abs_kappa_2_errors = np.array(map(
+            true_kappa_1, vtk_kappa_1)))
+        vtk_abs_kappa_2_errors = np.array(list(map(
             lambda x, y: absolute_error_scalar(x, y),
-            true_kappa_2, vtk_kappa_2))
-        vtk_rel_kappa_2_errors = np.array(map(
+            true_kappa_2, vtk_kappa_2)))
+        vtk_rel_kappa_2_errors = np.array(list(map(
             lambda x, y: relative_error_scalar(x, y),
-            true_kappa_2, vtk_kappa_2))
+            true_kappa_2, vtk_kappa_2)))
 
         # Calculating estimated and VTK mean curvatures and their errors:
         true_mean_curv = (true_kappa_1 + true_kappa_2) / 2.0
         mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(kappa_1, kappa_2)]
         vtk_mean_curv = [(k_1 + k_2) / 2 for k_1, k_2 in zip(
             vtk_kappa_1, vtk_kappa_2)]
-        abs_mean_curv_errors = np.array(map(
+        abs_mean_curv_errors = np.array(list(map(
             lambda x, y: absolute_error_scalar(x, y),
-            true_mean_curv, mean_curv))
-        rel_mean_curv_errors = np.array(map(
+            true_mean_curv, mean_curv)))
+        rel_mean_curv_errors = np.array(list(map(
             lambda x, y: relative_error_scalar(x, y),
-            true_mean_curv, mean_curv))
-        vtk_abs_mean_curv_errors = np.array(map(
+            true_mean_curv, mean_curv)))
+        vtk_abs_mean_curv_errors = np.array(list(map(
             lambda x, y: absolute_error_scalar(x, y),
-            true_mean_curv, vtk_mean_curv))
-        vtk_rel_mean_curv_errors = np.array(map(
+            true_mean_curv, vtk_mean_curv)))
+        vtk_rel_mean_curv_errors = np.array(list(map(
             lambda x, y: relative_error_scalar(x, y),
-            true_mean_curv, vtk_mean_curv))
+            true_mean_curv, vtk_mean_curv)))
 
         # Writing all the VV curvature values and errors into a csv file:
         df = pd.DataFrame()
@@ -1356,7 +1327,7 @@ def run_cylinder_with_creases(
     # Remove the normals graph file, so the next test will start anew
     remove(temp_normals_graph_file)
 
-    for method in method_sg_surf_dict.keys():
+    for method in list(method_sg_surf_dict.keys()):
         # Saving the output (TriangleGraph object) for later inspection in
         # ParaView:
         (sg, surf) = method_sg_surf_dict[method]

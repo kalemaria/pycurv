@@ -8,7 +8,7 @@ from functools import partial
 from os import remove
 from os.path import isfile
 
-from surface_graphs import TriangleGraph, PointGraph
+from .surface_graphs import TriangleGraph, PointGraph
 
 """
 Contains a function implementing the normal vector voting algorithm (Page et
@@ -246,7 +246,7 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         results_list = p.map(partial(first_pass,
                                      g_max=g_max, a_max=a_max, sigma=sigma,
                                      full_dist_map=full_dist_map),
-                             range(num_v))  # a list of vertex v indices
+                             list(range(num_v)))  # a list of vertex v indices
         p.close()
         p.clear()
 

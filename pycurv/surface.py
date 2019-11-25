@@ -1,12 +1,12 @@
 import vtk
 
-import pexceptions
-import pycurv_io as io
+from . import pexceptions
+from . import pycurv_io as io
 import numpy as np
 from scipy.ndimage import binary_dilation
 from scipy.ndimage.morphology import distance_transform_edt
 from scipy.ndimage.filters import gaussian_filter
-from linalg import dot_norm
+from .linalg import dot_norm
 import time
 
 """

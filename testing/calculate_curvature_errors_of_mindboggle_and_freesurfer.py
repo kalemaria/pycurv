@@ -5,9 +5,9 @@ from os import chdir
 import vtk
 import re
 
-from errors_calculation import relative_error_scalar
-from test_vector_voting import torus_curvatures_and_directions
-from synthetic_surfaces import SaddleGenerator
+from .errors_calculation import relative_error_scalar
+from .test_vector_voting import torus_curvatures_and_directions
+from .synthetic_surfaces import SaddleGenerator
 
 """
 A set of functions and a script for calculation of curvature errors of
@@ -201,8 +201,8 @@ def calculate_curvature_errors_torus(
     true_gauss_curv = true_kappa_1 * true_kappa_2
 
     # Calculating relative errors of the principal curvatures:
-    rel_mean_curv_errors = np.array(map(
-        lambda x, y: relative_error_scalar(x, y), true_mean_curv, mean_curv))
+    rel_mean_curv_errors = np.array(list(map(
+        lambda x, y: relative_error_scalar(x, y), true_mean_curv, mean_curv)))
     df = pd.DataFrame()
     df['true_mean_curv'] = true_mean_curv
     df['mean_curvatureRelErrors'] = rel_mean_curv_errors
@@ -211,13 +211,13 @@ def calculate_curvature_errors_torus(
             [relative_error_scalar(one_true_kappa_1, x) for x in kappa_1])
         df['kappa1RelErrors'] = rel_kappa_1_errors
     if kappa_2 is not None:
-        rel_kappa_2_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y), true_kappa_2, kappa_2))
+        rel_kappa_2_errors = np.array(list(map(
+            lambda x, y: relative_error_scalar(x, y), true_kappa_2, kappa_2)))
         df['true_kappa2'] = true_kappa_2
         df['kappa2RelErrors'] = rel_kappa_2_errors
     if gauss_curv is not None:
-        rel_gauss_curv_errors = np.array(map(
-            lambda x, y: relative_error_scalar(x, y), true_gauss_curv, gauss_curv))
+        rel_gauss_curv_errors = np.array(list(map(
+            lambda x, y: relative_error_scalar(x, y), true_gauss_curv, gauss_curv)))
         df['true_gauss_curv'] = true_gauss_curv
         df['gauss_curvatureRelErrors'] = rel_gauss_curv_errors
 
@@ -238,7 +238,7 @@ if __name__ == '__main__':
                 'smooth_sphere', 'noisy_sphere',
                 'smooth_cylinder', 'noisy_cylinder']
     m = 0
-    ns = range(1, 11, 1)
+    ns = list(range(1, 11, 1))
     for surface_base, subfold in zip(surface_bases, subfolds):
         fold = join(test_mindboggle_output_fold, subfold)
         chdir(fold)

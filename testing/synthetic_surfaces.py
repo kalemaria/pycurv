@@ -5,7 +5,7 @@ import numpy as np
 from pycurv import pycurv_io as io
 from pycurv import (pexceptions, surface_graphs, run_gen_surface,
                     reverse_sense_and_normals)
-from synthetic_volumes import SphereMask, CylinderMask, TorusMask, ConeMask
+from .synthetic_volumes import SphereMask, CylinderMask, TorusMask, ConeMask
 
 """
 A set of functions and classes for generating artificial surfaces of
@@ -112,7 +112,7 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
 
     # For each point, get its normal and randomly add noise from Gaussian
     # distribution with the wanted variance in the normal direction
-    for i in xrange(new_surface.GetNumberOfPoints()):
+    for i in range(new_surface.GetNumberOfPoints()):
         old_p = np.asarray(new_surface.GetPoint(i))
         normal_p = np.asarray(point_normals.GetTuple3(i))
         new_p = old_p + np.random.normal(scale=std) * normal_p
@@ -202,7 +202,7 @@ def are_triangle_vertices_on_smooth_sphere_surface(
     num_points_on_smooth_sphere_surface = 0
     # for each triangle vertex (point)
     # After subtracting center from all points, the new center becomes (0, 0, 0)
-    for i in xrange(surface.GetNumberOfPoints()):
+    for i in range(surface.GetNumberOfPoints()):
         point = np.asarray(surface.GetPoint(i))
         x = point[0] - center[0]
         y = point[1] - center[1]

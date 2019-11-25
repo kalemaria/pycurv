@@ -2,7 +2,7 @@ import numpy as np
 import math
 import vtk
 
-from surface_graphs import TriangleGraph
+from .surface_graphs import TriangleGraph
 
 """
 Set of functions for intermembrane distances calculation.

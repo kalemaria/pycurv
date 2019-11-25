@@ -1,7 +1,7 @@
 import time
 import sys
 
-from curvature_calculation import (
+from .curvature_calculation import (
     new_workflow, extract_curvatures_after_new_workflow)
 
 """

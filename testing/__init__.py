@@ -12,13 +12,13 @@ neighborhood parameter
 - unit testing of some linear algebra functions
 """
 
-from synthetic_volumes import *
-from synthetic_surfaces import *
-from errors_calculation import *
-from calculate_curvature_errors_of_mindboggle_and_freesurfer import *
-from test_vector_voting import *
-from plotting import *
-from visualization import *
-from test_distances_calculation import *
-from test_histogram_area_calculation import *
-from test_linalg import *
+from .synthetic_volumes import *
+from .synthetic_surfaces import *
+from .errors_calculation import *
+from .calculate_curvature_errors_of_mindboggle_and_freesurfer import *
+from .test_vector_voting import *
+from .plotting import *
+from .visualization import *
+from .test_distances_calculation import *
+from .test_histogram_area_calculation import *
+from .test_linalg import *

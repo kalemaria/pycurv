@@ -4,7 +4,7 @@ import vtk
 from pyto.io.image_io import ImageIO
 import nibabel as nib
 
-import pexceptions
+from . import pexceptions
 
 """
 Set of functions and a class (TypesConverter) for reading and writing different
@@ -468,7 +468,7 @@ def poly_array_to_volume(poly, array_name, scale, size, logfilename=None,
     voxel_to_values = {}
 
     # For each cell:
-    for cell_id in xrange(poly.GetNumberOfCells()):
+    for cell_id in range(poly.GetNumberOfCells()):
         # Get the cell i and check if it's a triangle:
         cell = poly.GetCell(cell_id)
         if isinstance(cell, vtk.vtkTriangle):

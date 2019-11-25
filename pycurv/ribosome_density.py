@@ -3,9 +3,9 @@ import numpy as np
 from scipy import spatial
 from datetime import datetime
 
-import graphs
-import pycurv_io as io
-import pexceptions
+from . import graphs
+from . import pycurv_io as io
+from . import pexceptions
 
 """
 Set of functions and a class (VoxelGraph) for calculating ribosome density on
@@ -57,7 +57,7 @@ def get_foreground_voxels_from_mask(mask):
     if isinstance(mask, np.ndarray) and (len(mask.shape) == 3):
         indices = mask.nonzero()
         voxels_num = indices[0].size
-        for i in xrange(voxels_num):
+        for i in range(voxels_num):
             voxel_i = (indices[0][i], indices[1][i], indices[2][i])
             voxels.append(voxel_i)
     else:
@@ -240,7 +240,7 @@ def particles_xyz_to_np_array(motl_em_file, scaling_factor=1):
     """
     motl = io.load_tomo(motl_em_file)
     particles_xyz = []
-    for col in xrange(motl.shape[1]):
+    for col in range(motl.shape[1]):
         x = scaling_factor * motl[7, col, 0]
         y = scaling_factor * motl[8, col, 0]
         z = scaling_factor * motl[9, col, 0]
@@ -467,7 +467,7 @@ class VoxelGraph(graphs.SegmentationGraph):
                                               neighbor_voxel[1],
                                               neighbor_voxel[2],
                                               self.graph.ep.distance[ed]))
-            except Exception, exc:
+            except Exception as exc:
                 print("An exception happened: " + str(exc))
                 print('There were {} remaining membrane voxels.'.format(
                     len(remaining_mem_voxels)))
@@ -507,9 +507,9 @@ class VoxelGraph(graphs.SegmentationGraph):
                             # do not add the voxel itself and voxels outside the
                             # border
                             if ((i, j, k) != (x, y, z) and
-                                    i in xrange(0, x_size) and
-                                    j in xrange(0, y_size) and
-                                    k in xrange(0, z_size)):
+                                    i in range(0, x_size) and
+                                    j in range(0, y_size) and
+                                    k in range(0, z_size)):
                                 # add only foreground voxels to the neighbors
                                 # list
                                 if mask[i, j, k] == 1:
