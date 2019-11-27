@@ -109,20 +109,54 @@ Please note that PyCurv depends on one not publicly available Python package,
 pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
 has to be requested from its author, Dr. Vladan Lučić.
 
-The code can currently be run using Python 2.7 versions, but since Python 2 will
-not longer be supported from the beginning of 2020 and pyto package has been
-recently made compatible with Python 3, we plan to upgrade our code to Python 3
-soon. Installation instructions are already provided for Python 3, with Python 2
-in parentheses.
+## Installation instructions with anaconda
+The following instruction were tested on SUSE Linux Enterprise Server 12, but
+they should work on other Linux-based systems.
 
-## Installation instructions for Ubuntu 18.04
+1. Install anaconda with [graph-tool](https://graph-tool.skewed.de/) (Peixoto,
+   2014) and its dependencies:
+   ```
+   targetFold=<your_anaconda_path>
+   wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
+   bash Anaconda3-2019.10-Linux-x86_64.sh -b -p $targetFold
+
+   conda install conda=4.6.14
+
+   conda config --set allow_conda_downgrades true
+   conda config --add channels pkgw-forge
+   conda config --add channels ostrokach-forge
+
+   conda install -c pkgw-forge gtk3
+   conda install -c conda-forge pygobject
+   conda install -c conda-forge matplotlib
+   conda install -c ostrokach-forge graph-tool
+
+   export PATH=$targetFold/bin:$PATH
+   ```
+
+   `which python` should output your anaconda `targetFold`.
+   You should be able to import `graph_tool` from `python` or `ipython` console:
+   ```python
+   from graph_tool.all import *
+   ```
+
+2. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
+   DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
+   (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
+   https://docs.python.org/3.6/tutorial/modules.html)
+
+3. Install dependencies from the `setup.py` provided in this folder:
+   ```
+   sudo python setup.py install
+   ```
+   You should be able to import `pycurv`.
+
+## Installation instructions without anaconda
 The following instruction were tested on Ubuntu 18.04, but the process should be
-equivalent for other version and other Linux-based systems. Ubuntu can be
-installed for free, also in a virtual machine on other operating systems
-(Windows or Mac).
+equivalent for other Ubuntu versions. Ubuntu can be installed for free, also in
+a virtual machine on other operating systems (Windows or Mac).
 
-1. Ubuntu 18.04 has `python3` version 3.6.7 preinstalled. (Install `python2`:
-   `sudo apt install python-minimal`)
+1. Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
 
 2. Install [graph-tool](https://graph-tool.skewed.de/) (Peixoto, 2014)
    for Ubuntu according to [instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu),
@@ -130,7 +164,8 @@ installed for free, also in a virtual machine on other operating systems
    ```
    apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
    ```
-   The graph-tool package does not work with anaconda python.
+   Unfortunately, this installation of the graph-tool package does not work with
+   anaconda python.
 
 3. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
    DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
@@ -151,34 +186,23 @@ installed for free, also in a virtual machine on other operating systems
    ```python
    from graph_tool.all import *
    ```
-   (`python2`: install [`virtualenv`](https://docs.python-guide.org/dev/virtualenvs/#virtualenvironments-ref)
-   in `~/workspace/venv2`:
-   ```
-   virtualenv -p /usr/bin/python2.7 --system-site-packages venv2
-   ```
-   and activate:
-   ```
-   source venv2/bin/activate
-   ```
-   install `ipython(2)`:
-   `sudo apt install ipython`)
 
 5. Install dependencies from the `setup.py` provided in this folder:
    ```
-   sudo pythonX setup.py install
+   sudo python setup.py install
    ```
-   X=2 or 3 for `python2` or `python3` and try to import `pycurv`.
+   You should be able to import `pycurv`.
 
-6. To re-create the environment on another computer or after
-   re-installation, freeze the current state of the environment packages:
-   ```
-   pip freeze > requirementsX.txt
-   ```
-   X=2 or 3 for `python2` or `python3`.
-   To re-create the environment:
-   ```
-   pip install -r requirementsX.txt
-   ```
+## Recreating the same environment
+To re-create the environment on another computer or after
+re-installation, freeze the current state of the environment packages:
+```
+pip freeze > requirements_pycurv.txt
+```
+To re-create the environment:
+```
+pip install -r requirements_pycurv.txt
+```
 
 
 # Running PyCurv
@@ -193,6 +217,8 @@ To run a specific test, for example `test_sphere_curvatures`, run:
 ```
 pytest -q test_vector_voting.py::test_sphere_curvatures
 ```
+If it does not work, try to replace `pytest -q` by `python -m pytest`.
+
 A folder `test_vector_voting_output` containing the test results will be created
 inside the current directory.
 
