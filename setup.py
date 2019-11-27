@@ -14,9 +14,9 @@ setup(
     long_description_content_type="text/markdown",
     url='https://github.com/kalemaria/pycurv',
     packages=find_packages(),
-    install_requires=["numpy", "scipy", "scikit-image<0.15", "pandas", "pytest",
+    install_requires=["numpy", "scipy", "scikit-image", "pandas", "pytest",
                       "matplotlib", "pathlib", "vtk", "nibabel",
-                      "pathos==0.2.2.1", "networkx==2.2"],
+                      "pathos", "networkx", "future"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Lesser General Public License v3 "
