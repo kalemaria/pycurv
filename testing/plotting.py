@@ -759,7 +759,7 @@ def plot_inverse_cylinder_t_1_and_kappa_2_errors(n=0):
         line_styles=['-', '-'], markers=['^', 'v'],
         colors=['b', 'c'],
         title="Inverse cylinder ({}% noise)".format(n),
-        x_label="t_1\ error",
+        x_label="t_1 error",
         y_label="Cumulative relative frequency",
         outfile="{}{}_noise{}.RVV_SSVV_rh8.t_1_errors.png".format(
             plot_fold, basename, n),

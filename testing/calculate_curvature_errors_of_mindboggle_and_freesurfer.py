@@ -318,7 +318,7 @@ if __name__ == '__main__':
                 25, 10, curvatures_csv_file, errors_csv_file)
         elif 'sphere' in surface_base:
             # get the radius from surface_base with pattern matching
-            m = re.search('(?<=_r)\d+', surface_base)
+            m = re.search(r'(?<=_r)\d+', surface_base)
             r = int(m.group(0))
             calculate_curvature_errors_sphere(
                 r, curvatures_csv_file, errors_csv_file)
