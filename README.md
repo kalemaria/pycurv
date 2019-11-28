@@ -120,9 +120,12 @@ they should work on other Linux-based systems.
    wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
    bash Anaconda3-2019.10-Linux-x86_64.sh -b -p $targetFold
 
-   conda install conda=4.6.14
+   export PATH=$targetFold/bin:$PATH
 
    conda config --set allow_conda_downgrades true
+
+   conda install conda=4.6.14
+
    conda config --add channels pkgw-forge
    conda config --add channels ostrokach-forge
 
@@ -130,8 +133,6 @@ they should work on other Linux-based systems.
    conda install -c conda-forge pygobject
    conda install -c conda-forge matplotlib
    conda install -c ostrokach-forge graph-tool
-
-   export PATH=$targetFold/bin:$PATH
    ```
 
    `which python` should output your anaconda `targetFold`.
@@ -147,7 +148,7 @@ they should work on other Linux-based systems.
 
 3. Install dependencies from the `setup.py` provided in this folder:
    ```
-   sudo python setup.py install
+   python setup.py install
    ```
    You should be able to import `pycurv`.
 
