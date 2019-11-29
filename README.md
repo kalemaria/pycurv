@@ -160,7 +160,8 @@ they should work on other Linux-based systems.
    cd [pathToInstallation]/pycurv
    python setup.py install
    ```
-   You should be able to import `pycurv` from a `python` or `ipython` shell.
+   You should be able to import `pycurv`, `pycurv_testing` and `pycurv_scripts`
+   from a `python` or `ipython` shell.
 
 ## Installation instructions without anaconda
 The following instruction were tested on Ubuntu 18.04, but the process should be
@@ -211,7 +212,8 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
    cd [pathToInstallation]/pycurv
    python setup.py install
    ```
-   You should be able to import `pycurv` from a `python` or `ipython` shell.
+   You should be able to import `pycurv`, `pycurv_testing` and `pycurv_scripts`
+   from a `python` or `ipython` shell.
 
 6. To re-create the environment on another computer or after
    re-installation, freeze the current state of the environment packages:
