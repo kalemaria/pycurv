@@ -12,4 +12,4 @@ dconf
 TCB_*
 t74_vesicle3*
 *~
-testing/test_distances_calculation_output/*
+pycurv_testing/test_distances_calculation_output/*
