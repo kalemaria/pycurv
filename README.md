@@ -147,15 +147,17 @@ they should work on other Linux-based systems.
    (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
    https://docs.python.org/3.6/tutorial/modules.html)
 
-3. To download the PyCurv package, change to your destination folder and run
-   from a bash shell:
+3. To download the PyCurv package, run from a bash shell:
    ```
+   cd [pathToInstallation]  # your destination folder
    git clone https://github.com/kalemaria/pycurv.git
    ```
+   The folder `pycurv` should be created, containing the modules and folders
+   listed here.
 
 4. Install dependencies from the `setup.py`:
    ```
-   cd pycurv
+   cd [pathToInstallation]/pycurv
    python setup.py install
    ```
    You should be able to import `pycurv` from a `python` or `ipython` shell.
@@ -196,18 +198,20 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
    from graph_tool.all import *
    ```
 
-4. To download the PyCurv package, change to your destination folder and run
-   from a bash shell:
+4. To download the PyCurv package, run from a bash shell:
    ```
+   cd [pathToInstallation]  # your destination folder
    git clone https://github.com/kalemaria/pycurv.git
    ```
+   The folder `pycurv` should be created, containing the modules and folders
+   listed here.
 
-5. Install dependencies from the `setup.py` provided in this folder:
+5. Install dependencies from the `setup.py`:
    ```
-   cd pycurv
+   cd [pathToInstallation]/pycurv
    python setup.py install
    ```
-   You should be able to import `pycurv`.
+   You should be able to import `pycurv` from a `python` or `ipython` shell.
 
 6. To re-create the environment on another computer or after
    re-installation, freeze the current state of the environment packages:
@@ -224,13 +228,13 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
 
 ## Running the tests
 To run the integration tests of the curvature workflow on synthetic surfaces,
-execute from a bash shell from the `pycurv_testing` folder:
+execute from a bash shell:
 ```
-pytest -q test_vector_voting.py
+pytest -q [pathToInstallation]/pycurv/pycurv_testing/test_vector_voting.py
 ```
 To run a specific test, for example `test_sphere_curvatures`, run:
 ```
-pytest -q test_vector_voting.py::test_sphere_curvatures
+pytest -q [pathToInstallation]/pycurv/pycurv_testing/test_vector_voting.py::test_sphere_curvatures
 ```
 If it does not work, try to replace `pytest -q` by `python -m pytest`.
 
@@ -247,9 +251,9 @@ In the same manner, you can run:
 
 ## Running the experimental data sets
 To run the curvature estimation workflow on the vesicle and ER segmentation in
-the `experimental_data_sets` folder, just run in a terminal from the
-`pycurv_scripts` folder:
+the `experimental_data_sets` folder, just run in a bash shell:
 ```
+cd [pathToInstallation]/pycurv/pycurv_scripts
 python curvature_calculation.py
 ```
 The output will be generated in the respective subfolders of the input,
