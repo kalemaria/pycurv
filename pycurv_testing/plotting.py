@@ -9,7 +9,7 @@ from pycurv import pexceptions
 from .errors_calculation import calculate_histogram_area
 
 import matplotlib.pyplot as plt
-plt.style.use('presentation')  # print(plt.style.available)
+# plt.style.use('presentation')  # print(plt.style.available)
 
 from matplotlib import rcParams
 rcParams['mathtext.default'] = 'regular'
