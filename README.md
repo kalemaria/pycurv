@@ -51,7 +51,7 @@ for the following analyses:
 - Calculation of ribosome density on ER and vesicle membranes using a mask with
   ribosome coordinates on the membranes and the membrane mask.
 
-## `scripts` package
+## `pycurv_scripts` package
 This package contains Python scripts applying the PyCurv package and
 combining different functions into the workflows described above, the main are:
 
@@ -69,7 +69,7 @@ Biology) and FreeSurfer (Pienaar et al. 2008, International Journal of Imaging
 Systems and Technology) curvature estimation functions and extracting the values
 to CSV files.
 
-## `testing` package
+## `pycurv_testing` package
 This package was used for testing our and external curvature estimation
 algorithms from VTK (Schroeder et al., 2006, Kitware), FreeSurfer and
 Mindboggle. It contains:
@@ -224,7 +224,7 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
 
 ## Running the tests
 To run the integration tests of the curvature workflow on synthetic surfaces,
-execute from a bash shell from the `testing` folder:
+execute from a bash shell from the `pycurv_testing` folder:
 ```
 pytest -q test_vector_voting.py
 ```
@@ -247,8 +247,8 @@ In the same manner, you can run:
 
 ## Running the experimental data sets
 To run the curvature estimation workflow on the vesicle and ER segmentation in
-the `experimental_data_sets` folder, just run in a terminal from the `scripts`
-folder:
+the `experimental_data_sets` folder, just run in a terminal from the
+`pycurv_scripts` folder:
 ```
 python curvature_calculation.py
 ```

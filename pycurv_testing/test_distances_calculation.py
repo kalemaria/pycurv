@@ -4,7 +4,7 @@ import os
 import shutil
 
 from pycurv import pycurv_io as io
-from scripts import distances_and_thicknesses_calculation
+from pycurv_scripts import distances_and_thicknesses_calculation
 
 """
 A function generating a synthetic segmentation and an integration test for
