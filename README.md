@@ -104,6 +104,7 @@ calculated by VTK):
 - embryo: AVV
 - brain: AVV, Mindboggle, FreeSurfer
 
+
 # Installing PyCurv
 Please note that PyCurv depends on one not publicly available Python package,
 pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
@@ -136,7 +137,7 @@ they should work on other Linux-based systems.
    ```
 
    `which python` should output your anaconda `targetFold`.
-   You should be able to import `graph_tool` from `python` or `ipython` console:
+   You should be able to import `graph_tool` from a `python` or `ipython` shell:
    ```python
    from graph_tool.all import *
    ```
@@ -146,20 +147,26 @@ they should work on other Linux-based systems.
    (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
    https://docs.python.org/3.6/tutorial/modules.html)
 
-3. Install dependencies from the `setup.py` provided in this folder:
+3. To download the PyCurv package, change to your destination folder and run
+   from a bash shell:
    ```
+   git clone https://github.com/kalemaria/pycurv.git
+   ```
+
+4. Install dependencies from the `setup.py`:
+   ```
+   cd pycurv
    python setup.py install
    ```
-   You should be able to import `pycurv`.
+   You should be able to import `pycurv` from a `python` or `ipython` shell.
 
 ## Installation instructions without anaconda
 The following instruction were tested on Ubuntu 18.04, but the process should be
 equivalent for other Ubuntu versions. Ubuntu can be installed for free, also in
 a virtual machine on other operating systems (Windows or Mac).
+Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
 
-1. Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
-
-2. Install [graph-tool](https://graph-tool.skewed.de/) (Peixoto, 2014)
+1. Install [graph-tool](https://graph-tool.skewed.de/) (Peixoto, 2014)
    for Ubuntu according to [instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu),
    `DISTRIBUTION=bionic`, but before running `apt-get update` add the public key:
    ```
@@ -168,14 +175,15 @@ a virtual machine on other operating systems (Windows or Mac).
    Unfortunately, this installation of the graph-tool package does not work with
    anaconda python.
 
-3. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
+2. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
    DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
    (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
    https://docs.python.org/3.6/tutorial/modules.html)
 
-4. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/)
-   (includes setuptools), [venv](https://docs.python.org/3/library/venv.html) (from
-   Python version 3.3 on, recommended from version 3.5 on) in e.g. ~/workspace:
+3. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/)
+   (includes setuptools), [venv](https://docs.python.org/3/library/venv.html)
+   (from Python version 3.3 on, recommended from version 3.5 on) in e.g.
+   `~/workspace`:
    ```
    python3 -m venv ./venv –system-site-packages
    ```
@@ -188,29 +196,35 @@ a virtual machine on other operating systems (Windows or Mac).
    from graph_tool.all import *
    ```
 
+4. To download the PyCurv package, change to your destination folder and run
+   from a bash shell:
+   ```
+   git clone https://github.com/kalemaria/pycurv.git
+   ```
+
 5. Install dependencies from the `setup.py` provided in this folder:
    ```
-   sudo python setup.py install
+   cd pycurv
+   python setup.py install
    ```
    You should be able to import `pycurv`.
 
-## Recreating the same environment
-To re-create the environment on another computer or after
-re-installation, freeze the current state of the environment packages:
-```
-pip freeze > requirements_pycurv.txt
-```
-To re-create the environment:
-```
-pip install -r requirements_pycurv.txt
-```
+6. To re-create the environment on another computer or after
+   re-installation, freeze the current state of the environment packages:
+   ```
+   pip freeze > requirements_pycurv.txt
+   ```
+   To re-create the environment:
+   ```
+   pip install -r requirements_pycurv.txt
+   ```
 
 
 # Running PyCurv
 
 ## Running the tests
 To run the integration tests of the curvature workflow on synthetic surfaces,
-execute from a terminal:
+execute from a bash shell from the `testing` folder:
 ```
 pytest -q test_vector_voting.py
 ```
