@@ -4,17 +4,17 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 4.39171600342 s
-<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2b8de3199090>
-Graph construction from surface took: 0.0 min 4.39555001259 s
+TriangleGraph generation took: 0.0 min 6.970754384994507 s
+<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2baaaf3fb850>
+Graph construction from surface took: 0.0 min 6.973608016967773 s
 
 Preparing for running modified Vector Voting...
 radius_hit = 5
-g_max = 7.85398163397
-Maximal triangle area = 0.648083801724
+g_max = 7.853981633974483
+Maximal triangle area = 0.6480838017244903
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.000297784805298 s
+Preparation took: 0.0 min 0.0003445148468017578 s
 
 Running modified Vector Voting for all vertices...
 
@@ -22,17 +22,17 @@ First pass: estimating normals...
 number of vertices: 3264
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Average number of geodesic neighbors for all vertices: 343.131127451
+Average number of geodesic neighbors for all vertices: 336.0526960784314
 3264 surface patches
-First pass took: 0.0 min 41.3326101303 s
-Preparation took: 0.0 min 0.00053596496582 s
+First pass took: 0.0 min 54.154168128967285 s
+Preparation took: 0.0 min 0.0005428791046142578 s
 
 Second pass: estimating principle curvatures and directions for surface patches using RVV...
 3264 vertices to estimate curvature
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Second run of VV took: 0.0 min 53.3275930882 s
-Whole method took: 1.0 min 34.6638679504 s
+Second run of VV took: 1.0 min 12.802269697189331 s
+Whole method took: 2.0 min 6.960680723190308 s
 Finding vertices at the graph border...
 136 vertices are at the graph border.
 For each graph border vertex, finding vertices within geodesic distance 5 to it...
@@ -40,18 +40,16 @@ For each graph border vertex, finding vertices within geodesic distance 5 to it.
 Filtering out those vertices and their edges...
 
 Excluded triangles that are 5 to surface borders.
-<Graph object, undirected, with 1768 vertices and 10092 edges, edges filtered by (<PropertyMap object with key type 'Edge' and value type 'bool', for Graph 0x2b8de3199090, at 0x2b8ddb773c10, with values:
-[1 1 1 ..., 1 1 1]>, False), vertices filtered by (<PropertyMap object with key type 'Vertex' and value type 'bool', for Graph 0x2b8de3199090, at 0x2b8ddb773490, with values:
-[1 1 1 ..., 1 1 1]>, False) at 0x2b8de3199090>
+<Graph object, undirected, with 1768 vertices and 10092 edges, edges filtered by (<EdgePropertyMap object with value type 'bool', for Graph 0x2baaaf3fb850, at 0x2baaaf371ad0>, False), vertices filtered by (<VertexPropertyMap object with value type 'bool', for Graph 0x2baaaf3fb850, at 0x2baaaf3fb950>, False) at 0x2baaaf3fb850>
 
 Evaluating RVV...
 1768 "kappa_1" values
-min = 0.0926033212504, max = 0.107087615696, mean = 0.0995519789606
+min = 0.09275945154799561, max = 0.10711895389096823, mean = 0.09940321015663155
 1768 "kappa_2" values
-min = -0.00205911587197, max = 0.00654420464818, mean = 0.00191651754687
+min = -0.002063965391585189, max = 0.006614382825803684, mean = 0.0019315897902936643
 1768 "max_curvature" values
-min = 0.0594121701328, max = 0.172598315031, mean = 0.112783912805
+min = 0.059412170132815696, max = 0.1725983150312532, mean = 0.11278391280496161
 1768 "min_curvature" values
-min = -0.137787588269, max = 3.82564350569e-15, mean = -0.0243153433806
+min = -0.13778758826946266, max = 3.825643505687519e-15, mean = -0.024315343380643815
 Testing the minimal principal directions (t_2)...
 Testing the maximal principal curvature (kappa_1)...

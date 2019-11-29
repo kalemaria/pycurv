@@ -4,21 +4,21 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 7.73578095436 s
-<Graph object, undirected, with 4802 vertices and 28812 edges at 0x2b8df33a8190>
-Graph construction from surface took: 0.0 min 7.74060678482 s
+TriangleGraph generation took: 0.0 min 12.0753812789917 s
+<Graph object, undirected, with 4802 vertices and 28812 edges at 0x2baae87b0a90>
+Graph construction from surface took: 0.0 min 12.07918930053711 s
 4802 "true_kappa_1" values
-min = 0.1, max = 0.1, mean = 0.1
+min = 0.1, max = 0.1, mean = 0.09999999999999999
 4802 "true_kappa_2" values
-min = -0.0666820616639, max = 0.0286200821707, mean = -0.00916383637282
+min = -0.06668206166389394, max = 0.0286200821707445, mean = -0.009163836372818363
 
 Preparing for running modified Vector Voting...
 radius_hit = 6
-g_max = 9.42477796077
-Maximal triangle area = 2.87347190056
+g_max = 9.42477796076938
+Maximal triangle area = 2.8734719005649003
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.000200986862183 s
+Preparation took: 0.0 min 0.0003681182861328125 s
 
 Running modified Vector Voting for all vertices...
 
@@ -26,25 +26,25 @@ First pass: estimating normals...
 number of vertices: 4802
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Average number of geodesic neighbors for all vertices: 135.020408163
+Average number of geodesic neighbors for all vertices: 124.6938775510204
 4802 surface patches
-First pass took: 0.0 min 52.4159400463 s
-Preparation took: 0.0 min 0.000563144683838 s
+First pass took: 0.0 min 34.258524656295776 s
+Preparation took: 0.0 min 0.0005221366882324219 s
 
 Second pass: estimating principle curvatures and directions for surface patches using SSVV...
 4802 vertices to estimate curvature
-Second run of SSVV took: 0.0 min 16.1718649864 s
-Whole method took: 1.0 min 8.59007906914 s
+Second run of SSVV took: 0.0 min 10.036291360855103 s
+Whole method took: 0.0 min 44.29764795303345 s
 
 Evaluating SSVV...
 4802 "kappa_1" values
-min = 0.0999890282789, max = 0.101781899842, mean = 0.100541725044
+min = 0.10000503100640423, max = 0.10178250780925471, mean = 0.10054359672828352
 4802 "kappa_2" values
-min = -0.0647663524566, max = 0.0272630408346, mean = -0.00862882426599
+min = -0.0647686248858912, max = 0.02726648884141148, mean = -0.00861039625185585
 4802 "max_curvature" values
-min = 0.0997740585536, max = 0.100422181151, mean = 0.100146650097
+min = 0.09977405855359396, max = 0.10042218115073019, mean = 0.10014665009707856
 4802 "min_curvature" values
-min = -0.0663135529871, max = 0.0286030555198, mean = -0.00907372958911
+min = -0.06631355298707575, max = 0.028603055519780624, mean = -0.00907372958910505
 Testing the maximal principal directions (t_1)...
 Testing the minimal principal directions (t_2)...
 Testing the maximal principal curvature (kappa_1)...

@@ -4,21 +4,21 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 8.33730506897 s
-<Graph object, undirected, with 4802 vertices and 28812 edges at 0x2b8df684cdd0>
-Graph construction from surface took: 0.0 min 8.34261107445 s
+TriangleGraph generation took: 0.0 min 10.742854595184326 s
+<Graph object, undirected, with 4802 vertices and 28812 edges at 0x2baaed7a9090>
+Graph construction from surface took: 0.0 min 10.746613264083862 s
 4802 "true_kappa_1" values
-min = 0.1, max = 0.1, mean = 0.1
+min = 0.1, max = 0.1, mean = 0.09999999999999999
 4802 "true_kappa_2" values
-min = -0.0666820616639, max = 0.0286200821707, mean = -0.00916383637282
+min = -0.06668206166389394, max = 0.0286200821707445, mean = -0.009163836372818363
 
 Preparing for running modified Vector Voting...
 radius_hit = 9
-g_max = 14.1371669412
-Maximal triangle area = 2.87347190056
+g_max = 14.137166941154069
+Maximal triangle area = 2.8734719005649003
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.000219821929932 s
+Preparation took: 0.0 min 0.002182483673095703 s
 
 Running modified Vector Voting for all vertices...
 
@@ -26,28 +26,28 @@ First pass: estimating normals...
 number of vertices: 4802
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Average number of geodesic neighbors for all vertices: 307.428571429
+Average number of geodesic neighbors for all vertices: 287.7755102040816
 4802 surface patches
-First pass took: 0.0 min 58.9978787899 s
-Maximal triangle area = 2.87347190056
-Preparation took: 0.0 min 0.000640869140625 s
+First pass took: 1.0 min 6.139458417892456 s
+Maximal triangle area = 2.8734719005649003
+Preparation took: 0.0 min 0.0005066394805908203 s
 
 Second pass: estimating principle curvatures and directions for surface patches using AVV...
 4802 vertices to estimate curvature
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Second run of VV took: 1.0 min 14.3892538548 s
-Whole method took: 2.0 min 13.3909511566 s
+Second run of VV took: 1.0 min 30.86681056022644 s
+Whole method took: 2.0 min 37.015198707580566 s
 
 Evaluating AVV...
 4802 "kappa_1" values
-min = 0.0948274127697, max = 0.10183381628, mean = 0.09842498623
+min = 0.09472073968505301, max = 0.10376262884704943, mean = 0.09911461716147067
 4802 "kappa_2" values
-min = -0.0613137528033, max = 0.0259160521628, mean = -0.00786499441648
+min = -0.06181325732936789, max = 0.0247020614997768, mean = -0.009113885890492496
 4802 "max_curvature" values
-min = 0.0997740585536, max = 0.100422181151, mean = 0.100146650097
+min = 0.09977405855359396, max = 0.10042218115073019, mean = 0.10014665009707856
 4802 "min_curvature" values
-min = -0.0663135529871, max = 0.0286030555198, mean = -0.00907372958911
+min = -0.06631355298707575, max = 0.028603055519780624, mean = -0.00907372958910505
 Testing the maximal principal directions (t_1)...
 Testing the minimal principal directions (t_2)...
 Testing the maximal principal curvature (kappa_1)...

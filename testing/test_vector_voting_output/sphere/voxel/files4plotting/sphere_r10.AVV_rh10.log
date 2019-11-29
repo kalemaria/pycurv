@@ -4,17 +4,17 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 2.55860209465 s
-<Graph object, undirected, with 1952 vertices and 11940 edges at 0x2b8df36d51d0>
-Graph construction from surface took: 0.0 min 2.61378192902 s
+TriangleGraph generation took: 0.0 min 4.029639959335327 s
+<Graph object, undirected, with 1952 vertices and 11940 edges at 0x2baaaf0473d0>
+Graph construction from surface took: 0.0 min 4.0323708057403564 s
 
 Preparing for running modified Vector Voting...
 radius_hit = 10
-g_max = 15.7079632679
-Maximal triangle area = 0.866025403784
+g_max = 15.707963267948966
+Maximal triangle area = 0.8660254037844386
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.00031590461731 s
+Preparation took: 0.0 min 0.0003552436828613281 s
 
 Running modified Vector Voting for all vertices...
 
@@ -22,27 +22,27 @@ First pass: estimating normals...
 number of vertices: 1952
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Average number of geodesic neighbors for all vertices: 1014.62704918
+Average number of geodesic neighbors for all vertices: 1006.0917008196722
 1952 surface patches
-First pass took: 1.0 min 1.6027328968 s
-Maximal triangle area = 0.866025403784
-Preparation took: 0.0 min 0.000520944595337 s
+First pass took: 1.0 min 24.41866135597229 s
+Maximal triangle area = 0.8660254037844386
+Preparation took: 0.0 min 0.0005691051483154297 s
 
 Second pass: estimating principle curvatures and directions for surface patches using AVV...
 1952 vertices to estimate curvature
 Calling find_geodesic_neighbors
 Opened a pool with 6 processes
-Second run of VV took: 1.0 min 18.9864740372 s
-Whole method took: 2.0 min 20.593075037 s
+Second run of VV took: 1.0 min 57.596731185913086 s
+Whole method took: 3.0 min 22.018821001052856 s
 
 Evaluating AVV...
 1952 "kappa_1" values
-min = 0.101460139775, max = 0.108611790623, mean = 0.105966130371
+min = 0.10134361128052284, max = 0.1086343151369009, mean = 0.105977662518453
 1952 "kappa_2" values
-min = 0.0975484112125, max = 0.106061462281, mean = 0.103170927043
+min = 0.09727255805006323, max = 0.10596941973238547, mean = 0.1031570385990515
 1952 "max_curvature" values
-min = 0.0, max = 1.0186786352, mean = 0.432394499829
+min = 0.0, max = 1.0186786352007382, mean = 0.4323944998294125
 1952 "min_curvature" values
-min = -0.696847251856, max = 0.151726803991, mean = -0.243611517293
+min = -0.6968472518562967, max = 0.15172680399145866, mean = -0.24361151729321426
 Testing the maximal principal curvature (kappa_1)...
 Testing the minimal principal curvature (kappa_2)...
