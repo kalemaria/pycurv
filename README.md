@@ -140,16 +140,27 @@ they should work on other Linux-based systems.
    export PATH=$targetFold/bin:$PATH
    ```
 
-   `which python` should output your anaconda `targetFold`.
+   From the same bash shell, `which python` should output
+   `<your_anaconda_path>/bin/python`.
+
    You should be able to import `graph_tool` from a `python` or `ipython` shell:
    ```python
    from graph_tool.all import *
    ```
 
+   In order that your anaconda python is found every time you open a new
+   bash shell, add it to PATH by adding the following line to your `~/.bashrc`:
+   ```
+   export PATH=<your_anaconda_path>/bin:$PATH
+   ```
+
+
 2. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
-   DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
-   (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
-   https://docs.python.org/3.6/tutorial/modules.html)
+   DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in your `~/.bashrc`:
+   ```
+   export PYTHONPATH=<your_path_to_pyto>:$PYTHONPATH
+   ```
+
 
 3. To download the PyCurv package, run from a bash shell:
    ```
