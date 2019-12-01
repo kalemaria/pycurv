@@ -127,13 +127,17 @@ they should work on other Linux-based systems.
 
    conda install conda=4.6.14
 
+   conda config --set allow_conda_downgrades true
    conda config --add channels pkgw-forge
+   conda config --add channels conda-forge
    conda config --add channels ostrokach-forge
 
    conda install -c pkgw-forge gtk3
    conda install -c conda-forge pygobject
    conda install -c conda-forge matplotlib
    conda install -c ostrokach-forge graph-tool
+
+   export PATH=$targetFold/bin:$PATH
    ```
 
    `which python` should output your anaconda `targetFold`.
