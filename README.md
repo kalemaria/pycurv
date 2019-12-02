@@ -247,11 +247,11 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
 To run the integration tests of the curvature workflow on synthetic surfaces,
 execute from a bash shell:
 ```
-pytest -q [pathToInstallation]/pycurv/pycurv_testing/test_vector_voting.py
+pytest -q --disable-pytest-warnings [pathToInstallation]/pycurv/pycurv_testing/test_vector_voting.py
 ```
 To run a specific test, for example `test_sphere_curvatures`, run:
 ```
-pytest -q [pathToInstallation]/pycurv/pycurv_testing/test_vector_voting.py::test_sphere_curvatures
+pytest -q --disable-pytest-warnings [pathToInstallation]/pycurv/pycurv_testing/test_vector_voting.py::test_sphere_curvatures
 ```
 If it does not work, try to replace `pytest -q` by `python -m pytest`.
 
