@@ -406,8 +406,12 @@ class SurfaceGraph(graphs.SegmentationGraph):
             - the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
               zeros
         """
-        num_neighbors, V_v = self.collect_normal_votes(
-            vertex_v_ind, g_max, a_max, sigma, full_dist_map)
+        if self.__class__.__name__ == 'TriangleGraph':
+            num_neighbors, V_v = self.collect_normal_votes(
+                vertex_v_ind, g_max, a_max, sigma, full_dist_map)
+        else:  # PointGraph
+            num_neighbors, V_v = self.collect_normal_votes(
+                vertex_v_ind, g_max, a_max, sigma)
         class_v, n_v, t_v = self.estimate_normal(
             vertex_v_ind, V_v, epsilon=0, eta=0)
         return num_neighbors, class_v, n_v, t_v
