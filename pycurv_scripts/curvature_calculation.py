@@ -674,7 +674,7 @@ def from_vtk_workflow(
     else:
         reverse_normals_str = ""
     vtk_filename = os.path.basename(vtk_file)
-    base_filename = os.path.splitext(vtk_filename)[0][:-15]+reverse_normals_str
+    base_filename = os.path.splitext(vtk_filename)[0] + reverse_normals_str
     log_file = '{}.{}_rh{}_epsilon{}_eta{}.log'.format(
         base_filename, methods[0], radius_hit, epsilon, eta)
     sys.stdout = open(log_file, 'a')
@@ -1041,11 +1041,15 @@ def main_brain():
 
     Returns:
         None
+
+    Note:
+        The surface normals will be reversed to point inside the brain surface,
+        according to our convention.
     """
     vtk_file = sys.argv[1]
     radius_hit = float(sys.argv[2])  # Mindboggle's default "radius disk"=2 mm
     if len(sys.argv) > 3:
-        radius_hit = float(sys.argv[3])
+        epsilon = float(sys.argv[3])
     else:
         epsilon = 0
     if len(sys.argv) > 4:
@@ -1053,8 +1057,8 @@ def main_brain():
     else:
         eta = 0
     from_vtk_workflow(
-        vtk_file, radius_hit, vertex_based=True, epsilon=epsilon, eta=eta,
-        scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=False)
+        vtk_file, radius_hit, vertex_based=False, epsilon=epsilon, eta=eta,
+        scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=True)
 
 
 def main_pore(isosurface=False, radius_hit=2):
