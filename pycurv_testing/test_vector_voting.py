@@ -169,8 +169,24 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 
 @pytest.mark.parametrize(
     "half_size,radius_hit,res,noise,rand_dir,vertex_based,cores", [
-        (20, 4, 20, 10, True, False, 6),  # noise in rand_dir direction
-        (20, 8, 20, 10, True, False, 6),  # noise in rand_dir direction
+        # noise in point normal direction:
+        (20, 4, 20, 5, False, False, 6),  # rh=4, noise=5%
+        (20, 8, 20, 5, False, False, 6),  # rh=8, noise=5%
+        (20, 4, 20, 10, False, False, 6),  # rh=4, noise=10%
+        (20, 8, 20, 10, False, False, 6),  # rh=8, noise=10%
+        (20, 4, 20, 20, False, False, 6),  # rh=4, noise=20%
+        (20, 8, 20, 20, False, False, 6),  # rh=8, noise=20%
+        (20, 4, 20, 30, False, False, 6),  # rh=4, noise=30%
+        (20, 8, 20, 30, False, False, 6),  # rh=8, noise=30%
+        # noise in random direction:
+        (20, 4, 20, 5, True, False, 6),  # rh=4, noise=5%
+        (20, 8, 20, 5, True, False, 6),  # rh=8, noise=5%
+        (20, 4, 20, 10, True, False, 6),  # rh=4, noise=10%
+        (20, 8, 20, 10, True, False, 6),  # rh=8, noise=10%
+        (20, 4, 20, 20, True, False, 6),  # rh=4, noise=20%
+        (20, 8, 20, 20, True, False, 6),  # rh=8, noise=20%
+        (20, 4, 20, 30, True, False, 6),  # rh=4, noise=30%
+        (20, 8, 20, 30, True, False, 6),  # rh=8, noise=30%
         # vertex-based:
         # pytest.param(20, 4, 20, 10, False, True, 6,
         #              marks=pytest.mark.xfail(reason="too high errors")),
