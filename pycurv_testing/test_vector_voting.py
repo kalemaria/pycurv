@@ -167,14 +167,17 @@ Tests for vector_voting.py, assuming that other used functions are correct.
 """
 
 
-@pytest.mark.parametrize("half_size,radius_hit,res,noise,vertex_based,cores", [
-    (20, 4, 20, 10, False, 6),
-    (20, 8, 20, 10, False, 6),
-    # pytest.param(20, 4, 20, 10, True, 6,
-    #              marks=pytest.mark.xfail(reason="too high errors")),  # vertex
-    # (20, 8, 20, 10, True, 6),  # vertex
-])
-def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
+@pytest.mark.parametrize(
+    "half_size,radius_hit,res,noise,rand_dir,vertex_based,cores", [
+        (20, 4, 20, 10, True, False, 6),  # noise in rand_dir direction
+        (20, 8, 20, 10, True, False, 6),  # noise in rand_dir direction
+        # vertex-based:
+        # pytest.param(20, 4, 20, 10, False, True, 6,
+        #              marks=pytest.mark.xfail(reason="too high errors")),
+        # (20, 8, 20, 10, False, True, 6),
+    ])
+def test_plane_normals(
+        half_size, radius_hit, res, noise, rand_dir, vertex_based, cores):
     """
     Tests whether normals are correctly estimated for a plane surface with
     known orientation (parallel to to X and Y axes).
@@ -189,6 +192,8 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
         noise (int): determines variance of the Gaussian noise in
             percents of average triangle edge length, the noise
             is added on triangle vertex coordinates in its normal direction
+        rand_dir (boolean): if True, each point will be moved in a random
+            direction instead of the direction of its normal.
         vertex_based (boolean): if True, curvature is calculated per triangle
             vertex instead of triangle center
         cores (int): number of cores to run VV in parallel
@@ -196,7 +201,10 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
     Returns:
         None
     """
-    fold = '{}plane/res{}_noise{}/'.format(FOLD, res, noise)
+    if rand_dir:
+        fold = '{}plane/res{}_noise{}_rand_dir/'.format(FOLD, res, noise)
+    else:
+        fold = '{}plane/res{}_noise{}/'.format(FOLD, res, noise)
     if not os.path.exists(fold):
         os.makedirs(fold)
     surf_file = '{}plane_half_size{}.surface.vtp'.format(fold, half_size)
@@ -225,7 +233,8 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
         pg = PlaneGenerator()
         plane = pg.generate_plane_surface(half_size, res)
         if noise > 0:
-            plane = add_gaussian_noise_to_surface(plane, percent=noise)
+            plane = add_gaussian_noise_to_surface(
+                plane, percent=noise, rand_dir=rand_dir)
         io.save_vtp(plane, surf_file)
 
     # Reading in the surface and transforming it into a graph
@@ -258,10 +267,14 @@ def test_plane_normals(half_size, radius_hit, res, noise, vertex_based, cores):
 
     # Computing errors of the initial (VTK) and estimated (VV) normals wrt
     # the true normal:
-    vtk_normal_errors = np.array([error_vector(true_normal, x) for x in vtk_normals])
-    vtk_normal_angular_errors = np.array([angular_error_vector(true_normal, x) for x in vtk_normals])
-    vv_normal_errors = np.array([error_vector(true_normal, x) for x in vv_normals])
-    vv_normal_angular_errors = np.array([angular_error_vector(true_normal, x) for x in vv_normals])
+    vtk_normal_errors = np.array(
+        [error_vector(true_normal, x) for x in vtk_normals])
+    vtk_normal_angular_errors = np.array(
+        [angular_error_vector(true_normal, x) for x in vtk_normals])
+    vv_normal_errors = np.array(
+        [error_vector(true_normal, x) for x in vv_normals])
+    vv_normal_angular_errors = np.array(
+        [angular_error_vector(true_normal, x) for x in vv_normals])
 
     # Writing the errors into csv files:
     df = pd.DataFrame()

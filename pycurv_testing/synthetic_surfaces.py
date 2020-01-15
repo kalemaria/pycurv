@@ -1,6 +1,7 @@
 import vtk
 import math
 import numpy as np
+from os import chdir
 
 from pycurv import pycurv_io as io
 from pycurv import (pexceptions, surface_graphs, run_gen_surface,
@@ -65,15 +66,19 @@ def remove_non_triangle_cells(surface, verbose=False):
     return surface
 
 
-def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
+def add_gaussian_noise_to_surface(surface, percent=10, rand_dir=False,
+                                  verbose=False):
     """
     Adds Gaussian noise to a surface by moving each triangle point in the
-    direction of its normal vector.
+    direction of its normal vector or in random directions.
 
     Args:
         surface (vtk.vtkPolyData): input surface
         percent (int, optional): determines variance of the Gaussian noise in
             percents of average triangle edge length (default 10)
+        rand_dir (boolean, optional): if True (default False), each point will
+            be moved in a random direction instead of the direction of its
+            normal vector.
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -91,35 +96,42 @@ def add_gaussian_noise_to_surface(surface, percent=10, verbose=False):
     if verbose:
         print("variance = {}".format(var))
 
-    # Get the point normals of the surface
-    point_normals = _get_point_normals(surface)
-    if point_normals is None:
-        print("No point normals were found. Computing normals...")
-        surface = _compute_point_normals(surface)
+    if not rand_dir:
+        # Get the point normals of the surface
         point_normals = _get_point_normals(surface)
         if point_normals is None:
-            print("Failed to compute point normals! Exiting...")
-            exit(0)
+            print("No point normals were found. Computing normals...")
+            surface = _compute_point_normals(surface)
+            point_normals = _get_point_normals(surface)
+            if point_normals is None:
+                print("Failed to compute point normals! Exiting...")
+                exit(0)
+            else:
+                print("Successfully computed point normals!")
         else:
-            print("Successfully computed point normals!")
-    else:
-        print("Point normals were found!")
+            print("Point normals were found!")
 
     # Copy the surface and initialize vtkPoints data structure
     new_surface = vtk.vtkPolyData()
     new_surface.DeepCopy(surface)
     points = vtk.vtkPoints()
 
-    # For each point, get its normal and randomly add noise from Gaussian
-    # distribution with the wanted variance in the normal direction
+    # For each point, randomly add noise from Gaussian distribution with the
+    # wanted variance either in rand_dir or in the normal direction
     for i in range(new_surface.GetNumberOfPoints()):
         old_p = np.asarray(new_surface.GetPoint(i))
-        normal_p = np.asarray(point_normals.GetTuple3(i))
-        new_p = old_p + np.random.normal(scale=std) * normal_p
+        if rand_dir:  # create a rand_dir 3D vector with length normalised to 1
+            random_dir = np.array([np.random.uniform(0, 1) for i in range(3)])
+            random_dir_len = math.sqrt(np.dot(random_dir, random_dir))
+            random_dir_norm = random_dir / random_dir_len
+            new_p = old_p + np.random.normal(scale=std) * random_dir_norm
+        else:
+            normal_p = np.asarray(point_normals.GetTuple3(i))
+            new_p = old_p + np.random.normal(scale=std) * normal_p
         new_x, new_y, new_z = new_p
         points.InsertPoint(i, new_x, new_y, new_z)
 
-    # Set the points of the surface copy and return it
+    # Set the points of the new surface and return it
     new_surface.SetPoints(points)
     return new_surface
 
@@ -799,7 +811,7 @@ def main():
     io.save_vtp(cylinder, "{}gauss_cylinder_r{}.vtp".format(fold, rad))
 
     # icosphere noise addition
-    os.chdir(fold)
+    chdir(fold)
     poly = io.load_poly("sphere/ico1280_noise0/sphere_r10.surface.vtp")
     poly_noise = add_gaussian_noise_to_surface(poly, percent=10)
     io.save_vtp(poly_noise, "sphere/ico1280_noise10/sphere_r10.surface.vtp")
