@@ -338,7 +338,7 @@ def plot_plane_normals(
         n=10, rand_dir=False, x_range=None, y_range=(0, 1), res=20,
         vertex_based=False):
     """ Plots estimated normals errors by VV versus original face normals
-    (calculated by VTK) on a noisy plane surface.
+    (calculated by VTK) on a noisy plane surface for several radius_hit values.
 
     Args:
         n (int, optional): noise in % (default 10)
@@ -394,7 +394,79 @@ def plot_plane_normals(
         labels=["Initial normals", r"VV rh=4", r"VV rh=8"],
         line_styles=['-', '-', '-'], markers=['s', 'v', '^'],
         colors=['r', 'c', 'b'],
-        title=None,  # "Plane ({}% noise)".format(n),
+        title=None,
+        x_label="Normal orientation error",
+        y_label="Cumulative relative frequency",
+        outfile=plot_file,
+        num_bins=20, normalize=True, cumulative=True,
+        x_range=x_range_1, y_range=y_range,
+        legend_loc='lower right'
+    )
+
+
+def plot_plane_normals_different_noise(
+        rh=8, rand_dir=False, x_range=None, y_range=(0, 1), res=20,
+        vertex_based=False):
+    """ Plots estimated normals errors by VV versus original face normals
+    (calculated by VTK) on a noisy plane surface for several noise levels (with
+    a fixed radius_hit values).
+
+    Args:
+        rh (int, optional): radius_hit parameter in pixels (default 8)
+        rand_dir (boolean, optional): if True (default False), results where
+            each point was moved in a random direction instead of the direction
+            of its normal will be plotted.
+        x_range (tuple, optional): a tuple of two values to limit the range
+            at X axis (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis (default (0, 1))
+        res (int, optional): defines the size of the square plane in pixels and
+            triangle division: 2*res
+        vertex_based (boolean, optional): if True (default False), curvature is
+            calculated per triangle vertex instead of triangle center
+    """
+    plot_file = "{}plane/plane_res{}_rh{}.VV.normal_errors.png".format(
+        FOLD, res, rh)
+    if rand_dir:
+        plot_file = os.path.splitext(plot_file)[0] + "_rand_dir.png"
+    if vertex_based:
+        plot_file = os.path.splitext(plot_file)[0] + "_vertex_based.png"
+    if x_range is not None:
+        plot_file = os.path.splitext(plot_file)[0] + "_{}-{}.png".format(
+            x_range[0], x_range[1])
+
+    data = []
+    for n in [5, 10, 20, 30]:  # noise levels in %
+        if rand_dir:
+            base_fold = "{}plane/res{}_noise{}_rand_dir/".format(FOLD, res, n)
+        else:
+            base_fold = "{}plane/res{}_noise{}/".format(FOLD, res, n)
+        fold = "{}files4plotting/".format(base_fold)
+        plot_fold = "{}plots/".format(base_fold)
+        if not os.path.exists(plot_fold):
+            os.makedirs(plot_fold)
+
+        basename = "plane_half_size{}".format(res)
+        if vertex_based:
+            basename += "_vertex_based"
+        SSVV_normal_errors = pd.read_csv("{}{}.SSVV_rh{}.csv".format(
+            fold, basename, rh), sep=';')["normalErrors"].tolist()
+        data.append(SSVV_normal_errors)
+
+    print("maximal values: {}".format([max(d) for d in data]))
+    if x_range is None:
+        # Find minimal and maximal value to set the X-range:
+        min_value = min([min(d) for d in data])
+        max_value = max([max(d) for d in data])
+        x_range_1 = (min_value, max_value)
+    else:
+        x_range_1 = x_range
+    plot_composite_line_hist(
+        data_arrays=data,
+        labels=["5% noise", "10% noise", "20% noise", "30% noise"],
+        line_styles=['-', '-', '-', '-'], markers=['s', '^', 'v', '*'],
+        colors=['g', 'b', 'y', 'r'],
+        title=None,
         x_label="Normal orientation error",
         y_label="Cumulative relative frequency",
         outfile=plot_file,
@@ -2339,7 +2411,9 @@ if __name__ == "__main__":
     # **Benchmark data**
     # Fig 4:
     plot_plane_normals(x_range=(0, 0.4))
-    # plot_plane_normals(rand_dir=True, x_range=(0, 0.4))
+    plot_plane_normals(rand_dir=True, x_range=(0, 0.4))
+    plot_plane_normals_different_noise(x_range=(0, 0.1))
+    plot_plane_normals_different_noise(rand_dir=True, x_range=(0, 0.1))
 
     # voxel sphere - Fig 5
     kwargs = {}
