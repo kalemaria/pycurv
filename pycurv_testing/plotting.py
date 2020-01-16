@@ -6,7 +6,7 @@ from pathlib import PurePath
 from itertools import cycle
 
 from pycurv import pexceptions
-from .errors_calculation import calculate_histogram_area
+from pycurv_testing import calculate_histogram_area
 
 import matplotlib.pyplot as plt
 # plt.style.use('presentation')  # print(plt.style.available)
@@ -155,7 +155,11 @@ def plot_line_hist(values, weights=None, num_bins=20, title=None,
         plt.legend(loc='best', fancybox=True, framealpha=0.5)
     plt.grid(True)
     plt.tight_layout()
-    plt.tick_params(top='off', right='off', which='both')
+    # plt.tick_params(top='off', right='off', which='both')  # stopped to work
+    # Only show ticks on the left and bottom spines
+    plt.yaxis.set_ticks_position('left')
+    plt.xaxis.set_ticks_position('bottom')
+
     plt.tick_params(direction='in')
     if outfile is None:
         plt.show()
@@ -195,8 +199,6 @@ def add_line_hist(values, weights=None, num_bins=20, x_range=None, max_val=None,
     """
     if max_val is not None:
         values = [max_val if val > max_val else val for val in values]
-
-    print("maximal value: {}".format(max(values)))
 
     params = {}
     if x_range is not None:
@@ -315,7 +317,11 @@ def plot_composite_line_hist(
                ncol=ncol, columnspacing=1, handletextpad=0.2, borderpad=0.2)
     # plt.grid(True)
     plt.tight_layout()
-    plt.tick_params(top='off', right='off', which='both')
+    # plt.tick_params(top='off', right='off', which='both')  # stopped to work
+    # Only show ticks on the left and bottom spines
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
+
     plt.tick_params(direction='in')
     ax.tick_params(axis='x', which='major', pad=8)  # space to X-labels
     if num_x_values > 0:
@@ -329,12 +335,16 @@ def plot_composite_line_hist(
 
 
 def plot_plane_normals(
-        n=10, x_range=None, y_range=(0, 1), res=20, vertex_based=False):
+        n=10, rand_dir=False, x_range=None, y_range=(0, 1), res=20,
+        vertex_based=False):
     """ Plots estimated normals errors by VV versus original face normals
     (calculated by VTK) on a noisy plane surface.
 
     Args:
         n (int, optional): noise in % (default 10)
+        rand_dir (boolean, optional): if True (default False), results where
+            each point was moved in a random direction instead of the direction
+            of its normal will be plotted.
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
         y_range (tuple, optional): a tuple of two values to limit the range
@@ -344,8 +354,12 @@ def plot_plane_normals(
         vertex_based (boolean, optional): if True (default False), curvature is
             calculated per triangle vertex instead of triangle center
     """
-    fold = ("{}plane/res{}_noise{}/files4plotting/".format(FOLD, res, n))
-    plot_fold = ("{}plane/res{}_noise{}/plots/".format(FOLD, res, n))
+    if rand_dir:
+        base_fold = "{}plane/res{}_noise{}_rand_dir/".format(FOLD, res, n)
+    else:
+        base_fold = "{}plane/res{}_noise{}/".format(FOLD, res, n)
+    fold = "{}files4plotting/".format(base_fold)
+    plot_fold = "{}plots/".format(base_fold)
     if not os.path.exists(plot_fold):
         os.makedirs(plot_fold)
 
@@ -2324,7 +2338,8 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
 if __name__ == "__main__":
     # **Benchmark data**
     # Fig 4:
-    plot_plane_normals(vertex_based=False, x_range=(0, 0.4))
+    plot_plane_normals(x_range=(0, 0.4))
+    # plot_plane_normals(rand_dir=True, x_range=(0, 0.4))
 
     # voxel sphere - Fig 5
     kwargs = {}
