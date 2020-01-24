@@ -407,9 +407,8 @@ def plot_plane_normals(
 def plot_plane_normals_different_noise(
         rh=8, rand_dir=False, x_range=None, y_range=(0, 1), res=20,
         vertex_based=False):
-    """ Plots estimated normals errors by VV versus original face normals
-    (calculated by VTK) on a noisy plane surface for several noise levels (with
-    a fixed radius_hit values).
+    """ Plots estimated normals errors by VV on a noisy plane surface for
+    several noise levels (with a fixed radius_hit value).
 
     Args:
         rh (int, optional): radius_hit parameter in pixels (default 8)
@@ -474,6 +473,108 @@ def plot_plane_normals_different_noise(
         x_range=x_range_1, y_range=y_range,
         legend_loc='lower right'
     )
+
+
+def plot_plane_normals_different_noise_and_rh(
+        noise_levels=[5, 10, 20, 30], rand_dir=False, x_range=None,
+        y_range=(0, 1), res=20, vertex_based=False):
+    """ Plots areas under the curve of histograms of the estimated normals
+    errors by VV on a noisy plane surface for several noise levels and
+    radius_hit values.
+
+    Args:
+        noise_levels (list, optional): noise levels in %, default 5, 10, 20, 30
+        rand_dir (boolean, optional): if True (default False), results where
+            each point was moved in a random direction instead of the direction
+            of its normal will be plotted.
+        x_range (tuple, optional): a tuple of two values to limit the range
+            at X axis of the underlying histograms (default None)
+        y_range (tuple, optional): a tuple of two values to limit the range
+            at Y axis of the underlying histograms (default (0, 1))
+        res (int, optional): defines the size of the square plane in pixels and
+            triangle division: 2*res
+        vertex_based (boolean, optional): if True (default False), curvature is
+            calculated per triangle vertex instead of triangle center
+    """
+    plot_file = "{}plane/plane_res{}.VV.normal_errors_AUC.png".format(
+        FOLD, res)
+    if rand_dir:
+        plot_file = os.path.splitext(plot_file)[0] + "_rand_dir.png"
+    if vertex_based:
+        plot_file = os.path.splitext(plot_file)[0] + "_vertex_based.png"
+    if x_range is not None:
+        plot_file = os.path.splitext(plot_file)[0] + "_{}-{}.png".format(
+            x_range[0], x_range[1])
+
+    rhs = [4, 8]
+    hist_areas_for_rhs = []
+    for rh in rhs:
+        data = []
+        for n in noise_levels:
+            if rand_dir:
+                base_fold = "{}plane/res{}_noise{}_rand_dir/".format(
+                    FOLD, res, n)
+            else:
+                base_fold = "{}plane/res{}_noise{}/".format(FOLD, res, n)
+            fold = "{}files4plotting/".format(base_fold)
+            plot_fold = "{}plots/".format(base_fold)
+            if not os.path.exists(plot_fold):
+                os.makedirs(plot_fold)
+
+            basename = "plane_half_size{}".format(res)
+            if vertex_based:
+                basename += "_vertex_based"
+            SSVV_normal_errors = pd.read_csv("{}{}.SSVV_rh{}.csv".format(
+                fold, basename, rh), sep=';')["normalErrors"].tolist()
+            data.append(SSVV_normal_errors)
+
+        print("maximal values: {}".format([max(d) for d in data]))
+        if x_range is None:
+            # Find minimal and maximal value to set the X-range:
+            min_value = min([min(d) for d in data])
+            max_value = max([max(d) for d in data])
+            x_range_1 = (min_value, max_value)
+        else:
+            x_range_1 = x_range
+        hist_areas = plot_composite_line_hist(
+            data_arrays=data,
+            labels=["5% noise", "10% noise", "20% noise", "30% noise"],
+            line_styles=['-', '-', '-', '-'], markers=['s', '^', 'v', '*'],
+            colors=['g', 'b', 'y', 'r'],
+            title=None,
+            x_label="Normal orientation error",
+            y_label="Cumulative relative frequency",
+            outfile=None,
+            num_bins=20, normalize=True, cumulative=True,
+            x_range=x_range_1, y_range=y_range,
+        )
+        hist_areas_for_rhs.append(hist_areas)
+
+    # Do the plot:
+    plt.rcParams.update({'font.size': 16})
+    fig, ax = plt.subplots()
+
+    for rh, hist_areas, m, c in zip(
+            rhs, hist_areas_for_rhs, ['*', '^'], ['cyan', 'b']):
+        plt.plot(noise_levels, hist_areas, ls='-', marker=m, c=c,
+                 label='rh={}'.format(rh), linewidth=LINEWIDTH, clip_on=False)
+
+    plt.xlabel("Noise (%)")
+    plt.ylabel("Area of cumulative normal error histogram")
+    if y_range is not None:
+        plt.ylim(y_range)
+    plt.legend(loc="best", fancybox=True, framealpha=0.5, fontsize=18,
+               ncol=1, columnspacing=1, handletextpad=0.2, borderpad=0.2)
+    plt.tight_layout()
+    # Only show ticks on the left and bottom spines
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
+
+    plt.tick_params(direction='in')
+    ax.tick_params(axis='x', which='major', pad=8)  # space to X-labels
+    # plt.show()
+    fig.savefig(plot_file)
+    print("The plot was saved as {}".format(plot_file))
 
 
 def plot_cylinder_kappa_1_diff_rh(n=0, x_range=None, num_bins=20):
@@ -988,8 +1089,9 @@ def plot_sphere_kappa_1_and_2_diff_rh(
 
 def plot_sphere_curvature_errors_diff_rh(
         r=10, methods=["AVV", "RVV", "SSVV"], curvature="both",
-        rhs=list(range(5, 10)), n=0, ico=0, voxel=False, x_range=None, y_range=(0, 1),
-        num_bins=20, legend_loc="lower right", csv=None, *args, **kwargs):
+        rhs=list(range(5, 10)), n=0, ico=0, voxel=False, x_range=None,
+        y_range=(0, 1), num_bins=20, legend_loc="lower right", csv=None, *args,
+        **kwargs):
     """
     Plots estimated curvature errors histograms on a sphere surface
     for different methods and radius_hit.
@@ -2410,124 +2512,123 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
 if __name__ == "__main__":
     # **Benchmark data**
     # Fig 4:
-    plot_plane_normals(x_range=(0, 0.4))
-    plot_plane_normals(rand_dir=True, x_range=(0, 0.4))
-    plot_plane_normals_different_noise(x_range=(0, 0.1))
-    plot_plane_normals_different_noise(rand_dir=True, x_range=(0, 0.1))
+    # plot_plane_normals(x_range=(0, 0.4))  # rand_dir=True
+    # plot_plane_normals_different_noise(rh=4, x_range=(0, 0.4))
+    plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
 
-    # voxel sphere - Fig 5
-    kwargs = {}
-    kwargs["num_x_values"] = 6
-    kwargs["fontsize"] = 23
-    kwargs["ncol"] = 2
-    for method in ["AVV", "RVV", "SSVV"]:
-        for curvature in ["kappa1", "kappa2", "both"]:
-            plot_sphere_curvature_errors_diff_rh(
-                voxel=True, methods=[method], curvature=curvature,
-                rhs=list(range(5, 11)), x_range=(0, 0.5), csv=join(
-                    FOLD, "sphere/voxel/files4plotting",
-                    "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
-                        method, curvature)), **kwargs)
-    # Fig 8:
-    for r in [10, 30]:
-        plot_sphere_curvature_errors_allVV(  # both curvatures
-            r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
-            x_range=(0, 0.7), legend_loc="center right"
-        )
-    plot_sphere_curvature_errors_allVV(  # both curvatures
-        r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
-        x_range=(0, 0.7), legend_loc="center right"
-    )
-
-    # smooth torus
-    kwargs = {}
-    kwargs["num_x_values"] = 6
-    for method in ["AVV", "RVV"]:
-        for curvature in ["kappa1", "kappa2", "mean_curvature"]:
-            plot_torus_curvature_errors_diff_rh(
-                methods=[method], curvature=curvature,
-                rhs=list(range(4, 11)), csv=join(
-                    FOLD, "torus/noise0/files4plotting",
-                    "torus_rr25_csr10_{}_RadiusHit4-10_{}_area.csv".format(
-                        method, curvature)), **kwargs)
-    for method in ["SSVV"]:
-        for curvature in ["kappa1", "kappa2", "mean_curvature"]:
-            plot_torus_curvature_errors_diff_rh(
-                methods=[method], curvature=curvature,
-                rhs=list(range(4, 10)), csv=join(
-                    FOLD, "torus/noise0/files4plotting",
-                    "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
-                        method, curvature)), **kwargs)
-    # Fig 6:
-    plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
-        rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 0.08),
-        legend_loc="lower right")  # range for kappa1
-    plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
-        rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 1.4),
-        legend_loc="lower right")  # range for kappa2
-
-    # smooth sphere
-    kwargs = {}
-    kwargs["num_x_values"] = 6
-    kwargs["fontsize"] = 23
-    for method in ["AVV", "RVV"]:
-        for curvature in ["kappa1", "kappa2", "both", "mean_curvature"]:
-            plot_sphere_curvature_errors_diff_rh(
-                methods=[method], curvature=curvature,
-                rhs=list(range(5, 11)), csv=join(
-                    FOLD, "sphere/noise0/files4plotting",
-                    "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
-                        method, curvature)), **kwargs)
-    for method in ["SSVV"]:
-        for curvature in ["kappa1", "kappa2", "both", "mean_curvature"]:
-            plot_sphere_curvature_errors_diff_rh(
-                methods=[method], curvature=curvature,
-                rhs=list(range(5, 10)), csv=join(
-                    FOLD, "sphere/noise0/files4plotting",
-                    "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
-                        method, curvature)), **kwargs)
-    # Fig 7:
-    for r in [10, 20]:
-        plot_sphere_curvature_errors_allVV(  # both curvatures
-            r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
-            x_range=(0, 0.25), **kwargs
-        )
-    for r in [10, 20]:
-        plot_sphere_curvature_errors_allVV(  # both curvatures
-            r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
-            x_range=(0, 8), **kwargs
-        )
-
-    # smooth cylinder
-    kwargs = {}
-    kwargs["fontsize"] = 23
-    plot_cylinder_curvature_errors_diff_rh(
-        x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=list(range(2, 11)),
-        csv=join(FOLD, "cylinder/noise0/files4plotting",
-                 "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv"))
-    for method in ["AVV", "RVV", "SSVV"]:
-        for curvature in ["kappa1", "kappa2", "mean_curvature"]:
-            plot_cylinder_curvature_errors_diff_rh(
-                methods=[method], curvature=curvature,
-                rhs=list(range(3, 11)), csv=join(
-                    FOLD, "cylinder/noise0/files4plotting",
-                    "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
-                        method, curvature)), **kwargs)
-    # Fig 9:
-    plot_cylinder_t_2_and_kappa_1_errors(
-        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-        exclude_borders=0, rhVV=5, rhSSVV=6, n=2, **kwargs)
-    plot_cylinder_t_2_and_kappa_1_errors(
-        x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
-        exclude_borders=5, rhVV=5, rhSSVV=6, **kwargs)
-
-    # **Real data**
-    read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
-                                     num_bins=25)
-    for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
-        # plot_excluding_borders(method=method)
-        read_in_and_plot_surface_curvatures(
-            num_bins=25, method=method, borders=0, x_range=(-0.1, 0.15))
+    # # voxel sphere - Fig 5
+    # kwargs = {}
+    # kwargs["num_x_values"] = 6
+    # kwargs["fontsize"] = 23
+    # kwargs["ncol"] = 2
+    # for method in ["AVV", "RVV", "SSVV"]:
+    #     for curvature in ["kappa1", "kappa2", "both"]:
+    #         plot_sphere_curvature_errors_diff_rh(
+    #             voxel=True, methods=[method], curvature=curvature,
+    #             rhs=list(range(5, 11)), x_range=(0, 0.5), csv=join(
+    #                 FOLD, "sphere/voxel/files4plotting",
+    #                 "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
+    #                     method, curvature)), **kwargs)
+    # # Fig 8:
+    # for r in [10, 30]:
+    #     plot_sphere_curvature_errors_allVV(  # both curvatures
+    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
+    #         x_range=(0, 0.7), legend_loc="center right"
+    #     )
+    # plot_sphere_curvature_errors_allVV(  # both curvatures
+    #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
+    #     x_range=(0, 0.7), legend_loc="center right"
+    # )
+    #
+    # # smooth torus
+    # kwargs = {}
+    # kwargs["num_x_values"] = 6
+    # for method in ["AVV", "RVV"]:
+    #     for curvature in ["kappa1", "kappa2", "mean_curvature"]:
+    #         plot_torus_curvature_errors_diff_rh(
+    #             methods=[method], curvature=curvature,
+    #             rhs=list(range(4, 11)), csv=join(
+    #                 FOLD, "torus/noise0/files4plotting",
+    #                 "torus_rr25_csr10_{}_RadiusHit4-10_{}_area.csv".format(
+    #                     method, curvature)), **kwargs)
+    # for method in ["SSVV"]:
+    #     for curvature in ["kappa1", "kappa2", "mean_curvature"]:
+    #         plot_torus_curvature_errors_diff_rh(
+    #             methods=[method], curvature=curvature,
+    #             rhs=list(range(4, 10)), csv=join(
+    #                 FOLD, "torus/noise0/files4plotting",
+    #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
+    #                     method, curvature)), **kwargs)
+    # # Fig 6:
+    # plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
+    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 0.08),
+    #     legend_loc="lower right")  # range for kappa1
+    # plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
+    #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 1.4),
+    #     legend_loc="lower right")  # range for kappa2
+    #
+    # # smooth sphere
+    # kwargs = {}
+    # kwargs["num_x_values"] = 6
+    # kwargs["fontsize"] = 23
+    # for method in ["AVV", "RVV"]:
+    #     for curvature in ["kappa1", "kappa2", "both", "mean_curvature"]:
+    #         plot_sphere_curvature_errors_diff_rh(
+    #             methods=[method], curvature=curvature,
+    #             rhs=list(range(5, 11)), csv=join(
+    #                 FOLD, "sphere/noise0/files4plotting",
+    #                 "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
+    #                     method, curvature)), **kwargs)
+    # for method in ["SSVV"]:
+    #     for curvature in ["kappa1", "kappa2", "both", "mean_curvature"]:
+    #         plot_sphere_curvature_errors_diff_rh(
+    #             methods=[method], curvature=curvature,
+    #             rhs=list(range(5, 10)), csv=join(
+    #                 FOLD, "sphere/noise0/files4plotting",
+    #                 "sphere_r10_{}_RadiusHit5-9_{}_area.csv".format(
+    #                     method, curvature)), **kwargs)
+    # # Fig 7:
+    # for r in [10, 20]:
+    #     plot_sphere_curvature_errors_allVV(  # both curvatures
+    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
+    #         x_range=(0, 0.25), **kwargs
+    #     )
+    # for r in [10, 20]:
+    #     plot_sphere_curvature_errors_allVV(  # both curvatures
+    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=9, n=2, voxel=False,
+    #         x_range=(0, 8), **kwargs
+    #     )
+    #
+    # # smooth cylinder
+    # kwargs = {}
+    # kwargs["fontsize"] = 23
+    # plot_cylinder_curvature_errors_diff_rh(
+    #     x_range=(0, 0.25), methods=["AVV", "SSVV"], rhs=list(range(2, 11)),
+    #     csv=join(FOLD, "cylinder/noise0/files4plotting",
+    #              "cylinder_r10_AVV_SSVV_RadiusHit2-10_xmax0.25.csv"))
+    # for method in ["AVV", "RVV", "SSVV"]:
+    #     for curvature in ["kappa1", "kappa2", "mean_curvature"]:
+    #         plot_cylinder_curvature_errors_diff_rh(
+    #             methods=[method], curvature=curvature,
+    #             rhs=list(range(3, 11)), csv=join(
+    #                 FOLD, "cylinder/noise0/files4plotting",
+    #                 "cylinder_r10_{}_RadiusHit3-10_{}_area.csv".format(
+    #                     method, curvature)), **kwargs)
+    # # Fig 9:
+    # plot_cylinder_t_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
+    #     exclude_borders=0, rhVV=5, rhSSVV=6, n=2, **kwargs)
+    # plot_cylinder_t_2_and_kappa_1_errors(
+    #     x_range_T=(0, 0.006), x_range_kappa=(0, 1.0),
+    #     exclude_borders=5, rhVV=5, rhSSVV=6, **kwargs)
+    #
+    # # **Real data**
+    # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
+    #                                  num_bins=25)
+    # for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
+    #     # plot_excluding_borders(method=method)
+    #     read_in_and_plot_surface_curvatures(
+    #         num_bins=25, method=method, borders=0, x_range=(-0.1, 0.15))
 
     # **Extra tests**
     # *voxel torus*
