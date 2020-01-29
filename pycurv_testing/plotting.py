@@ -510,6 +510,15 @@ def plot_plane_normals_different_noise_and_rh(
     rhs = [4, 8]
     hist_areas_for_rhs = []
     for rh in rhs:
+        hist_file = "{}plane/plane_res{}_rh{}.VV.normal_errors.png".format(
+            FOLD, res, rh)
+        if rand_dir:
+            hist_file = os.path.splitext(hist_file)[0] + "_rand_dir.png"
+        if vertex_based:
+            hist_file = os.path.splitext(hist_file)[0] + "_vertex_based.png"
+        if x_range is not None:
+            hist_file = os.path.splitext(hist_file)[0] + "_{}-{}.png".format(
+                x_range[0], x_range[1])
         data = []
         for n in noise_levels:
             if rand_dir:
@@ -534,9 +543,9 @@ def plot_plane_normals_different_noise_and_rh(
             # Find minimal and maximal value to set the X-range:
             min_value = min([min(d) for d in data])
             max_value = max([max(d) for d in data])
-            x_range_1 = (min_value, max_value)
         else:
-            x_range_1 = x_range
+            min_value, max_value = x_range
+        x_range_1 = (min_value, max_value)
         hist_areas = plot_composite_line_hist(
             data_arrays=data,
             labels=["5% noise", "10% noise", "20% noise", "30% noise"],
@@ -545,7 +554,7 @@ def plot_plane_normals_different_noise_and_rh(
             title=None,
             x_label="Normal orientation error",
             y_label="Cumulative relative frequency",
-            outfile=None,
+            outfile=hist_file,
             num_bins=20, normalize=True, cumulative=True,
             x_range=x_range_1, y_range=y_range,
         )
@@ -561,7 +570,8 @@ def plot_plane_normals_different_noise_and_rh(
                  label='rh={}'.format(rh), linewidth=LINEWIDTH, clip_on=False)
 
     plt.xlabel("Noise (%)")
-    plt.ylabel("Area of cumulative normal error histogram")
+    plt.ylabel("Area of cumulative\nnormal error histogram < {}".format(
+        max_value))
     if y_range is not None:
         plt.ylim(y_range)
     plt.legend(loc="best", fancybox=True, framealpha=0.5, fontsize=18,
@@ -2513,13 +2523,13 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
 if __name__ == "__main__":
     # **Benchmark data**
     # Fig 4:
-    plot_plane_normals(x_range=(0, 0.4))
-    plot_plane_normals(x_range=(0, 0.4), rand_dir=True)
+    # plot_plane_normals(x_range=(0, 0.4))
+    # plot_plane_normals(x_range=(0, 0.4), rand_dir=True)
 
-    plot_plane_normals_different_noise(rh=8, x_range=(0, 0.4))
-    plot_plane_normals_different_noise(rh=8, x_range=(0, 0.1))
-    plot_plane_normals_different_noise(rh=4, x_range=(0, 0.4))
-    plot_plane_normals_different_noise(rh=4, x_range=(0, 0.1))
+    # plot_plane_normals_different_noise(rh=8, x_range=(0, 0.4))
+    # plot_plane_normals_different_noise(rh=8, x_range=(0, 0.1))
+    # plot_plane_normals_different_noise(rh=4, x_range=(0, 0.4))
+    # plot_plane_normals_different_noise(rh=4, x_range=(0, 0.1))
 
     plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
     plot_plane_normals_different_noise_and_rh(x_range=(0, 0.1))
