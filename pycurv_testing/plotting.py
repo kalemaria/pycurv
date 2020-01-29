@@ -567,14 +567,14 @@ def plot_plane_normals_different_noise_and_rh(
     for rh, hist_areas, m, c in zip(
             rhs, hist_areas_for_rhs, ['*', '^'], ['cyan', 'b']):
         plt.plot(noise_levels, hist_areas, ls='-', marker=m, c=c,
-                 label='rh={}'.format(rh), linewidth=LINEWIDTH, clip_on=False)
+                 label='VV rh={}'.format(rh), linewidth=LINEWIDTH, clip_on=False)
 
     plt.xlabel("Noise (%)")
     plt.ylabel("Area of cumulative\nnormal error histogram < {}".format(
         max_value))
     if y_range is not None:
         plt.ylim(y_range)
-    plt.legend(loc="best", fancybox=True, framealpha=0.5, fontsize=18,
+    plt.legend(loc="lower right", fancybox=True, framealpha=0.5, fontsize=18,
                ncol=1, columnspacing=1, handletextpad=0.2, borderpad=0.2)
     plt.tight_layout()
     # Only show ticks on the left and bottom spines
