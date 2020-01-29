@@ -9,7 +9,8 @@ from pycurv import pexceptions
 from pycurv_testing import calculate_histogram_area
 
 import matplotlib.pyplot as plt
-# plt.style.use('presentation')  # print(plt.style.available)
+plt.style.use('classic')
+plt.style.use('presentation')  # print(plt.style.available)
 
 from matplotlib import rcParams
 rcParams['mathtext.default'] = 'regular'
@@ -2512,7 +2513,7 @@ def plot_excluding_borders(method="AVV", radius_hit=10):
 if __name__ == "__main__":
     # **Benchmark data**
     # Fig 4:
-    # plot_plane_normals(x_range=(0, 0.4))  # rand_dir=True
+    plot_plane_normals(x_range=(0, 0.4))
     plot_plane_normals(x_range=(0, 0.4), rand_dir=True)
 
     plot_plane_normals_different_noise(rh=8, x_range=(0, 0.4))
