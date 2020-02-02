@@ -507,9 +507,10 @@ def plot_plane_normals_different_noise_and_rh(
         plot_file = os.path.splitext(plot_file)[0] + "_{}-{}.png".format(
             x_range[0], x_range[1])
 
-    rhs = [4, 8]
+    rhs = [0, 4, 8]
     hist_areas_for_rhs = []
     for rh in rhs:
+        print("rh={}".format(rh))
         hist_file = "{}plane/plane_res{}_rh{}.VV.normal_errors.png".format(
             FOLD, res, rh)
         if rand_dir:
@@ -534,9 +535,13 @@ def plot_plane_normals_different_noise_and_rh(
             basename = "plane_half_size{}".format(res)
             if vertex_based:
                 basename += "_vertex_based"
-            SSVV_normal_errors = pd.read_csv("{}{}.SSVV_rh{}.csv".format(
-                fold, basename, rh), sep=';')["normalErrors"].tolist()
-            data.append(SSVV_normal_errors)
+            if rh == 0:  # initial normals
+                normal_errors = pd.read_csv("{}{}.VTK.csv".format(
+                    fold, basename), sep=';')["normalErrors"].tolist()
+            else:  # estimated normals
+                normal_errors = pd.read_csv("{}{}.SSVV_rh{}.csv".format(
+                    fold, basename, rh), sep=';')["normalErrors"].tolist()
+            data.append(normal_errors)
 
         print("maximal values: {}".format([max(d) for d in data]))
         if x_range is None:
@@ -564,14 +569,15 @@ def plot_plane_normals_different_noise_and_rh(
     plt.rcParams.update({'font.size': 16})
     fig, ax = plt.subplots()
 
-    for rh, hist_areas, m, c in zip(
-            rhs, hist_areas_for_rhs, ['*', '^'], ['cyan', 'b']):
+    for hist_areas, m, c, l in zip(
+            hist_areas_for_rhs, ['s', 'v', '^'], ['r', 'c', 'b'],
+            ["Initial normals", "VV rh=4", "VV rh=8"]):
         plt.plot(noise_levels, hist_areas, ls='-', marker=m, c=c,
-                 label='VV rh={}'.format(rh), linewidth=LINEWIDTH, clip_on=False)
+                 label=l, linewidth=LINEWIDTH, clip_on=False)
 
     plt.xlabel("Noise (%)")
-    plt.ylabel("Area of cumulative\nnormal error histogram < {}".format(
-        max_value))
+    plt.ylabel("Area of cumulative histograms\n"
+               "of normal orientation errors < {}".format(max_value))
     if y_range is not None:
         plt.ylim(y_range)
     plt.legend(loc="lower right", fancybox=True, framealpha=0.5, fontsize=18,
@@ -2526,13 +2532,7 @@ if __name__ == "__main__":
     # plot_plane_normals(x_range=(0, 0.4))
     # plot_plane_normals(x_range=(0, 0.4), rand_dir=True)
 
-    # plot_plane_normals_different_noise(rh=8, x_range=(0, 0.4))
-    # plot_plane_normals_different_noise(rh=8, x_range=(0, 0.1))
-    # plot_plane_normals_different_noise(rh=4, x_range=(0, 0.4))
-    # plot_plane_normals_different_noise(rh=4, x_range=(0, 0.1))
-
     plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
-    plot_plane_normals_different_noise_and_rh(x_range=(0, 0.1))
 
     # # voxel sphere - Fig 5
     # kwargs = {}
