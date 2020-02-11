@@ -1,8 +1,8 @@
 from pathlib import Path, PurePath
-from .curvature_calculation import (
+from pycurv_scripts import (
     new_workflow, calculate_PM_curvatures,
     extract_curvatures_after_new_workflow)
-from .distances_calculation import (
+from pycurv_scripts import (
     distances_and_thicknesses_calculation, extract_distances)
 
 """
@@ -29,7 +29,7 @@ CONDITIONS = ["WT", "IST2", "SCS", "TCB", "dTCB1", "dTCB2", "dTCB3",
 
 def task_calculate_cER_curvatures():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/"
+    base_fold = "/fs/pool/pool-ruben/Maria/MCS_data/cER_curvature/"
     radius_hit = RADIUS_HIT
     methods = ["VV"]
     lbl = 2  # cER
@@ -91,7 +91,7 @@ def task_calculate_cER_curvatures():
 
 def task_extract_cER_curvatures():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/"
+    base_fold = "/fs/pool/pool-ruben/Maria/MCS_data/cER_curvature/"
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
@@ -132,7 +132,7 @@ def task_extract_cER_curvatures():
 
 def task_calculate_PMcER_distances():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
+    base_fold = "/fs/pool/pool-ruben/Maria/MCS_data/PM-ER_distances/"
     radius_hit = RADIUS_HIT
 
     for condition in CONDITIONS:
@@ -173,7 +173,7 @@ def task_calculate_PMcER_distances():
 
 def task_extract_distances_without_borders():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
+    base_fold = "/fs/pool/pool-ruben/Maria/MCS_data/PM-ER_distances/"
 
     for condition in CONDITIONS:
         fold = "{}{}/".format(base_fold, condition)
@@ -226,7 +226,7 @@ def task_calculate_PM_curvatures():
         None
     """
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
+    base_fold = "/fs/pool/pool-ruben/Maria/MCS_data/PM-ER_distances/"
     radius_hit = RADIUS_HIT
 
     for condition in CONDITIONS:
@@ -264,7 +264,7 @@ def task_calculate_PM_curvatures():
 
 def task_extract_PM_curvatures():
     # constant parameters for all conditions and segmentations:
-    base_fold = "/fs/pool/pool-ruben/Maria/4Javier/smooth_distances/"
+    base_fold = "/fs/pool/pool-ruben/Maria/MCS_data/PM-ER_distances/"
     radius_hit = RADIUS_HIT
     methods = ["VV"]
 
@@ -310,7 +310,7 @@ def task_extract_PM_curvatures():
 
 def task_calculate_MitoER_distances():
     # constant parameters for all conditions and segmentations:
-    fold = "/fs/pool/pool-ruben/Maria/4Javier/ER-Mito/"
+    fold = "/fs/pool/pool-ruben/Maria/MCS_data/ER-Mito_distances/"
     radius_hit = RADIUS_HIT
     mem1 = "Mito"
     mem2 = "ER"
@@ -352,7 +352,7 @@ def task_calculate_MitoER_distances():
 
 def task_extract_MitoER_distances_without_borders():
     # constant parameters for all conditions and segmentations:
-    fold = "/fs/pool/pool-ruben/Maria/4Javier/ER-Mito/"
+    fold = "/fs/pool/pool-ruben/Maria/MCS_data/ER-Mito_distances/"
     mem1 = "Mito"
     mem2 = "ER"
 
@@ -398,7 +398,7 @@ def task_extract_MitoER_distances_without_borders():
 
 def task_calculate_VacNuc_distances():
     # constant parameters for all conditions and segmentations:
-    fold = "/fs/pool/pool-ruben/Maria/4Javier/Vac-Nuc/"
+    fold = "/fs/pool/pool-ruben/Maria/MCS_data/Vac-Nuc_distances/"
     radius_hit = RADIUS_HIT
     mem1 = "Vac"
     mem2 = "Nuc"
@@ -423,7 +423,7 @@ def task_calculate_VacNuc_distances():
                         'mem1': mem1,
                         'mem2': mem2,
                         'lbl_between_mem1_mem2': 3,
-                        'maxthick_nm': 0
+                        'maxthick': 0
                     })
                 ],
                'targets': [
@@ -439,7 +439,7 @@ def task_calculate_VacNuc_distances():
 
 def task_extract_VacNuc_distances_without_borders():
     # constant parameters for all conditions and segmentations:
-    fold = "/fs/pool/pool-ruben/Maria/4Javier/Vac-Nuc/"
+    fold = "/fs/pool/pool-ruben/Maria/MCS_data/Vac-Nuc_distances/"
     mem1 = "Vac"
     mem2 = "Nuc"
 
@@ -472,3 +472,81 @@ def task_extract_VacNuc_distances_without_borders():
                # target removed)
                'uptodate': [True]
                }
+
+def task_calculate_MitoNuc_distances():
+    # constant parameters for all conditions and segmentations:
+    fold = "/fs/pool/pool-ruben/Maria/MCS_data/Mito-Nuc_distances/"
+    radius_hit = RADIUS_HIT
+    mem1 = "Mito"
+    mem2 = "Nuc"
+
+    fold_p = Path(fold)
+    # iterate over all subfolders
+    for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
+        subfold_name = subfold_p.name
+        date, _, lamella, tomo = subfold_name.split('_')
+        base_filename = "{}_{}_{}".format(date, lamella, tomo)
+        subfold = str(subfold_p) + '/'
+        segmentation_file_p = list(subfold_p.glob('*.mrc'))[0].name
+        segmentation_file = str(segmentation_file_p)
+        target_base = "{}{}".format(subfold, base_filename)
+        distances_suffix = ".{}.distancesFrom{}".format(mem2, mem1)
+        yield {'name': base_filename,
+               # 'verbosity': 2,
+               'actions': [
+                   (distances_and_thicknesses_calculation,
+                    [subfold, segmentation_file, base_filename], {
+                        'radius_hit': RADIUS_HIT,
+                        'mem1': mem1,
+                        'mem2': mem2,
+                        'lbl_between_mem1_mem2': 3,
+                        'maxthick': 0
+                    })
+                ],
+               'targets': [
+                   "{}.{}.NVV_rh{}.gt".format(target_base, mem1, radius_hit),
+                   "{}{}.gt".format(target_base, distances_suffix),
+                   "{}{}.csv".format(target_base, distances_suffix),
+               ],
+               # force doit to always mark the task as up-to-date (unless
+               # target removed)
+               'uptodate': [True]
+               }
+
+
+def task_extract_MitoNuc_distances_without_borders():
+    # constant parameters for all conditions and segmentations:
+    fold = "/fs/pool/pool-ruben/Maria/MCS_data/Mito-Nuc_distances/"
+    mem1 = "Mito"
+    mem2 = "Nuc"
+
+    fold_p = Path(fold)
+    # iterate over all subfolders
+    for subfold_p in [x for x in fold_p.iterdir() if x.is_dir()]:
+        subfold_name = subfold_p.name
+        date, _, lamella, tomo = subfold_name.split('_')
+        base_filename = "{}_{}_{}".format(date, lamella, tomo)
+        distances_suffix = ".{}.distancesFrom{}".format(mem2, mem1)
+        subfold = str(subfold_p) + '/'
+        target_base = "{}{}".format(subfold, base_filename)
+        yield {'name': base_filename,
+               # 'verbosity': 2,
+               'actions': [
+                   (extract_distances,
+                    [subfold, base_filename + distances_suffix], {
+                        'name': '{}distance'.format(mem1),
+                        'exclude_borders': 1
+                    }),
+               ],
+               'file_dep': [
+                   "{}{}.gt".format(target_base, distances_suffix),
+               ],
+               'targets': [
+                   "{}_excluding1borders.csv".format(
+                       target_base + distances_suffix),
+               ],
+               # force doit to always mark the task as up-to-date (unless
+               # target removed)
+               'uptodate': [True]
+               }
+
