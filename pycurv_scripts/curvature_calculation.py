@@ -969,6 +969,41 @@ def main_felix():
     print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
 
 
+def main_till():
+    """
+    Main function for running the new_workflow function for Till' data.
+
+    Returns:
+        None
+    """
+    t_begin = time.time()
+
+    base_filename = "l2_t6_dimifilt_th10000_binned2"
+    pixel_size = 3.368  # nm, because binned twice: 1.684 * 2
+    radius_hit = 10  # nm
+    fold = '/fs/pool/pool-ruben/Maria/curvature/Till_4paper/'
+    seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl_th10000_binned2.mrc'
+    lbl = 1
+    min_component = 0  # already removed components <10000 voxels
+
+    print("\nCalculating curvatures for {}".format(base_filename))
+    new_workflow(
+        fold, base_filename, pixel_size, radius_hit, methods=['VV'],
+        seg_file=seg_file, label=lbl, holes=0, min_component=min_component)
+
+    for b in range(0, 2):
+        print("\nExtracting curvatures for vesicle without {} nm from border"
+              .format(b))
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, radius_hit, methods=['VV'],
+            exclude_borders=b, categorize_shape_index=False)
+
+    t_end = time.time()
+    duration = t_end - t_begin
+    minutes, seconds = divmod(duration, 60)
+    print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
+
+
 def main_light_microscopy_cells(timepoint=22):
     """
     Main function for running the ply workflow for the whole C.Elegans embryo
@@ -1115,8 +1150,8 @@ def main_pore(isosurface=False, radius_hit=2):
 
 if __name__ == "__main__":
 
-    main_felix()
-    main_javier('ER', 10)
+    # main_felix()
+    # main_javier('ER', 10)
 
     # main_light_microscopy_cells()
 
@@ -1125,3 +1160,5 @@ if __name__ == "__main__":
     # main_brain()
 
     # main_pore(isosurface=True, radius_hit=4)
+
+    main_till()
