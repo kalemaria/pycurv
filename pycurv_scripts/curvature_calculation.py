@@ -1150,8 +1150,8 @@ def main_pore(isosurface=False, radius_hit=2):
 
 if __name__ == "__main__":
 
-    # main_felix()
-    # main_javier('ER', 10)
+    main_felix()
+    main_javier('ER', 10)
 
     # main_light_microscopy_cells()
 
@@ -1161,4 +1161,4 @@ if __name__ == "__main__":
 
     # main_pore(isosurface=True, radius_hit=4)
 
-    main_till()
+    # main_till()
