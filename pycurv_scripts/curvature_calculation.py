@@ -9,10 +9,13 @@ import numpy as np
 from scipy import ndimage
 import os
 from pathlib import Path
+import pathos.pools as pp
+from functools import partial
 
 from pycurv import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
-    TriangleGraph, PointGraph, curvature_estimation, merge_vtp_files)
+    TriangleGraph, PointGraph, curvature_estimation, merge_vtp_files,
+    split_segmentation)
 from pycurv import pycurv_io as io
 
 """
@@ -136,9 +139,9 @@ def _vtp_arrays_to_mrc_volumes(
 
 
 def new_workflow(
-        fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-        page_curvature_formula=False, area2=True,
-        seg_file=None, label=1, filled_label=None, unfilled_mask=None, holes=0,
+        base_filename, seg_file, fold, pixel_size, radius_hit,
+        methods=['VV'], page_curvature_formula=False, area2=True,
+        label=1, filled_label=None, unfilled_mask=None, holes=0,
         remove_wrong_borders=True, min_component=100, only_normals=False,
         cores=6, runtimes=''):
     """
@@ -153,9 +156,10 @@ def new_workflow(
     parallel on multiple cores (for RVV and AVV, but not for SSVV).
 
     Args:
+        base_filename (str): base file name for saving the output files
+        seg_file (str): membrane segmentation mask, pass '' if surface exists
         fold (str): path where the input membrane segmentation is and where the
             output will be written
-        base_filename (str): base file name for saving the output files
         pixel_size (float): pixel size in nanometer of the membrane mask
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
@@ -168,7 +172,6 @@ def new_workflow(
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
             curvatures estimation)
-        seg_file (str, optional): membrane segmentation mask
         label (int, optional): label to be considered in the membrane mask
             (default 1)
         filled_label (int, optional): if the membrane mask was filled with this
@@ -204,7 +207,7 @@ def new_workflow(
 
     surf_file = base_filename + ".surface.vtp"
     if not isfile(fold + surf_file):
-        if seg_file is None or not isfile(fold + seg_file):
+        if seg_file == '' or not isfile(fold + seg_file):
             raise pexceptions.PySegInputError(
                 expr="new_workflow",
                 msg="The segmentation file not given or not found")
@@ -978,22 +981,67 @@ def main_till():
     """
     t_begin = time.time()
 
-    base_filename = "l2_t6_dimifilt_th10000_binned2"
-    pixel_size = 3.368  # nm, because binned twice: 1.684 * 2
-    radius_hit = 10  # nm
-    fold = '/fs/pool/pool-ruben/Maria/curvature/Till_4paper/'
-    seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl_th10000_binned2.mrc'
+    # Input parameters:
+    fold = '/fs/pool/pool-ruben/Maria/curvature/Till_4paper/Golgi/'
+    seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl.GolgiFilled.mrc'
+    base_filename = "l2_t6_Golgi"
     lbl = 1
-    min_component = 0  # already removed components <10000 voxels
+    filled_lbl = 2
+    min_comp = 1000  # to remove possible segmentation "noise"
+    pixel_size = 1.684  # nm
+    radius_hit = 10  # nm
 
-    print("\nCalculating curvatures for {}".format(base_filename))
-    new_workflow(
-        fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-        seg_file=seg_file, label=lbl, holes=0, min_component=min_component)
+    # Load the segmentation numpy array from the file and join both labels as 1:
+    seg = io.load_tomo(fold + seg_file)
+    assert (isinstance(seg, np.ndarray))
+    data_type = seg.dtype
+    binary_seg = ((seg == lbl) | (seg == filled_lbl)).astype(data_type)
+    binary_seg_path = os.path.splitext(fold + seg_file)[0] + 'Binary.mrc'
+    io.save_numpy(binary_seg, binary_seg_path)
 
+    # Split the segmentation into binary regions, with 1 instead of both labels:
+    binary_seg_regions, _ = split_segmentation(
+        infile=binary_seg_path, lbl=1, close=False, min_region_size=min_comp)
+
+    cores = len(binary_seg_regions)
+    seg_region_files = []
+    base_region_files = []
+    region_surf_files = []
+    for i, binary_seg_region in enumerate(binary_seg_regions):
+        # Restore the original labels at place of each binary region, else 0:
+        seg_region = seg * binary_seg_region
+
+        # Prepare files and filenames for the runs i/o:
+        seg_region_file = os.path.splitext(seg_file)[0] + str(i + 1) + '.mrc'
+        io.save_numpy(seg_region, fold + seg_region_file)
+        seg_region_files.append(seg_region_file)
+
+        base_region_file = "{}{}".format(base_filename, str(i + 1))
+        base_region_files. append(base_region_file)
+
+        region_surf_file = '{}{}.AVV_rh{}.vtp'.format(
+            fold, base_region_file, radius_hit)
+        region_surf_files.append(region_surf_file)
+
+    # Run each region on a different core:
+    print("\nCalculating curvatures for {} regions".format(cores))
+    p = pp.ProcessPool(cores)
+    print('Opened a pool with {} processes'.format(cores))
+    p.map(partial(new_workflow,
+                  fold=fold, pixel_size=pixel_size, radius_hit=radius_hit,
+                  methods=['VV'], page_curvature_formula=False, area2=True,
+                  label=lbl, filled_label=filled_lbl, unfilled_mask=None,
+                  holes=0, min_component=0, remove_wrong_borders=True,
+                  only_normals=False, cores=1, runtimes=''),
+          base_region_files, seg_region_files)
+    p.close()
+    p.clear()
+
+    # Join region VTP files to one VTP file and extract curvatures:
+    surf_file = '{}{}.AVV_rh{}.vtp'.format(fold, base_filename, radius_hit)
+    io.merge_vtp_files(region_surf_files, surf_file)
     for b in range(0, 2):
-        print("\nExtracting curvatures for vesicle without {} nm from border"
-              .format(b))
+        print("\nExtracting curvatures without {} nm from border".format(b))
         extract_curvatures_after_new_workflow(
             fold, base_filename, radius_hit, methods=['VV'],
             exclude_borders=b, categorize_shape_index=False)
@@ -1150,8 +1198,9 @@ def main_pore(isosurface=False, radius_hit=2):
 
 if __name__ == "__main__":
 
-    main_felix()
-    main_javier('ER', 10)
+    # main_javier('ER', 10)
+    # main_felix()
+    main_till()
 
     # main_light_microscopy_cells()
 
@@ -1160,5 +1209,3 @@ if __name__ == "__main__":
     # main_brain()
 
     # main_pore(isosurface=True, radius_hit=4)
-
-    # main_till()
