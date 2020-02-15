@@ -29,10 +29,11 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 
 __author__ = 'kalemanov'
 
-FOLDPEAKS = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
+FOLDPEAKS = "/fs/pool/pool-ruben/Maria/workspace/github/pycurv/" \
+            "experimental_data_sets/ER/peaks_AVV_and_SSVV/TCB/" \
             "180830_TITAN_l2_t2peak/"
-FOLDCER = "/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/" \
-          "180830_TITAN_l2_t2half/"
+FOLDCER = "/fs/pool/pool-ruben/Maria/workspace/github/pycurv/" \
+          "experimental_data_sets/ER/AVV/"
 FOLDPEAKSPLOTS = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
                  'plots_peaks/'
 FOLD = '/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/' \
@@ -43,6 +44,7 @@ FOLDFS = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
          "comparison_to_others/test_freesurfer_output/"
 FOLDPLOTS = "/fs/pool/pool-ruben/Maria/workspace/github/my_tests_output/" \
             "comparison_to_others/plots/"
+FOLDTILL = "/fs/pool/pool-ruben/Maria/curvature/Till_4paper/"
 LINEWIDTH = 4
 MARKERS = ['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*']
 COLORS = ['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r']
@@ -2384,14 +2386,17 @@ def read_in_and_plot_surface_curvature(
 
 
 def read_in_and_plot_surface_curvatures(
-        x_range=None, num_bins=20, weights=None, method="AVV", radius_hit=10,
-        borders=0):
+        folder, plot_fold, base_filename, x_range=None, num_bins=20,
+        weights=None, method="AVV", radius_hit=10, borders=0, title=None):
     """
     Reads in curvature data of a cER surface, generated using a compartment
     segmentation, estimated by the given method and radius_hit, and plots the
     curvature (minimal and maximal principal as well as curvedness).
 
     Args:
+        folder (str): folder of the input data
+        plot_fold (str): folder where the plot should be written
+        base_filename (str): main part of the file name before '.METHOD_rhRH...'
         x_range (tuple, optional): a tuple of two values to limit the range
             at X axis (default None)
         num_bins (int, optional): number of bins for the histogram (default 20)
@@ -2401,20 +2406,20 @@ def read_in_and_plot_surface_curvatures(
         radius_hit (int, optional): which radius_hit to plot (default 10)
         borders (int, optional): how much to exclude from borders in nm
             (default 0)
+        title (str, optional): title of the plot
 
     Returns:
         None
     """
-    folder = FOLDCER
-    plot_fold = FOLDPEAKSPLOTS
     if borders == 0:
-        csv = "{}TCB_180830_l2_t2half.cER.{}_rh{}.csv".format(
-            folder, method, radius_hit)
+        csv = "{}.{}_rh{}.csv".format(base_filename, method, radius_hit)
     else:
-        csv = ("{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding{}borders.csv"
-               .format(folder, method, radius_hit, borders))
-    plot_file = "{}TCB_180830_l2_t2half.cER.{}_rh{}_excluding{}borders" \
-                "_curvatures.png".format(plot_fold, method, radius_hit, borders)
+        csv = "{}.{}_rh{}_excluding{}borders.csv".format(
+            base_filename, method, radius_hit, borders)
+    csv = os.path.join(folder, csv)
+    plot_file = "{}.{}_rh{}_excluding{}borders_curvatures.png".format(
+        base_filename, method, radius_hit, borders)
+    plot_file = os.path.join(plot_fold, plot_file)
     if x_range is not None:
         plot_file = os.path.splitext(plot_file)[0] + "_{}-{}.png".format(
             x_range[0], x_range[1])
@@ -2446,7 +2451,7 @@ def read_in_and_plot_surface_curvatures(
         line_styles=['-', '-', '-'],
         markers=['^', 's', 'o'],
         colors=['g', 'y', 'r'],
-        x_label=x_label, y_label=y_label, title=None,
+        x_label=x_label, y_label=y_label, title=title,
         data_arrays=curvatures_arrays, weights_arrays=weights_arrays,
         num_bins=num_bins, x_range=x_range, y_range=None,
         normalize=True, cumulative=False, outfile=plot_file)
@@ -2532,7 +2537,7 @@ if __name__ == "__main__":
     # plot_plane_normals(x_range=(0, 0.4))
     # plot_plane_normals(x_range=(0, 0.4), rand_dir=True)
 
-    plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
+    # plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
 
     # # voxel sphere - Fig 5
     # kwargs = {}
@@ -2641,12 +2646,26 @@ if __name__ == "__main__":
     #     exclude_borders=5, rhVV=5, rhSSVV=6, **kwargs)
     #
     # # **Real data**
+    # # Fig 10
     # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
     #                                  num_bins=25)
-    # for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
-    #     # plot_excluding_borders(method=method)
-    #     read_in_and_plot_surface_curvatures(
-    #         num_bins=25, method=method, borders=0, x_range=(-0.1, 0.15))
+    for b in range(2):
+        for w in [None, 'triangleAreas']:
+            for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
+                # Fig 11
+                # plot_excluding_borders(method=method)
+                read_in_and_plot_surface_curvatures(
+                    FOLDCER, FOLDPEAKSPLOTS, "TCB_180830_l2_t2half.ER",
+                    num_bins=25, method=method, x_range=(-0.1, 0.15),
+                    borders=b, weights=w, title="Cortical ER")
+            # New Fig with Golgi and Vesicles
+            for organelle in ["Golgi", "Vesicles"]:
+                read_in_and_plot_surface_curvatures(
+                    os.path.join(FOLDTILL, organelle),
+                    os.path.join(FOLDTILL, "visualizations_and_plots"),
+                    "l2_t6_{}".format(organelle),
+                    num_bins=25, method="AVV", x_range=(-0.1, 0.15),
+                    borders=b, weights=w, title=organelle)
 
     # **Extra tests**
     # *voxel torus*
