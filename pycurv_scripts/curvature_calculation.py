@@ -433,6 +433,9 @@ def extract_curvatures_after_new_workflow(
                 fold, base_filename, methods[0], radius_hit)
     sys.stdout = open(log_file, 'a')
 
+    print("\nExtracting curvatures without {} nm from border".format(
+        exclude_borders))
+
     for method in methods:
         if method == 'VV':
             if page_curvature_formula and (area2 is False):
@@ -479,6 +482,7 @@ def extract_curvatures_after_new_workflow(
             else:  # if multiple regions
                 csv_region_outfiles = []
                 for i in range(1, regions + 1):
+                    print("\nRegion {}:".format(i))
                     # correct in/output files for multiple regions
                     gt_region_infile = gt_infile.replace(
                         base_filename, base_filename+str(i))
@@ -499,8 +503,8 @@ def extract_curvatures_after_new_workflow(
                     [pd.read_csv(f) for f in csv_region_outfiles])
                 combined_df.to_csv(csv_outfile, index=False)
                 # remove the region CSVs
-                for f in csv_region_outfiles:
-                    os.remove(f)
+                # for f in csv_region_outfiles:
+                #     os.remove(f)
 
 
 def _extract_curvatures_from_graph(
@@ -929,8 +933,8 @@ def main_javier(membrane, radius_hit):
         lbl = 1
         print("\nEstimating normals for {}".format(base_filename))
         new_workflow(
-            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-            seg_file=seg_file, label=lbl, holes=holes,
+            base_filename, seg_file, fold, pixel_size, radius_hit,
+            methods=['VV'], label=lbl, holes=holes,
             min_component=min_component, only_normals=True,
             runtimes=runtimes_file)
     elif membrane == "ER":
@@ -938,8 +942,8 @@ def main_javier(membrane, radius_hit):
         filled_lbl = 3  # ER lumen
         print("\nCalculating curvatures for {}".format(base_filename))
         new_workflow(
-            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-            seg_file=seg_file, label=lbl, filled_label=filled_lbl,
+            base_filename, seg_file, fold, pixel_size, radius_hit,
+            methods=['VV'], label=lbl, filled_label=filled_lbl,
             min_component=min_component, runtimes=runtimes_file)
 
         for b in range(0, 2):
@@ -987,9 +991,8 @@ def main_felix():
 
     print("\nCalculating curvatures for {}".format(base_filename))
     new_workflow(
-        fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-        seg_file=seg_file, label=lbl, holes=0, min_component=min_component,
-        runtimes=runtimes_file)
+        base_filename, seg_file, fold, pixel_size, radius_hit, methods=['VV'],
+        label=lbl, holes=0, min_component=min_component, runtimes=runtimes_file)
 
     for b in range(0, 2):
         print("\nExtracting curvatures for vesicle without {} nm from border"
@@ -1073,7 +1076,6 @@ def main_till():
     surf_file = '{}{}.AVV_rh{}.vtp'.format(fold, base_filename, radius_hit)
     io.merge_vtp_files(region_surf_files, surf_file)
     for b in range(0, 2):
-        print("\nExtracting curvatures without {} nm from border".format(b))
         extract_curvatures_after_new_workflow(
             fold, base_filename, radius_hit, methods=['VV'],
             exclude_borders=b, categorize_shape_index=False, regions=cores)
@@ -1203,8 +1205,8 @@ def main_pore(isosurface=False, radius_hit=2):
         filled_lbl = 1
         print("\nCalculating curvatures for an isosurface")
         new_workflow(
-            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-            seg_file=seg_file, label=lbl, filled_label=filled_lbl,
+            base_filename, seg_file, fold, pixel_size, radius_hit,
+            methods=['VV'], label=lbl, filled_label=filled_lbl,
             min_component=min_component, runtimes=runtimes_file)
 
     else:
@@ -1212,12 +1214,11 @@ def main_pore(isosurface=False, radius_hit=2):
         runtimes_file = "{}{}_runtimes.csv".format(fold, base_filename)
         print("\nCalculating curvatures for a single-layer surface")
         new_workflow(
-            fold, base_filename, pixel_size, radius_hit, methods=['VV'],
-            seg_file=seg_file, label=lbl, holes=holes,
+            base_filename, seg_file, fold, pixel_size, radius_hit,
+            methods=['VV'], label=lbl, holes=holes,
             min_component=min_component, runtimes=runtimes_file)
 
     for b in range(0, 2):
-        print("\nExtracting curvatures without {} nm from border".format(b))
         extract_curvatures_after_new_workflow(
             fold, base_filename, radius_hit, methods=['VV'],
             exclude_borders=b, categorize_shape_index=True)
