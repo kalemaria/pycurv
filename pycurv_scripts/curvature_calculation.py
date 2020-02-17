@@ -1007,7 +1007,7 @@ def main_felix():
     print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
 
 
-def main_till():
+def main_till(organelle):
     """
     Main function for running the new_workflow function for Till' data.
 
@@ -1017,9 +1017,11 @@ def main_till():
     t_begin = time.time()
 
     # Input parameters:
-    fold = '/fs/pool/pool-ruben/Maria/curvature/Till_4paper/Golgi/'
-    seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl.GolgiFilled.mrc'
-    base_filename = "l2_t6_Golgi"
+    fold = '/fs/pool/pool-ruben/Maria/curvature/Till_4paper/{}/'.format(
+        organelle)
+    seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl.{}Filled.mrc'.format(
+        organelle)
+    base_filename = "l2_t6_{}".format(organelle)
     lbl = 1
     filled_lbl = 2
     min_comp = 1000  # to remove possible segmentation "noise"
@@ -1233,7 +1235,8 @@ if __name__ == "__main__":
 
     main_javier('ER', 10)
     main_felix()
-    # main_till()
+    # main_till('Golgi')
+    # main_till('Vesicles')
 
     # main_light_microscopy_cells()
 
