@@ -433,9 +433,6 @@ def extract_curvatures_after_new_workflow(
                 fold, base_filename, methods[0], radius_hit)
     sys.stdout = open(log_file, 'a')
 
-    print("\nExtracting curvatures without {} nm from border".format(
-        exclude_borders))
-
     for method in methods:
         if method == 'VV':
             if page_curvature_formula and (area2 is False):
@@ -461,6 +458,8 @@ def extract_curvatures_after_new_workflow(
             gt_outfile = None
             vtp_outfile = None
         for dist in range(exclude_borders + 1):
+            print("\nExtracting curvatures without {} nm from border".format(
+                dist))
             if dist > 0:
                 eb = "_excluding{}borders".format(dist)
                 csv_outfile = '{}{}.{}_rh{}{}.csv'.format(
@@ -951,12 +950,10 @@ def main_javier(membrane, radius_hit):
             methods=['VV'], label=lbl, filled_label=filled_lbl,
             min_component=min_component, runtimes=runtimes_file)
 
-        for b in range(0, 2):
-            print("\nExtracting curvatures for {} without {} nm from border"
-                  .format(membrane, b))
-            extract_curvatures_after_new_workflow(
-                fold, base_filename, radius_hit, methods=['VV'],
-                exclude_borders=b, categorize_shape_index=True)
+        print("\nExtracting curvatures for {}".format(membrane))
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, radius_hit, methods=['VV'],
+            exclude_borders=1, categorize_shape_index=True)
 
         # surf_vtp_file = '{}{}.{}_rh{}.vtp'.format(
         #     fold, base_filename, 'AVV', radius_hit)
@@ -999,12 +996,10 @@ def main_felix():
         base_filename, seg_file, fold, pixel_size, radius_hit, methods=['VV'],
         label=lbl, holes=0, min_component=min_component, runtimes=runtimes_file)
 
-    for b in range(0, 2):
-        print("\nExtracting curvatures for vesicle without {} nm from border"
-              .format(b))
-        extract_curvatures_after_new_workflow(
-            fold, base_filename, radius_hit, methods=['VV'],
-            exclude_borders=b, categorize_shape_index=True)
+    print("\nExtracting curvatures for vesicle")
+    extract_curvatures_after_new_workflow(
+        fold, base_filename, radius_hit, methods=['VV'],
+        exclude_borders=1, categorize_shape_index=True)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -1090,10 +1085,9 @@ def main_till(organelle, regions=True):
         p.clear()
 
         # Extract curvatures and join region VTP files to one VTP file:
-        for b in range(0, 2):
-            extract_curvatures_after_new_workflow(
-                fold, base_filename, radius_hit, methods=['VV'],
-                exclude_borders=b, categorize_shape_index=True, regions=cores)
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, radius_hit, methods=['VV'],
+            exclude_borders=1, categorize_shape_index=True, regions=cores)
         surf_file = '{}{}.AVV_rh{}.vtp'.format(fold, base_filename, radius_hit)
         io.merge_vtp_files(region_surf_files, surf_file)
 
@@ -1107,10 +1101,9 @@ def main_till(organelle, regions=True):
             only_normals=False, cores=6, runtimes='')
 
         # Extract curvatures:
-        for b in range(0, 2):
-            extract_curvatures_after_new_workflow(
-                fold, base_filename, radius_hit, methods=['VV'],
-                exclude_borders=b, categorize_shape_index=True)
+        extract_curvatures_after_new_workflow(
+            fold, base_filename, radius_hit, methods=['VV'],
+            exclude_borders=2, categorize_shape_index=True)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -1250,10 +1243,9 @@ def main_pore(isosurface=False, radius_hit=2):
             methods=['VV'], label=lbl, holes=holes,
             min_component=min_component, runtimes=runtimes_file)
 
-    for b in range(0, 2):
-        extract_curvatures_after_new_workflow(
-            fold, base_filename, radius_hit, methods=['VV'],
-            exclude_borders=b, categorize_shape_index=True)
+    extract_curvatures_after_new_workflow(
+        fold, base_filename, radius_hit, methods=['VV'],
+        exclude_borders=1, categorize_shape_index=True)
 
     t_end = time.time()
     duration = t_end - t_begin

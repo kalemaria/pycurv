@@ -56,9 +56,9 @@ def task_calculate_cER_curvatures():
                    # 'verbosity': 2,
                    'actions': [
                        (new_workflow,
-                        [subsubfold, base_filename, pixel_size, radius_hit], {
+                        [base_filename, seg_filename[i], subsubfold, pixel_size,
+                         radius_hit], {
                             'methods': METHODS,
-                            'seg_file': seg_filename[i],
                             'label': lbl,
                             'filled_label': filled_lbl[i],
                             'unfilled_mask': unfilled_mask,

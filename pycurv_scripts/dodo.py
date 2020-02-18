@@ -66,9 +66,9 @@ def task_calculate_cER_curvatures():
                        # 'verbosity': 2,
                        'actions': [
                            (new_workflow,
-                            [subfold, base_filename, pixel_size, radius_hit], {
+                            [base_filename, seg_filename, subfold, pixel_size,
+                             radius_hit], {
                                 'methods': methods,
-                                'seg_file': seg_filename,
                                 'label': lbl,
                                 'filled_label': filled_lbl,
                                 'holes': holes,
@@ -283,11 +283,6 @@ def task_extract_PM_curvatures():
             yield {'name': base_filename,
                    # 'verbosity': 2,
                    'actions': [
-                       (extract_curvatures_after_new_workflow,
-                        [subfold, base_filename, radius_hit], {
-                            'methods': methods,
-                            'exclude_borders': 0
-                        }),
                        (extract_curvatures_after_new_workflow,
                         [subfold, base_filename, radius_hit], {
                             'methods': methods,

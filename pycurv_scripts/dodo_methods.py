@@ -45,11 +45,11 @@ def task_calculate_cER_curvatures():
                        # 'verbosity': 2,
                        'actions': [
                            (new_workflow,  # NVV
-                            [subfold, base_filename, pixel_size, radius_hit], {
+                            [base_filename, seg_filename, subfold, pixel_size,
+                             radius_hit], {
                                 'methods': ['VV'],
                                 'page_curvature_formula': True,
                                 'area2': False,
-                                'seg_file': seg_filename,
                                 'label': lbl,
                                 'filled_label': filled_lbl,
                                 'holes': holes,
@@ -57,11 +57,11 @@ def task_calculate_cER_curvatures():
                                 'cores': 6
                             }),
                            (new_workflow,  # RVV
-                            [subfold, base_filename, pixel_size, radius_hit], {
+                            [base_filename, seg_filename, subfold, pixel_size,
+                             radius_hit], {
                                 'methods': ['VV'],
                                 'page_curvature_formula': False,
                                 'area2': False,
-                                'seg_file': seg_filename,
                                 'label': lbl,
                                 'filled_label': filled_lbl,
                                 'holes': holes,
@@ -69,9 +69,9 @@ def task_calculate_cER_curvatures():
                                 'cores': 6
                             }),
                            (new_workflow,  # SSVV
-                            [subfold, base_filename, pixel_size, radius_hit], {
+                            [base_filename, seg_filename, subfold, pixel_size,
+                             radius_hit], {
                                 'methods': ['SSVV'],
-                                'seg_file': seg_filename,
                                 'label': lbl,
                                 'filled_label': filled_lbl,
                                 'holes': holes,
@@ -79,11 +79,11 @@ def task_calculate_cER_curvatures():
                                 'cores': 6
                             }),
                            (new_workflow,  # AVV
-                            [subfold, base_filename, pixel_size, radius_hit], {
+                            [base_filename, seg_filename, subfold, pixel_size,
+                             radius_hit], {
                                 'methods': ['VV'],
                                 'page_curvature_formula': False,
                                 'area2': True,
-                                'seg_file': seg_filename,
                                 'label': lbl,
                                 'filled_label': filled_lbl,
                                 'holes': holes,
