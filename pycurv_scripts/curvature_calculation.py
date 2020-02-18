@@ -489,13 +489,18 @@ def extract_curvatures_after_new_workflow(
                     csv_region_outfile = csv_outfile.replace(
                         base_filename, base_filename+str(i))
                     csv_region_outfiles.append(csv_region_outfile)
+                    gt_region_outfile = gt_outfile.replace(
+                        base_filename, base_filename + str(i))
+                    vtp_region_outfile = vtp_outfile.replace(
+                        base_filename, base_filename + str(i))
 
                     # Create TriangleGraph object and load the graph file
                     tg = TriangleGraph()
                     tg.graph = load_graph(gt_region_infile)
 
                     _extract_curvatures_from_graph(
-                        tg, csv_region_outfile, dist, gt_outfile, vtp_outfile,
+                        tg, csv_region_outfile, dist,
+                        gt_region_outfile, vtp_region_outfile,
                         categorize_shape_index=categorize_shape_index, region=i)
 
                 # join the region CSV files to one
@@ -1007,9 +1012,15 @@ def main_felix():
     print('\nTotal elapsed time: {} min {} s'.format(minutes, seconds))
 
 
-def main_till(organelle):
+def main_till(organelle, regions=True):
     """
     Main function for running the new_workflow function for Till' data.
+
+    Args:
+        organelle (string): run this organelle in so named subfolder.
+        regions (boolean, optional): if True, split the segmentation into
+        commented regions (minimal size of 1000 voxels) and run the workflow per
+        region, each on 1 core. If False (default), use a ready surface.
 
     Returns:
         None
@@ -1019,8 +1030,6 @@ def main_till(organelle):
     # Input parameters:
     fold = '/fs/pool/pool-ruben/Maria/curvature/Till_4paper/{}/'.format(
         organelle)
-    seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl.{}Filled.mrc'.format(
-        organelle)
     base_filename = "l2_t6_{}".format(organelle)
     lbl = 1
     filled_lbl = 2
@@ -1028,59 +1037,80 @@ def main_till(organelle):
     pixel_size = 1.684  # nm
     radius_hit = 10  # nm
 
-    # Load the segmentation numpy array from the file and join both labels as 1:
-    seg = io.load_tomo(fold + seg_file)
-    assert (isinstance(seg, np.ndarray))
-    data_type = seg.dtype
-    binary_seg = ((seg == lbl) | (seg == filled_lbl)).astype(data_type)
-    binary_seg_path = os.path.splitext(fold + seg_file)[0] + 'Binary.mrc'
-    io.save_numpy(binary_seg, binary_seg_path)
+    if regions:
+        # Load the segmentation numpy array from the file and join both labels
+        # as 1:
+        seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl.{}Filled.mrc'.format(
+            organelle)
+        seg = io.load_tomo(fold + seg_file)
+        assert (isinstance(seg, np.ndarray))
+        data_type = seg.dtype
+        binary_seg = ((seg == lbl) | (seg == filled_lbl)).astype(data_type)
+        binary_seg_path = os.path.splitext(fold + seg_file)[0] + 'Binary.mrc'
+        io.save_numpy(binary_seg, binary_seg_path)
 
-    # Split the segmentation into binary regions, with 1 instead of both labels:
-    binary_seg_regions, _ = split_segmentation(
-        infile=binary_seg_path, lbl=1, close=False, min_region_size=min_comp)
+        # Split the segmentation into binary regions, with 1 instead of both
+        # labels:
+        binary_seg_regions, _ = split_segmentation(
+            infile=binary_seg_path, lbl=1, close=False,
+            min_region_size=min_comp)
 
-    cores = len(binary_seg_regions)
-    seg_region_files = []
-    base_region_files = []
-    region_surf_files = []
-    for i, binary_seg_region in enumerate(binary_seg_regions):
-        # Restore the original labels at place of each binary region, else 0:
-        seg_region = seg * binary_seg_region
+        cores = len(binary_seg_regions)
+        seg_region_files = []
+        base_region_files = []
+        region_surf_files = []
+        for i, binary_seg_region in enumerate(binary_seg_regions):
+            # Restore the original labels at place of each binary region:
+            seg_region = seg * binary_seg_region
 
-        # Prepare files and filenames for the runs i/o:
-        seg_region_file = os.path.splitext(seg_file)[0] + str(i + 1) + '.mrc'
-        io.save_numpy(seg_region, fold + seg_region_file)
-        seg_region_files.append(seg_region_file)
+            # Prepare files and filenames for the runs i/o:
+            seg_region_file = os.path.splitext(seg_file)[0] + str(i+1) + '.mrc'
+            io.save_numpy(seg_region, fold + seg_region_file)
+            seg_region_files.append(seg_region_file)
 
-        base_region_file = "{}{}".format(base_filename, str(i + 1))
-        base_region_files. append(base_region_file)
+            base_region_file = "{}{}".format(base_filename, str(i + 1))
+            base_region_files. append(base_region_file)
 
-        region_surf_file = '{}{}.AVV_rh{}.vtp'.format(
-            fold, base_region_file, radius_hit)
-        region_surf_files.append(region_surf_file)
+            region_surf_file = '{}{}.AVV_rh{}.vtp'.format(
+                fold, base_region_file, radius_hit)
+            region_surf_files.append(region_surf_file)
 
-    # Run each region on a different core:
-    print("\nCalculating curvatures for {} regions".format(cores))
-    p = pp.ProcessPool(cores)
-    print('Opened a pool with {} processes'.format(cores))
-    p.map(partial(new_workflow,
-                  fold=fold, pixel_size=pixel_size, radius_hit=radius_hit,
-                  methods=['VV'], page_curvature_formula=False, area2=True,
-                  label=lbl, filled_label=filled_lbl, unfilled_mask=None,
-                  holes=0, min_component=0, remove_wrong_borders=True,
-                  only_normals=False, cores=1, runtimes=''),
-          base_region_files, seg_region_files)
-    p.close()
-    p.clear()
+        # Run each region on a different core:
+        print("\nCalculating curvatures for {} regions".format(cores))
+        p = pp.ProcessPool(cores)
+        print('Opened a pool with {} processes'.format(cores))
+        p.map(partial(new_workflow,
+                      fold=fold, pixel_size=pixel_size, radius_hit=radius_hit,
+                      methods=['VV'], page_curvature_formula=False, area2=True,
+                      label=lbl, filled_label=filled_lbl, unfilled_mask=None,
+                      holes=0, min_component=0, remove_wrong_borders=True,
+                      only_normals=False, cores=1, runtimes=''),
+              base_region_files, seg_region_files)
+        p.close()
+        p.clear()
 
-    # Join region VTP files to one VTP file and extract curvatures:
-    surf_file = '{}{}.AVV_rh{}.vtp'.format(fold, base_filename, radius_hit)
-    io.merge_vtp_files(region_surf_files, surf_file)
-    for b in range(0, 2):
-        extract_curvatures_after_new_workflow(
-            fold, base_filename, radius_hit, methods=['VV'],
-            exclude_borders=b, categorize_shape_index=False, regions=cores)
+        # Extract curvatures and join region VTP files to one VTP file:
+        for b in range(0, 2):
+            extract_curvatures_after_new_workflow(
+                fold, base_filename, radius_hit, methods=['VV'],
+                exclude_borders=b, categorize_shape_index=True, regions=cores)
+        surf_file = '{}{}.AVV_rh{}.vtp'.format(fold, base_filename, radius_hit)
+        io.merge_vtp_files(region_surf_files, surf_file)
+
+    else:  # No regions, use the ready surface
+        new_workflow(
+            base_filename, "", fold=fold,
+            pixel_size=pixel_size, radius_hit=radius_hit, methods=['VV'],
+            page_curvature_formula=False, area2=True, label=lbl,
+            filled_label=filled_lbl, unfilled_mask=None, holes=0,
+            min_component=min_comp, remove_wrong_borders=True,
+            only_normals=False, cores=6, runtimes='')
+
+        # Extract curvatures:
+        for b in range(0, 2):
+            extract_curvatures_after_new_workflow(
+                fold, base_filename, radius_hit, methods=['VV'],
+                exclude_borders=b, categorize_shape_index=True)
 
     t_end = time.time()
     duration = t_end - t_begin
@@ -1237,6 +1267,7 @@ if __name__ == "__main__":
     main_felix()
     # main_till('Golgi')
     # main_till('Vesicles')
+    # main_till('dimifilt_th10000_binned2_smooth200_dec0.6', regions=False)
 
     # main_light_microscopy_cells()
 
