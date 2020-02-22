@@ -13,8 +13,8 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 
 __author__ = 'kalemanov'
 
-tg_file = '/fs/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/' \
-          '180830_TITAN_l2_t2half/TCB_180830_l2_t2half.cER.AVV_rh10.gt'
+tg_file = '/fs/pool/pool-ruben/Maria/workspace/github/pycurv/' \
+          'experimental_data_sets/ER/AVV/TCB_180830_l2_t2half.ER.AVV_rh10.gt'
 tg = TriangleGraph()
 tg.graph = load_graph(tg_file)
 poly_verts, poly_lines = tg.graph_to_points_and_lines_polys()

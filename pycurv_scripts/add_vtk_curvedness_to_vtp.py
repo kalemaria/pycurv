@@ -15,8 +15,8 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 __author__ = 'kalemanov'
 
 # Read in graph GT file
-tg_file = '/fs/gpfs03/lv04/pool/pool-ruben/Maria/4Javier/new_curvature/TCB/' \
-          '180830_TITAN_l2_t2half/TCB_180830_l2_t2half.cER.AVV_rh10.gt'
+tg_file = '/fs/pool/pool-ruben/Maria/workspace/github/pycurv/' \
+          'experimental_data_sets/ER/AVV/TCB_180830_l2_t2half.ER.AVV_rh10.gt'
 tg = TriangleGraph()
 tg.graph = load_graph(tg_file)
 # Read in VTK principle curvatures for each vertex,
