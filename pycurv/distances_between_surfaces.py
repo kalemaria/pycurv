@@ -225,9 +225,9 @@ def calculate_distances(
         reverse_direction=False, mem1="PM", verbose=False):
     """
     Function to compute shortest distances between two membranes using their
-    surfaces. Adds a vertex property to cER graph:
-    "<mem1>distance" with a distance from the first membrane surface for the
-        intersected triangles in the second membrane surface.
+    surfaces. Adds a vertex property to cER graph, "<mem1>distance", with a
+    distance from the first membrane surface for the intersected triangles in
+    the second membrane surface.
     All distances measures are in units of the graphs and the surface.
 
     Args:
@@ -235,8 +235,7 @@ def calculate_distances(
             normals
         tg_mem2 (TriangleGraph): graph of the second membrane
         surf_mem2 (vtkPolyData): the second membrane surface
-        maxdist (float): maximal distance from the first to the second
-            membrane
+        maxdist (float): maximal distance from the first to the second membrane
         offset (float, optional): positive or negative offset (default 0)
             to add to the distances, depending on how the surfaces where
             generated and/or in order to account for membrane thickness
