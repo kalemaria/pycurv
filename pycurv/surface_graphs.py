@@ -79,12 +79,12 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 Notes), default 0
 
         Returns:
-            - orientation of vertex v (int): 1 if it belongs to a surface patch,
-              2 if it belongs to a crease junction or 3 if it doesn't have a
-              preferred orientation
-            - estimated normal "n_v" (3x1 array) if class is 1, otherwise zeros
-            - the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
-              zeros
+            orientation of vertex v (int): 1 if it belongs to a surface patch,
+                2 if it belongs to a crease junction or 3 if it doesn't have a
+                preferred orientation
+            estimated normal "n_v" (3x1 array) if class is 1, otherwise zeros
+            the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
+                zeros
 
         Notes:
             If epsilon = 0 and eta = 0, all triangles will be classified as
@@ -399,12 +399,12 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 calculated for this vertex (default)
 
         Returns:
-            - orientation of vertex v (int): 1 if it belongs to a surface patch,
-              2 if it belongs to a crease junction or 3 if it doesn't have a
-              preferred orientation
-            - estimated normal "n_v" (3x1 array) if class is 1, otherwise zeros
-            - the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
-              zeros
+            orientation of vertex v (int): 1 if it belongs to a surface patch,
+                2 if it belongs to a crease junction or 3 if it doesn't have a
+                preferred orientation
+            estimated normal "n_v" (3x1 array) if class is 1, otherwise zeros
+            the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
+                zeros
         """
         if self.__class__.__name__ == 'TriangleGraph':
             num_neighbors, V_v = self.collect_normal_votes(

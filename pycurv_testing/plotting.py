@@ -239,6 +239,7 @@ def plot_composite_line_hist(
         num_x_values=0, zorders=None, fontsize=30, ncol=1):
     """
     Plots several data sets as line histograms in one plot.
+
     Args:
         labels: list of legend labels (str) for the data sets
         line_styles: list of line styles (str)
@@ -274,6 +275,7 @@ def plot_composite_line_hist(
 
     Returns:
         hist_areas: list of histogram areas, values are Null in not cumulative
+
     Note:
         either data_arrays or data_files has to be given
 

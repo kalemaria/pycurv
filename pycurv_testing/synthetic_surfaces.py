@@ -178,6 +178,7 @@ def is_coordinate_on_sphere_surface(x, y, z, r, error=0.0):
     """
     Checks whether a coordinate is on smooth sphere surface. Only works if the
     sphere is centered at (0, 0, 0)!
+
     Args:
         x (float): x coordinate
         y (float): y coordinate
@@ -201,11 +202,12 @@ def are_triangle_vertices_on_smooth_sphere_surface(
     """
     Checks and prints out how many triangle vertices (from total) of the given
     surface are on smooth sphere surface.
+
     Args:
         surface (vtk.vtkPolyData): sphere surface approximated by triangles
         r (int or float): smooth sphere radius
         center (float[3]): coordinates in the center of the sphere surface
-             (default=[0, 0, 0])
+            (default=[0, 0, 0])
         error (float): allowed relative +/- error of the radius (default=0.0)
 
     Returns:
