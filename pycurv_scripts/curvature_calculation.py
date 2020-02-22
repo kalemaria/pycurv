@@ -925,7 +925,7 @@ def main_javier(membrane, radius_hit):
     """
     t_begin = time.time()
 
-    fold = "../experimental_data_sets/ER/"
+    fold = "../experimental_data_sets/ER/AVV/"
     seg_file = "t2_ny01_lbl.labels_FILLED_half.mrc"
     base_filename = "TCB_180830_l2_t2half.{}".format(membrane)
     pixel_size = 1.368
@@ -960,6 +960,8 @@ def main_javier(membrane, radius_hit):
         # outfile_base = '{}{}.{}_rh{}'.format(
         #     fold, base_filename, 'AVV', radius_hit)
         # scale = (pixel_size, pixel_size, pixel_size)
+        # seg = io.load_tomo(fold + seg_file)
+        # size = seg.shape
         # convert_vtp_to_stl_surface_and_mrc_curvatures(
         #     surf_vtp_file, outfile_base, scale, size)
     else:
