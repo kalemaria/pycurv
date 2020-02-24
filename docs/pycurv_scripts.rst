@@ -1,3 +1,5 @@
+:orphan:
+
 pycurv\_scripts package
 =======================
 
