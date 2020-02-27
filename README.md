@@ -56,8 +56,8 @@ This package contains Python scripts applying the PyCurv package and
 combining different functions into the workflows described above, the main are:
 
 - `curvature_calculation.py` script for membrane curvature calculation workflows
-  used in ([Bäuerlein et al. 2017, Cell](https://www.cell.com/fulltext/S0092-8674(17)30934-0))
-  and ([Collado et al. 2019, Developmental Cell](https://www.cell.com/developmental-cell/fulltext/S1534-5807(19)30865-2))
+  used in ([Bäuerlein et al. 2017, Cell](https://doi.org/10.1016/j.cell.2017.08.009))
+  and ([Collado et al. 2019, Developmental Cell](https://doi.org/10.1016/j.devcel.2019.10.018))
 - `distances_calculation.py` script for membrane distances and thicknesses
   calculation used in (Collado et al. 2019)
 - `ribosome_density_calculation.py` script for ribosome density calculation used
@@ -241,7 +241,15 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
    ```
 
 
-# Running PyCurv
+# Applying PyCurv
+
+To test your PyCurv installation, you can run tests on synthetic surfaces or
+workflow scripts on the provided experimental data sets, as explained in the
+next subsections.
+Then, you can build your own PyCurv curvature estimation workflow, as explained
+step-by-step in the "User manual" subsection.
+For the full documentation of all modules and functions, please consult
+`[pathToInstallation]/pycurv/docs/_build/html/py-modindex.html)`.
 
 ## Running the tests
 To run the integration tests of the curvature workflow on synthetic surfaces,
@@ -274,7 +282,31 @@ cd [pathToInstallation]/pycurv/pycurv_scripts
 python curvature_calculation.py
 ```
 The output will be generated in the respective subfolders of the input,
-`vesicle` and `ER`. You can change the parameters in the script.
+`vesicle` and `ER`.
+You can change the parameters and find more workflow examples in the script.
+
+## User manual
+If the tests and the examples above worked for you, now you can learn how to
+build your own PyCurv curvature estimation workflow.
+
+If the input segmentation (e.g. MRC) is filled, the surface is generated using
+the *compartment segmentation*, otherwise using the *membrane segmentation*
+algorithm.
+This step is omitted if the input is a surface (e.g. VTP).
+
+From the surface, a graph is generated.
+
+If it has surface borders, they are removed.
+
+Then, surface normals are estimated at each triangle center using the
+neighboring triangles.
+
+Finally, principle directions and curvatures are estimated and different
+combined indices calculated using one of the tensor voting-based algorithms:
+RVV, AVV (default algorithm) or SSVV.
+
+The output is a surface with all the calculated values stored as triangle
+properties (VTP).
 
 
 # Reporting bugs
