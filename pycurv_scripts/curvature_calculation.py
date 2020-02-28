@@ -15,7 +15,7 @@ from functools import partial
 from pycurv import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
     TriangleGraph, PointGraph, curvature_estimation, merge_vtp_files,
-    split_segmentation)
+    split_segmentation, MAX_DIST_SURF, THRESH_SIGMA1)
 from pycurv import pycurv_io as io
 
 """
@@ -26,18 +26,6 @@ Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
 """
 
 __author__ = 'kalemanov'
-
-
-# CONSTANTS
-MAX_DIST_SURF = 3
-"""int: a constant determining the maximal distance in pixels of a point on the
-surface from the segmentation mask, used in gen_isosurface and gen_surface
-functions.
-"""
-THRESH_SIGMA1 = 0.699471735
-""" float: when convoluting a binary mask with a gaussian kernel with sigma 1,
-values 1 at the boundary with 0's become this value.
-"""
 
 
 def convert_vtp_to_stl_surface_and_mrc_curvatures(
@@ -160,7 +148,7 @@ def new_workflow(
         seg_file (str): membrane segmentation mask, pass '' if surface exists
         fold (str): path where the input membrane segmentation is and where the
             output will be written
-        pixel_size (float): pixel size in nanometer of the membrane mask
+        pixel_size (float): pixel size in nanometer of the segmentation
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
@@ -280,10 +268,8 @@ def new_workflow(
             tg.graph.num_vertices(), tg.graph.num_edges()))
 
         # Remove the wrong borders (surface generation artefact)
-        b = 0
         if remove_wrong_borders:
-            b += MAX_DIST_SURF  # "padding" from masking in surface generation
-        if b > 0:
+            b = MAX_DIST_SURF  # "padding" from masking in surface generation
             print('\nFinding triangles that are {} pixels to surface borders...'
                   .format(b))
             tg.find_vertices_near_border(b * pixel_size, purge=True)
