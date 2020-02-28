@@ -324,10 +324,9 @@ def new_workflow(
                 poly_surf=surf_clean, cores=cores, runtimes=runtimes)
             method_tg_surf_dict[method] = (tg_curv, surface_curv)
 
-    if only_normals is False:
+    if only_normals is False:  # Saving the output (graph and surface objects)
+        # for later filtering or inspection in ParaView:
         for method in list(method_tg_surf_dict.keys()):
-            # Saving the output (graph and surface object) for later
-            # filtering or inspection in ParaView:
             (tg, surf) = method_tg_surf_dict[method]
             if method == 'VV':
                 if page_curvature_formula and (area2 is False):
