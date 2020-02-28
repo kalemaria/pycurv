@@ -289,25 +289,117 @@ You can change the parameters and find more workflow examples in the script.
 If the tests and the examples above worked for you, now you can learn how to
 build your own PyCurv curvature estimation workflow.
 
-If the input segmentation (e.g. MRC) is filled, the surface is generated using
-the *compartment segmentation*, otherwise using the *membrane segmentation*
-algorithm.
-This step is omitted if the input is a surface (e.g. VTP).
+Importing modules:
+```
+from pycurv import pycurv_io as io
+from pycurv import run_gen_surface
+import numpy as np
+from scipy import ndimage
+TODO
+```
 
-From the surface, a graph is generated.
+Initializing variables:
+```
+fold = <your_path>
+seg_file = <your_segmentation_file>  # for step 1.
+label = <membrane_label>  # for step 1.a)
+cube_size = <pixels>  # optional for step 1.a), try 3 or 5
+filled_label = <lumen_label>  # for step 1.b)
+THRESH_SIGMA1 = 0.699471735  # constant for step 1.b)
+base_filename = <prefix_for_your_output_files>
+TODO
+```
 
-If it has surface borders, they are removed.
+1. If the input is a segmentation (e.g. MRC), load it first:
+```
+seg = io.load_tomo(fold + seg_file)
+data_type = seg.dtype
+```
 
-Then, surface normals are estimated at each triangle center using the
-neighboring triangles.
+a) If the segmentation is not filled (contains only membrane label), generate
+the surface using the *membrane segmentation* algorithm.
+First, get the membrane segmentation:
+```
+binary_seg = (seg == label).astype(data_type)
+```
+Then, generate surface delineating the membrane segmentation:
+```
+surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
+```
+However, the surface is not always oriented properly, especially if there are
+holes in the segmentation.
+To close small holes (fitting in the given cube) in the segmentation, run
+before `run_gen_surface`:
+```
+cube = np.ones((cube_size, cube_size, cube_size))
+binary_seg = ndimage.binary_closing(
+    binary_seg, structure=cube, iterations=1).astype(data_type)
+```
 
-Finally, principle directions and curvatures are estimated and different
-combined indices calculated using one of the tensor voting-based algorithms:
-RVV, AVV (default algorithm) or SSVV.
+b) If the segmentation is filled, generate the surface using the *compartment
+segmentation* algorithm.
+This is the preferred approach, because the surface is always properly oriented.
+As in the previous case, first, get the membrane segmentation:
+```
+binary_seg = (seg == label).astype(data_type)
+```
+Second, combine the membrane segmentation with the lumen segmentation into
+compartment (filled) segmentation:
+```
+filled_binary_seg = np.logical_or(
+    seg == label, seg == filled_label).astype(data_type)
+```
+Then, generate isosurface around the slightly smoothed compartment segmentation
+and apply the mask of membrane segmentation:
+```
+surf = run_gen_surface(
+    filled_binary_seg, fold + base_filename, lbl=1,
+    other_mask=binary_seg, isosurface=True, sg=1, thr=THRESH_SIGMA1)
+```
+
+Omit step 1. if the input is a surface (e.g. VTP) and load it:
+```
+surf = io.load_poly(fold + surf_file)
+```
+
+2.a) From the surface, generate a graph:
+```
+TODO
+```
+b) If the surface has borders, they have grown during the surface generation
+(in order to close small holes) and should be removed:
+```
+TODO
+```
+
+3. Then, estimate surface normals at each triangle center using the neighboring
+triangles:
+```
+TODO
+```
+
+4. Finally, estimate principle directions and curvatures and calculate different
+combined indices using one of the tensor voting-based algorithms:
+RVV, AVV (default algorithm) or SSVV:
+```
+TODO
+```
 
 The output is a surface with all the calculated values stored as triangle
 properties (VTP).
 
+TODO Add a list of properties name and explanation!
+
+To extract the curvatures into a CSV file, run:
+```
+extract_curvatures_after_new_workflow(
+    fold, base_filename, radius_hit, methods=['VV'], exclude_borders=1
+```
+Because of the last option, two files will be output: with all values and
+excluding those within 1 nm to the surface border.
+
+Finally, you can plot your results in the CSV file, using for example
+`[pathToInstallation]/pycurv/pycurv_testing/plotting.py`.
 
 # Reporting bugs
 If you have found a bug or have an issue with the software, please open an issue
