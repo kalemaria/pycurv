@@ -69,7 +69,7 @@ def normals_directions_and_curvature_estimation(
         poly_surf (vtkPolyData, optional): surface from which the graph was
             generated, scaled to given units (required only for SSVV, default
             None)
-        cores (int, optional): number of cores to run VV in parallel (default 4)
+        cores (int, optional): number of cores to run VV in parallel (default 6)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default '')
 
@@ -345,7 +345,7 @@ def curvature_estimation(
             approach), otherwise a local distance map is calculated later for
             each vertex (default)
         cores (int): number of cores to run VV (collect_curvature_votes and
-            estimate_curvature) in parallel (default 4)
+            estimate_curvature) in parallel (default 6)
         runtimes (str): if given, runtimes and some parameters are added to
             this file (default '')
         vertex_based (boolean, optional): if True (default False), curvature is
