@@ -362,37 +362,56 @@ User manual
 If the tests and the examples above worked for you, now you can learn how to
 build your own PyCurv curvature estimation workflow.
 
-Importing modules:
+Imports
+^^^^^^^
+
+Fist, import the following:
 
 .. code-block::
 
    from pycurv import pycurv_io as io
-   from pycurv import run_gen_surface
+   from pycurv import run_gen_surface, THRESH_SIGMA1, TriangleGraph, MAX_DIST_SURF
    import numpy as np
    from scipy import ndimage
    TODO
 
-Initializing variables:
+Parameters
+^^^^^^^^^^
+
+Initialize the following parameters for your run:
 
 .. code-block::
 
-   fold = <your_path>
-   seg_file = <your_segmentation_file>  # for step 1.
-   label = <membrane_label>  # for step 1.a)
-   cube_size = <pixels>  # optional for step 1.a), try 3 or 5
-   filled_label = <lumen_label>  # for step 1.b)
-   THRESH_SIGMA1 = 0.699471735  # constant for step 1.b)
+   fold = <your_path_to_input>  # output will be also written there
    base_filename = <prefix_for_your_output_files>
+   pixel_size = <nanometers>  # pixel size of the (underlying) segmentation
+
+   # for step 1.a):
+   seg_file = <your_segmentation_file>  # MRC in this example
+   # for step 1.a)I.:
+   label = <membrane_label>
+   cube_size = <pixels>  # optional, try 3 or 5
+   # for step 1.a)II.:
+   filled_label = <lumen_label>
+   # for step 1.b):
+   surf_file = <your_surface_file>  # VTP in this example
+   # for step 2.c):
+   min_component = <number_triangles>  # default 100, to remove small disconnected
+                                       # surface components within this size
    TODO
 
+Workflow
+^^^^^^^^
 
-#. If the input is a segmentation (e.g. MRC), load it first:
+
+#. Generate or load the surface.
+   a) If the input is a segmentation (here MRC), load it first:
    .. code-block::
 
       seg = io.load_tomo(fold + seg_file)
       data_type = seg.dtype
 
-a) If the segmentation is not filled (contains only membrane label), generate
+I. If the segmentation is not filled (contains only membrane label), generate
 the surface using the *membrane segmentation* algorithm.
 First, get the membrane segmentation:
 
@@ -417,7 +436,7 @@ before ``run_gen_surface``\ :
    binary_seg = ndimage.binary_closing(
        binary_seg, structure=cube, iterations=1).astype(data_type)
 
-b) If the segmentation is filled, generate the surface using the *compartment
+II. If the segmentation is filled, generate the surface using the *compartment
 segmentation* algorithm.
 This is the preferred approach, because the surface is always properly oriented.
 As in the previous case, first, get the membrane segmentation:
@@ -443,24 +462,44 @@ and apply the mask of membrane segmentation:
        filled_binary_seg, fold + base_filename, lbl=1,
        other_mask=binary_seg, isosurface=True, sg=1, thr=THRESH_SIGMA1)
 
-Omit step 1. if the input is a surface (e.g. VTP) and load it:
+In both cases a) and b), the surface is saved to a VTP file named
+``fold + base_filename + ".surface.vtp"``.
+
+b) If the input is a surface (here VTP), omit the above steps and load it:
 
 .. code-block::
 
    surf = io.load_poly(fold + surf_file)
 
-2.a) From the surface, generate a graph:
+2.a) From the surface, generate a "triangle" graph, with vertices at triangle
+centers and edges between neighboring triangles:
 
 .. code-block::
 
-   TODO
+   tg = TriangleGraph()
+   scale = (pixel_size, pixel_size, pixel_size)
+   tg.build_graph_from_vtk_surface(surf, scale)
 
-b) If the surface has borders, they have grown during the surface generation
-(in order to close small holes) and should be removed:
+b) If the surface has borders, they have grown a bit during the surface
+generation (in order to bridge upon small holes) and should be removed:
 
 .. code-block::
 
-   TODO
+   tg.find_vertices_near_border(MAX_DIST_SURF * pixel_size, purge=True)
+
+c) You may filter out possibly occurring small disconnected fragments:
+
+.. code-block::
+
+   tg.find_small_connected_components(
+       threshold=min_component, purge=True, verbose=True)
+
+You can check the number of graph vertices and edges before / after each step:
+
+.. code-block::
+
+   print('The graph has {} vertices and {} edges'.format(
+       tg.graph.num_vertices(), tg.graph.num_edges()))
 
 
 #. 
