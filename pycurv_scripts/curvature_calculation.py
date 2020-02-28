@@ -175,13 +175,14 @@ def new_workflow(
         label (int, optional): label to be considered in the membrane mask
             (default 1)
         filled_label (int, optional): if the membrane mask was filled with this
-            label (default None), a better surface generation will be used (with
-            a slight smoothing; holes are closed automatically by the filling.)
+            label (default None), complementing it to a compartment
+            segmentation, a better surface generation will be used (with a
+            slight smoothing; holes are closed automatically by the filling)
         unfilled_mask (numpy.ndarray, optional): if given (default None), apply
-            this mask on the extracted surface from an unfilled segmentation,
+            this mask on the extracted surface using a membrane segmentation,
             instead of the segmentation itself; not used if filled_label is
             given
-        holes (int, optional): if > 0, small holes in the unfilled segmentation
+        holes (int, optional): if > 0, small holes in the membrane segmentation
             are closed with a cube of that size in pixels before curvature
             estimation (default 0); not used if filled_label is given
         remove_wrong_borders (boolean, optional): if True (default), wrong
@@ -216,16 +217,17 @@ def new_workflow(
         assert(isinstance(seg, np.ndarray))
         data_type = seg.dtype
 
-        if filled_label is not None:  # if filled seg. given
-            # Surface generation with filled segmentation using vtkMarchingCubes
-            # and applying the mask of unfilled segmentation
-            print("\nMaking filled and unfilled binary segmentations...")
+        if filled_label is not None:  # if lumen segmentation given:
+            # Surface generation with compartment segmentation using Marching
+            # Cubes algorithm and applying the mask of membrane segmentation.
+            print("\nMaking membrane and compartment binary segmentations...")
             binary_seg = (seg == label).astype(data_type)
             if not np.any(binary_seg):
                 raise pexceptions.PySegInputError(
                     expr="new_workflow",
                     msg="Label not found in the segmentation!")
-            # have to combine the outer and inner seg. for the filled one:
+            # Combine the membrane and lumen segmentations into the compartment
+            # (filled) segmentation:
             filled_binary_seg = np.logical_or(
                 seg == label, seg == filled_label).astype(data_type)
             print("\nGenerating a surface...")
@@ -239,9 +241,8 @@ def new_workflow(
             binary_seg_file = "{}{}.binary_seg.mrc".format(fold, base_filename)
             io.save_numpy(binary_seg, binary_seg_file)
 
-        else:  # Surface generation with vtkSurfaceReconstructionFilter method
-            # Load the segmentation numpy array from a file and get only the
-            # requested labels as 1 and the background as 0:
+        else:  # Surface generation with Hoppe's algorithm and applying the mask
+            # of membrane segmentation.
             print("\nMaking the segmentation binary...")
             binary_seg = (seg == label).astype(data_type)
             if not np.any(binary_seg):
@@ -282,8 +283,6 @@ def new_workflow(
         b = 0
         if remove_wrong_borders:
             b += MAX_DIST_SURF  # "padding" from masking in surface generation
-        # if holes < 0:
-        #     b += abs(holes)
         if b > 0:
             print('\nFinding triangles that are {} pixels to surface borders...'
                   .format(b))
