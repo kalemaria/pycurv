@@ -88,12 +88,13 @@ Some experimental data can be found here:
 
 - vesicle: membrane segmentation of a vesicle from a cryo-electron tomogram
   (Bäuerlein et al. 2017)
-- vesicle: compartment segmentation of a cortical ER membrane from a cryo-electron
-  tomogram (Collado et al. 2019)
+- vesicle: compartment segmentation of a cortical ER membrane from a
+  cryo-electron tomogram (Collado et al. 2019)
 - embryo: surfaces of C. elegans embryo cells imaged by confocal light
   microscopy and segmented by LimeSeg (Machado et al., BMC Bioinformatics 2019)
 - brain: cortical pial surfaces of both human brain hemispheres imaged by MRI
-  and segmented by FreeSurfer, taken from [Mindboggle example data](https://osf.io/8cf5z/).
+  and segmented by FreeSurfer, taken from
+  [Mindboggle example data](https://osf.io/8cf5z/).
 
 Output of the following curvature algorithms is included for experimental data
 (AVV and SSVV output also includes minimum and maximum principal curvatures
@@ -114,8 +115,8 @@ has to be requested from its author, Dr. Vladan Lučić.
 The following instruction were tested on SUSE Linux Enterprise Server 12, but
 they should work on other Linux-based systems.
 
-1. Install anaconda with [graph-tool](https://graph-tool.skewed.de/) (Peixoto,
-   2014) and its dependencies:
+1. Install anaconda with [graph-tool](https://graph-tool.skewed.de/)
+   (Peixoto, 2014) and its dependencies:
    ```
    targetFold=<your_anaconda_path>
    wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
@@ -154,17 +155,15 @@ they should work on other Linux-based systems.
    export PATH=<your_anaconda_path>/bin:$PATH
    ```
 
-
 2. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
    DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in your `~/.bashrc`:
    ```
    export PYTHONPATH=<your_path_to_pyto>:$PYTHONPATH
    ```
 
-
 3. To download the PyCurv package, run from a bash shell:
    ```
-   cd [pathToInstallation]  # your destination folder
+   cd <path_to_installation>  # your destination folder
    git clone https://github.com/kalemaria/pycurv.git
    ```
    The folder `pycurv` should be created, containing the modules and folders
@@ -172,7 +171,7 @@ they should work on other Linux-based systems.
 
 4. Install dependencies from the `setup.py`:
    ```
-   cd [pathToInstallation]/pycurv
+   cd <path_to_installation>/pycurv
    python setup.py install
    ```
    You should be able to import `pycurv`, `pycurv_testing` and `pycurv_scripts`
@@ -185,7 +184,8 @@ a virtual machine on other operating systems (Windows or Mac).
 Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
 
 1. Install [graph-tool](https://graph-tool.skewed.de/) (Peixoto, 2014)
-   for Ubuntu according to [instructions](https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu),
+   for Ubuntu according to [instructions](https://git.skewed.de/count0/
+   graph-tool/wikis/installation-instructions#debian-ubuntu),
    `DISTRIBUTION=bionic`, but before running `apt-get update` add the public key:
    ```
    apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
@@ -216,7 +216,7 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
 
 4. To download the PyCurv package, run from a bash shell:
    ```
-   cd [pathToInstallation]  # your destination folder
+   cd <path_to_installation>  # your destination folder
    git clone https://github.com/kalemaria/pycurv.git
    ```
    The folder `pycurv` should be created, containing the modules and folders
@@ -224,7 +224,7 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
 
 5. Install dependencies from the `setup.py`:
    ```
-   cd [pathToInstallation]/pycurv
+   cd <path_to_installation>/pycurv
    python setup.py install
    ```
    You should be able to import `pycurv`, `pycurv_testing` and `pycurv_scripts`
@@ -249,17 +249,19 @@ next subsections.
 Then, you can build your own PyCurv curvature estimation workflow, as explained
 step-by-step in the "User manual" subsection.
 For the full documentation of all modules and functions, please consult
-`[pathToInstallation]/pycurv/docs/_build/html/py-modindex.html)`.
+`<path_to_installation>/pycurv/docs/_build/html/py-modindex.html)`.
 
 ## Running the tests
 To run the integration tests of the curvature workflow on synthetic surfaces,
 execute from a bash shell:
 ```
-pytest -q --disable-pytest-warnings [pathToInstallation]/pycurv/pycurv_testing/test_vector_voting.py
+pytest -q --disable-pytest-warnings <path_to_installation>/pycurv/pycurv_testing/
+test_vector_voting.py
 ```
 To run a specific test, for example `test_sphere_curvatures`, run:
 ```
-pytest -q --disable-pytest-warnings [pathToInstallation]/pycurv/pycurv_testing/test_vector_voting.py::test_sphere_curvatures
+pytest -q --disable-pytest-warnings <path_to_installation>/pycurv/pycurv_testing/
+test_vector_voting.py::test_sphere_curvatures
 ```
 If it does not work, try to replace `pytest -q` by `python -m pytest`.
 
@@ -278,7 +280,7 @@ In the same manner, you can run:
 To run the curvature estimation workflow on the vesicle and ER segmentation in
 the `experimental_data_sets` folder, just run in a bash shell:
 ```
-cd [pathToInstallation]/pycurv/pycurv_scripts
+cd <path_to_installation>/pycurv/pycurv_scripts
 python curvature_calculation.py
 ```
 The output will be generated in the respective subfolders of the input,
@@ -287,7 +289,8 @@ You can change the parameters and find more workflow examples in the script.
 
 ## User manual
 If the tests and the examples above worked for you, now you can learn how to
-build your own PyCurv curvature estimation workflow.
+build your own PyCurv curvature estimation workflow.  
+TODO add the workflow UML activity diagram.
 
 ### Imports
 Fist, import the following:
@@ -308,157 +311,158 @@ pixel_size = <nanometers>  # pixel size of the (underlying) segmentation
 radius_hit = <nm>  # radius of the smallest feature of interest (neighborhood)
 
 # alternative or optional:
-# for step 1.a):
+# for step 1.:
+#   for segmentation input:
 seg_file = <your_segmentation_file>  # MRC in this example
-# for step 1.a)I.:
 label = <membrane_label>
 cube_size = <pixels>  # try 3 or 5
-# for step 1.a)II.:
-filled_label = <lumen_label>
-# for step 1.b):
+filled_label = <lumen_label>  # if compartment segmentation
+#   for surface input:
 surf_file = <your_surface_file>  # VTP in this example
-# for step 2.c):
+# for step 2.:
 # to remove small disconnected surface components within this size (default 100)
 min_component = <number_triangles>
 # for step 3.:
 methods = ["VV", "SSVV"]  # list of algorithms to run (default "VV")
-area2 = <True_or_False>  # if methods contains "VV": True for AVV, False for RVV
+area2 = <True_or_False>  # if method "VV": True for AVV (default), False for RVV
 cores = <cores>  # number of cores to run VV in parallel (default 6)
 ```
 
-### Workflow
+### Building your workflow
 1. Generate or load the surface.
-a) If the input is a segmentation (here MRC), load it first:
-```python
-seg = io.load_tomo(fold + seg_file)
-data_type = seg.dtype
-```
+   1. If the input is a segmentation (here MRC), load it first:
+      ```python
+      seg = io.load_tomo(fold + seg_file)
+      data_type = seg.dtype
+      ```
+      1. If the segmentation is not filled (contains only membrane label),
+         generate the surface using the *membrane segmentation* algorithm.
+         First, get the membrane segmentation:
+         ```python
+         binary_seg = (seg == label).astype(data_type)
+         ```
 
-I. If the segmentation is not filled (contains only membrane label), generate
-the surface using the *membrane segmentation* algorithm.
-First, get the membrane segmentation:
-```python
-binary_seg = (seg == label).astype(data_type)
-```
+         Then, generate surface delineating the membrane segmentation:
+         ```python
+         surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
+         ```
 
-Then, generate surface delineating the membrane segmentation:
-```python
-surf = run_gen_surface(binary_seg, fold + base_filename, lbl=1)
-```
+         However, the surface is not always oriented properly, especially if
+         there are holes in the segmentation. To close small holes (fitting in
+         the given cube) in the segmentation, run before `run_gen_surface`:
+         ```python
+         cube = np.ones((cube_size, cube_size, cube_size))
+         binary_seg = ndimage.binary_closing(
+             binary_seg, structure=cube, iterations=1).astype(data_type)
+         ```
 
-However, the surface is not always oriented properly, especially if there are
-holes in the segmentation.
-To close small holes (fitting in the given cube) in the segmentation, run
-before `run_gen_surface`:
-```python
-cube = np.ones((cube_size, cube_size, cube_size))
-binary_seg = ndimage.binary_closing(
-    binary_seg, structure=cube, iterations=1).astype(data_type)
-```
+      2. If the segmentation is filled, generate the surface using the
+         *compartment segmentation* algorithm. This is the preferred approach,
+         because the surface is always properly oriented. As in the previous
+         case, first, get the membrane segmentation:
+         ```python
+         binary_seg = (seg == label).astype(data_type)
+         ```
 
-II. If the segmentation is filled, generate the surface using the *compartment
-segmentation* algorithm.
-This is the preferred approach, because the surface is always properly oriented.
-As in the previous case, first, get the membrane segmentation:
-```python
-binary_seg = (seg == label).astype(data_type)
-```
+         Second, combine the membrane segmentation with the lumen segmentation
+         into compartment (filled) segmentation:
+         ```python
+         filled_binary_seg = np.logical_or(
+             seg == label, seg == filled_label).astype(data_type)
+         ```
 
-Second, combine the membrane segmentation with the lumen segmentation into
-compartment (filled) segmentation:
-```python
-filled_binary_seg = np.logical_or(
-    seg == label, seg == filled_label).astype(data_type)
-```
+         Then, generate isosurface around the slightly smoothed compartment
+         segmentation and apply the mask of membrane segmentation:
+         ```python
+         surf = run_gen_surface(
+             filled_binary_seg, fold + base_filename, lbl=1,
+             other_mask=binary_seg, isosurface=True, sg=1, thr=THRESH_SIGMA1)
+         ```
 
-Then, generate isosurface around the slightly smoothed compartment segmentation
-and apply the mask of membrane segmentation:
-```python
-surf = run_gen_surface(
-    filled_binary_seg, fold + base_filename, lbl=1,
-    other_mask=binary_seg, isosurface=True, sg=1, thr=THRESH_SIGMA1)
-```
+      In both above cases, the surface is saved to a VTP file named
+      `fold + base_filename + ".surface.vtp"`.
 
-In both cases a) and b), the surface is saved to a VTP file named
-`fold + base_filename + ".surface.vtp"`.
+   2. If the input is a surface (here VTP), omit the above steps and load it:
+      ```python
+      surf = io.load_poly(fold + surf_file)
+      ```
 
-b) If the input is a surface (here VTP), omit the above steps and load it:
-```python
-surf = io.load_poly(fold + surf_file)
-```
+2. From the surface, generate a "triangle" graph, with vertices at triangle
+   centers and edges between neighboring triangles:
+   ```python
+   tg = TriangleGraph()
+   scale = (pixel_size, pixel_size, pixel_size)
+   tg.build_graph_from_vtk_surface(surf, scale)
+   ```
 
-2.a) From the surface, generate a "triangle" graph, with vertices at triangle
-centers and edges between neighboring triangles:
-```python
-tg = TriangleGraph()
-scale = (pixel_size, pixel_size, pixel_size)
-tg.build_graph_from_vtk_surface(surf, scale)
-```
+   If the surface has borders, they have grown a bit during the surface
+   generation (in order to bridge upon small holes) and should be removed:
+   ```python
+   tg.find_vertices_near_border(MAX_DIST_SURF * pixel_size, purge=True)
+   ```
 
-b) If the surface has borders, they have grown a bit during the surface
-generation (in order to bridge upon small holes) and should be removed:
-```python
-tg.find_vertices_near_border(MAX_DIST_SURF * pixel_size, purge=True)
-```
+   You may filter out possibly occurring small disconnected fragments:
+   ```python
+   tg.find_small_connected_components(
+       threshold=min_component, purge=True, verbose=True)
+   ```
 
-c) You may filter out possibly occurring small disconnected fragments:
-```python
-tg.find_small_connected_components(
-    threshold=min_component, purge=True, verbose=True)
-```
+   You can check the number of graph vertices and edges before / after each
+   step:
+   ```python
+   print('The graph has {} vertices and {} edges'.format(
+       tg.graph.num_vertices(), tg.graph.num_edges()))
+   ```
 
-You can check the number of graph vertices and edges before / after each step:
-```python
-print('The graph has {} vertices and {} edges'.format(
-    tg.graph.num_vertices(), tg.graph.num_edges()))
-```
+   It might be a good idea to save the graph and the clean surface into files:
+   ```python
+   clean_graph_file = '{}.scaled_cleaned.gt'.format(base_filename)
+   clean_surf_file = '{}.scaled_cleaned.vtp'.format(base_filename)
+   tg.graph.save(fold + clean_graph_file)
+   surf_clean = tg.graph_to_triangle_poly()
+   io.save_vtp(surf_clean, fold + clean_surf_file)
+   ```
 
-d) It might be a good idea to save the graph and the clean surface into files:
-```python
-clean_graph_file = '{}.scaled_cleaned.gt'.format(base_filename)
-clean_surf_file = '{}.scaled_cleaned.vtp'.format(base_filename)
-tg.graph.save(fold + clean_graph_file)
-surf_clean = tg.graph_to_triangle_poly()
-io.save_vtp(surf_clean, fold + clean_surf_file)
-```
+   This way, you can load the graph and the surface to continue later:
+   ```python
+   surf_clean = io.load_poly(fold + clean_surf_file)
+   tg = TriangleGraph()
+   tg.graph = load_graph(fold + clean_graph_file)
+   ```
 
-This way, you can load the graph and the surface to continue later:
-```python
-surf_clean = io.load_poly(fold + clean_surf_file)
-tg = TriangleGraph()
-tg.graph = load_graph(fold + clean_graph_file)
-```
+3. Then, you can estimate surface normals at each triangle center using a
+   geodesic neighborhood of triangles, and finally, estimate principle
+   directions and curvatures as well as calculate different combined indices
+   using one of the tensor voting-based algorithms: RVV, AVV (default) or SSVV:
+   ```python
+   method_tg_surf_dict = normals_directions_and_curvature_estimation(
+       tg, radius_hit, methods=methods, area2=area2, cores=cores,
+       poly_surf=surf_clean)  # required only for SSVV
+   ```
 
-3.a) Then, you can estimate surface normals at each triangle center using a
-geodesic neighborhood of triangles, and finally, estimate principle directions
-and curvatures as well as calculate different combined indices using one of the
-tensor voting-based algorithms: RVV, AVV (default) or SSVV:
-```python
-method_tg_surf_dict = normals_directions_and_curvature_estimation(
-    tg, radius_hit, methods=methods, area2=area2, cores=cores,
-    poly_surf=surf_clean)  # required only for SSVV
-```
+   Save the output (graph and surface objects) for later filtering or inspection
+   in ParaView:
+   ```python
+   for method in list(method_tg_surf_dict.keys()):
+       (tg, surf) = method_tg_surf_dict[method]
+       if method == 'VV':
+           if area2 is False:
+               method = 'RVV'
+           else:
+               method = 'AVV'
+       gt_file = '{}{}.{}_rh{}.gt'.format(
+           fold, base_filename, method, radius_hit)
+       tg.graph.save(gt_file)
+       surf_file = '{}{}.{}_rh{}.vtp'.format(
+           fold, base_filename, method, radius_hit)
+       io.save_vtp(surf, surf_file)
+   ```
 
-b) Save the output (graph and surface objects) for later filtering or inspection
-in ParaView:
-```python
-for method in list(method_tg_surf_dict.keys()):
-    (tg, surf) = method_tg_surf_dict[method]
-    if method == 'VV':
-        if area2 is False:
-            method = 'RVV'
-        else:
-            method = 'AVV'
-    gt_file = '{}{}.{}_rh{}.gt'.format(
-        fold, base_filename, method, radius_hit)
-    tg.graph.save(gt_file)
-    surf_file = '{}{}.{}_rh{}.vtp'.format(
-        fold, base_filename, method, radius_hit)
-    io.save_vtp(surf, surf_file)
-```
-
+### Analyzing the output
 The output VTP file is a surface with all the calculated values stored as
-triangle properties:
+triangle properties, which can be visualized in
+[ParaView](https://www.paraview.org/).  
+TODO add a nice ParaView screenshot.
 - normal: original triangle normal
 - area: triangle are in the input units (e.g. nm)
 
@@ -480,7 +484,7 @@ only 1-ring neighbors, 3 triangle values are averaged per triangle:
 - mean_curvature: mean curvature
 - gauss_curvature: Gauss curvature
 
-4. To extract the curvatures into a CSV file, run:
+To extract the curvatures into a CSV file, run:
 ```python
 extract_curvatures_after_new_workflow(
     fold, base_filename, radius_hit, methods=['VV'], exclude_borders=1
@@ -490,7 +494,7 @@ Because of the last option, two files will be output: with all values and
 excluding those within 1 nm to the surface border.
 
 Finally, you can plot your results in the CSV file, using for example
-`[pathToInstallation]/pycurv/pycurv_testing/plotting.py`.
+`<path_to_installation>/pycurv/pycurv_testing/plotting.py`.
 
 # Reporting bugs
 If you have found a bug or have an issue with the software, please open an issue
