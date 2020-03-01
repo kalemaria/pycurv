@@ -1,6 +1,3 @@
-.. role:: raw-html-m2r(raw)
-   :format: html
-
 
 PyCurv
 ======
@@ -202,7 +199,7 @@ they should work on other Linux-based systems.
 
    .. code-block::
 
-      cd [pathToInstallation]  # your destination folder
+      cd <path_to_installation>  # your destination folder
       git clone https://github.com/kalemaria/pycurv.git
 
    The folder ``pycurv`` should be created, containing the modules and folders
@@ -213,7 +210,7 @@ they should work on other Linux-based systems.
 
    .. code-block::
 
-      cd [pathToInstallation]/pycurv
+      cd <path_to_installation>/pycurv
       python setup.py install
 
    You should be able to import ``pycurv``\ , ``pycurv_testing`` and ``pycurv_scripts``
@@ -274,7 +271,7 @@ Ubuntu 18.04 has ``python3`` version 3.6.7 preinstalled.
 
    .. code-block::
 
-      cd [pathToInstallation]  # your destination folder
+      cd <path_to_installation>  # your destination folder
       git clone https://github.com/kalemaria/pycurv.git
 
    The folder ``pycurv`` should be created, containing the modules and folders
@@ -285,7 +282,7 @@ Ubuntu 18.04 has ``python3`` version 3.6.7 preinstalled.
 
    .. code-block::
 
-      cd [pathToInstallation]/pycurv
+      cd <path_to_installation>/pycurv
       python setup.py install
 
    You should be able to import ``pycurv``\ , ``pycurv_testing`` and ``pycurv_scripts``
@@ -314,7 +311,7 @@ next subsections.
 Then, you can build your own PyCurv curvature estimation workflow, as explained
 step-by-step in the "User manual" subsection.
 For the full documentation of all modules and functions, please consult
-``[pathToInstallation]/pycurv/docs/_build/html/py-modindex.html)``.
+``<path_to_installation>/pycurv/docs/_build/html/py-modindex.html)``.
 
 Running the tests
 -----------------
@@ -324,14 +321,14 @@ execute from a bash shell:
 
 .. code-block::
 
-   pytest -q --disable-pytest-warnings [pathToInstallation]/pycurv/pycurv_testing/
+   pytest -q --disable-pytest-warnings <path_to_installation>/pycurv/pycurv_testing/
    test_vector_voting.py
 
 To run a specific test, for example ``test_sphere_curvatures``\ , run:
 
 .. code-block::
 
-   pytest -q --disable-pytest-warnings [pathToInstallation]/pycurv/pycurv_testing/
+   pytest -q --disable-pytest-warnings <path_to_installation>/pycurv/pycurv_testing/
    test_vector_voting.py::test_sphere_curvatures
 
 If it does not work, try to replace ``pytest -q`` by ``python -m pytest``.
@@ -356,7 +353,7 @@ the ``experimental_data_sets`` folder, just run in a bash shell:
 
 .. code-block::
 
-   cd [pathToInstallation]/pycurv/pycurv_scripts
+   cd <path_to_installation>/pycurv/pycurv_scripts
    python curvature_calculation.py
 
 The output will be generated in the respective subfolders of the input,
@@ -367,8 +364,13 @@ User manual
 -----------
 
 If the tests and the examples above worked for you, now you can learn how to
-build your own PyCurv curvature estimation workflow.\ :raw-html-m2r:`<br>`
-TODO add the workflow UML activity diagram.
+build your own PyCurv curvature estimation workflow.  
+
+
+.. image:: https://github.com/kalemaria/pycurv/blob/master/images/Workflow.png
+   :target: https://github.com/kalemaria/pycurv/blob/master/images/Workflow.png
+   :alt: Workflow
+
 
 Imports
 ^^^^^^^
@@ -577,8 +579,13 @@ Analyzing the output
 
 The output VTP file is a surface with all the calculated values stored as
 triangle properties, which can be visualized in
-`ParaView <https://www.paraview.org/>`_.\ :raw-html-m2r:`<br>`
-TODO add a nice ParaView screenshot.
+`ParaView <https://www.paraview.org/>`_.
+
+
+.. image:: https://github.com/kalemaria/pycurv/blob/master/images/ParaView.png
+   :target: https://github.com/kalemaria/pycurv/blob/master/images/ParaView.png
+   :alt: ParaView visualization
+
 
 
 * normal: original triangle normal
@@ -587,24 +594,24 @@ TODO add a nice ParaView screenshot.
 The following properties are estimated using each of our algorithms:
 
 
-* N_v: estimates triangle normal
-* T_1: maximal principal direction
-* T_2: minimal principal direction
-* kappa1: maximal principle curvature
-* kappa2: minimal principle curvature
-* mean_curvature_VV: mean curvature
-* gauss_curvature_VV: Gauss curvature
-* curvedness_VV: curvedness
-* shape_index_VV: Shape Index
+* ``N_v``\ : estimates triangle normal
+* ``T_1``\ : maximal principal direction
+* ``T_2``\ : minimal principal direction
+* ``kappa1``\ : maximal principle curvature
+* ``kappa2``\ : minimal principle curvature
+* ``mean_curvature_VV``\ : mean curvature
+* ``gauss_curvature_VV``\ : Gauss curvature
+* ``curvedness_VV``\ : curvedness
+* ``shape_index_VV``\ : Shape Index
 
 The following properties are calculated using VTK per triangle vertex using
 only 1-ring neighbors, 3 triangle values are averaged per triangle:
 
 
-* max_curvature: maximal principle curvature
-* mean_curvature: minimal principle curvature
-* mean_curvature: mean curvature
-* gauss_curvature: Gauss curvature
+* ``max_curvature``\ : maximal principle curvature
+* ``mean_curvature``\ : minimal principle curvature
+* ``mean_curvature``\ : mean curvature
+* ``gauss_curvature``\ : Gauss curvature
 
 To extract the curvatures into a CSV file, run:
 
@@ -615,8 +622,9 @@ To extract the curvatures into a CSV file, run:
 
 Because of the last option, two files will be output: with all values and
 excluding those within 1 nm to the surface border.
+
 Finally, you can plot your results in the CSV file, using for example
-``[pathToInstallation]/pycurv/pycurv_testing/plotting.py``.
+``<path_to_installation>/pycurv/pycurv_testing/plotting.py``.
 
 Reporting bugs
 ==============

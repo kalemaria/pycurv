@@ -290,7 +290,8 @@ You can change the parameters and find more workflow examples in the script.
 ## User manual
 If the tests and the examples above worked for you, now you can learn how to
 build your own PyCurv curvature estimation workflow.  
-TODO add the workflow UML activity diagram.
+
+![Workflow](https://github.com/kalemaria/pycurv/blob/master/images/Workflow.png)
 
 ### Imports
 Fist, import the following:
@@ -461,28 +462,30 @@ cores = <cores>  # number of cores to run VV in parallel (default 6)
 ### Analyzing the output
 The output VTP file is a surface with all the calculated values stored as
 triangle properties, which can be visualized in
-[ParaView](https://www.paraview.org/).  
-TODO add a nice ParaView screenshot.
+[ParaView](https://www.paraview.org/).
+ 
+![ParaView visualization](https://github.com/kalemaria/pycurv/blob/master/images/ParaView.png)
+
 - normal: original triangle normal
 - area: triangle are in the input units (e.g. nm)
 
 The following properties are estimated using each of our algorithms:
-- N_v: estimates triangle normal
-- T_1: maximal principal direction
-- T_2: minimal principal direction
-- kappa1: maximal principle curvature
-- kappa2: minimal principle curvature
-- mean_curvature_VV: mean curvature
-- gauss_curvature_VV: Gauss curvature
-- curvedness_VV: curvedness
-- shape_index_VV: Shape Index
+- `N_v`: estimates triangle normal
+- `T_1`: maximal principal direction
+- `T_2`: minimal principal direction
+- `kappa1`: maximal principle curvature
+- `kappa2`: minimal principle curvature
+- `mean_curvature_VV`: mean curvature
+- `gauss_curvature_VV`: Gauss curvature
+- `curvedness_VV`: curvedness
+- `shape_index_VV`: Shape Index
 
 The following properties are calculated using VTK per triangle vertex using
 only 1-ring neighbors, 3 triangle values are averaged per triangle:
-- max_curvature: maximal principle curvature
-- mean_curvature: minimal principle curvature
-- mean_curvature: mean curvature
-- gauss_curvature: Gauss curvature
+- `max_curvature`: maximal principle curvature
+- `mean_curvature`: minimal principle curvature
+- `mean_curvature`: mean curvature
+- `gauss_curvature`: Gauss curvature
 
 To extract the curvatures into a CSV file, run:
 ```python
