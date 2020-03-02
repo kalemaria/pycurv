@@ -1,0 +1,12 @@
+numpy
+scipy
+scikit-image
+pandas
+pytest
+matplotlib
+pathlib
+vtk
+nibabel
+pathos
+networkx
+future
