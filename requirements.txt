@@ -147,8 +147,8 @@ pycodestyle==2.5.0
 pycosat==0.6.3
 pycparser==2.19
 #pycrypto==2.6.1
-pycurl==7.43.0.3
--e git+https://github.com/kalemaria/pycurv@7fe45f5487676a6f23b38598dfd82727fec3211d#egg=pycurv
+#pycurl==7.43.0.3
+#-e git+https://github.com/kalemaria/pycurv@7fe45f5487676a6f23b38598dfd82727fec3211d#egg=pycurv
 pyflakes==2.1.1
 Pygments==2.4.2
 PyGObject==3.30.5
