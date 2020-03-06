@@ -580,8 +580,7 @@ def plot_plane_normals_different_noise_and_rh(
                  label=l, linewidth=LINEWIDTH, clip_on=False)
 
     plt.xlabel("Noise (%)")
-    plt.ylabel("Area of cumulative histograms\n"
-               "of normal orientation errors < {}".format(max_value))
+    plt.ylabel("Area under the cumulative\nerror histogram")
     if y_range is not None:
         plt.ylim(y_range)
     plt.legend(loc="lower right", fancybox=True, framealpha=0.5, fontsize=18,
@@ -2539,7 +2538,7 @@ if __name__ == "__main__":
     # plot_plane_normals(x_range=(0, 0.4))
     # plot_plane_normals(x_range=(0, 0.4), rand_dir=True)
 
-    # plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
+    plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
 
     # # voxel sphere - Fig 5
     # kwargs = {}
@@ -2651,23 +2650,23 @@ if __name__ == "__main__":
     # # Fig 10
     # read_in_and_plot_peak_curvatures(x_range=(-0.1, 0.4), y_range=(0, 0.8),
     #                                  num_bins=25)
-    for b in range(2):
-        for w in [None, 'triangleAreas']:
-            for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
-                # Fig 11
-                # plot_excluding_borders(method=method)
-                read_in_and_plot_surface_curvatures(
-                    FOLDCER, FOLDPEAKSPLOTS, "TCB_180830_l2_t2half.ER",
-                    num_bins=25, method=method, x_range=(-0.1, 0.15),
-                    borders=b, weights=w, title="Cortical ER")
-            # New Fig with Golgi and Vesicles
-            for organelle in ["Golgi", "Vesicles"]:
-                read_in_and_plot_surface_curvatures(
-                    os.path.join(FOLDTILL, organelle),
-                    os.path.join(FOLDTILL, "visualizations_and_plots"),
-                    "l2_t6_{}".format(organelle),
-                    num_bins=25, method="AVV", x_range=(-0.1, 0.15),
-                    borders=b, weights=w, title=organelle)
+    # for b in range(2):
+    #     for w in [None, 'triangleAreas']:
+    #         for method in ["AVV"]:  # "NVV", "RVV", "SSVV"
+    #             # Fig 11
+    #             # plot_excluding_borders(method=method)
+    #             read_in_and_plot_surface_curvatures(
+    #                 FOLDCER, FOLDPEAKSPLOTS, "TCB_180830_l2_t2half.ER",
+    #                 num_bins=25, method=method, x_range=(-0.1, 0.15),
+    #                 borders=b, weights=w, title="Cortical ER")
+    #         # New Fig with Golgi and Vesicles
+    #         for organelle in ["Golgi", "Vesicles"]:
+    #             read_in_and_plot_surface_curvatures(
+    #                 os.path.join(FOLDTILL, organelle),
+    #                 os.path.join(FOLDTILL, "visualizations_and_plots"),
+    #                 "l2_t6_{}".format(organelle),
+    #                 num_bins=25, method="AVV", x_range=(-0.1, 0.15),
+    #                 borders=b, weights=w, title=organelle)
 
     # **Extra tests**
     # *voxel torus*
