@@ -367,9 +367,7 @@ If the tests and the examples above worked for you, now you can learn how to
 build your own PyCurv curvature estimation workflow.  
 
 
-.. image:: https://github.com/kalemaria/pycurv/blob/master/images/Workflow.png
-   :target: https://github.com/kalemaria/pycurv/blob/master/images/Workflow.png
-   :alt: Workflow
+
 
 
 Imports
@@ -582,9 +580,7 @@ triangle properties, which can be visualized in
 `ParaView <https://www.paraview.org/>`_.
 
 
-.. image:: https://github.com/kalemaria/pycurv/blob/master/images/ParaView.png
-   :target: https://github.com/kalemaria/pycurv/blob/master/images/ParaView.png
-   :alt: ParaView visualization
+
 
 
 
