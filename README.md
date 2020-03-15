@@ -291,7 +291,7 @@ You can change the parameters and find more workflow examples in the script.
 If the tests and the examples above worked for you, now you can learn how to
 build your own PyCurv curvature estimation workflow.  
 
-![Workflow](https://github.com/kalemaria/pycurv/blob/master/images/Workflow.png)
+![Workflow](images/Workflow.png)
 
 ### Imports
 Fist, import the following:
@@ -464,7 +464,7 @@ The output VTP file is a surface with all the calculated values stored as
 triangle properties, which can be visualized in
 [ParaView](https://www.paraview.org/).
  
-![ParaView visualization](https://github.com/kalemaria/pycurv/blob/master/images/ParaView.png)
+![ParaView visualization](images/ParaView.png)
 
 - normal: original triangle normal
 - area: triangle are in the input units (e.g. nm)
