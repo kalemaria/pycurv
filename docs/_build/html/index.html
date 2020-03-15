@@ -1,0 +1,621 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>PyCurv &#8212; PyCurv 2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pycurv">
+<h1>PyCurv<a class="headerlink" href="#pycurv" title="Permalink to this headline">¶</a></h1>
+<p>This Python-based software was developed mainly to analyse curvature of
+membranes in 3D originating from high-resolution, noisy cryo-electron tomograms.
+Additionally, the software was also applied to other volumetric data with
+segmented structures or directly surface data, e.g. brain or organs from MRI and
+cells from confocal light microscopy.
+Accepted image data formats are: MRC, EM, VTI, NII.
+Accepted surface data formats are: VTP, VTK, STL, PLY.</p>
+<p>Moreover, the software can be used to calculate distances between two adjacent
+membranes and thicknesses of a membrane organelle.</p>
+<p>Furthermore, the software enables to calculate density distribution of
+particles mapped on a membrane, e.g. membrane-bound ribosomes.</p>
+<p>The software output is mostly in VTP format (triangle-mesh surfaces with
+numerical properties like curvatures, distances or densities), which can be
+visualized and further analysed in 3D using an external tool,
+<a class="reference external" href="https://www.paraview.org/">ParaView</a>.
+Also CSV table files for plotting the results are produced and many plotting
+functions are included.</p>
+<div class="section" id="pycurv-package">
+<h2><code class="docutils literal notranslate"><span class="pre">pycurv</span></code> package<a class="headerlink" href="#pycurv-package" title="Permalink to this headline">¶</a></h2>
+<p>This is the main Python package containing modules, classes and functions used
+for the following analyses:</p>
+<ul>
+<li><p>Estimation of membrane curvature using our several tensor voting-based methods
+based on (Page et al. 2002, Graphical Models) and (Tong and Tang 2005, IEEE
+Transactions on Pattern Analysis and Machine Intelligence), details available
+in the pre-print (<a class="reference external" href="https://www.biorxiv.org/content/10.1101/579060v1.full">Kalemanov et al. 2019, bioRxiv</a>).
+The workflow consists of the following three main steps:</p>
+<ol class="arabic simple">
+<li><p>signed surface generation from a segmentation</p></li>
+<li><p>surface graph generation and surface cleaning</p></li>
+<li><p>estimation of normal vectors of the true surface per triangle</p></li>
+<li><p>principle directions and curvatures estimation per triangle.</p></li>
+</ol>
+<p>The main parameter of our methods, <code class="docutils literal notranslate"><span class="pre">radius_hit</span></code> (borrowed from Tong and Tang
+2005 ) should be set to the radius of the smallest feature of interest on the
+input surface (in the target units, e.g. nanometers). It is used to define a
+geodesic neighborhood of triangles for each central triangle.</p>
+<p>Our method of choice is AVV (augmented vector voting), because it proved to be
+the most robust to noisy and irregularly triangulated surface and to variable
+feature size.</p>
+</li>
+<li><p>Calculation of distances between two adjacent membranes and thicknesses of a
+membrane organelle, using the membrane surfaces and outgoing normal vectors
+(estimated as in step iii. in the curvature estimation workflow) from the
+first, flat membrane surface.</p></li>
+<li><p>Calculation of ribosome density on ER and vesicle membranes using a mask with
+ribosome coordinates on the membranes and the membrane mask.</p></li>
+</ul>
+</div>
+<div class="section" id="pycurv-scripts-package">
+<h2><code class="docutils literal notranslate"><span class="pre">pycurv_scripts</span></code> package<a class="headerlink" href="#pycurv-scripts-package" title="Permalink to this headline">¶</a></h2>
+<p>This package contains Python scripts applying the PyCurv package and
+combining different functions into the workflows described above, the main are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">curvature_calculation.py</span></code> script for membrane curvature calculation workflows
+used in (<a class="reference external" href="https://doi.org/10.1016/j.cell.2017.08.009">Bäuerlein et al. 2017, Cell</a>)
+and (<a class="reference external" href="https://doi.org/10.1016/j.devcel.2019.10.018">Collado et al. 2019, Developmental Cell</a>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">distances_calculation.py</span></code> script for membrane distances and thicknesses
+calculation used in (Collado et al. 2019)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ribosome_density_calculation.py</span></code> script for ribosome density calculation used
+in (Bäuerlein et al. 2017).</p></li>
+</ul>
+</div>
+<div class="section" id="scripts-running-mindboggle-and-freesurfer-folder">
+<h2><code class="docutils literal notranslate"><span class="pre">scripts_running_mindboggle_and_freesurfer</span></code> folder<a class="headerlink" href="#scripts-running-mindboggle-and-freesurfer-folder" title="Permalink to this headline">¶</a></h2>
+<p>Python and bash scripts running Mindboggle (Klein et al. 2017, PLoS Computational
+Biology) and FreeSurfer (Pienaar et al. 2008, International Journal of Imaging
+Systems and Technology) curvature estimation functions and extracting the values
+to CSV files.</p>
+</div>
+<div class="section" id="pycurv-testing-package">
+<h2><code class="docutils literal notranslate"><span class="pre">pycurv_testing</span></code> package<a class="headerlink" href="#pycurv-testing-package" title="Permalink to this headline">¶</a></h2>
+<p>This package was used for testing our and external curvature estimation
+algorithms from VTK (Schroeder et al., 2006, Kitware), FreeSurfer and
+Mindboggle. It contains:</p>
+<ul class="simple">
+<li><p>code used to generate synthetic surfaces</p></li>
+<li><p>error calculation module</p></li>
+<li><p>scripts getting FreeSurfer’s and Mindboggle’s curvatures and calculating
+errors from their output VTK files.</p></li>
+<li><p>integration and unit tests for the main PyCurv workflows and functions</p></li>
+<li><p>a collection of plotting functions.</p></li>
+<li><p>folders with output of curvature tests, e.g. <code class="docutils literal notranslate"><span class="pre">test_vector_voting_output</span></code>),
+and the test surfaces, e.g. <code class="docutils literal notranslate"><span class="pre">torus/noise0/torus_rr25_csr10.surface.vtp</span></code>.</p></li>
+</ul>
+</div>
+<div class="section" id="experimental-data-sets-folder">
+<h2><code class="docutils literal notranslate"><span class="pre">experimental_data_sets</span></code> folder<a class="headerlink" href="#experimental-data-sets-folder" title="Permalink to this headline">¶</a></h2>
+<p>Some experimental data can be found here:</p>
+<ul class="simple">
+<li><p>vesicle: membrane segmentation of a vesicle from a cryo-electron tomogram
+(Bäuerlein et al. 2017)</p></li>
+<li><p>vesicle: compartment segmentation of a cortical ER membrane from a
+cryo-electron tomogram (Collado et al. 2019)</p></li>
+<li><p>embryo: surfaces of C. elegans embryo cells imaged by confocal light
+microscopy and segmented by LimeSeg (Machado et al., BMC Bioinformatics 2019)</p></li>
+<li><p>brain: cortical pial surfaces of both human brain hemispheres imaged by MRI
+and segmented by FreeSurfer, taken from
+<a class="reference external" href="https://osf.io/8cf5z/">Mindboggle example data</a>.</p></li>
+</ul>
+<p>Output of the following curvature algorithms is included for experimental data
+(AVV and SSVV output also includes minimum and maximum principal curvatures
+calculated by VTK):</p>
+<ul class="simple">
+<li><p>vesicle: AVV</p></li>
+<li><p>ER: AVV, SSVV and Mindboggle</p></li>
+<li><p>embryo: AVV</p></li>
+<li><p>brain: AVV, Mindboggle, FreeSurfer</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="installing-pycurv">
+<h1>Installing PyCurv<a class="headerlink" href="#installing-pycurv" title="Permalink to this headline">¶</a></h1>
+<p>Please note that PyCurv depends on one not publicly available Python package,
+pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
+has to be requested from its author, Dr. Vladan Lučić.</p>
+<div class="section" id="installation-instructions-with-anaconda">
+<h2>Installation instructions with anaconda<a class="headerlink" href="#installation-instructions-with-anaconda" title="Permalink to this headline">¶</a></h2>
+<p>The following instruction were tested on SUSE Linux Enterprise Server 12, but
+they should work on other Linux-based systems.</p>
+<ol class="arabic">
+<li><p>Install anaconda with <a class="reference external" href="https://graph-tool.skewed.de/">graph-tool</a>
+(Peixoto, 2014) and its dependencies:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>targetFold=&lt;your_anaconda_path&gt;
+wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
+bash Anaconda3-2019.10-Linux-x86_64.sh -b -p $targetFold
+
+export PATH=$targetFold/bin:$PATH
+
+conda config --set allow_conda_downgrades true
+
+conda install conda=4.6.14
+
+conda config --set allow_conda_downgrades true
+conda config --add channels pkgw-forge
+conda config --add channels conda-forge
+conda config --add channels ostrokach-forge
+
+conda install -c pkgw-forge gtk3
+conda install -c conda-forge pygobject
+conda install -c conda-forge matplotlib
+conda install -c ostrokach-forge graph-tool
+
+export PATH=$targetFold/bin:$PATH
+</pre></div>
+</div>
+<p>From the same bash shell, <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">python</span></code> should output
+<code class="docutils literal notranslate"><span class="pre">&lt;your_anaconda_path&gt;/bin/python</span></code>.</p>
+<p>You should be able to import <code class="docutils literal notranslate"><span class="pre">graph_tool</span></code> from a <code class="docutils literal notranslate"><span class="pre">python</span></code> or <code class="docutils literal notranslate"><span class="pre">ipython</span></code> shell:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">graph_tool.all</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>In order that your anaconda python is found every time you open a new
+bash shell, add it to PATH by adding the following line to your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PATH=&lt;your_anaconda_path&gt;/bin:$PATH
+</pre></div>
+</div>
+</li>
+<li><p>Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
+DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PYTHONPATH=&lt;your_path_to_pyto&gt;:$PYTHONPATH
+</pre></div>
+</div>
+</li>
+<li><p>To download the PyCurv package, run from a bash shell:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">&lt;</span><span class="n">path_to_installation</span><span class="o">&gt;</span>  <span class="c1"># your destination folder</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">kalemaria</span><span class="o">/</span><span class="n">pycurv</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+<p>The folder <code class="docutils literal notranslate"><span class="pre">pycurv</span></code> should be created, containing the modules and folders
+listed here.</p>
+</li>
+<li><p>Install dependencies from the <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">&lt;</span><span class="n">path_to_installation</span><span class="o">&gt;/</span><span class="n">pycurv</span>
+<span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+</pre></div>
+</div>
+<p>You should be able to import <code class="docutils literal notranslate"><span class="pre">pycurv</span></code>, <code class="docutils literal notranslate"><span class="pre">pycurv_testing</span></code> and <code class="docutils literal notranslate"><span class="pre">pycurv_scripts</span></code>
+from a <code class="docutils literal notranslate"><span class="pre">python</span></code> or <code class="docutils literal notranslate"><span class="pre">ipython</span></code> shell.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="installation-instructions-without-anaconda">
+<h2>Installation instructions without anaconda<a class="headerlink" href="#installation-instructions-without-anaconda" title="Permalink to this headline">¶</a></h2>
+<p>The following instruction were tested on Ubuntu 18.04, but the process should be
+equivalent for other Ubuntu versions. Ubuntu can be installed for free, also in
+a virtual machine on other operating systems (Windows or Mac).
+Ubuntu 18.04 has <code class="docutils literal notranslate"><span class="pre">python3</span></code> version 3.6.7 preinstalled.</p>
+<ol class="arabic">
+<li><p>Install <a class="reference external" href="https://graph-tool.skewed.de/">graph-tool</a> (Peixoto, 2014)
+for Ubuntu according to <a class="reference external" href="https://git.skewed.de/count0/graph-tool/wikis/installation-instructions#debian-ubuntu">instructions</a>,
+<code class="docutils literal notranslate"><span class="pre">DISTRIBUTION=bionic</span></code>, but before running <code class="docutils literal notranslate"><span class="pre">apt-get</span> <span class="pre">update</span></code> add the public key:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">apt</span><span class="o">-</span><span class="n">key</span> <span class="n">adv</span> <span class="o">--</span><span class="n">keyserver</span> <span class="n">pgp</span><span class="o">.</span><span class="n">skewed</span><span class="o">.</span><span class="n">de</span> <span class="o">--</span><span class="n">recv</span><span class="o">-</span><span class="n">key</span> <span class="mi">612</span><span class="n">DEFB798507F25</span>
+</pre></div>
+</div>
+<p>Unfortunately, this installation of the graph-tool package does not work with
+anaconda python.</p>
+</li>
+<li><p>Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
+DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
+(See <a class="reference external" href="https://stackoverflow.com/questions/19917492/how-to-use-pythonpath">https://stackoverflow.com/questions/19917492/how-to-use-pythonpath</a> and
+<a class="reference external" href="https://docs.python.org/3.6/tutorial/modules.html">https://docs.python.org/3.6/tutorial/modules.html</a>)</p></li>
+<li><p>Install <a class="reference external" href="https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/">pip3</a>
+(includes setuptools), <a class="reference external" href="https://docs.python.org/3/library/venv.html">venv</a>
+(from Python version 3.3 on, recommended from version 3.5 on) in e.g.
+<code class="docutils literal notranslate"><span class="pre">~/workspace</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python3 -m venv ./venv –system-site-packages
+</pre></div>
+</div>
+<p>and activate:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="n">venv</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ipython3</span></code> should be present and you should be able to import <code class="docutils literal notranslate"><span class="pre">graph_tool</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">graph_tool.all</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+</li>
+<li><p>To download the PyCurv package, run from a bash shell:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">&lt;</span><span class="n">path_to_installation</span><span class="o">&gt;</span>  <span class="c1"># your destination folder</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">kalemaria</span><span class="o">/</span><span class="n">pycurv</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+</div>
+<p>The folder <code class="docutils literal notranslate"><span class="pre">pycurv</span></code> should be created, containing the modules and folders
+listed here.</p>
+</li>
+<li><p>Install dependencies from the <code class="docutils literal notranslate"><span class="pre">setup.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">&lt;</span><span class="n">path_to_installation</span><span class="o">&gt;/</span><span class="n">pycurv</span>
+<span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+</pre></div>
+</div>
+<p>You should be able to import <code class="docutils literal notranslate"><span class="pre">pycurv</span></code>, <code class="docutils literal notranslate"><span class="pre">pycurv_testing</span></code> and <code class="docutils literal notranslate"><span class="pre">pycurv_scripts</span></code>
+from a <code class="docutils literal notranslate"><span class="pre">python</span></code> or <code class="docutils literal notranslate"><span class="pre">ipython</span></code> shell.</p>
+</li>
+<li><p>To re-create the environment on another computer or after
+re-installation, freeze the current state of the environment packages:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">freeze</span> <span class="o">&gt;</span> <span class="n">requirements_pycurv</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>To re-create the environment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements_pycurv</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="applying-pycurv">
+<h1>Applying PyCurv<a class="headerlink" href="#applying-pycurv" title="Permalink to this headline">¶</a></h1>
+<p>To test your PyCurv installation, you can run tests on synthetic surfaces or
+workflow scripts on the provided experimental data sets, as explained in the
+next subsections.
+Then, you can build your own PyCurv curvature estimation workflow, as explained
+step-by-step in the “User manual” subsection.
+For the full documentation of all modules and functions, please consult
+<code class="docutils literal notranslate"><span class="pre">&lt;path_to_installation&gt;/pycurv/docs/_build/html/py-modindex.html)</span></code>.</p>
+<div class="section" id="running-the-tests">
+<h2>Running the tests<a class="headerlink" href="#running-the-tests" title="Permalink to this headline">¶</a></h2>
+<p>To run the integration tests of the curvature workflow on synthetic surfaces,
+execute from a bash shell:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pytest</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">disable</span><span class="o">-</span><span class="n">pytest</span><span class="o">-</span><span class="n">warnings</span> <span class="o">&lt;</span><span class="n">path_to_installation</span><span class="o">&gt;/</span><span class="n">pycurv</span><span class="o">/</span><span class="n">pycurv_testing</span><span class="o">/</span>
+<span class="n">test_vector_voting</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>To run a specific test, for example <code class="docutils literal notranslate"><span class="pre">test_sphere_curvatures</span></code>, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pytest</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">disable</span><span class="o">-</span><span class="n">pytest</span><span class="o">-</span><span class="n">warnings</span> <span class="o">&lt;</span><span class="n">path_to_installation</span><span class="o">&gt;/</span><span class="n">pycurv</span><span class="o">/</span><span class="n">pycurv_testing</span><span class="o">/</span>
+<span class="n">test_vector_voting</span><span class="o">.</span><span class="n">py</span><span class="p">::</span><span class="n">test_sphere_curvatures</span>
+</pre></div>
+</div>
+<p>If it does not work, try to replace <code class="docutils literal notranslate"><span class="pre">pytest</span> <span class="pre">-q</span></code> by <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pytest</span></code>.</p>
+<p>A folder <code class="docutils literal notranslate"><span class="pre">test_vector_voting_output</span></code> containing the test results will be created
+inside the current directory.</p>
+<p>In the same manner, you can run:</p>
+<ul class="simple">
+<li><p>the integration tests of the distances and thicknesses workflow
+(<code class="docutils literal notranslate"><span class="pre">test_distances_calculation.py</span></code>)</p></li>
+<li><p>the unit test of histogram area calculation
+(<code class="docutils literal notranslate"><span class="pre">test_histogram_area_calculation.py</span></code>)</p></li>
+<li><p>the unit test for some linear algebra functions (<code class="docutils literal notranslate"><span class="pre">test_linalg.py</span></code>)</p></li>
+</ul>
+</div>
+<div class="section" id="running-the-experimental-data-sets">
+<h2>Running the experimental data sets<a class="headerlink" href="#running-the-experimental-data-sets" title="Permalink to this headline">¶</a></h2>
+<p>To run the curvature estimation workflow on the vesicle and ER segmentation in
+the <code class="docutils literal notranslate"><span class="pre">experimental_data_sets</span></code> folder, just run in a bash shell:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">&lt;</span><span class="n">path_to_installation</span><span class="o">&gt;/</span><span class="n">pycurv</span><span class="o">/</span><span class="n">pycurv_scripts</span>
+<span class="n">python</span> <span class="n">curvature_calculation</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>The output will be generated in the respective subfolders of the input,
+<code class="docutils literal notranslate"><span class="pre">vesicle</span></code> and <code class="docutils literal notranslate"><span class="pre">ER</span></code>.
+You can change the parameters and find more workflow examples in the script.</p>
+</div>
+<div class="section" id="user-manual">
+<h2>User manual<a class="headerlink" href="#user-manual" title="Permalink to this headline">¶</a></h2>
+<p>If the tests and the examples above worked for you, now you can learn how to
+build your own PyCurv curvature estimation workflow.</p>
+<a class="reference external image-reference" href="images/Workflow.png"><img alt="Workflow" src="_images/Workflow.png" /></a>
+<div class="section" id="imports">
+<h3>Imports<a class="headerlink" href="#imports" title="Permalink to this headline">¶</a></h3>
+<p>Fist, import the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pycurv</span> <span class="kn">import</span> <span class="n">pycurv_io</span> <span class="k">as</span> <span class="n">io</span>
+<span class="kn">from</span> <span class="nn">pycurv</span> <span class="kn">import</span> <span class="n">run_gen_surface</span><span class="p">,</span> <span class="n">THRESH_SIGMA1</span><span class="p">,</span> <span class="n">TriangleGraph</span><span class="p">,</span> <span class="n">MAX_DIST_SURF</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">ndimage</span>
+<span class="kn">from</span> <span class="nn">graph_tool</span> <span class="kn">import</span> <span class="n">load_graph</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Permalink to this headline">¶</a></h3>
+<p>Initialize the following parameters for your run:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fold</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">your_path_to_input</span><span class="o">&gt;</span>  <span class="c1"># output will be also written there</span>
+<span class="n">base_filename</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">prefix_for_your_output_files</span><span class="o">&gt;</span>
+<span class="n">pixel_size</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">nanometers</span><span class="o">&gt;</span>  <span class="c1"># pixel size of the (underlying) segmentation</span>
+<span class="n">radius_hit</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">nm</span><span class="o">&gt;</span>  <span class="c1"># radius of the smallest feature of interest (neighborhood)</span>
+
+<span class="c1"># alternative or optional:</span>
+<span class="c1"># for step 1.:</span>
+<span class="c1">#   for segmentation input:</span>
+<span class="n">seg_file</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">your_segmentation_file</span><span class="o">&gt;</span>  <span class="c1"># MRC in this example</span>
+<span class="n">label</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">membrane_label</span><span class="o">&gt;</span>
+<span class="n">cube_size</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">pixels</span><span class="o">&gt;</span>  <span class="c1"># try 3 or 5</span>
+<span class="n">filled_label</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">lumen_label</span><span class="o">&gt;</span>  <span class="c1"># if compartment segmentation</span>
+<span class="c1">#   for surface input:</span>
+<span class="n">surf_file</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">your_surface_file</span><span class="o">&gt;</span>  <span class="c1"># VTP in this example</span>
+<span class="c1"># for step 2.:</span>
+<span class="c1"># to remove small disconnected surface components within this size (default 100)</span>
+<span class="n">min_component</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">number_triangles</span><span class="o">&gt;</span>
+<span class="c1"># for step 3.:</span>
+<span class="n">methods</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;VV&quot;</span><span class="p">,</span> <span class="s2">&quot;SSVV&quot;</span><span class="p">]</span>  <span class="c1"># list of algorithms to run (default &quot;VV&quot;)</span>
+<span class="n">area2</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">True_or_False</span><span class="o">&gt;</span>  <span class="c1"># if method &quot;VV&quot;: True for AVV (default), False for RVV</span>
+<span class="n">cores</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">cores</span><span class="o">&gt;</span>  <span class="c1"># number of cores to run VV in parallel (default 6)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-your-workflow">
+<h3>Building your workflow<a class="headerlink" href="#building-your-workflow" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p>Generate or load the surface.</p>
+<ol class="arabic">
+<li><p>If the input is a segmentation (here MRC), load it first:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">seg</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">load_tomo</span><span class="p">(</span><span class="n">fold</span> <span class="o">+</span> <span class="n">seg_file</span><span class="p">)</span>
+<span class="n">data_type</span> <span class="o">=</span> <span class="n">seg</span><span class="o">.</span><span class="n">dtype</span>
+</pre></div>
+</div>
+<ol class="arabic">
+<li><p>If the segmentation is not filled (contains only membrane label),
+generate the surface using the <em>membrane segmentation</em> algorithm.
+First, get the membrane segmentation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">binary_seg</span> <span class="o">=</span> <span class="p">(</span><span class="n">seg</span> <span class="o">==</span> <span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then, generate surface delineating the membrane segmentation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">surf</span> <span class="o">=</span> <span class="n">run_gen_surface</span><span class="p">(</span><span class="n">binary_seg</span><span class="p">,</span> <span class="n">fold</span> <span class="o">+</span> <span class="n">base_filename</span><span class="p">,</span> <span class="n">lbl</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>However, the surface is not always oriented properly, especially if
+there are holes in the segmentation. To close small holes (fitting in
+the given cube) in the segmentation, run before <code class="docutils literal notranslate"><span class="pre">run_gen_surface</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">cube</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">cube_size</span><span class="p">,</span> <span class="n">cube_size</span><span class="p">,</span> <span class="n">cube_size</span><span class="p">))</span>
+<span class="n">binary_seg</span> <span class="o">=</span> <span class="n">ndimage</span><span class="o">.</span><span class="n">binary_closing</span><span class="p">(</span>
+    <span class="n">binary_seg</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">cube</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>If the segmentation is filled, generate the surface using the
+<em>compartment segmentation</em> algorithm. This is the preferred approach,
+because the surface is always properly oriented. As in the previous
+case, first, get the membrane segmentation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">binary_seg</span> <span class="o">=</span> <span class="p">(</span><span class="n">seg</span> <span class="o">==</span> <span class="n">label</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Second, combine the membrane segmentation with the lumen segmentation
+into compartment (filled) segmentation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">filled_binary_seg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
+    <span class="n">seg</span> <span class="o">==</span> <span class="n">label</span><span class="p">,</span> <span class="n">seg</span> <span class="o">==</span> <span class="n">filled_label</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">data_type</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then, generate isosurface around the slightly smoothed compartment
+segmentation and apply the mask of membrane segmentation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">surf</span> <span class="o">=</span> <span class="n">run_gen_surface</span><span class="p">(</span>
+    <span class="n">filled_binary_seg</span><span class="p">,</span> <span class="n">fold</span> <span class="o">+</span> <span class="n">base_filename</span><span class="p">,</span> <span class="n">lbl</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">other_mask</span><span class="o">=</span><span class="n">binary_seg</span><span class="p">,</span> <span class="n">isosurface</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">sg</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">thr</span><span class="o">=</span><span class="n">THRESH_SIGMA1</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>In both above cases, the surface is saved to a VTP file named
+<code class="docutils literal notranslate"><span class="pre">fold</span> <span class="pre">+</span> <span class="pre">base_filename</span> <span class="pre">+</span> <span class="pre">&quot;.surface.vtp&quot;</span></code>.</p>
+</li>
+<li><p>If the input is a surface (here VTP), omit the above steps and load it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">surf</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">load_poly</span><span class="p">(</span><span class="n">fold</span> <span class="o">+</span> <span class="n">surf_file</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</li>
+<li><p>From the surface, generate a “triangle” graph, with vertices at triangle
+centers and edges between neighboring triangles:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tg</span> <span class="o">=</span> <span class="n">TriangleGraph</span><span class="p">()</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">pixel_size</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="n">pixel_size</span><span class="p">)</span>
+<span class="n">tg</span><span class="o">.</span><span class="n">build_graph_from_vtk_surface</span><span class="p">(</span><span class="n">surf</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If the surface has borders, they have grown a bit during the surface
+generation (in order to bridge upon small holes) and should be removed:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tg</span><span class="o">.</span><span class="n">find_vertices_near_border</span><span class="p">(</span><span class="n">MAX_DIST_SURF</span> <span class="o">*</span> <span class="n">pixel_size</span><span class="p">,</span> <span class="n">purge</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You may filter out possibly occurring small disconnected fragments:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tg</span><span class="o">.</span><span class="n">find_small_connected_components</span><span class="p">(</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="n">min_component</span><span class="p">,</span> <span class="n">purge</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can check the number of graph vertices and edges before / after each
+step:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;The graph has {} vertices and {} edges&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+    <span class="n">tg</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">num_vertices</span><span class="p">(),</span> <span class="n">tg</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">num_edges</span><span class="p">()))</span>
+</pre></div>
+</div>
+<p>It might be a good idea to save the graph and the clean surface into files:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">clean_graph_file</span> <span class="o">=</span> <span class="s1">&#39;{}.scaled_cleaned.gt&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base_filename</span><span class="p">)</span>
+<span class="n">clean_surf_file</span> <span class="o">=</span> <span class="s1">&#39;{}.scaled_cleaned.vtp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base_filename</span><span class="p">)</span>
+<span class="n">tg</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">fold</span> <span class="o">+</span> <span class="n">clean_graph_file</span><span class="p">)</span>
+<span class="n">surf_clean</span> <span class="o">=</span> <span class="n">tg</span><span class="o">.</span><span class="n">graph_to_triangle_poly</span><span class="p">()</span>
+<span class="n">io</span><span class="o">.</span><span class="n">save_vtp</span><span class="p">(</span><span class="n">surf_clean</span><span class="p">,</span> <span class="n">fold</span> <span class="o">+</span> <span class="n">clean_surf_file</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This way, you can load the graph and the surface to continue later:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">surf_clean</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">load_poly</span><span class="p">(</span><span class="n">fold</span> <span class="o">+</span> <span class="n">clean_surf_file</span><span class="p">)</span>
+<span class="n">tg</span> <span class="o">=</span> <span class="n">TriangleGraph</span><span class="p">()</span>
+<span class="n">tg</span><span class="o">.</span><span class="n">graph</span> <span class="o">=</span> <span class="n">load_graph</span><span class="p">(</span><span class="n">fold</span> <span class="o">+</span> <span class="n">clean_graph_file</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Then, you can estimate surface normals at each triangle center using a
+geodesic neighborhood of triangles, and finally, estimate principle
+directions and curvatures as well as calculate different combined indices
+using one of the tensor voting-based algorithms: RVV, AVV (default) or SSVV:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">method_tg_surf_dict</span> <span class="o">=</span> <span class="n">normals_directions_and_curvature_estimation</span><span class="p">(</span>
+    <span class="n">tg</span><span class="p">,</span> <span class="n">radius_hit</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="n">methods</span><span class="p">,</span> <span class="n">area2</span><span class="o">=</span><span class="n">area2</span><span class="p">,</span> <span class="n">cores</span><span class="o">=</span><span class="n">cores</span><span class="p">,</span>
+    <span class="n">poly_surf</span><span class="o">=</span><span class="n">surf_clean</span><span class="p">)</span>  <span class="c1"># required only for SSVV</span>
+</pre></div>
+</div>
+<p>Save the output (graph and surface objects) for later filtering or inspection
+in ParaView:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">method_tg_surf_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+    <span class="p">(</span><span class="n">tg</span><span class="p">,</span> <span class="n">surf</span><span class="p">)</span> <span class="o">=</span> <span class="n">method_tg_surf_dict</span><span class="p">[</span><span class="n">method</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;VV&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">area2</span> <span class="ow">is</span> <span class="bp">False</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;RVV&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="s1">&#39;AVV&#39;</span>
+    <span class="n">gt_file</span> <span class="o">=</span> <span class="s1">&#39;{}{}.{}_rh{}.gt&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">fold</span><span class="p">,</span> <span class="n">base_filename</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">radius_hit</span><span class="p">)</span>
+    <span class="n">tg</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">gt_file</span><span class="p">)</span>
+    <span class="n">surf_file</span> <span class="o">=</span> <span class="s1">&#39;{}{}.{}_rh{}.vtp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">fold</span><span class="p">,</span> <span class="n">base_filename</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">radius_hit</span><span class="p">)</span>
+    <span class="n">io</span><span class="o">.</span><span class="n">save_vtp</span><span class="p">(</span><span class="n">surf</span><span class="p">,</span> <span class="n">surf_file</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="analyzing-the-output">
+<h3>Analyzing the output<a class="headerlink" href="#analyzing-the-output" title="Permalink to this headline">¶</a></h3>
+<p>The output VTP file is a surface with all the calculated values stored as
+triangle properties, which can be visualized in
+<a class="reference external" href="https://www.paraview.org/">ParaView</a>.</p>
+<a class="reference external image-reference" href="images/ParaView.png"><img alt="ParaView visualization" src="_images/ParaView.png" /></a>
+<ul class="simple">
+<li><p>normal: original triangle normal</p></li>
+<li><p>area: triangle are in the input units (e.g. nm)</p></li>
+</ul>
+<p>The following properties are estimated using each of our algorithms:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">N_v</span></code>: estimates triangle normal</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">T_1</span></code>: maximal principal direction</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">T_2</span></code>: minimal principal direction</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kappa1</span></code>: maximal principle curvature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kappa2</span></code>: minimal principle curvature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mean_curvature_VV</span></code>: mean curvature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gauss_curvature_VV</span></code>: Gauss curvature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">curvedness_VV</span></code>: curvedness</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">shape_index_VV</span></code>: Shape Index</p></li>
+</ul>
+<p>The following properties are calculated using VTK per triangle vertex using
+only 1-ring neighbors, 3 triangle values are averaged per triangle:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">max_curvature</span></code>: maximal principle curvature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mean_curvature</span></code>: minimal principle curvature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mean_curvature</span></code>: mean curvature</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gauss_curvature</span></code>: Gauss curvature</p></li>
+</ul>
+<p>To extract the curvatures into a CSV file, run:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">extract_curvatures_after_new_workflow</span><span class="p">(</span>
+    <span class="n">fold</span><span class="p">,</span> <span class="n">base_filename</span><span class="p">,</span> <span class="n">radius_hit</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;VV&#39;</span><span class="p">],</span> <span class="n">exclude_borders</span><span class="o">=</span><span class="mi">1</span>
+</pre></div>
+</div>
+<p>Because of the last option, two files will be output: with all values and
+excluding those within 1 nm to the surface border.</p>
+<p>Finally, you can plot your results in the CSV file, using for example
+<code class="docutils literal notranslate"><span class="pre">&lt;path_to_installation&gt;/pycurv/pycurv_testing/plotting.py</span></code>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="reporting-bugs">
+<h1>Reporting bugs<a class="headerlink" href="#reporting-bugs" title="Permalink to this headline">¶</a></h1>
+<p>If you have found a bug or have an issue with the software, please open an issue
+<a class="reference external" href="https://github.com/kalemaria/pycurv/issues">here</a>.</p>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">PyCurv</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Maria Kalemanov, Antonio Martinez-Sanchez.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

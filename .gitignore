@@ -3,8 +3,6 @@ build
 dist
 *.pyc
 *.egg-info
-docs/_build
-docs/_templates
 .directory
 .doit*
 .cache

@@ -1,0 +1,2102 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pycurv_testing package &#8212; PyCurv 2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pycurv-testing-package">
+<h1>pycurv_testing package<a class="headerlink" href="#pycurv-testing-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer">
+<span id="pycurv-testing-calculate-curvature-errors-of-mindboggle-and-freesurfer-module"></span><h2>pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer module<a class="headerlink" href="#module-pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.calculate_curvature_errors_cylinder">
+<code class="sig-prename descclassname">pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.</code><code class="sig-name descname">calculate_curvature_errors_cylinder</code><span class="sig-paren">(</span><em class="sig-param">radius</em>, <em class="sig-param">curvatures_csv_file</em>, <em class="sig-param">errors_csv_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.calculate_curvature_errors_cylinder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function calculating relative curvature errors for a cylinder surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radius</strong> (<em>int</em>) – radius of the cylinder</p></li>
+<li><p><strong>curvatures_csv_file</strong> (<em>string</em>) – input curvatures file with columns labeled
+“kappa1”, “kappa2”, “mean_curvature” and “gauss_curvature”.</p></li>
+<li><p><strong>errors_csv_file</strong> (<em>string</em>) – output error file with “RelErrors” appended to
+the aforementioned curvature column labels.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.calculate_curvature_errors_sphere">
+<code class="sig-prename descclassname">pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.</code><code class="sig-name descname">calculate_curvature_errors_sphere</code><span class="sig-paren">(</span><em class="sig-param">radius</em>, <em class="sig-param">curvatures_csv_file</em>, <em class="sig-param">errors_csv_file</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.calculate_curvature_errors_sphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function calculating relative curvature errors for a sphere surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radius</strong> (<em>int</em>) – radius of the sphere</p></li>
+<li><p><strong>curvatures_csv_file</strong> (<em>string</em>) – input curvatures file with columns labeled
+“kappa1”, “kappa2”, “mean_curvature” and “gauss_curvature”.</p></li>
+<li><p><strong>errors_csv_file</strong> (<em>string</em>) – output error file with “RelErrors” appended to
+the aforementioned curvature column labels.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.calculate_curvature_errors_torus">
+<code class="sig-prename descclassname">pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.</code><code class="sig-name descname">calculate_curvature_errors_torus</code><span class="sig-paren">(</span><em class="sig-param">rr</em>, <em class="sig-param">csr</em>, <em class="sig-param">curvatures_csv_file</em>, <em class="sig-param">errors_csv_file</em>, <em class="sig-param">voxel=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.calculate_curvature_errors_of_mindboggle_and_freesurfer.calculate_curvature_errors_torus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function calculating relative curvature errors for a torus surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rr</strong> (<em>int</em>) – ring radius of the torus</p></li>
+<li><p><strong>csr</strong> (<em>int</em>) – cross-section radius of the torus</p></li>
+<li><p><strong>curvatures_csv_file</strong> (<em>string</em>) – input curvatures file with columns labeled
+“kappa1”, “kappa2”, “mean_curvature” and “gauss_curvature”,
+including coordinates columns labeled ‘x’, ‘y’ and ‘z’</p></li>
+<li><p><strong>errors_csv_file</strong> (<em>string</em>) – output error file with “RelErrors” appended to
+the aforementioned curvature column labels.</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em>) – if True, a voxel torus is generated (default False)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.errors_calculation">
+<span id="pycurv-testing-errors-calculation-module"></span><h2>pycurv_testing.errors_calculation module<a class="headerlink" href="#module-pycurv_testing.errors_calculation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_testing.errors_calculation.absolute_error_scalar">
+<code class="sig-prename descclassname">pycurv_testing.errors_calculation.</code><code class="sig-name descname">absolute_error_scalar</code><span class="sig-paren">(</span><em class="sig-param">true_value</em>, <em class="sig-param">estimated_value</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.errors_calculation.absolute_error_scalar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the “absolute error” as measure of accuracy for scalars.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_value</strong> – true / accepted scalar value</p></li>
+<li><p><strong>estimated_value</strong> – estimated / measured / experimental scalar value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>abs(true_value - estimated_value)
+the lower the error, the more accurate the estimated value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.errors_calculation.angular_error_vector">
+<code class="sig-prename descclassname">pycurv_testing.errors_calculation.</code><code class="sig-name descname">angular_error_vector</code><span class="sig-paren">(</span><em class="sig-param">true_vector</em>, <em class="sig-param">estimated_vector</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.errors_calculation.angular_error_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the “angular error” for 3D vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_vector</strong> (<em>numpy.ndarray</em>) – true / accepted 3D vector</p></li>
+<li><p><strong>estimated_vector</strong> (<em>numpy.ndarray</em>) – estimated / measured / experimental 3D
+vector</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>acos(abs(np.dot(true_vector, estimated_vector)))
+angle in radians between two vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.errors_calculation.calculate_histogram_area">
+<code class="sig-prename descclassname">pycurv_testing.errors_calculation.</code><code class="sig-name descname">calculate_histogram_area</code><span class="sig-paren">(</span><em class="sig-param">counts</em>, <em class="sig-param">bin_edges</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.errors_calculation.calculate_histogram_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates normalized area of a cumulative histogram (maximal is 1), where
+maximal count must be 1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>counts</strong> (<em>ndarray</em>) – normalized frequency of the values in the bins,
+maximal value must be 1</p></li>
+<li><p><strong>bin_edges</strong> (<em>Tuple</em><em>[</em><em>ndarray</em><em>, </em><em>float</em><em>]</em>) – bin edges of the bins, length of this
+array is one more than of the “counts” array</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>normalized area</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.errors_calculation.error_vector">
+<code class="sig-prename descclassname">pycurv_testing.errors_calculation.</code><code class="sig-name descname">error_vector</code><span class="sig-paren">(</span><em class="sig-param">true_vector</em>, <em class="sig-param">estimated_vector</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.errors_calculation.error_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the error for 3D vectors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_vector</strong> (<em>numpy.ndarray</em>) – true / accepted 3D vector</p></li>
+<li><p><strong>estimated_vector</strong> (<em>numpy.ndarray</em>) – estimated / measured / experimental 3D
+vector</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>1 - abs(np.dot(true_vector, estimated_vector))
+0 if the vectors are parallel, 1 if they are perpendicular</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.errors_calculation.relative_error_scalar">
+<code class="sig-prename descclassname">pycurv_testing.errors_calculation.</code><code class="sig-name descname">relative_error_scalar</code><span class="sig-paren">(</span><em class="sig-param">true_value</em>, <em class="sig-param">estimated_value</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.errors_calculation.relative_error_scalar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the “relative error” as measure of accuracy for scalars.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_value</strong> – true / accepted scalar value</p></li>
+<li><p><strong>estimated_value</strong> – estimated / measured / experimental scalar value</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>abs((true_value - estimated_value) / true_value)
+if true_value = 0, just abs(true_value - estimated_value)
+the lower the error, the more accurate the estimated value</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.plotting">
+<span id="pycurv-testing-plotting-module"></span><h2>pycurv_testing.plotting module<a class="headerlink" href="#module-pycurv_testing.plotting" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_testing.plotting.add_line_hist">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">add_line_hist</code><span class="sig-paren">(</span><em class="sig-param">values</em>, <em class="sig-param">weights=None</em>, <em class="sig-param">num_bins=20</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">max_val=None</em>, <em class="sig-param">label=None</em>, <em class="sig-param">ls='-'</em>, <em class="sig-param">marker='^'</em>, <em class="sig-param">c='b'</em>, <em class="sig-param">normalize=False</em>, <em class="sig-param">cumulative=False</em>, <em class="sig-param">zorder=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.add_line_hist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a line histogram of the values with the given number of bins and plot
+title.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>values</strong> (<em>numpy.ndarray</em>) – a list of numerical values</p></li>
+<li><p><strong>weights</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – if given, values will be weighted</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>max_val</strong> (<em>float</em><em>, </em><em>optional</em>) – if given (default None), values higher than
+this value will be set to this value</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – legend label for the value list (default None)</p></li>
+<li><p><strong>ls</strong> (<em>str</em><em>, </em><em>optional</em>) – line style (default ‘-‘)</p></li>
+<li><p><strong>marker</strong> (<em>str</em><em>, </em><em>optional</em>) – plotting character (default ‘^’)</p></li>
+<li><p><strong>c</strong> (<em>str</em><em>, </em><em>optional</em>) – color (default ‘b’ for blue)</p></li>
+<li><p><strong>normalize</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), relative
+frequencies instead of frequencies will be plotted</p></li>
+<li><p><strong>cumulative</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), cumulative
+counts or frequencies will be plotted</p></li>
+<li><p><strong>zorder</strong> (<em>int</em><em>, </em><em>optional</em>) – integer indicating the order of the data line
+on the plot</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>hist_area, if cumulative, else None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_composite_line_hist">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_composite_line_hist</code><span class="sig-paren">(</span><em class="sig-param">labels</em>, <em class="sig-param">line_styles</em>, <em class="sig-param">markers</em>, <em class="sig-param">colors</em>, <em class="sig-param">x_label</em>, <em class="sig-param">y_label</em>, <em class="sig-param">title=None</em>, <em class="sig-param">data_arrays=None</em>, <em class="sig-param">data_files=None</em>, <em class="sig-param">weights_arrays=None</em>, <em class="sig-param">num_bins=20</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=None</em>, <em class="sig-param">max_val=None</em>, <em class="sig-param">normalize=False</em>, <em class="sig-param">cumulative=False</em>, <em class="sig-param">outfile=None</em>, <em class="sig-param">legend_loc='best'</em>, <em class="sig-param">num_x_values=0</em>, <em class="sig-param">zorders=None</em>, <em class="sig-param">fontsize=30</em>, <em class="sig-param">ncol=1</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_composite_line_hist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots several data sets as line histograms in one plot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>labels</strong> – list of legend labels (str) for the data sets</p></li>
+<li><p><strong>line_styles</strong> – list of line styles (str)</p></li>
+<li><p><strong>markers</strong> – list of plotting characters (str)</p></li>
+<li><p><strong>colors</strong> – list of colors (str)</p></li>
+<li><p><strong>x_label</strong> (<em>str</em>) – X axis label</p></li>
+<li><p><strong>y_label</strong> (<em>str</em>) – Y axis label</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – title of the plot</p></li>
+<li><p><strong>data_arrays</strong> (<em>list</em><em>, </em><em>optional</em>) – list of data arrays</p></li>
+<li><p><strong>data_files</strong> (<em>list</em><em>, </em><em>optional</em>) – list of data file names (str)</p></li>
+<li><p><strong>weights_arrays</strong> (<em>list</em><em>, </em><em>optional</em>) – if given, data will be weighted,
+should be in the same format as the data arrays (default None)</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default None)</p></li>
+<li><p><strong>max_val</strong> (<em>float</em><em>, </em><em>optional</em>) – if given (default None), values higher than
+this value will be set to this value</p></li>
+<li><p><strong>normalize</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), relative
+frequencies instead of frequencies will be plotted</p></li>
+<li><p><strong>cumulative</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), cumulative
+counts or frequencies will be plotted</p></li>
+<li><p><strong>outfile</strong> (<em>str</em><em>, </em><em>optional</em>) – if given (default None), the plot will be saved
+as a file under this path</p></li>
+<li><p><strong>legend_loc</strong> (<em>str</em><em>, </em><em>optional</em>) – legend location (default ‘best’)</p></li>
+<li><p><strong>num_x_values</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0), plot this number of
+ticks on X axis</p></li>
+<li><p><strong>zorders</strong> (<em>list</em><em>, </em><em>optional</em>) – list of integers indicating the order of data
+lines on the plot</p></li>
+<li><p><strong>fontsize</strong> (<em>int</em><em>, </em><em>optional</em>) – fontsize (default 30)</p></li>
+<li><p><strong>ncol</strong> (<em>int</em><em>, </em><em>optional</em>) – number of legend columns (default 1)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of histogram areas, values are Null in not cumulative</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>hist_areas</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>either data_arrays or data_files has to be given</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_cylinder_curvature_errors_diff_rh">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_cylinder_curvature_errors_diff_rh</code><span class="sig-paren">(</span><em class="sig-param">methods=['RVV', 'AVV', 'SSVV'], curvature='kappa1', rhs=[5, 6, 7, 8, 9], x_range=None, y_range=(0, 1), num_bins=20, legend_loc='lower right', csv=None, voxel=False, *args, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_cylinder_curvature_errors_diff_rh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated curvature errors histograms on a cylinder surface
+for different methods and radius_hit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – tells which method(s) should be used
+(default=[“RVV”, “AVV”, “SSVV”])</p></li>
+<li><p><strong>curvature</strong> (<em>str</em><em>, </em><em>optional</em>) – “kappa1” (default), “kappa2” or
+“mean_curvature”</p></li>
+<li><p><strong>rhs</strong> (<em>list</em><em>, </em><em>optional</em>) – wanted radius_hit parameter values (default 5-9)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>legend_loc</strong> (<em>str</em><em>, </em><em>optional</em>) – legend location (default ‘lower right’)</p></li>
+<li><p><strong>csv</strong> (<em>str</em><em>, </em><em>optional</em>) – csv file for saving cumulative histogram areas</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if noisy cylinder should be plotted</p></li>
+<li><p><strong>*args</strong> – other arguments passed to plot_composite_line_hist</p></li>
+<li><p><strong>**kwargs</strong> – other keyword arguments passed to plot_composite_line_hist</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_cylinder_kappa_1_diff_rh">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_cylinder_kappa_1_diff_rh</code><span class="sig-paren">(</span><em class="sig-param">n=0</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">num_bins=20</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_cylinder_kappa_1_diff_rh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_1 values histograms on a cylinder surface by
+different methods (AVV and SSVV) using different radius_hit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_cylinder_t_2_and_kappa_1_errors">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_cylinder_t_2_and_kappa_1_errors</code><span class="sig-paren">(</span><em class="sig-param">RorAVV='AVV'</em>, <em class="sig-param">rhVV=5</em>, <em class="sig-param">rhSSVV=6</em>, <em class="sig-param">n=None</em>, <em class="sig-param">voxel=False</em>, <em class="sig-param">exclude_borders=5</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">x_range_T=None</em>, <em class="sig-param">x_range_kappa=None</em>, <em class="sig-param">legend_loc='lower right'</em>, <em class="sig-param">vertex_based=False</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_cylinder_t_2_and_kappa_1_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_2 and t_1 errors histograms on a cylinder surface
+for different methods (RVV or AVV and SSVV) and optimal radius_hit for each
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>RorAVV</strong> (<em>str</em><em>, </em><em>optional</em>) – RVV or AVV (default)
+weighted by triangle area also in the second step (principle
+directions and curvatures estimation)</p></li>
+<li><p><strong>rhVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for VV (default 5)</p></li>
+<li><p><strong>rhSSVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for SSVV (default 6)</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – n for Mindboggle (MB) -m 0 (default None=not plotted)</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), voxel cylinder
+results are used</p></li>
+<li><p><strong>exclude_borders</strong> (<em>int</em><em>, </em><em>optional</em>) – how many voxels from border were
+excluded for curvature calculation (default 5)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>x_range_T</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the
+range at X axis of principal directions plots (default None)</p></li>
+<li><p><strong>x_range_kappa</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the
+range at X axis of principal curvatures plots (default None)</p></li>
+<li><p><strong>legend_loc</strong> (<em>str</em><em>, </em><em>optional</em>) – legend location (default ‘lower right’)</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), curvature is
+calculated per triangle vertex instead of triangle center</p></li>
+<li><p><strong>*args</strong> – other arguments passed to plot_composite_line_hist</p></li>
+<li><p><strong>**kwargs</strong> – other keyword arguments passed to plot_composite_line_hist</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_cylinder_t_2_and_kappa_1_errors_allVV">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_cylinder_t_2_and_kappa_1_errors_allVV</code><span class="sig-paren">(</span><em class="sig-param">n=0</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">exclude_borders=5</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_cylinder_t_2_and_kappa_1_errors_allVV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_2 and t_1 errors histograms on a cylinder surface
+for different methods (RVV, AVV and SSVV) and optimal radius_hit for each
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>exclude_borders</strong> (<em>int</em><em>, </em><em>optional</em>) – how many voxels from border were
+excluded for curvature calculation (default 5)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_errors_different_parameter">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_errors_different_parameter</code><span class="sig-paren">(</span><em class="sig-param">errors_csv_file_template</em>, <em class="sig-param">parameter_name</em>, <em class="sig-param">parameter_values</em>, <em class="sig-param">plot_fold</em>, <em class="sig-param">curvature='kappa1'</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">title=None</em>, <em class="sig-param">csv=None</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_errors_different_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>errors_csv_file_template</strong> – errors CSV file template with
+‘X’ instead of the parameter value</p></li>
+<li><p><strong>parameter_name</strong> (<em>str</em>) – parameter name</p></li>
+<li><p><strong>parameter_values</strong> (<em>list</em>) – wanted parameter values</p></li>
+<li><p><strong>plot_fold</strong> (<em>str</em>) – output folder</p></li>
+<li><p><strong>curvature</strong> (<em>str</em><em>, </em><em>optional</em>) – “kappa1” (default), “kappa2”,
+“mean_curvature” or “both” for kappa1 and kappa2</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – plot title (default None - no title)</p></li>
+<li><p><strong>csv</strong> (<em>str</em><em>, </em><em>optional</em>) – csv file for saving cumulative histogram areas</p></li>
+<li><p><strong>*args</strong> – other arguments passed to plot_composite_line_hist</p></li>
+<li><p><strong>**kwargs</strong> – other keyword arguments passed to plot_composite_line_hist</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_excluding_borders">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_excluding_borders</code><span class="sig-paren">(</span><em class="sig-param">method='AVV'</em>, <em class="sig-param">radius_hit=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_excluding_borders" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots maximal absolute curvatures and percent surface depending on distance
+filtered from border.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – which method to plot (default “AVV”)</p></li>
+<li><p><strong>radius_hit</strong> (<em>int</em><em>, </em><em>optional</em>) – which radius_hit to plot (default 10)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_hist">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_hist</code><span class="sig-paren">(</span><em class="sig-param">values</em>, <em class="sig-param">num_bins</em>, <em class="sig-param">title</em>, <em class="sig-param">x_label='Value'</em>, <em class="sig-param">y_label='Frequency'</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">outfile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_hist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a histogram of the values with the given number of bins and plot
+title.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>values</strong> – a list of numerical values</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em>) – number of bins for the histogram</p></li>
+<li><p><strong>title</strong> (<em>str</em>) – title of the plot</p></li>
+<li><p><strong>x_label</strong> (<em>str</em><em>, </em><em>optional</em>) – X axis label (default “Value”)</p></li>
+<li><p><strong>y_label</strong> (<em>str</em><em>, </em><em>optional</em>) – Y axis label (default “Frequency”)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>outfile</strong> (<em>str</em><em>, </em><em>optional</em>) – if given (default None), the plot will be saved
+as a file under this path</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_inverse_cylinder_t_1_and_kappa_2_errors">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_inverse_cylinder_t_1_and_kappa_2_errors</code><span class="sig-paren">(</span><em class="sig-param">n=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_inverse_cylinder_t_1_and_kappa_2_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_2 and t_1 errors histograms on an inverse cylinder
+surface for different methods (RVV and SSVV) and optimal radius_hit for
+each method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_inverse_sphere_kappa_1_and_2_errors">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_inverse_sphere_kappa_1_and_2_errors</code><span class="sig-paren">(</span><em class="sig-param">n=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_inverse_sphere_kappa_1_and_2_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_1 and kappa_2 errors histograms on an inverse
+icosahedron sphere surface for different methods (RVV and SSVV) and an
+optimal radius_hit for each method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_line_hist">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_line_hist</code><span class="sig-paren">(</span><em class="sig-param">values</em>, <em class="sig-param">weights=None</em>, <em class="sig-param">num_bins=20</em>, <em class="sig-param">title=None</em>, <em class="sig-param">x_label='Value'</em>, <em class="sig-param">y_label='Frequency'</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">label=None</em>, <em class="sig-param">ls='-'</em>, <em class="sig-param">marker='^'</em>, <em class="sig-param">c='b'</em>, <em class="sig-param">max_val=None</em>, <em class="sig-param">normalize=False</em>, <em class="sig-param">cumulative=False</em>, <em class="sig-param">outfile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_line_hist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a line histogram of the values with the given number of bins and plot
+title.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>values</strong> – a list of numerical values</p></li>
+<li><p><strong>weights</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – if given, values will be weighted</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em>) – number of bins for the histogram (default 10)</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – title of the plot</p></li>
+<li><p><strong>x_label</strong> (<em>str</em><em>, </em><em>optional</em>) – X axis label (default “Value”)</p></li>
+<li><p><strong>y_label</strong> (<em>str</em><em>, </em><em>optional</em>) – Y axis label (default “Frequency”)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>label</strong> (<em>str</em><em>, </em><em>optional</em>) – legend label for the value list (default None)</p></li>
+<li><p><strong>ls</strong> (<em>str</em><em>, </em><em>optional</em>) – line style (default ‘-‘)</p></li>
+<li><p><strong>marker</strong> (<em>str</em><em>, </em><em>optional</em>) – plotting character (default ‘^’)</p></li>
+<li><p><strong>c</strong> (<em>str</em><em>, </em><em>optional</em>) – color (default ‘b’ for blue)</p></li>
+<li><p><strong>max_val</strong> (<em>float</em><em>, </em><em>optional</em>) – if given (default None), values higher than
+this value will be set to this value</p></li>
+<li><p><strong>normalize</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), relative
+frequencies instead of frequencies will be plotted</p></li>
+<li><p><strong>cumulative</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), cumulative
+counts or frequencies will be plotted</p></li>
+<li><p><strong>outfile</strong> (<em>str</em><em>, </em><em>optional</em>) – if given (default None), the plot will be saved
+as a file under this path</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_mindboggle_errors">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_mindboggle_errors</code><span class="sig-paren">(</span><em class="sig-param">mb_errors_csv_file</em>, <em class="sig-param">avv_errors_csv_file</em>, <em class="sig-param">vtk_errors_csv_file</em>, <em class="sig-param">plot_fold</em>, <em class="sig-param">curvature='kappa1'</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">title=None</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_mindboggle_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots relative curvature errors for Mindboggle, AVV and VTK.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mb_errors_csv_file</strong> (<em>str</em>) – Mindboggle errors CSV file</p></li>
+<li><p><strong>avv_errors_csv_file</strong> (<em>str</em>) – AVV errors CSV file</p></li>
+<li><p><strong>vtk_errors_csv_file</strong> (<em>str</em>) – VTK errors CSV file</p></li>
+<li><p><strong>plot_fold</strong> (<em>str</em>) – output folder</p></li>
+<li><p><strong>curvature</strong> (<em>str</em><em>, </em><em>optional</em>) – “kappa1” (default), “kappa2” or
+“mean_curvature”</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – plot title (default None - no title)</p></li>
+<li><p><strong>*args</strong> – other arguments passed to plot_composite_line_hist</p></li>
+<li><p><strong>**kwargs</strong> – other keyword arguments passed to plot_composite_line_hist</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_peak_curvature_diff_rh">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_peak_curvature_diff_rh</code><span class="sig-paren">(</span><em class="sig-param">df</em>, <em class="sig-param">segmentation='filled'</em>, <em class="sig-param">method='AVV'</em>, <em class="sig-param">curvature='kappa1'</em>, <em class="sig-param">weights=None</em>, <em class="sig-param">x_label='$\\kappa_{1}\\ (nm^{-1})$'</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=None</em>, <em class="sig-param">num_bins=20</em>, <em class="sig-param">title=None</em>, <em class="sig-param">plot_fold=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_peak_curvature_diff_rh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots curvature data of a cER sub-surface with a peak, generated
+using a regular or compartment segmentation, estimated by AVV or SSVV and
+different radius_hit</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pandas.DataFrame</em>) – DataFrame containing all the data in special
+format, generated in read_in_and_plot_peak_curvatures</p></li>
+<li><p><strong>segmentation</strong> (<em>str</em><em>, </em><em>optional</em>) – segmentation used for surface generation,
+default “filled”</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – curvature method used, default “AVV”</p></li>
+<li><p><strong>curvature</strong> (<em>str</em><em>, </em><em>optional</em>) – curvature to be plotted, default “kappa1”</p></li>
+<li><p><strong>weights</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, curvatures will be weighted by this
+column from the DataFrame (default None)</p></li>
+<li><p><strong>x_label</strong> (<em>str</em><em>, </em><em>optional</em>) – X-label, default r”$kappa_{1}(nm^{-1})$”</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default None)</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – plot title (default None - no title)</p></li>
+<li><p><strong>plot_fold</strong> (<em>str</em><em>, </em><em>optional</em>) – folder where to save the plot, if wished
+(default None)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_plane_normals">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_plane_normals</code><span class="sig-paren">(</span><em class="sig-param">n=10</em>, <em class="sig-param">rand_dir=False</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">res=20</em>, <em class="sig-param">vertex_based=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_plane_normals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated normals errors by VV versus original face normals
+(calculated by VTK) on a noisy plane surface for several radius_hit values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 10)</p></li>
+<li><p><strong>rand_dir</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), results where
+each point was moved in a random direction instead of the direction
+of its normal will be plotted.</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>res</strong> (<em>int</em><em>, </em><em>optional</em>) – defines the size of the square plane in pixels and
+triangle division: 2*res</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), curvature is
+calculated per triangle vertex instead of triangle center</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_plane_normals_different_noise">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_plane_normals_different_noise</code><span class="sig-paren">(</span><em class="sig-param">rh=8</em>, <em class="sig-param">rand_dir=False</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">res=20</em>, <em class="sig-param">vertex_based=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_plane_normals_different_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated normals errors by VV on a noisy plane surface for
+several noise levels (with a fixed radius_hit value).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rh</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit parameter in pixels (default 8)</p></li>
+<li><p><strong>rand_dir</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), results where
+each point was moved in a random direction instead of the direction
+of its normal will be plotted.</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>res</strong> (<em>int</em><em>, </em><em>optional</em>) – defines the size of the square plane in pixels and
+triangle division: 2*res</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), curvature is
+calculated per triangle vertex instead of triangle center</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_plane_normals_different_noise_and_rh">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_plane_normals_different_noise_and_rh</code><span class="sig-paren">(</span><em class="sig-param">noise_levels=[5, 10, 20, 30], rand_dir=False, x_range=None, y_range=(0, 1), res=20, vertex_based=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_plane_normals_different_noise_and_rh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots areas under the curve of histograms of the estimated normals
+errors by VV on a noisy plane surface for several noise levels and
+radius_hit values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_levels</strong> (<em>list</em><em>, </em><em>optional</em>) – noise levels in %, default 5, 10, 20, 30</p></li>
+<li><p><strong>rand_dir</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), results where
+each point was moved in a random direction instead of the direction
+of its normal will be plotted.</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis of the underlying histograms (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis of the underlying histograms (default (0, 1))</p></li>
+<li><p><strong>res</strong> (<em>int</em><em>, </em><em>optional</em>) – defines the size of the square plane in pixels and
+triangle division: 2*res</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), curvature is
+calculated per triangle vertex instead of triangle center</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_sphere_curvature_errors_allVV">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_sphere_curvature_errors_allVV</code><span class="sig-paren">(</span><em class="sig-param">r=10</em>, <em class="sig-param">rhRVV=9</em>, <em class="sig-param">rhAVV=9</em>, <em class="sig-param">rhSSVV=9</em>, <em class="sig-param">n=8</em>, <em class="sig-param">voxel=False</em>, <em class="sig-param">curvature='both'</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">onlyVV=False</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_sphere_curvature_errors_allVV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+for different methods (RVV, AVV, SSVV and VTK) and an optimal radius_hit for
+each method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em><em>, </em><em>optional</em>) – radius of the sphere in voxels (default 10)</p></li>
+<li><p><strong>rhRVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for RVV (default 9)</p></li>
+<li><p><strong>rhAVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for AVV (default 9)</p></li>
+<li><p><strong>rhSSVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for SSVV (default 9)</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – n for Mindboggle (MB) -m 0 (default 8)</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), voxel sphere
+results are used</p></li>
+<li><p><strong>curvature</strong> (<em>str</em><em>, </em><em>optional</em>) – “kappa1”, “kappa2”, “both” (default) or
+“mean_curvature”</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>*args</strong> – other arguments passed to plot_composite_line_hist</p></li>
+<li><p><strong>**kwargs</strong> – other keyword arguments passed to plot_composite_line_hist</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_sphere_curvature_errors_diff_rh">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_sphere_curvature_errors_diff_rh</code><span class="sig-paren">(</span><em class="sig-param">r=10, methods=['AVV', 'RVV', 'SSVV'], curvature='both', rhs=[5, 6, 7, 8, 9], n=0, ico=0, voxel=False, x_range=None, y_range=(0, 1), num_bins=20, legend_loc='lower right', csv=None, *args, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_sphere_curvature_errors_diff_rh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated curvature errors histograms on a sphere surface
+for different methods and radius_hit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em><em>, </em><em>optional</em>) – radius of the sphere in voxels (default 10)</p></li>
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – tells which method(s) should be used
+(default=[“RVV”, “AVV”, “SSVV”])</p></li>
+<li><p><strong>curvature</strong> (<em>str</em><em>, </em><em>optional</em>) – “kappa1”, “kappa2”, “both” (default) or
+“mean_curvature”</p></li>
+<li><p><strong>rhs</strong> (<em>list</em><em>, </em><em>optional</em>) – wanted radius_hit parameter values (default 5-9)</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p></li>
+<li><p><strong>ico</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (e.g. 1280), icosahedron results with so
+many faces are used; if 0 (default), smooth sphere results are used</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), voxel sphere
+results are used (ignoring the other options)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>legend_loc</strong> (<em>str</em><em>, </em><em>optional</em>) – legend location (default ‘lower right’)</p></li>
+<li><p><strong>csv</strong> (<em>str</em><em>, </em><em>optional</em>) – csv file for saving cumulative histogram areas</p></li>
+<li><p><strong>*args</strong> – other arguments passed to plot_composite_line_hist</p></li>
+<li><p><strong>**kwargs</strong> – other keyword arguments passed to plot_composite_line_hist</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_sphere_kappa_1_and_2_diff_rh">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_sphere_kappa_1_and_2_diff_rh</code><span class="sig-paren">(</span><em class="sig-param">r=10, n=0, ico=0, voxel=False, methods=['RVV', 'AVV', 'SSVV'], rhs=[5, 6, 7, 8, 9], x_range=None, y_range=None, num_bins=20, legend_loc='upper left'</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_sphere_kappa_1_and_2_diff_rh" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Plots estimated kappa_1 and kappa_2 values for a sphere surface</dt><dd><p>by different methods (RVV, AVV and SSVV) using different radius_hit.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em><em>, </em><em>optional</em>) – radius of the sphere in voxels (default 10)</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p></li>
+<li><p><strong>ico</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (e.g. 1280), icosahedron results with so
+many faces are used; if 0 (default), smooth sphere results are used</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), voxel sphere
+results are used (ignoring the other options)</p></li>
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – tells which method(s) should be used
+(default=[“RVV”, “AVV”, “SSVV”])</p></li>
+<li><p><strong>rhs</strong> (<em>list</em><em>, </em><em>optional</em>) – wanted radius_hit parameter values (default 5-9)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default None)</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>legend_loc</strong> (<em>str</em><em>, </em><em>optional</em>) – legend location (default ‘upper left’)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_sphere_kappa_1_and_2_errors">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_sphere_kappa_1_and_2_errors</code><span class="sig-paren">(</span><em class="sig-param">r=10</em>, <em class="sig-param">rhVV=9</em>, <em class="sig-param">rhSSVV=9</em>, <em class="sig-param">n=0</em>, <em class="sig-param">ico=0</em>, <em class="sig-param">voxel=False</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">RorAVV='AVV'</em>, <em class="sig-param">vertex_based=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_sphere_kappa_1_and_2_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+for different methods (RVV, AVV, SSVV and VTK) and an optimal radius_hit for
+each method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em><em>, </em><em>optional</em>) – radius of the sphere in voxels (default 10)</p></li>
+<li><p><strong>rhVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for VV (default 9)</p></li>
+<li><p><strong>rhSSVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for SSVV (default 9)</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p></li>
+<li><p><strong>ico</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (i.e. 1280), icosahedron results with so
+many faces are used; if 0 (default), smooth sphere results are used</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), voxel sphere
+results are used (ignoring the other options)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>RorAVV</strong> (<em>str</em><em>, </em><em>optional</em>) – RVV or AVV (default)
+weighted by triangle area also in the second step (principle
+directions and curvatures estimation)</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), curvature is
+calculated per triangle vertex instead of triangle center</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_sphere_kappa_1_and_2_errors_noVTK">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_sphere_kappa_1_and_2_errors_noVTK</code><span class="sig-paren">(</span><em class="sig-param">r=10</em>, <em class="sig-param">rhVV=9</em>, <em class="sig-param">rhSSVV=9</em>, <em class="sig-param">n=0</em>, <em class="sig-param">ico=0</em>, <em class="sig-param">voxel=False</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">RorAVV='AVV'</em>, <em class="sig-param">legend_loc='lower right'</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_sphere_kappa_1_and_2_errors_noVTK" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+for different methods (RVV, AVV and SSVV) and an optimal radius_hit for each
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em><em>, </em><em>optional</em>) – radius of the sphere in voxels (default 10)</p></li>
+<li><p><strong>rhVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for VV (default 9)</p></li>
+<li><p><strong>rhSSVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for SSVV (default 9)</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p></li>
+<li><p><strong>ico</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (e.g. 1280), icosahedron results with so
+many faces are used; if 0 (default), smooth sphere results are used</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), voxel sphere
+results are used (ignoring the other options)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>RorAVV</strong> (<em>str</em><em>, </em><em>optional</em>) – RVV or AVV (default)
+weighted by triangle area also in the second step (principle
+directions and curvatures estimation)</p></li>
+<li><p><strong>legend_loc</strong> (<em>str</em><em>, </em><em>optional</em>) – legend location (default ‘lower right’)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_sphere_kappa_1_and_2_errors_noVTK_allVV">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_sphere_kappa_1_and_2_errors_noVTK_allVV</code><span class="sig-paren">(</span><em class="sig-param">r=10</em>, <em class="sig-param">rhVV=9</em>, <em class="sig-param">rhSSVV=9</em>, <em class="sig-param">n=0</em>, <em class="sig-param">ico=0</em>, <em class="sig-param">voxel=False</em>, <em class="sig-param">value_range=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_sphere_kappa_1_and_2_errors_noVTK_allVV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_1 and kappa_2 errors histograms on a sphere surface
+for different methods (VV and SSVV) and an optimal radius_hit for each
+method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em><em>, </em><em>optional</em>) – radius of the sphere in voxels (default 10)</p></li>
+<li><p><strong>rhVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for VV (default 9)</p></li>
+<li><p><strong>rhSSVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for SSVV (default 9)</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – noise in % (default 0)</p></li>
+<li><p><strong>ico</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (e.g. 1280), icosahedron results with so
+many faces are used; if 0 (default), smooth sphere results are used</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), voxel sphere
+results are used (ignoring the other options)</p></li>
+<li><p><strong>value_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_torus_curvature_errors_diff_rh">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_torus_curvature_errors_diff_rh</code><span class="sig-paren">(</span><em class="sig-param">methods=['RVV', 'AVV', 'SSVV'], curvature='kappa1', rhs=[5, 6, 7, 8, 9], x_range=None, y_range=(0, 1), num_bins=20, legend_loc='lower right', csv=None, voxel=False, *args, **kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_torus_curvature_errors_diff_rh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated curvature errors histograms on a torus surface
+for different methods and radius_hit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – tells which method(s) should be used
+(default=[“RVV”, “AVV”, “SSVV”])</p></li>
+<li><p><strong>curvature</strong> (<em>str</em><em>, </em><em>optional</em>) – “kappa1” (default), “kappa2” or
+“mean_curvature”</p></li>
+<li><p><strong>rhs</strong> (<em>list</em><em>, </em><em>optional</em>) – wanted radius_hit parameter values (default 5-9)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>legend_loc</strong> (<em>str</em><em>, </em><em>optional</em>) – legend location (default ‘lower right’)</p></li>
+<li><p><strong>csv</strong> (<em>str</em><em>, </em><em>optional</em>) – csv file for saving cumulative histogram areas</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if noisy cylinder should be plotted</p></li>
+<li><p><strong>*args</strong> – other arguments passed to plot_composite_line_hist</p></li>
+<li><p><strong>**kwargs</strong> – other keyword arguments passed to plot_composite_line_hist</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_torus_kappa_1_and_2_diff_rh">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_torus_kappa_1_and_2_diff_rh</code><span class="sig-paren">(</span><em class="sig-param">methods=['RVV', 'AVV', 'SSVV'], rhs=[5, 6, 7, 8, 9], x_range=None, num_bins=20</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_torus_kappa_1_and_2_diff_rh" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Plots estimated kappa_1 values for a torus surface</dt><dd><p>by different methods (RVV, AVV and SSVV) using different radius_hit.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – tells which method(s) should be used: ‘RVV’ or
+‘AVV’ for normal vector voting (default) or ‘SSVV’ for vector and
+curvature tensor voting to estimate the principal directions and
+curvatures</p></li>
+<li><p><strong>rhs</strong> (<em>list</em><em>, </em><em>optional</em>) – wanted radius_hit parameter values (default 5-9)</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_torus_kappa_1_and_2_t_1_and_2_errors">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_torus_kappa_1_and_2_t_1_and_2_errors</code><span class="sig-paren">(</span><em class="sig-param">rhVV=9</em>, <em class="sig-param">rhSSVV=5</em>, <em class="sig-param">subdivisions=0</em>, <em class="sig-param">x_range_T=None</em>, <em class="sig-param">x_range_kappa=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">RorAVV='AVV'</em>, <em class="sig-param">vertex_based=False</em>, <em class="sig-param">voxel=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_torus_kappa_1_and_2_t_1_and_2_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_1 and kappa_2 as well as t_1 and t_2 errors histograms
+on a torus surface for different methods (VV and SSVV) and an optimal
+radius_hit for each method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rhVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for VV (default 9)</p></li>
+<li><p><strong>rhSSVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for SSVV (default 5)</p></li>
+<li><p><strong>subdivisions</strong> (<em>int</em><em>, </em><em>optional</em>) – number of subdivisions in all three torus
+dimensions, if 0 (default), default subdivisions are used</p></li>
+<li><p><strong>x_range_T</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the
+range at X axis of principal directions plots (default None)</p></li>
+<li><p><strong>x_range_kappa</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the
+range at X axis of principal curvatures plots (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>RorAVV</strong> (<em>str</em><em>, </em><em>optional</em>) – RVV or AVV (default)
+weighted by triangle area also in the second step (principle
+directions and curvatures estimation)</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), curvature is
+calculated per triangle vertex instead of triangle center</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if noisy torus should be plotted</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV</code><span class="sig-paren">(</span><em class="sig-param">rhRVV=9</em>, <em class="sig-param">rhAVV=9</em>, <em class="sig-param">rhSSVV=5</em>, <em class="sig-param">n=4</em>, <em class="sig-param">x_range_T=None</em>, <em class="sig-param">x_range_kappa=None</em>, <em class="sig-param">y_range=(0</em>, <em class="sig-param">1)</em>, <em class="sig-param">voxel=False</em>, <em class="sig-param">*args</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots estimated kappa_1 and kappa_2 as well as t_1 and t_2 errors histograms
+on a torus surface for different methods (RVV, AVV and SSVV) and an
+optimal radius_hit for each method. VTK is included for curvatures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rhRVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for RVV (default 9)</p></li>
+<li><p><strong>rhAVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for AVV (default 9)</p></li>
+<li><p><strong>rhSSVV</strong> (<em>int</em><em>, </em><em>optional</em>) – radius_hit for SSVV (default 5)</p></li>
+<li><p><strong>n</strong> (<em>int</em><em>, </em><em>optional</em>) – n for Mindboggle (MB) -m 0 (default 4)</p></li>
+<li><p><strong>x_range_T</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the
+range at X axis of principal directions plots (default None)</p></li>
+<li><p><strong>x_range_kappa</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the
+range at X axis of principal curvatures plots (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default (0, 1))</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if noisy torus should be plotted</p></li>
+<li><p><strong>*args</strong> – other arguments passed to plot_composite_line_hist</p></li>
+<li><p><strong>**kwargs</strong> – other keyword arguments passed to plot_composite_line_hist</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.read_in_and_plot_peak_curvatures">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">read_in_and_plot_peak_curvatures</code><span class="sig-paren">(</span><em class="sig-param">x_range=None</em>, <em class="sig-param">y_range=None</em>, <em class="sig-param">num_bins=20</em>, <em class="sig-param">weights=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.read_in_and_plot_peak_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in curvature data of a cER sub-surface with a peak, generated
+using a regular or compartment segmentation, estimated by AVV or SSVV and
+different radius_hit and plots the curvatures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>y_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at Y axis (default None)</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>weights</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, curvatures will be weighted by this
+property (default None)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.read_in_and_plot_surface_curvature">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">read_in_and_plot_surface_curvature</code><span class="sig-paren">(</span><em class="sig-param">num_bins=20</em>, <em class="sig-param">weights=None</em>, <em class="sig-param">curvature='kappa1'</em>, <em class="sig-param">x_label='$\\kappa_{1}\\ (nm^{-1})$'</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.read_in_and_plot_surface_curvature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in curvature data of a cER surface, generated using a compartment
+segmentation, estimated by AVV and radius_hit=10 and plots the curvature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>weights</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, curvatures will be weighted by this
+column of the DataFrame (default None)</p></li>
+<li><p><strong>curvature</strong> (<em>str</em><em>, </em><em>optional</em>) – curvature to be plotted, default “kappa1”</p></li>
+<li><p><strong>x_label</strong> (<em>str</em><em>, </em><em>optional</em>) – X-label, default r”$kappa_{1}(nm^{-1})$”</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.plotting.read_in_and_plot_surface_curvatures">
+<code class="sig-prename descclassname">pycurv_testing.plotting.</code><code class="sig-name descname">read_in_and_plot_surface_curvatures</code><span class="sig-paren">(</span><em class="sig-param">folder</em>, <em class="sig-param">plot_fold</em>, <em class="sig-param">base_filename</em>, <em class="sig-param">x_range=None</em>, <em class="sig-param">num_bins=20</em>, <em class="sig-param">weights=None</em>, <em class="sig-param">method='AVV'</em>, <em class="sig-param">radius_hit=10</em>, <em class="sig-param">borders=0</em>, <em class="sig-param">title=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.plotting.read_in_and_plot_surface_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in curvature data of a cER surface, generated using a compartment
+segmentation, estimated by the given method and radius_hit, and plots the
+curvature (minimal and maximal principal as well as curvedness).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>folder</strong> (<em>str</em>) – folder of the input data</p></li>
+<li><p><strong>plot_fold</strong> (<em>str</em>) – folder where the plot should be written</p></li>
+<li><p><strong>base_filename</strong> (<em>str</em>) – main part of the file name before ‘.METHOD_rhRH…’</p></li>
+<li><p><strong>x_range</strong> (<em>tuple</em><em>, </em><em>optional</em>) – a tuple of two values to limit the range
+at X axis (default None)</p></li>
+<li><p><strong>num_bins</strong> (<em>int</em><em>, </em><em>optional</em>) – number of bins for the histogram (default 20)</p></li>
+<li><p><strong>weights</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, curvatures will be weighted by this
+column of the DataFrame (default None)</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – which method to plot (default “AVV”)</p></li>
+<li><p><strong>radius_hit</strong> (<em>int</em><em>, </em><em>optional</em>) – which radius_hit to plot (default 10)</p></li>
+<li><p><strong>borders</strong> (<em>int</em><em>, </em><em>optional</em>) – how much to exclude from borders in nm
+(default 0)</p></li>
+<li><p><strong>title</strong> (<em>str</em><em>, </em><em>optional</em>) – title of the plot</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.synthetic_surfaces">
+<span id="pycurv-testing-synthetic-surfaces-module"></span><h2>pycurv_testing.synthetic_surfaces module<a class="headerlink" href="#module-pycurv_testing.synthetic_surfaces" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycurv_testing.synthetic_surfaces.ConeGenerator">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">ConeGenerator</code><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.ConeGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating triangular-mesh surface of a cone.</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.ConeGenerator.generate_cone">
+<em class="property">static </em><code class="sig-name descname">generate_cone</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">h</em>, <em class="sig-param">res</em>, <em class="sig-param">subdivisions=0</em>, <em class="sig-param">decimate=0.0</em>, <em class="sig-param">smoothing_iterations=0</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.ConeGenerator.generate_cone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a cone surface with a given base radius and height using VTK.
+The resulting surface can be smooth if subdivisions, decimate and
+smoothing options are used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em>) – cone base radius</p></li>
+<li><p><strong>h</strong> (<em>int</em>) – cone height</p></li>
+<li><p><strong>res</strong> (<em>int</em>) – resolution</p></li>
+<li><p><strong>subdivisions</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0) vtkLinearSubdivi-
+sionFilter is applied with this number of subdivisions</p></li>
+<li><p><strong>decimate</strong> (<em>float</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0) vtkDecimatePro is
+applied with this target reduction (&lt; 1)</p></li>
+<li><p><strong>smoothing_iterations</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0)
+vtkWindowedSincPolyDataFilter is applied with this number of
+smoothing iterations</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a cone surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.ConeGenerator.generate_voxel_cone_surface">
+<em class="property">static </em><code class="sig-name descname">generate_voxel_cone_surface</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">h</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.ConeGenerator.generate_voxel_cone_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a cone surface with a given radius and height using a filled
+voxel cone mask and the Marching Cubes method. The resulting surface
+tends to follow the sharp voxels outline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em>) – cone radius</p></li>
+<li><p><strong>h</strong> (<em>int</em>) – cone height</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a cone surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv_testing.synthetic_surfaces.CylinderGenerator">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">CylinderGenerator</code><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.CylinderGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating triangular-mesh surface of a cylinder.</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.CylinderGenerator.generate_cylinder_surface">
+<em class="property">static </em><code class="sig-name descname">generate_cylinder_surface</code><span class="sig-paren">(</span><em class="sig-param">r=10.0</em>, <em class="sig-param">h=20.0</em>, <em class="sig-param">res=100</em>, <em class="sig-param">subdivisions=0</em>, <em class="sig-param">max_edge=0</em>, <em class="sig-param">max_area=0</em>, <em class="sig-param">decimate=0</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.CylinderGenerator.generate_cylinder_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a cylinder surface with minimal number of triangular cells
+and two circular planes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>float</em><em>, </em><em>optional</em>) – cylinder radius (default 10.0)</p></li>
+<li><p><strong>h</strong> (<em>float</em><em>, </em><em>optional</em>) – cylinder high (default 20.0)</p></li>
+<li><p><strong>res</strong> (<em>int</em><em>, </em><em>optional</em>) – resolution (default 100)</p></li>
+<li><p><strong>subdivisions</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0) vtkLinearSubdivi-
+sionFilter is applied with this number of subdivisions</p></li>
+<li><p><strong>max_edge</strong> (<em>float</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0) vtkAdaptiveSubdivi-
+sionFilter is applied with this maximal triangle edge length</p></li>
+<li><p><strong>max_area</strong> (<em>float</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0) vtkAdaptiveSubdivi-
+sionFilter is applied with this maximal triangle area</p></li>
+<li><p><strong>decimate</strong> (<em>float</em><em>, </em><em>optional</em>) – if &gt; 0 (default) vtkDecimatePro is
+applied with this target reduction (&lt; 1)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a cylinder surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.CylinderGenerator.generate_gauss_cylinder_surface">
+<em class="property">static </em><code class="sig-name descname">generate_gauss_cylinder_surface</code><span class="sig-paren">(</span><em class="sig-param">r</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.CylinderGenerator.generate_gauss_cylinder_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a cylinder surface with a given radius using a gaussian
+cylinder mask and the Marching Cubes method. The resulting surface is
+smooth.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>int</em>) – cylinder radius</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a cylinder surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.CylinderGenerator.generate_voxel_cylinder_surface">
+<em class="property">static </em><code class="sig-name descname">generate_voxel_cylinder_surface</code><span class="sig-paren">(</span><em class="sig-param">r</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.CylinderGenerator.generate_voxel_cylinder_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a cylinder surface with a given radius using a filled voxel
+cylinder mask and the Marching Cubes method. The resulting surface tends
+to follow the sharp voxels outline and does not have planes on both
+sides of the cylinder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>int</em>) – cylinder radius in voxels</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a cylinder surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv_testing.synthetic_surfaces.PlaneGenerator">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">PlaneGenerator</code><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.PlaneGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating triangular-mesh surface of a plane.</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.PlaneGenerator.generate_plane_surface">
+<em class="property">static </em><code class="sig-name descname">generate_plane_surface</code><span class="sig-paren">(</span><em class="sig-param">half_size=10</em>, <em class="sig-param">res=30</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.PlaneGenerator.generate_plane_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a square plane surface with triangular cells.</p>
+<p>The plane has a center at (0, 0, 0) and normals (0, 0, 1), i.e. the
+plane is parallel to X and Y axes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>half_size</strong> (<em>int</em>) – half size of the plane (from center to an edge)</p></li>
+<li><p><strong>res</strong> (<em>int</em>) – resolution (number of divisions) in X and Y axes</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a plane surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv_testing.synthetic_surfaces.SaddleGenerator">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">SaddleGenerator</code><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.SaddleGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating triangular-mesh surfaces containing a saddle surface
+(negative gaussian curvature).</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.SaddleGenerator.generate_parametric_torus">
+<em class="property">static </em><code class="sig-name descname">generate_parametric_torus</code><span class="sig-paren">(</span><em class="sig-param">rr</em>, <em class="sig-param">csr</em>, <em class="sig-param">subdivisions=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.SaddleGenerator.generate_parametric_torus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a torus surface with triangular cells.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rr</strong> (<em>int</em><em> or </em><em>float</em>) – ring radius</p></li>
+<li><p><strong>csr</strong> (<em>int</em><em> or </em><em>float</em>) – cross-section radius</p></li>
+<li><p><strong>subdivisions</strong> (<em>int</em><em>, </em><em>optional</em>) – number of subdivisions in all three
+dimensions, if 0 (default), default subdivisions are used</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a torus surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.SaddleGenerator.generate_voxel_torus_surface">
+<em class="property">static </em><code class="sig-name descname">generate_voxel_torus_surface</code><span class="sig-paren">(</span><em class="sig-param">rr</em>, <em class="sig-param">csr</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.SaddleGenerator.generate_voxel_torus_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a torus surface with a given radii using a filled voxel
+torus mask and the Marching Cubes method. The resulting surface tends
+to follow the sharp voxels outline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rr</strong> (<em>int</em><em> or </em><em>float</em>) – ring radius = c</p></li>
+<li><p><strong>csr</strong> (<em>int</em><em> or </em><em>float</em>) – cross-section radius = a</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a torus surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv_testing.synthetic_surfaces.SphereGenerator">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">SphereGenerator</code><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.SphereGenerator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating triangular-mesh surface of a sphere.</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.SphereGenerator.generate_UV_sphere_surface">
+<em class="property">static </em><code class="sig-name descname">generate_UV_sphere_surface</code><span class="sig-paren">(</span><em class="sig-param">r=10.0</em>, <em class="sig-param">latitude_res=100</em>, <em class="sig-param">longitude_res=100</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.SphereGenerator.generate_UV_sphere_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a UV sphere surface with only triangular cells.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>float</em><em>, </em><em>optional</em>) – sphere radius (default 10.0)</p></li>
+<li><p><strong>latitude_res</strong> (<em>int</em><em>, </em><em>optional</em>) – latitude resolution (default 100)</p></li>
+<li><p><strong>longitude_res</strong> (<em>int</em><em>, </em><em>optional</em>) – latitude resolution (default 100)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a sphere surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.SphereGenerator.generate_gauss_sphere_surface">
+<em class="property">static </em><code class="sig-name descname">generate_gauss_sphere_surface</code><span class="sig-paren">(</span><em class="sig-param">r</em>, <em class="sig-param">mask=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.SphereGenerator.generate_gauss_sphere_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a sphere surface with a given radius using a gaussian sphere
+mask and the Marching Cubes method. The resulting surface is smooth.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em>) – sphere radius</p></li>
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – custom sphere mask, e.g. with a
+missing wedge</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a sphere surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv_testing.synthetic_surfaces.SphereGenerator.generate_voxel_sphere_surface">
+<em class="property">static </em><code class="sig-name descname">generate_voxel_sphere_surface</code><span class="sig-paren">(</span><em class="sig-param">r</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.SphereGenerator.generate_voxel_sphere_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a sphere surface with a given radius using a filled voxel
+sphere mask and the Marching Cubes method. The resulting surface tends
+to follow the sharp voxels outline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>r</strong> (<em>int</em>) – sphere radius</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a sphere surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.synthetic_surfaces.add_gaussian_noise_to_surface">
+<code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">add_gaussian_noise_to_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">percent=10</em>, <em class="sig-param">rand_dir=False</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.add_gaussian_noise_to_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds Gaussian noise to a surface by moving each triangle point in the
+direction of its normal vector or in random directions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – input surface</p></li>
+<li><p><strong>percent</strong> (<em>int</em><em>, </em><em>optional</em>) – determines variance of the Gaussian noise in
+percents of average triangle edge length (default 10)</p></li>
+<li><p><strong>rand_dir</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), each point will
+be moved in a random direction instead of the direction of its
+normal vector.</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>noisy surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.synthetic_surfaces.are_triangle_vertices_on_smooth_sphere_surface">
+<code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">are_triangle_vertices_on_smooth_sphere_surface</code><span class="sig-paren">(</span><em class="sig-param">surface, r, center=[0, 0, 0], error=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.are_triangle_vertices_on_smooth_sphere_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks and prints out how many triangle vertices (from total) of the given
+surface are on smooth sphere surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – sphere surface approximated by triangles</p></li>
+<li><p><strong>r</strong> (<em>int</em><em> or </em><em>float</em>) – smooth sphere radius</p></li>
+<li><p><strong>center</strong> (<em>float</em><em>[</em><em>3</em><em>]</em>) – coordinates in the center of the sphere surface
+(default=[0, 0, 0])</p></li>
+<li><p><strong>error</strong> (<em>float</em>) – allowed relative +/- error of the radius (default=0.0)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.synthetic_surfaces.is_coordinate_on_sphere_surface">
+<code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">is_coordinate_on_sphere_surface</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">z</em>, <em class="sig-param">r</em>, <em class="sig-param">error=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.is_coordinate_on_sphere_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a coordinate is on smooth sphere surface. Only works if the
+sphere is centered at (0, 0, 0)!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> (<em>float</em>) – x coordinate</p></li>
+<li><p><strong>y</strong> (<em>float</em>) – y coordinate</p></li>
+<li><p><strong>z</strong> (<em>float</em>) – z coordinate</p></li>
+<li><p><strong>r</strong> (<em>int</em><em> or </em><em>float</em>) – smooth sphere radius</p></li>
+<li><p><strong>error</strong> (<em>float</em>) – allowed relative +/- error of the radius (default=0.0)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the coordinate is close to the sphere surface within the error,
+False if it is not</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.synthetic_surfaces.is_positive_number">
+<code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">is_positive_number</code><span class="sig-paren">(</span><em class="sig-param">arg</em>, <em class="sig-param">input_error=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.is_positive_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether an argument is a positive number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arg</strong> – argument</p></li>
+<li><p><strong>input_error</strong> (<em>boolean</em>) – if True (default), raises PySegInputError</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the argument if a positive number, False otherwise</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.synthetic_surfaces.isosurface_from_mask">
+<code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">isosurface_from_mask</code><span class="sig-paren">(</span><em class="sig-param">mask_np</em>, <em class="sig-param">threshold=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.isosurface_from_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a isosurface using the Marching Cubes method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask_np</strong> (<em>numpy.ndarray</em>) – a 3D voxel mask</p></li>
+<li><p><strong>threshold</strong> (<em>optional</em><em>, </em><em>float</em>) – threshold for isosurface (default 1.0)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.synthetic_surfaces.main">
+<code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Code generating some surfaces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.synthetic_surfaces.remove_non_triangle_cells">
+<code class="sig-prename descclassname">pycurv_testing.synthetic_surfaces.</code><code class="sig-name descname">remove_non_triangle_cells</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_surfaces.remove_non_triangle_cells" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes non-triangle cells( e.g. lines and vertices) from the given surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – a surface</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>cleaned surface with only triangular cells (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.synthetic_volumes">
+<span id="pycurv-testing-synthetic-volumes-module"></span><h2>pycurv_testing.synthetic_volumes module<a class="headerlink" href="#module-pycurv_testing.synthetic_volumes" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycurv_testing.synthetic_volumes.ConeMask">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_volumes.</code><code class="sig-name descname">ConeMask</code><a class="headerlink" href="#pycurv_testing.synthetic_volumes.ConeMask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating a cone mask.</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_volumes.ConeMask.generate_cone_mask">
+<em class="property">static </em><code class="sig-name descname">generate_cone_mask</code><span class="sig-paren">(</span><em class="sig-param">r=10</em>, <em class="sig-param">h=20</em>, <em class="sig-param">box=23</em>, <em class="sig-param">t=0</em>, <em class="sig-param">opened=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_volumes.ConeMask.generate_cone_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a 3D volume with a cone voxel mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em>) – radius in voxels difference (default 10)</p></li>
+<li><p><strong>h</strong> (<em>int</em>) – height in voxels difference (default 20)</p></li>
+<li><p><strong>box</strong> (<em>int</em>) – size of the box in x, y, and z dimensions in voxels, has
+to be at least 2 * r + 1 or h + 1 (the bigger of them, default
+23)</p></li>
+<li><p><strong>t</strong> (<em>int</em>) – thickness of a hollow cone in voxels, if 0 (default) a
+filled cone is generated</p></li>
+<li><p><strong>opened</strong> (<em>boolean</em>) – if True (default False) and t&gt;0, an “opened”
+cone mask without the circular plane is generated</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3D volume with the cone mask (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv_testing.synthetic_volumes.CylinderMask">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_volumes.</code><code class="sig-name descname">CylinderMask</code><a class="headerlink" href="#pycurv_testing.synthetic_volumes.CylinderMask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating a cylinder mask.</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_volumes.CylinderMask.generate_cylinder_mask">
+<em class="property">static </em><code class="sig-name descname">generate_cylinder_mask</code><span class="sig-paren">(</span><em class="sig-param">r=10</em>, <em class="sig-param">h=20</em>, <em class="sig-param">box=23</em>, <em class="sig-param">t=0</em>, <em class="sig-param">opened=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_volumes.CylinderMask.generate_cylinder_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a 3D volume with a cylinder mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em>) – radius in voxels difference (default 10)</p></li>
+<li><p><strong>h</strong> (<em>int</em>) – height in voxels difference (default 20)</p></li>
+<li><p><strong>box</strong> (<em>int</em>) – size of the box in x, y, and z dimensions in voxels, has
+to be at least 2 * r + 1 or h (the bigger of them, default 23)</p></li>
+<li><p><strong>t</strong> (<em>int</em>) – thickness of a hollow cylinder in voxels, if 0 (default) a
+filled cylinder is generated</p></li>
+<li><p><strong>opened</strong> (<em>boolean</em>) – if True (default False) and t&gt;0, an “opened”
+cylinder mask without the circular planes is generated</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3D volume with the cylinder mask (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv_testing.synthetic_volumes.CylinderMask.generate_gauss_cylinder_mask">
+<em class="property">static </em><code class="sig-name descname">generate_gauss_cylinder_mask</code><span class="sig-paren">(</span><em class="sig-param">sg</em>, <em class="sig-param">box</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_volumes.CylinderMask.generate_gauss_cylinder_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a 3D volume with a smooth cylinder mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sg</strong> (<em>float</em>) – sigma of the gaussian formula</p></li>
+<li><p><strong>box</strong> (<em>int</em>) – size of the box in x, y, and z dimensions in voxels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3D volume with the gaussian cylinder mask (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv_testing.synthetic_volumes.SphereMask">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_volumes.</code><code class="sig-name descname">SphereMask</code><a class="headerlink" href="#pycurv_testing.synthetic_volumes.SphereMask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating a sphere mask.</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_volumes.SphereMask.generate_gauss_sphere_mask">
+<em class="property">static </em><code class="sig-name descname">generate_gauss_sphere_mask</code><span class="sig-paren">(</span><em class="sig-param">sg</em>, <em class="sig-param">box</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_volumes.SphereMask.generate_gauss_sphere_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a 3D volume with a smooth sphere mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sg</strong> (<em>float</em>) – sigma of the gaussian formula</p></li>
+<li><p><strong>box</strong> (<em>int</em>) – size of the box in x, y, and z dimensions in voxels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3D volume with the gaussian sphere mask (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv_testing.synthetic_volumes.SphereMask.generate_sphere_mask">
+<em class="property">static </em><code class="sig-name descname">generate_sphere_mask</code><span class="sig-paren">(</span><em class="sig-param">r=10</em>, <em class="sig-param">box=23</em>, <em class="sig-param">t=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_volumes.SphereMask.generate_sphere_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a 3D volume with a sphere mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>r</strong> (<em>int</em>) – radius in voxels difference (default 10)</p></li>
+<li><p><strong>box</strong> (<em>int</em>) – size of the box in x, y, and z dimensions in voxels, has
+to be at least 2 * r + 1 (default 23)</p></li>
+<li><p><strong>t</strong> (<em>int</em>) – thickness of a hollow sphere in voxels, if 0 (default) a
+filled sphere is generated</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3D volume with the sphere mask (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv_testing.synthetic_volumes.TorusMask">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv_testing.synthetic_volumes.</code><code class="sig-name descname">TorusMask</code><a class="headerlink" href="#pycurv_testing.synthetic_volumes.TorusMask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for generating a torus mask.</p>
+<dl class="method">
+<dt id="pycurv_testing.synthetic_volumes.TorusMask.generate_torus_mask">
+<em class="property">static </em><code class="sig-name descname">generate_torus_mask</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">a</em>, <em class="sig-param">box</em>, <em class="sig-param">t=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_volumes.TorusMask.generate_torus_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a 3D volume with a torus mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>c</strong> (<em>int</em><em> or </em><em>float</em>) – ring radius</p></li>
+<li><p><strong>a</strong> (<em>int</em><em> or </em><em>float</em>) – cross-section radius</p></li>
+<li><p><strong>box</strong> (<em>int</em>) – size of the box in x, y, and z dimensions in voxels, has
+to be at least 2 * c + 2 * a + 1</p></li>
+<li><p><strong>t</strong> (<em>int</em>) – thickness of a hollow torus in voxels, if 0 (default) a
+filled torus is generated</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3D volume with the torus mask (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.synthetic_volumes.main">
+<code class="sig-prename descclassname">pycurv_testing.synthetic_volumes.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.synthetic_volumes.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Code generating some sphere and cylinder masks and from them signed
+surfaces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.test_distances_calculation">
+<span id="pycurv-testing-test-distances-calculation-module"></span><h2>pycurv_testing.test_distances_calculation module<a class="headerlink" href="#module-pycurv_testing.test_distances_calculation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_testing.test_distances_calculation.generate_pm_er_lumen_segmentation">
+<code class="sig-prename descclassname">pycurv_testing.test_distances_calculation.</code><code class="sig-name descname">generate_pm_er_lumen_segmentation</code><span class="sig-paren">(</span><em class="sig-param">dist</em>, <em class="sig-param">thick</em>, <em class="sig-param">padding=2</em>, <em class="sig-param">lbl_pm=1</em>, <em class="sig-param">lbl_er=2</em>, <em class="sig-param">lbl_between_pm_er=4</em>, <em class="sig-param">lbl_er_lumen=3</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_distances_calculation.generate_pm_er_lumen_segmentation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a simple phantom segmentation shaped as a 3d cube, with a plane
+PM membrane, a hollow block-shaped ER membrane (parallel to each other and
+both 1 voxel thick, for simplicity), a block-shaped volume between PM and
+ER and a block-shaped volume inside the ER (ER lumen).
+Also calculates the distance in pixels between PM and ER membranes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dist</strong> (<em>int</em>) – distance from PM to ER (excluding the membranes) in voxels</p></li>
+<li><p><strong>thick</strong> (<em>int</em>) – thickness of ER lumen (excluding the membranes) in voxels</p></li>
+<li><p><strong>padding</strong> (<em>int</em><em>, </em><em>optional</em>) – padding of all the labels from the volume
+border in voxels (default 2)</p></li>
+<li><p><strong>lbl_pm</strong> (<em>int</em><em>, </em><em>optional</em>) – label of PM membrane (default 1)</p></li>
+<li><p><strong>lbl_er</strong> (<em>int</em><em>, </em><em>optional</em>) – label of ER membrane (default 2)</p></li>
+<li><p><strong>lbl_between_pm_er</strong> (<em>int</em><em>, </em><em>optional</em>) – label of inter-membrane space
+(default 4)</p></li>
+<li><p><strong>lbl_er_lumen</strong> (<em>int</em><em>, </em><em>optional</em>) – label of inter-membrane space (default 3)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>segmentation (nd.array)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_distances_calculation.test_distances_and_thicknesses_calculation">
+<code class="sig-prename descclassname">pycurv_testing.test_distances_calculation.</code><code class="sig-name descname">test_distances_and_thicknesses_calculation</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_distances_calculation.test_distances_and_thicknesses_calculation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests for run_calculate_distances.py, assuming that other used functions are
+correct.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.test_histogram_area_calculation">
+<span id="pycurv-testing-test-histogram-area-calculation-module"></span><h2>pycurv_testing.test_histogram_area_calculation module<a class="headerlink" href="#module-pycurv_testing.test_histogram_area_calculation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_testing.test_histogram_area_calculation.test_calculate_histogram_area">
+<code class="sig-prename descclassname">pycurv_testing.test_histogram_area_calculation.</code><code class="sig-name descname">test_calculate_histogram_area</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_histogram_area_calculation.test_calculate_histogram_area" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.test_linalg">
+<span id="pycurv-testing-test-linalg-module"></span><h2>pycurv_testing.test_linalg module<a class="headerlink" href="#module-pycurv_testing.test_linalg" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_testing.test_linalg.test_euclidean_distance">
+<code class="sig-prename descclassname">pycurv_testing.test_linalg.</code><code class="sig-name descname">test_euclidean_distance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_linalg.test_euclidean_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests the triangle area calculation function from its three points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_linalg.test_triangle_area">
+<code class="sig-prename descclassname">pycurv_testing.test_linalg.</code><code class="sig-name descname">test_triangle_area</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_linalg.test_triangle_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests the triangle area calculation functions from its three points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_linalg.test_triangle_center">
+<code class="sig-prename descclassname">pycurv_testing.test_linalg.</code><code class="sig-name descname">test_triangle_center</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_linalg.test_triangle_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests the triangle center calculation function from its three points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.test_vector_voting">
+<span id="pycurv-testing-test-vector-voting-module"></span><h2>pycurv_testing.test_vector_voting module<a class="headerlink" href="#module-pycurv_testing.test_vector_voting" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_testing.test_vector_voting.beautify_number">
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">beautify_number</code><span class="sig-paren">(</span><em class="sig-param">number</em>, <em class="sig-param">precision=15</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.beautify_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rounds an almost zero floating point number to 0 and removes minus.
+:param number: input number
+:type number: float
+:param precision: desired number of decimal points to use for rounding
+:type precision: int</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>0 if absolute value of the rounded number is 0, else the original number</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_vector_voting.run_cylinder_with_creases">
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">run_cylinder_with_creases</code><span class="sig-paren">(</span><em class="sig-param">radius_hit</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">epsilon</em>, <em class="sig-param">eta</em>, <em class="sig-param">radius=10</em>, <em class="sig-param">h=25</em>, <em class="sig-param">res=10</em>, <em class="sig-param">subdivisions=3</em>, <em class="sig-param">max_edge=0</em>, <em class="sig-param">max_area=0</em>, <em class="sig-param">decimate=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.run_cylinder_with_creases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests whether surface is correctly classified for a cylinder surface with
+circular planes and that neighborhood search does not go over the creases
+for curvature estimation step, using normal vector voting (VV) or VV
+combined with curvature tensor voting (SSVV).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, here voxels;
+it should be chosen to correspond to radius of smallest features
+of interest on the surface</p></li>
+<li><p><strong>inverse</strong> (<em>boolean</em>) – if True, the cylinder will have normals pointing
+outwards (negative curvature), else the other way around</p></li>
+<li><p><strong>methods</strong> (<em>list</em>) – tells which method(s) should be used: ‘VV’
+for normal vector voting or ‘SSVV’ for vector and curvature tensor
+voting to estimate the principal directions and curvatures</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
+triangle area also in the second step (principle directions and
+curvatures estimation; not possible if vertex_based is True)</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em>) – if True, curvature is calculated per triangle
+vertex instead of triangle center.</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em>) – parameter of Normal Vector Voting algorithm influencing
+the number of triangles classified as “crease junction” (class 2)</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – parameter of Normal Vector Voting algorithm influencing the
+number of triangles classified as “crease junction” (class 2) and
+“no preferred orientation” (class 3)</p></li>
+<li><p><strong>radius</strong> (<em>int</em><em>, </em><em>optional</em>) – cylinder radius in voxels (&gt;0, default 10)</p></li>
+<li><p><strong>h</strong> (<em>int</em><em>, </em><em>optional</em>) – cylinder height in voxels (&gt;0, default 25)</p></li>
+<li><p><strong>res</strong> (<em>int</em><em>, </em><em>optional</em>) – determines how many stripes around both
+approximate circles (and then triangles) the cylinder has, the
+surface is generated using vtkCylinderSource (&gt;0, default 10)</p></li>
+<li><p><strong>subdivisions</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (default 3) vtkLinearSubdivi-
+sionFilter is applied with this number of subdivisions</p></li>
+<li><p><strong>max_edge</strong> (<em>float</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0) vtkAdaptiveSubdivi-
+sionFilter is applied with this maximal triangle edge length</p></li>
+<li><p><strong>max_area</strong> (<em>float</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0) vtkAdaptiveSubdivi-
+sionFilter is applied with this maximal triangle area</p></li>
+<li><p><strong>decimate</strong> (<em>float</em><em>, </em><em>optional</em>) – if &gt; 0 (default 0) vtkDecimatePro is
+applied with this target reduction (&lt; 1)</p></li>
+<li><p><strong>noise</strong> (<em>int</em><em>, </em><em>optional</em>) – determines variance of the Gaussian noise in
+percents of average triangle edge length (default 0), the noise
+is added on triangle vertex coordinates in its normal direction</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False)
+normal curvature formula from Page at al. is used for VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
+calculated for the whole graph, otherwise a local distance map
+is calculated for each vertex (default)</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 6)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_vector_voting.surface_to_graph">
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">surface_to_graph</code><span class="sig-paren">(</span><em class="sig-param">surf_file</em>, <em class="sig-param">scale=(1</em>, <em class="sig-param">1</em>, <em class="sig-param">1)</em>, <em class="sig-param">inverse=False</em>, <em class="sig-param">vertex_based=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.surface_to_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in the .vtp file with the triangle mesh surface and transforms it
+into a SurfaceGraph graph (TriangleGraph or PointGraph).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surf_file</strong> (<em>str</em>) – .vtp file with the triangle mesh surface</p></li>
+<li><p><strong>scale</strong> (<em>float</em><em>, </em><em>optional</em>) – scale factor (X, Y, Z) in given units for
+scaling the surface and the graph (default (1, 1, 1))</p></li>
+<li><p><strong>inverse</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, the graph will have normals
+pointing outwards (negative curvature), if False (default), the
+other way around</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), a PointGraph
+is built instead of a TriangleGraph.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>surface (vtk.vtkPolyData) and triangle graph(TriangleGraph)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_vector_voting.test_cylinder_directions_curvatures">
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">test_cylinder_directions_curvatures</code><span class="sig-paren">(</span><em class="sig-param">radius</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">eb</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">voxel</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">res=0</em>, <em class="sig-param">h=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.test_cylinder_directions_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests whether minimal principal directions (t_2), as well as minimal and
+maximal principal curvatures are correctly estimated for an opened
+cylinder surface (without the circular planes) with known
+orientation (height, i.e. t_2, parallel to the Z axis) using normal
+vector voting (VV) or VV combined with curvature tensor voting (SSVV).
+Allowing error of +-30% of the maximal absolute true value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radius</strong> (<em>int</em>) – cylinder radius in voxels</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, here voxels;
+it should be chosen to correspond to radius of smallest features
+of interest on the surface</p></li>
+<li><p><strong>eb</strong> (<em>float</em>) – distance from borders to exclude in length unit of the
+graph, here voxels</p></li>
+<li><p><strong>inverse</strong> (<em>boolean</em>) – if True, the cylinder will have normals pointing
+outwards (negative curvature), else the other way around</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
+triangle area also in the second step (principle directions and
+curvatures estimation; not possible if vertex_based is True)</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em>) – if True, a voxel cylinder is generated (ignoring the
+options res and noise)</p></li>
+<li><p><strong>methods</strong> (<em>list</em>) – tells which method(s) should be used: ‘VV’
+for normal vector voting or ‘SSVV’ for vector and curvature tensor
+voting to estimate the principal directions and curvatures</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em>) – if True, curvature is calculated per triangle
+vertex instead of triangle center.</p></li>
+<li><p><strong>res</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 determines how many stripes around both
+approximate circles (and then triangles) the cylinder has, the
+surface is generated using vtkCylinderSource; If 0 (default)
+first a smooth cylinder mask is generated and then surface
+using vtkMarchingCubes, in the latter case the cylinder is as
+high as the used mask box (2.5 * r) and is open at both sides</p></li>
+<li><p><strong>h</strong> (<em>int</em><em>, </em><em>optional</em>) – cylinder height in voxels, only needed if res &gt; 0
+for the method using vtkCylinderSource, if res is 0 or h is 0
+(default), height will be set to 2.5 * r rounded up</p></li>
+<li><p><strong>noise</strong> (<em>int</em><em>, </em><em>optional</em>) – determines variance of the Gaussian noise in
+percents of average triangle edge length (default 0), the noise
+is added on triangle vertex coordinates in its normal direction</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False)
+normal curvature formula from Page at al. is used for VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
+calculated for the whole graph, otherwise a local distance map
+is calculated for each vertex (default)</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 6)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_vector_voting.test_plane_normals">
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">test_plane_normals</code><span class="sig-paren">(</span><em class="sig-param">half_size</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">res</em>, <em class="sig-param">noise</em>, <em class="sig-param">rand_dir</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">cores</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.test_plane_normals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests whether normals are correctly estimated for a plane surface with
+known orientation (parallel to to X and Y axes).
+Allowing error of 30%.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>half_size</strong> (<em>int</em>) – half size of the plane (from center to an edge)</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, here voxels;
+it should be chosen to correspond to radius of smallest features
+of interest on the surface</p></li>
+<li><p><strong>res</strong> (<em>int</em>) – resolution (number of divisions) in X and Y axes</p></li>
+<li><p><strong>noise</strong> (<em>int</em>) – determines variance of the Gaussian noise in
+percents of average triangle edge length, the noise
+is added on triangle vertex coordinates in its normal direction</p></li>
+<li><p><strong>rand_dir</strong> (<em>boolean</em>) – if True, each point will be moved in a random
+direction instead of the direction of its normal.</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em>) – if True, curvature is calculated per triangle
+vertex instead of triangle center</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_vector_voting.test_sphere_curvatures">
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">test_sphere_curvatures</code><span class="sig-paren">(</span><em class="sig-param">radius</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">voxel</em>, <em class="sig-param">ico</em>, <em class="sig-param">runtimes</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">res=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">save_areas=False</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.test_sphere_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs all the steps needed to calculate curvatures for a test sphere with a
+given radius. Tests whether the curvatures are correctly estimated using
+normal vector voting (VV), VV combined with curvature tensor voting (SSVV).
+kappa_1 = kappa_2 = 1/r; allowing error of +-30%.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radius</strong> (<em>int</em>) – radius of the sphere</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, here voxels;
+it should be chosen to correspond to radius of smallest features
+of interest on the surface</p></li>
+<li><p><strong>inverse</strong> (<em>boolean</em>) – if True, the sphere will have normals pointing
+outwards (negative curvature), else the other way around</p></li>
+<li><p><strong>methods</strong> (<em>list</em>) – tells which method(s) should be used: ‘VV’
+for normal vector voting or ‘SSVV’ for vector and curvature tensor
+voting to estimate the principal directions and curvatures</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em>) – if True (default), votes are weighted by triangle area
+also in the second step (principle directions and curvatures
+estimation; not possible if vertex_based is True)</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em>) – if True, a voxel sphere is generated (ignoring the
+options ico, res and noise)</p></li>
+<li><p><strong>ico</strong> (<em>int</em>) – if &gt; 0 and res=0, an icosahedron with so many faces is used
+(1280 faces with radius 1 or 10 are available so far)</p></li>
+<li><p><strong>runtimes</strong> (<em>str</em>) – if given, runtimes and some parameters are added to
+this file (otherwise empty string ‘’)</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em>) – if True, curvature is calculated per triangle
+vertex instead of triangle center.</p></li>
+<li><p><strong>res</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 determines how many longitude and
+latitude stripes the UV sphere from vtkSphereSource has, the
+surface is triangulated; If 0 (default) and ico=0, first a
+smooth sphere mask is generated and then surface using
+vtkMarchingCubes</p></li>
+<li><p><strong>noise</strong> (<em>int</em><em>, </em><em>optional</em>) – determines variance of the Gaussian noise in
+percents of average triangle edge length (default 10), the noise
+is added on triangle vertex coordinates in its normal direction</p></li>
+<li><p><strong>save_areas</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), also mesh
+triangle ares will be saved to a file (not possible if vertex_based
+is True)</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False)
+normal curvature formula from Page et al. is used for VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
+calculated for the whole graph, otherwise a local distance map
+is calculated for each vertex (default)</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 6)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_vector_voting.test_torus_directions_curvatures">
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">test_torus_directions_curvatures</code><span class="sig-paren">(</span><em class="sig-param">rr</em>, <em class="sig-param">csr</em>, <em class="sig-param">subdivisions</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">voxel</em>, <em class="sig-param">runtimes</em>, <em class="sig-param">cores</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.test_torus_directions_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs all the steps needed to calculate curvatures for a test torus
+with given radii using normal vector voting (VV) or VV combined with
+curvature tensor voting (SSVV).
+Allowing error of +-30%.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rr</strong> (<em>int</em>) – ring radius of the torus</p></li>
+<li><p><strong>csr</strong> (<em>int</em>) – cross-section radius of the torus</p></li>
+<li><p><strong>subdivisions</strong> (<em>int</em>) – number of subdivisions in all three
+dimensions, if 0, default subdivisions are used</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, here voxels;
+it should be chosen to correspond to radius of smallest features
+of interest on the surface</p></li>
+<li><p><strong>methods</strong> (<em>list</em>) – tells which method(s) should be used: ‘VV’
+for normal vector voting or ‘SSVV’ for vector and curvature tensor
+voting to estimate the principal directions and curvatures</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em>) – if True (default), votes are weighted by triangle area
+also in the second step (principle directions and curvatures
+estimation; not possible if vertex_based is True)</p></li>
+<li><p><strong>voxel</strong> (<em>boolean</em>) – if True, a voxel torus is generated (ignoring
+subdivisions parameter)</p></li>
+<li><p><strong>runtimes</strong> (<em>str</em>) – if given, runtimes and some parameters are added to
+this file (otherwise ‘’)</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em>) – if True, curvature is calculated per triangle
+vertex instead of triangle center.</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False)
+normal curvature formula from Page et al. is used for VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
+calculated for the whole graph, otherwise a local distance map
+is calculated for each vertex (default)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>csr should be much smaller than rr (csr &lt; rr - csr).</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.test_vector_voting.torus_curvatures_and_directions">
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">torus_curvatures_and_directions</code><span class="sig-paren">(</span><em class="sig-param">c</em>, <em class="sig-param">a</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">z</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.torus_curvatures_and_directions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculated true minimal principal curvature (kappa_2), maximal (t_1) and
+minimal (t_2) principal directions at a point on the surface of a torus.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>c</strong> (<em>int</em>) – major (ring) radius</p></li>
+<li><p><strong>a</strong> (<em>int</em>) – minor (cross-section) radius</p></li>
+<li><p><strong>x</strong> (<em>float</em>) – X coordinate of the point on the torus surface</p></li>
+<li><p><strong>y</strong> (<em>float</em>) – Y coordinate of the point on the torus surface</p></li>
+<li><p><strong>z</strong> (<em>float</em>) – Z coordinate of the point on the torus surface</p></li>
+<li><p><strong>verbose</strong> – (boolean, optional): if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>kappa_2, t_1, t_2</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Maximal principal curvature (kappa_1) is always 1 / a.</p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing.visualization">
+<span id="pycurv-testing-visualization-module"></span><h2>pycurv_testing.visualization module<a class="headerlink" href="#module-pycurv_testing.visualization" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_testing.visualization.calculate_distances_from_triangle">
+<code class="sig-prename descclassname">pycurv_testing.visualization.</code><code class="sig-name descname">calculate_distances_from_triangle</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">scale</em>, <em class="sig-param">triangle_index</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.visualization.calculate_distances_from_triangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates shortest geodesic distances from a source triangle center to all
+other triangles on the surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtkPolyData</em>) – input surface</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – scale factor (X, Y, Z) from voxels to units of the
+surface</p></li>
+<li><p><strong>triangle_index</strong> (<em>int</em>) – index of the source triangle</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vtkPolyData with “dist_to_v” property</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_testing.visualization.calculate_g_max_from_radius_hit">
+<code class="sig-prename descclassname">pycurv_testing.visualization.</code><code class="sig-name descname">calculate_g_max_from_radius_hit</code><span class="sig-paren">(</span><em class="sig-param">radius_hit</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.visualization.calculate_g_max_from_radius_hit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates maximal geodesic neighborhood distance g_max from radius_hit:
+g_max is a quarter of a circle with radius equal to radius_hit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>radius_hit</strong> (<em>float</em>) – radius_hit parameter in given units</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>g_max in given units</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_testing">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pycurv_testing" title="Permalink to this headline">¶</a></h2>
+<p>This package is intended for testing PyCurv and data visualization purposes:
+- synthetic volumes and surfaces generation
+- error calculation and integration testing of our and VTK’s membrane curvature
+estimation algorithms implemented in the PyCurv package against the algorithms
+from the Mindboggle and FreeSurfer packages using the synthetic surfaces
+- plotting of the above curvature estimation errors to compare the algorithms
+- visualization a geodesic neighborhood on a surface
+- integration testing of membrane distances and thicknesses calculation
+- unit testing of histogram area calculation used for the choice of the best
+neighborhood parameter
+- unit testing of some linear algebra functions</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyCurv</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Maria Kalemanov, Antonio Martinez-Sanchez.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/pycurv_testing.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

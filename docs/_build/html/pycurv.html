@@ -1,0 +1,2640 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pycurv package &#8212; PyCurv 2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pycurv-package">
+<h1>pycurv package<a class="headerlink" href="#pycurv-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pycurv.curvature_definitions">
+<span id="pycurv-curvature-definitions-module"></span><h2>pycurv.curvature_definitions module<a class="headerlink" href="#module-pycurv.curvature_definitions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv.curvature_definitions.calculate_curvedness">
+<code class="sig-prename descclassname">pycurv.curvature_definitions.</code><code class="sig-name descname">calculate_curvedness</code><span class="sig-paren">(</span><em class="sig-param">kappa_1</em>, <em class="sig-param">kappa_2</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.curvature_definitions.calculate_curvedness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the curvedness (Koenderink and van Doorn et al., Image and
+Vision Computing, 1992) from the principal curvatures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kappa_1</strong> (<em>float</em>) – maximal principal curvature</p></li>
+<li><p><strong>kappa_2</strong> (<em>float</em>) – minimal principal curvature</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>curvedness (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.curvature_definitions.calculate_gauss_curvature">
+<code class="sig-prename descclassname">pycurv.curvature_definitions.</code><code class="sig-name descname">calculate_gauss_curvature</code><span class="sig-paren">(</span><em class="sig-param">kappa_1</em>, <em class="sig-param">kappa_2</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.curvature_definitions.calculate_gauss_curvature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Gauss curvature from the principal curvatures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kappa_1</strong> (<em>float</em>) – maximal principal curvature</p></li>
+<li><p><strong>kappa_2</strong> (<em>float</em>) – minimal principal curvature</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Gauss curvature (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.curvature_definitions.calculate_mean_curvature">
+<code class="sig-prename descclassname">pycurv.curvature_definitions.</code><code class="sig-name descname">calculate_mean_curvature</code><span class="sig-paren">(</span><em class="sig-param">kappa_1</em>, <em class="sig-param">kappa_2</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.curvature_definitions.calculate_mean_curvature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the mean curvature from the principal curvatures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kappa_1</strong> (<em>float</em>) – maximal principal curvature</p></li>
+<li><p><strong>kappa_2</strong> (<em>float</em>) – minimal principal curvature</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>mean curvature (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.curvature_definitions.calculate_shape_index">
+<code class="sig-prename descclassname">pycurv.curvature_definitions.</code><code class="sig-name descname">calculate_shape_index</code><span class="sig-paren">(</span><em class="sig-param">kappa_1</em>, <em class="sig-param">kappa_2</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.curvature_definitions.calculate_shape_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the shape index (Koenderink and van Doorn et al., Image and
+Vision Computing, 1992) from the principal curvatures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>kappa_1</strong> (<em>float</em>) – maximal principal curvature</p></li>
+<li><p><strong>kappa_2</strong> (<em>float</em>) – minimal principal curvature</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>shape index (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.distances_between_surfaces">
+<span id="pycurv-distances-between-surfaces-module"></span><h2>pycurv.distances_between_surfaces module<a class="headerlink" href="#module-pycurv.distances_between_surfaces" title="Permalink to this headline">¶</a></h2>
+<dl class="data">
+<dt id="pycurv.distances_between_surfaces.SAMPLE_DST">
+<code class="sig-prename descclassname">pycurv.distances_between_surfaces.</code><code class="sig-name descname">SAMPLE_DST</code><em class="property"> = 1</em><a class="headerlink" href="#pycurv.distances_between_surfaces.SAMPLE_DST" title="Permalink to this definition">¶</a></dt>
+<dd><p>sampling distance in units used in find_2_distances.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.distances_between_surfaces.calculate_distances">
+<code class="sig-prename descclassname">pycurv.distances_between_surfaces.</code><code class="sig-name descname">calculate_distances</code><span class="sig-paren">(</span><em class="sig-param">tg_mem1</em>, <em class="sig-param">tg_mem2</em>, <em class="sig-param">surf_mem2</em>, <em class="sig-param">maxdist</em>, <em class="sig-param">offset=0</em>, <em class="sig-param">both_directions=False</em>, <em class="sig-param">reverse_direction=False</em>, <em class="sig-param">mem1='PM'</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.distances_between_surfaces.calculate_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to compute shortest distances between two membranes using their
+surfaces. Adds a vertex property to cER graph, “&lt;mem1&gt;distance”, with a
+distance from the first membrane surface for the intersected triangles in
+the second membrane surface.
+All distances measures are in units of the graphs and the surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg_mem1</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph of the first membrane with corrected
+normals</p></li>
+<li><p><strong>tg_mem2</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph of the second membrane</p></li>
+<li><p><strong>surf_mem2</strong> (<em>vtkPolyData</em>) – the second membrane surface</p></li>
+<li><p><strong>maxdist</strong> (<em>float</em>) – maximal distance from the first to the second membrane</p></li>
+<li><p><strong>offset</strong> (<em>float</em><em>, </em><em>optional</em>) – positive or negative offset (default 0)
+to add to the distances, depending on how the surfaces where
+generated and/or in order to account for membrane thickness</p></li>
+<li><p><strong>both_directions</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, look in both directions of
+each first membrane’s normal, otherwise only in the normal direction
+(default)</p></li>
+<li><p><strong>reverse_direction</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, look in opposite
+direction of each first membrane’s normals (if both_directions True,
+will look in both directions)</p></li>
+<li><p><strong>mem1</strong> (<em>str</em><em>, </em><em>optional</em>) – name of the first membrane (default “PM”)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a lists of distances between the two membranes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.distances_between_surfaces.calculate_thicknesses">
+<code class="sig-prename descclassname">pycurv.distances_between_surfaces.</code><code class="sig-name descname">calculate_thicknesses</code><span class="sig-paren">(</span><em class="sig-param">tg_mem1</em>, <em class="sig-param">tg_mem2</em>, <em class="sig-param">surf_mem2</em>, <em class="sig-param">maxdist</em>, <em class="sig-param">maxthick</em>, <em class="sig-param">offset=0</em>, <em class="sig-param">both_directions=True</em>, <em class="sig-param">reverse_direction=False</em>, <em class="sig-param">mem2='cER'</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.distances_between_surfaces.calculate_thicknesses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to compute membrane organelle thickness, using a contacting flat
+membrane surface normals and a two-sided inner membrane surface.
+Adds vertex properties to the second (organelle) membrane graph:
+“&lt;mem2&gt;thickness”: distance from the 1st intersected triangles for the 2nd
+intersected triangles in the second membrane surface.
+All distances measures are in units of the graphs and the surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg_mem1</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph of the first membrane surface with
+corrected normals</p></li>
+<li><p><strong>tg_mem2</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph of inner second membrane surface</p></li>
+<li><p><strong>surf_mem2</strong> (<em>vtkPolyData</em>) – inner second membrane surface</p></li>
+<li><p><strong>maxdist</strong> (<em>float</em>) – maximal distance from the first to the second
+membrane</p></li>
+<li><p><strong>maxthick</strong> (<em>float</em>) – maximal thickness of the second organelle</p></li>
+<li><p><strong>offset</strong> (<em>float</em><em>, </em><em>optional</em>) – positive or negative offset (default 0)
+to add to the thicknesses, depending on how the surfaces where
+generated and/or in order to account for membrane thickness</p></li>
+<li><p><strong>both_directions</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, look in both directions of
+each first membrane’s normal (default), otherwise only in the normal
+direction</p></li>
+<li><p><strong>reverse_direction</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, look in opposite
+direction of each first membrane’s  normals (default=False;
+if both_directions True, will look in both directions)</p></li>
+<li><p><strong>mem2</strong> (<em>str</em><em>, </em><em>optional</em>) – name of the second membrane (default “cER”)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a lists of thicknesses of the second organelle</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.distances_between_surfaces.find_1_distance">
+<code class="sig-prename descclassname">pycurv.distances_between_surfaces.</code><code class="sig-name descname">find_1_distance</code><span class="sig-paren">(</span><em class="sig-param">p0</em>, <em class="sig-param">normal</em>, <em class="sig-param">maxdist</em>, <em class="sig-param">tg_er</em>, <em class="sig-param">poly_er</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.distances_between_surfaces.find_1_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a point and a normal vector, finds the first intersection point with a
+membrane surface in the direction of the normal vector and measures
+the distance. All distances measures are in units of the surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p0</strong> (<em>numpy.ndarray</em>) – 3D point coordinates</p></li>
+<li><p><strong>normal</strong> (<em>numpy.ndarray</em>) – 3D normal vector</p></li>
+<li><p><strong>maxdist</strong> (<em>float</em>) – maximal distance from p0 the membrane</p></li>
+<li><p><strong>tg_er</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph of the target membrane surface</p></li>
+<li><p><strong>poly_er</strong> (<em>vtkPolyData</em>) – the target membrane surface</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the distance, the vertex and the intersection point
+or None, None, None in case no intersection was found</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.distances_between_surfaces.find_2_distances">
+<code class="sig-prename descclassname">pycurv.distances_between_surfaces.</code><code class="sig-name descname">find_2_distances</code><span class="sig-paren">(</span><em class="sig-param">p0</em>, <em class="sig-param">normal</em>, <em class="sig-param">maxdist</em>, <em class="sig-param">maxthick</em>, <em class="sig-param">tg_er</em>, <em class="sig-param">poly_er</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.distances_between_surfaces.find_2_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a point and a normal vector, finds two intersection points with a
+double membrane surface in the direction of the normal vector and measures
+the two distances (to the first surface and between the two surfaces).
+All distances measures are in units of the graph and the surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p0</strong> (<em>numpy.ndarray</em>) – 3D point coordinates</p></li>
+<li><p><strong>normal</strong> (<em>numpy.ndarray</em>) – 3D normal vector</p></li>
+<li><p><strong>maxdist</strong> (<em>float</em>) – maximal distance from p0 to first membrane</p></li>
+<li><p><strong>maxthick</strong> (<em>float</em>) – maximal thickness from first to second membrane</p></li>
+<li><p><strong>tg_er</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph of the target membrane surface</p></li>
+<li><p><strong>poly_er</strong> (<em>vtkPolyData</em>) – the target double membrane surface</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>d1, d2, v1, v2
+or None, None, None, None in case less than two intersections were found</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>the two distances and the vertices at the intersections</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.distances_between_surfaces.find_2_distances_2_surf">
+<code class="sig-prename descclassname">pycurv.distances_between_surfaces.</code><code class="sig-name descname">find_2_distances_2_surf</code><span class="sig-paren">(</span><em class="sig-param">p0</em>, <em class="sig-param">normal</em>, <em class="sig-param">maxdist</em>, <em class="sig-param">maxthick</em>, <em class="sig-param">tg1</em>, <em class="sig-param">poly1</em>, <em class="sig-param">tg2</em>, <em class="sig-param">poly2</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.distances_between_surfaces.find_2_distances_2_surf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a point and a normal vector, finds two intersection points with two
+membrane surfaces in the direction of the normal vector and measures
+the two distances (to the first surface and between the two surfaces).
+All distances measures are in units of the graphs and the surfaces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p0</strong> (<em>numpy.ndarray</em>) – 3D point coordinates</p></li>
+<li><p><strong>normal</strong> (<em>numpy.ndarray</em>) – 3D normal vector</p></li>
+<li><p><strong>maxdist</strong> (<em>float</em>) – maximal distance from p0 to first membrane</p></li>
+<li><p><strong>maxthick</strong> (<em>float</em>) – maximal thickness from first to second membrane</p></li>
+<li><p><strong>tg1</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph of the first target membrane surface</p></li>
+<li><p><strong>poly1</strong> (<em>vtkPolyData</em>) – the first target membrane surface</p></li>
+<li><p><strong>tg2</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph of the second target membrane surface</p></li>
+<li><p><strong>poly2</strong> (<em>vtkPolyData</em>) – the second target membrane surface</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>d1, d2, v1, v2
+or None, None, None, None in case less than two intersections were found</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>the two distances and the vertices at the intersections</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.graphs">
+<span id="pycurv-graphs-module"></span><h2>pycurv.graphs module<a class="headerlink" href="#module-pycurv.graphs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycurv.graphs.SegmentationGraph">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv.graphs.</code><code class="sig-name descname">SegmentationGraph</code><a class="headerlink" href="#pycurv.graphs.SegmentationGraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class defining the abstract SegmentationGraph object, its attributes and
+implements methods common to all derived graph classes.</p>
+<p>The constructor requires the following parameters of the underlying
+segmentation that will be used to build the graph.</p>
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.calculate_average_edge_length">
+<code class="sig-name descname">calculate_average_edge_length</code><span class="sig-paren">(</span><em class="sig-param">prop_e=None</em>, <em class="sig-param">value=1</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.calculate_average_edge_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the average edge length in the graph.</p>
+<p>If a special edge property is specified, includes only the edges where
+this property equals the given value. If there are no edges in the
+graph, the given property does not exist or there are no edges with the
+given property equaling the given value, None is returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_e</strong> (<em>str</em><em>, </em><em>optional</em>) – edge property, if specified only edges where
+this property equals the given value will be considered</p></li>
+<li><p><strong>value</strong> (<em>int</em><em>, </em><em>optional</em>) – value of the specified edge property an edge
+has to have in order to be considered (default 1)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the average edge length in the graph (float) or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.calculate_density">
+<code class="sig-name descname">calculate_density</code><span class="sig-paren">(</span><em class="sig-param">size</em>, <em class="sig-param">scale</em>, <em class="sig-param">mask=None</em>, <em class="sig-param">target_coordinates=None</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.calculate_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates ribosome density for each membrane graph vertex.</p>
+<p>Calculates shortest geodesic distances (d) for each vertex in the graph
+to each reachable ribosome center mapped on the membrane given by a
+binary mask with coordinates in pixels or an array of coordinates in
+given units.
+Then, calculates a density measure of ribosomes at each vertex or
+membrane voxel: D = sum {over all reachable ribosomes} (1 / (d + 1)).
+Adds the density as vertex PropertyMap to the graph. Returns an array
+with the same shape as the underlying segmentation with the densities
+plus 1, in order to distinguish membrane voxels with 0 density from the
+background.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>size</strong> (<em>tuple</em>) – size in voxels (X, Y, Z) of the original segmentation</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – pixel size (X, Y, Z) in given units of the original
+segmentation</p></li>
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – a binary mask of the ribosome
+centers as 3D array where indices are coordinates in pixels
+(default None)</p></li>
+<li><p><strong>target_coordinates</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – the ribosome centers
+coordinates in given units as 2D array in format
+[[x1, y1, z1], [x2, y2, z2], …] (default None)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a 3D numpy ndarray with the densities + 1</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>One of the two parameters, mask or target_coordinates, has to be
+given.</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pycurv.graphs.SegmentationGraph.coordinates_pair_connected">
+<code class="sig-name descname">coordinates_pair_connected</code><em class="property"> = None</em><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.coordinates_pair_connected" title="Permalink to this definition">¶</a></dt>
+<dd><p>a set storing pairs of vertex coordinates that are
+connected by an edge in a tuple form ((x1, y1, z1), (x2, y2, z2)).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>set</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pycurv.graphs.SegmentationGraph.coordinates_to_vertex_index">
+<code class="sig-name descname">coordinates_to_vertex_index</code><em class="property"> = None</em><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.coordinates_to_vertex_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>a dictionary mapping the vertex coordinates (x, y, z) to the
+vertex index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.distance_between_voxels">
+<em class="property">static </em><code class="sig-name descname">distance_between_voxels</code><span class="sig-paren">(</span><em class="sig-param">voxel1</em>, <em class="sig-param">voxel2</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.distance_between_voxels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates and returns the Euclidean distance between two voxels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>voxel1</strong> (<em>tuple</em>) – first voxel coordinates in form of a tuple of
+floats of length 3 (x1, y1, z1)</p></li>
+<li><p><strong>voxel2</strong> (<em>tuple</em>) – second voxel coordinates in form of a tuple of
+floats of length 3 (x2, y2, z2)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the Euclidean distance between two voxels (float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.find_geodesic_neighbors">
+<code class="sig-name descname">find_geodesic_neighbors</code><span class="sig-paren">(</span><em class="sig-param">v</em>, <em class="sig-param">g_max</em>, <em class="sig-param">full_dist_map=None</em>, <em class="sig-param">only_surface=False</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.find_geodesic_neighbors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds geodesic neighbor vertices of a given vertex v in the graph that
+are within a given maximal geodesic distance g_max from it.</p>
+<p>Also finds the corresponding geodesic distances. All edges are
+considered. The distances are calculated with a breadth-first search
+(BFS) or Dijkstra’s algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> (<em>graph_tool.Vertex</em>) – the source vertex</p></li>
+<li><p><strong>g_max</strong> – maximal geodesic distance (in the units of the graph)</p></li>
+<li><p><strong>full_dist_map</strong> (<em>graph_tool.PropertyMap</em><em>, </em><em>optional</em>) – the full distance
+map for the whole graph; if None, a local distance map is
+calculated for each vertex (default)</p></li>
+<li><p><strong>only_surface</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), only
+neighbors classified as surface patch (class 1) are considered</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a dictionary mapping a neighbor vertex index to the geodesic
+distance from vertex v</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.find_geodesic_neighbors_exact">
+<code class="sig-name descname">find_geodesic_neighbors_exact</code><span class="sig-paren">(</span><em class="sig-param">o</em>, <em class="sig-param">g_max</em>, <em class="sig-param">only_surface=False</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.find_geodesic_neighbors_exact" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds geodesic neighbor vertices of the origin vertex o in the graph
+that are within a given maximal geodesic distance g_max from it.</p>
+<p>Also finds the corresponding geodesic distances. All edges and faces are
+considered. The distances are calculated with Sun’s and Abidi’s
+algorithm, a simplification of Kimmels’ and Sethian’s fast marching
+algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>o</strong> (<em>graph_tool.Vertex</em>) – the source vertex</p></li>
+<li><p><strong>g_max</strong> – maximal geodesic distance (in the units of the graph)</p></li>
+<li><p><strong>only_surface</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), only
+neighbors classified as surface patch (class 1) are considered</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+<li><p><strong>debug</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some more extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a dictionary mapping a neighbor vertex index to the geodesic
+distance from vertex o</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.get_edge_prop_entry">
+<code class="sig-name descname">get_edge_prop_entry</code><span class="sig-paren">(</span><em class="sig-param">prop_key</em>, <em class="sig-param">edge_descriptor</em>, <em class="sig-param">n_comp</em>, <em class="sig-param">data_type</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.get_edge_prop_entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a property value of an edge for inserting into a VTK vtkDataArray
+object.</p>
+<p>This private function is used by the method
+graph_to_points_and_lines_polys.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_key</strong> (<em>str</em>) – name of the desired vertex property</p></li>
+<li><p><strong>edge_descriptor</strong> (<em>graph_tool.Edge</em>) – edge descriptor of the current
+edge</p></li>
+<li><p><strong>n_comp</strong> (<em>int</em>) – number of components of the array (length of the
+output tuple)</p></li>
+<li><p><strong>data_type</strong> – numpy data type converted from a graph-tool property
+value type by TypesConverter().gt_to_numpy</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a tuple (with length like n_comp) with the property value of the
+edge converted to a numpy data type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.get_vertex_prop_entry">
+<code class="sig-name descname">get_vertex_prop_entry</code><span class="sig-paren">(</span><em class="sig-param">prop_key</em>, <em class="sig-param">vertex_descriptor</em>, <em class="sig-param">n_comp</em>, <em class="sig-param">data_type</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.get_vertex_prop_entry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a property value of a vertex for inserting into a VTK vtkDataArray
+object.</p>
+<p>This function is used by the methods graph_to_points_and_lines_polys and
+graph_to_triangle_poly (the latter of the derived classes PointGraph and
+TriangleGraph (in surface_graphs).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prop_key</strong> (<em>str</em>) – name of the desired vertex property</p></li>
+<li><p><strong>vertex_descriptor</strong> (<em>graph_tool.Vertex</em>) – vertex descriptor of the
+current vertex</p></li>
+<li><p><strong>n_comp</strong> (<em>int</em>) – number of components of the array (length of the
+output tuple)</p></li>
+<li><p><strong>data_type</strong> – numpy data type converted from a graph-tool property
+value type by TypesConverter().gt_to_numpy</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a tuple (with length like n_comp) with the property value of the
+vertex converted to a numpy data type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.get_vertex_property_array">
+<code class="sig-name descname">get_vertex_property_array</code><span class="sig-paren">(</span><em class="sig-param">property_name</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.get_vertex_property_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a numpy array with all values of a vertex property of the graph,
+printing out the number of values, the minimal and the maximal value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>property_name</strong> (<em>str</em>) – vertex property name</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>an array (numpy.ndarray) with all values of the vertex property</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pycurv.graphs.SegmentationGraph.graph">
+<code class="sig-name descname">graph</code><em class="property"> = None</em><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>a graph object storing the segmentation graph
+topology, geometry and properties (initially empty).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>graph_tool.Graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.graph_to_points_and_lines_polys">
+<code class="sig-name descname">graph_to_points_and_lines_polys</code><span class="sig-paren">(</span><em class="sig-param">vertices=True</em>, <em class="sig-param">edges=True</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.graph_to_points_and_lines_polys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a VTK PolyData object from the graph with vertices as
+vertex-cells (containing 1 point) and edges as line-cells (containing 2
+points).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertices</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default) vertices are stored
+a VTK PolyData object as vertex-cells</p></li>
+<li><p><strong>edges</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default) edges are stored a VTK
+PolyData object as line-cells</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>vtk.vtkPolyData with vertex-cells</p></li>
+<li><p>vtk.vtkPolyData with edges as line-cells</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.graphs.SegmentationGraph.update_coordinates_to_vertex_index">
+<code class="sig-name descname">update_coordinates_to_vertex_index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.graphs.SegmentationGraph.update_coordinates_to_vertex_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates graph’s dictionary coordinates_to_vertex_index.</p>
+<p>The dictionary maps the vertex coordinates (x, y, z) to the vertex
+index. It has to be updated after purging the graph, because vertices
+are renumbered, as well as after reading a graph from a file (e.g.
+before density calculation).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.linalg">
+<span id="pycurv-linalg-module"></span><h2>pycurv.linalg module<a class="headerlink" href="#module-pycurv.linalg" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv.linalg.dot_norm">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">dot_norm</code><span class="sig-paren">(</span><em class="sig-param">p</em>, <em class="sig-param">pnorm</em>, <em class="sig-param">norm</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.dot_norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes the dot-product between the input point and the closest point normal.
+Both vectors are first normalized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p</strong> (<em>numpy.ndarray</em>) – the input point, must be float numpy array</p></li>
+<li><p><strong>pnorm</strong> (<em>numpy.ndarray</em>) – the point normal, must be float numpy array</p></li>
+<li><p><strong>norm</strong> (<em>numpy.ndarray</em>) – the closest point normal, must be float numpy
+array</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the dot-product between the input point and the closest point normal
+(float)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.euclidean_distance">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">euclidean_distance</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.euclidean_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates and returns the Euclidean distance between two voxels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>np.ndarray</em>) – first voxel coordinates in form of an array of
+integers of length 3 [x1, y1, z1]</p></li>
+<li><p><strong>b</strong> (<em>np.ndarray</em>) – second voxel coordinates in form of an array of
+integers of length 3 [x2, y2, z2]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the Euclidean distance between two voxels (float).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.nice_acos">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">nice_acos</code><span class="sig-paren">(</span><em class="sig-param">cos_theta</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.nice_acos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the angle in radians given a cosine of the angle without ValueError.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cos_theta</strong> (<em>float</em>) – cosine of an angle</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>angle in radians</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.nice_asin">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">nice_asin</code><span class="sig-paren">(</span><em class="sig-param">sin_theta</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.nice_asin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the angle in radians given a sine of the angle without ValueError.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sin_theta</strong> (<em>float</em>) – sine of an angle</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>angle in radians</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.perpendicular_vector">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">perpendicular_vector</code><span class="sig-paren">(</span><em class="sig-param">iv</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.perpendicular_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds a unit vector perpendicular to a given vector.
+Implementation of algorithm of Ahmed Fasih <a class="reference external" href="https://math.stackexchange.com/">https://math.stackexchange.com/</a>
+questions/133177/finding-a-unit-vector-perpendicular-to-another-vector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>iv</strong> (<em>numpy.ndarray</em>) – input 3D vector</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3D vector perpendicular to the input vector (np.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.rotate_vector">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">rotate_vector</code><span class="sig-paren">(</span><em class="sig-param">v</em>, <em class="sig-param">theta</em>, <em class="sig-param">axis=None</em>, <em class="sig-param">matrix=None</em>, <em class="sig-param">debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.rotate_vector" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotates a 3D vector around an axis by an angle (wrapper function for
+rotation_matrix).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> (<em>numpy.ndarray</em>) – input 3D vector</p></li>
+<li><p><strong>theta</strong> (<em>float</em>) – rotational angle (radians)</p></li>
+<li><p><strong>axis</strong> (<em>numpy.ndarray</em>) – rotational axis (3D vector)</p></li>
+<li><p><strong>matrix</strong> (<em>numpy.ndarray</em>) – 3 x 3 rotation matrix</p></li>
+<li><p><strong>debug</strong> (<em>boolean</em>) – if True (default False), an assertion is done to assure
+that the angle is correct</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>rotated 3D vector (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.rotation_matrix">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">rotation_matrix</code><span class="sig-paren">(</span><em class="sig-param">axis</em>, <em class="sig-param">theta</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.rotation_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a rotation matrix for rotating a 3D vector around an axis by an
+angle. From B. M. <a class="reference external" href="https://stackoverflow.com/questions/6802577/">https://stackoverflow.com/questions/6802577/</a>
+python-rotation-of-3d-vector</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>axis</strong> (<em>numpy.ndarray</em>) – rotational axis (3D vector)</p></li>
+<li><p><strong>theta</strong> (<em>float</em>) – rotational angle (radians)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>3 x 3 rotation matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.signum">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">signum</code><span class="sig-paren">(</span><em class="sig-param">number</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.signum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the signum of a number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>number</strong> – a number</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>-1 if the number is negative, 1 if it is positive, 0 if it is 0</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.triangle_area_cross_product">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">triangle_area_cross_product</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em>, <em class="sig-param">c</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.triangle_area_cross_product" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate triangle area using 3 triangle points a, b, c, given their
+coordinates (x, y, z), and cross product formula.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>numpy.ndarray</em>) – 3D point a coordinates</p></li>
+<li><p><strong>b</strong> (<em>numpy.ndarray</em>) – 3D point b coordinates</p></li>
+<li><p><strong>c</strong> (<em>numpy.ndarray</em>) – 3D point c coordinates</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>area of the triangle abc (float).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.triangle_area_heron">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">triangle_area_heron</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em>, <em class="sig-param">c</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.triangle_area_heron" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate triangle area using 3 triangle points a, b, c, given their
+coordinates (x, y, z), and Heron’s formula.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>numpy.ndarray</em>) – 3D point a coordinates</p></li>
+<li><p><strong>b</strong> (<em>numpy.ndarray</em>) – 3D point b coordinates</p></li>
+<li><p><strong>c</strong> (<em>numpy.ndarray</em>) – 3D point c coordinates</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>area of the triangle abc (float).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.triangle_center">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">triangle_center</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">b</em>, <em class="sig-param">c</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.triangle_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate triangle center using 3 triangle points a, b, c, given their
+coordinates (x, y, z).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>numpy.ndarray</em>) – 3D point a coordinates</p></li>
+<li><p><strong>b</strong> (<em>numpy.ndarray</em>) – 3D point b coordinates</p></li>
+<li><p><strong>c</strong> (<em>numpy.ndarray</em>) – 3D point c coordinates</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>center coordinates of the triangle abc (1x3 numpy.ndarray).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.linalg.triangle_normal">
+<code class="sig-prename descclassname">pycurv.linalg.</code><code class="sig-name descname">triangle_normal</code><span class="sig-paren">(</span><em class="sig-param">ref_normal</em>, <em class="sig-param">a</em>, <em class="sig-param">b</em>, <em class="sig-param">c</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.linalg.triangle_normal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate triangle normal using 3 triangle points a, b, c, given their
+coordinates (x, y, z).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ref_normal</strong> (<em>numpy.ndarray</em>) – 3D reference normal vector to correct the
+vector orientation</p></li>
+<li><p><strong>a</strong> (<em>numpy.ndarray</em>) – 3D point a coordinates</p></li>
+<li><p><strong>b</strong> (<em>numpy.ndarray</em>) – 3D point b coordinates</p></li>
+<li><p><strong>c</strong> (<em>numpy.ndarray</em>) – 3D point c coordinates</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>normal vector of the triangle abc (numpy.ndarray).</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.pexceptions">
+<span id="pycurv-pexceptions-module"></span><h2>pycurv.pexceptions module<a class="headerlink" href="#module-pycurv.pexceptions" title="Permalink to this headline">¶</a></h2>
+<p>Set of classes for handling exceptions and warnings implemented for PySeg
+package and also used in the PyCurv package.</p>
+<p>Author: Antonio Martinez-Sanchez (Max Planck Institute for Biochemistry), date:
+2014-04-02</p>
+<dl class="exception">
+<dt id="pycurv.pexceptions.PySegError">
+<em class="property">exception </em><code class="sig-prename descclassname">pycurv.pexceptions.</code><code class="sig-name descname">PySegError</code><a class="headerlink" href="#pycurv.pexceptions.PySegError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Base class for pexceptions in this module.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="pycurv.pexceptions.PySegInputError">
+<em class="property">exception </em><code class="sig-prename descclassname">pycurv.pexceptions.</code><code class="sig-name descname">PySegInputError</code><span class="sig-paren">(</span><em class="sig-param">expr</em>, <em class="sig-param">msg</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pexceptions.PySegInputError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pycurv.pexceptions.PySegError" title="pycurv.pexceptions.PySegError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycurv.pexceptions.PySegError</span></code></a></p>
+<p>Exception raised for errors in the input.</p>
+<p>The constructor requires the following parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>expr</strong> (<em>str</em>) – input expression in which the error occurred</p></li>
+<li><p><strong>msg</strong> (<em>str</em>) – explanation of the error</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="pycurv.pexceptions.PySegInputError.get_message">
+<code class="sig-name descname">get_message</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pexceptions.PySegInputError.get_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the input expression and the message of the error.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>string in format ‘&lt;expr&gt; - &lt;msg&gt;’</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="pycurv.pexceptions.PySegInputWarning">
+<em class="property">exception </em><code class="sig-prename descclassname">pycurv.pexceptions.</code><code class="sig-name descname">PySegInputWarning</code><span class="sig-paren">(</span><em class="sig-param">expr</em>, <em class="sig-param">msg</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pexceptions.PySegInputWarning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pycurv.pexceptions.PySegWarning" title="pycurv.pexceptions.PySegWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycurv.pexceptions.PySegWarning</span></code></a></p>
+<p>Exception raised for warnings in the input.</p>
+<p>The constructor requires the following parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>expr</strong> (<em>str</em>) – input expression in which the warning occurred</p></li>
+<li><p><strong>msg</strong> (<em>str</em>) – explanation of the warning</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="pycurv.pexceptions.PySegInputWarning.get_message">
+<code class="sig-name descname">get_message</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pexceptions.PySegInputWarning.get_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the input expression and the message of the warning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>string in format ‘&lt;expr&gt; - &lt;msg&gt;’</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="pycurv.pexceptions.PySegTransitionError">
+<em class="property">exception </em><code class="sig-prename descclassname">pycurv.pexceptions.</code><code class="sig-name descname">PySegTransitionError</code><span class="sig-paren">(</span><em class="sig-param">prev</em>, <em class="sig-param">next</em>, <em class="sig-param">msg</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pexceptions.PySegTransitionError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pycurv.pexceptions.PySegError" title="pycurv.pexceptions.PySegError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycurv.pexceptions.PySegError</span></code></a></p>
+<p>Raised when an operation attempts a state transition that is not allowed.</p>
+<p>The constructor requires the following parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prev</strong> – state at beginning of transition</p></li>
+<li><p><strong>next</strong> – attempted new state</p></li>
+<li><p><strong>msg</strong> (<em>str</em>) – explanation of why the specific transition is not allowed</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="exception">
+<dt id="pycurv.pexceptions.PySegWarning">
+<em class="property">exception </em><code class="sig-prename descclassname">pycurv.pexceptions.</code><code class="sig-name descname">PySegWarning</code><a class="headerlink" href="#pycurv.pexceptions.PySegWarning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Warning</span></code></p>
+<p>Base class for warnings pexceptions in this module.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.pycurv_io">
+<span id="pycurv-pycurv-io-module"></span><h2>pycurv.pycurv_io module<a class="headerlink" href="#module-pycurv.pycurv_io" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycurv.pycurv_io.TypesConverter">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">TypesConverter</code><a class="headerlink" href="#pycurv.pycurv_io.TypesConverter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A static class for converting types between different libraries: numpy, VTK
+and graph-tool.</p>
+<p>In general if types do not match exactly, data are upcasted.</p>
+<dl class="method">
+<dt id="pycurv.pycurv_io.TypesConverter.gt_to_numpy">
+<em class="property">static </em><code class="sig-name descname">gt_to_numpy</code><span class="sig-paren">(</span><em class="sig-param">din</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.TypesConverter.gt_to_numpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>From the graph-tool property value type return an equivalent numpy data
+type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>din</strong> (<em>str</em>) – graph-tool property value type</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.pycurv_io.TypesConverter.gt_to_vtk">
+<em class="property">static </em><code class="sig-name descname">gt_to_vtk</code><span class="sig-paren">(</span><em class="sig-param">din</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.TypesConverter.gt_to_vtk" title="Permalink to this definition">¶</a></dt>
+<dd><p>From the graph-tool property value type creates an equivalent
+vtkDataArray object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>din</strong> (<em>str</em>) – graph-tool property value type</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vtkDataArray object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.pycurv_io.TypesConverter.vtk_to_numpy">
+<em class="property">static </em><code class="sig-name descname">vtk_to_numpy</code><span class="sig-paren">(</span><em class="sig-param">din</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.TypesConverter.vtk_to_numpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>From a vtkDataArray object returns an equivalent numpy data type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>din</strong> (<em>vtk.vtkDataArray</em>) – input vtkDataArray object</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy type</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.append_polys">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">append_polys</code><span class="sig-paren">(</span><em class="sig-param">poly_list</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.append_polys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Appends a list of VTK PolyData objects to one object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>poly_list</strong> (<em>list</em>) – a list of vtk.vtkPolyData objects</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vtk.vtkPolyData object containing all input objects</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.load_nii">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">load_nii</code><span class="sig-paren">(</span><em class="sig-param">img_path</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.load_nii" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a ‘nii’ or ‘nii.gz’ file, returns everything needed to save another
+‘nii’ or ‘nii.gz’ in the same dimensional space, i.e. the numpy array,
+the affine matrix and the header.
+author: Clement Zotti (<a class="reference external" href="mailto:clement&#46;zotti&#37;&#52;&#48;usherbrooke&#46;ca">clement<span>&#46;</span>zotti<span>&#64;</span>usherbrooke<span>&#46;</span>ca</a>)
+date: April 2017</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>img_path</strong> (<em>str</em>) – Path of the ‘nii’ or ‘nii.gz’ image file name.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the numpy array, the affine matrix and the header</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.load_poly">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">load_poly</code><span class="sig-paren">(</span><em class="sig-param">fname</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.load_poly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads data from a VTK PolyData (VTP) file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) – input file name, should end with ‘.vtp’</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vtk.vtkPolyData object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.load_poly_from_vtk">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">load_poly_from_vtk</code><span class="sig-paren">(</span><em class="sig-param">fname</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.load_poly_from_vtk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads data from a legacy VTK file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em>) – input file name, should end with ‘.vtk’</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vtk.vtkPolyData object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.load_tomo">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">load_tomo</code><span class="sig-paren">(</span><em class="sig-param">fname</em>, <em class="sig-param">mmap=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.load_tomo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads a tomogram in MRC, EM or VTI format and converts it into a numpy
+format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fname</strong> (<em>str</em>) – full path to the tomogram, has to end with ‘.mrc’, ‘.em’ or
+‘.vti’</p></li>
+<li><p><strong>mmap</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False) a numpy.memmap object
+is loaded instead of numpy.ndarray, which means that data are not
+loaded completely to memory, this is useful only for very large
+tomograms. Only valid with formats MRC and EM. VERY IMPORTANT: This
+subclass of ndarray has some unpleasant interaction with some
+operations, because it does not quite fit properly as a subclass of
+numpy.ndarray</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy.ndarray or numpy.memmap object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.merge_vtp_files">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">merge_vtp_files</code><span class="sig-paren">(</span><em class="sig-param">vtp_file_list</em>, <em class="sig-param">outfilename</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.merge_vtp_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merges a list of ‘.vtp’ files to one file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vtp_file_list</strong> (<em>str list</em>) – a list of strings with paths and names of
+‘.vtp’ files</p></li>
+<li><p><strong>outfilename</strong> (<em>str</em>) – an output file name (with path)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.numpy_to_vti">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">numpy_to_vti</code><span class="sig-paren">(</span><em class="sig-param">array, offset=[0, 0, 0], spacing=[1, 1, 1]</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.numpy_to_vti" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a numpy array into a VTK image data object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>numpy.ndarray</em>) – input numpy array</p></li>
+<li><p><strong>offset</strong> (<em>int</em><em> [</em><em>3</em><em>]</em><em>, </em><em>optional</em>) – the reading start positions in x, y and z
+dimensions, default [0, 0, 0]</p></li>
+<li><p><strong>spacing</strong> (<em>float</em><em> [</em><em>3</em><em>]</em><em>, </em><em>optional</em>) – the spacing (width, height, length) of
+the cubical cells that compose the data set, default [1, 1, 1]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vtk.vtkImageData object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.ply_file_to_vtp_file">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">ply_file_to_vtp_file</code><span class="sig-paren">(</span><em class="sig-param">infilename</em>, <em class="sig-param">outfilename</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.ply_file_to_vtp_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an ‘.ply’ file to a ‘.vtp’ file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infilename</strong> (<em>str</em>) – an input ‘.ply’ file name (with path)</p></li>
+<li><p><strong>outfilename</strong> (<em>str</em>) – an output ‘.vtp’ file name (with path)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.poly_array_to_volume">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">poly_array_to_volume</code><span class="sig-paren">(</span><em class="sig-param">poly</em>, <em class="sig-param">array_name</em>, <em class="sig-param">scale</em>, <em class="sig-param">size</em>, <em class="sig-param">logfilename=None</em>, <em class="sig-param">mean=False</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.poly_array_to_volume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a triangle-cell data array of the given vtkPolyData to a 3D array
+of size like the underlying segmentation.</p>
+<p>Initializes a 3D matrix of size like the segmentation with zeros, calculates
+triangle centroid coordinates, transforms them from units to voxels and
+puts the corresponding cell data value into the voxel.</p>
+<p>If more than one triangles map to the same voxel, takes the maximal or mean
+value. Optionally, logs such cases by writing out the voxel coordinates and
+the value list into a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>poly</strong> (<em>vtk.vtkPolyData</em>) – a vtkPolyData object with triangle-cells.</p></li>
+<li><p><strong>array_name</strong> (<em>str</em>) – name of the desired cell data array of the vtkPolyData
+object</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – pixel size (X, Y, Z) in given units that was used for
+scaling the graph</p></li>
+<li><p><strong>size</strong> (<em>tuple</em>) – (X, Y, Z) length in pixels of the segmentation</p></li>
+<li><p><strong>logfilename</strong> (<em>str</em><em>, </em><em>optional</em>) – specifies an output log file path (default
+None) for listing voxel coordinates with multiple values mapping to
+this voxel</p></li>
+<li><p><strong>mean</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, takes the mean value in case multiple
+triangles map to the same voxel; if False (default), takes the
+maximal value</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>the 3D numpy.ndarray of size like the segmentation containing the cell</dt><dd><p>data values at the corresponding coordinates</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.save_numpy">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">save_numpy</code><span class="sig-paren">(</span><em class="sig-param">array</em>, <em class="sig-param">fname</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.save_numpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a numpy array to a file in MRC, EM or VTI format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>array</strong> (<em>numpy.ndarray</em>) – input array</p></li>
+<li><p><strong>fname</strong> (<em>str</em>) – full path to the tomogram, has to end with ‘.mrc’, ‘.em’ or
+‘.vti’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.save_vti">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">save_vti</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">fname</em>, <em class="sig-param">outputdir</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.save_vti" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a VTK image data object into a VTI file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>vtk.vtkImageData</em>) – </p></li>
+<li><p><strong>fname</strong> (<em>str</em>) – output file name, should end with ‘.vti’</p></li>
+<li><p><strong>outputdir</strong> (<em>str</em>) – output directory</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.save_vtk">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">save_vtk</code><span class="sig-paren">(</span><em class="sig-param">poly</em>, <em class="sig-param">fname</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.save_vtk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a VTK PolyData object into a VTK file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>poly</strong> (<em>vtk.vtkPolyData</em>) – input VTK PolyData object</p></li>
+<li><p><strong>fname</strong> (<em>str</em>) – output file name</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.save_vtp">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">save_vtp</code><span class="sig-paren">(</span><em class="sig-param">poly</em>, <em class="sig-param">fname</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.save_vtp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a VTK PolyData object into a VTP file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>poly</strong> (<em>vtk.vtkPolyData</em>) – input VTK PolyData object</p></li>
+<li><p><strong>fname</strong> (<em>str</em>) – output file name</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.stl_file_to_vtp_file">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">stl_file_to_vtp_file</code><span class="sig-paren">(</span><em class="sig-param">infilename</em>, <em class="sig-param">outfilename</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.stl_file_to_vtp_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an ‘.stl’ file to a ‘.vtp’ file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infilename</strong> (<em>str</em>) – an input ‘.stl’ file name (with path)</p></li>
+<li><p><strong>outfilename</strong> (<em>str</em>) – an output ‘.vtp’ file name (with path)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.vti_to_numpy">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">vti_to_numpy</code><span class="sig-paren">(</span><em class="sig-param">image</em>, <em class="sig-param">transpose=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.vti_to_numpy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts VTK image data (that was read in from a VTI file) into a numpy
+format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image</strong> (<em>vtkImageData</em>) – input VTK image data, must be a scalar field
+(output of vtk.vtkXMLImageDataReader)</p></li>
+<li><p><strong>transpose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), the image is
+transposed (x and z axes are switched)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>numpy.ndarray with the image data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.vtp_file_to_stl_file">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">vtp_file_to_stl_file</code><span class="sig-paren">(</span><em class="sig-param">infilename</em>, <em class="sig-param">outfilename</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.vtp_file_to_stl_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a ‘.vtp’ file to an ‘.stl’ file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infilename</strong> (<em>str</em>) – an input ‘.vtp’ file name (with path)</p></li>
+<li><p><strong>outfilename</strong> (<em>str</em>) – an output ‘.stl’ file name (with path)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.vtp_file_to_vtk_file">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">vtp_file_to_vtk_file</code><span class="sig-paren">(</span><em class="sig-param">infilename</em>, <em class="sig-param">outfilename</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.vtp_file_to_vtk_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an ‘.vtp’ file to a ‘.vtk’ file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infilename</strong> (<em>str</em>) – an input ‘.vtp’ file name (with path)</p></li>
+<li><p><strong>outfilename</strong> (<em>str</em>) – an output ‘.vtk’ file name (with path)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.pycurv_io.write_stl_file">
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">write_stl_file</code><span class="sig-paren">(</span><em class="sig-param">poly</em>, <em class="sig-param">outfilename</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.write_stl_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writs an ‘.stl’ file from a VTK PolyData object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>poly</strong> (<em>vtk.vtkPolyData</em>) – an input VTK PolyData object</p></li>
+<li><p><strong>outfilename</strong> (<em>str</em>) – an output ‘.stl’ file name (with path)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.ribosome_density">
+<span id="pycurv-ribosome-density-module"></span><h2>pycurv.ribosome_density module<a class="headerlink" href="#module-pycurv.ribosome_density" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycurv.ribosome_density.VoxelGraph">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">VoxelGraph</code><a class="headerlink" href="#pycurv.ribosome_density.VoxelGraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pycurv.graphs.SegmentationGraph" title="pycurv.graphs.SegmentationGraph"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycurv.graphs.SegmentationGraph</span></code></a></p>
+<p>Class defining the VoxelGraph object and its methods.</p>
+<p>Please use constructor parameters inherited from graphs.SegmentationGraph.</p>
+<dl class="method">
+<dt id="pycurv.ribosome_density.VoxelGraph.build_graph_from_np_ndarray">
+<code class="sig-name descname">build_graph_from_np_ndarray</code><span class="sig-paren">(</span><em class="sig-param">mask</em>, <em class="sig-param">scale</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.VoxelGraph.build_graph_from_np_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a graph from a binary mask of a membrane segmentation, including
+only voxels with value 1 (foreground voxels).</p>
+<p>Each foreground voxel, its foreground neighbor voxels and edges with
+euclidean distances between the voxel and its neighbor voxels (all
+scaled in given units) are added to the graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – a binary 3D mask</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – pixel size (X, Y, Z) in given units for scaling the
+surface and the graph</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.ribosome_density.VoxelGraph.foreground_neighbors_of_voxel">
+<em class="property">static </em><code class="sig-name descname">foreground_neighbors_of_voxel</code><span class="sig-paren">(</span><em class="sig-param">mask</em>, <em class="sig-param">voxel</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.VoxelGraph.foreground_neighbors_of_voxel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns neighbor voxels with value 1 (foreground) of a given voxel
+inside a binary mask of a membrane segmentation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – a binary 3D mask</p></li>
+<li><p><strong>voxel</strong> (<em>tuple</em>) – voxel coordinates in the mask as a tuple of integers
+of length 3: (x, y, z)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a list of tuples with neighbor voxels coordinates in format
+[(x1, y1, z1), (x2, y2, z2), …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.ribosome_density.get_foreground_voxels_from_mask">
+<code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">get_foreground_voxels_from_mask</code><span class="sig-paren">(</span><em class="sig-param">mask</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.get_foreground_voxels_from_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets foreground (non-zero) voxel coordinates from a mask (binary tomographic
+data).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mask</strong> (<em>numpy ndarray</em>) – a 3D array holding the mask, which should be
+binary</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a list of foreground (nonzero) voxel coordinates as tuples in form
+(x, y, z)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.ribosome_density.get_target_voxels_in_membrane_mask">
+<code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">get_target_voxels_in_membrane_mask</code><span class="sig-paren">(</span><em class="sig-param">ribo_mask</em>, <em class="sig-param">mem_mask</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.get_target_voxels_in_membrane_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets target voxels from a ribosome mask and pre-filters them to those that
+are inside a membrane mask (value 1).</p>
+<p>Prints out the target voxel numbers before and after filtering and warns of
+the voxels that are not inside the membrane mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ribo_mask</strong> (<em>numpy.ndarray</em>) – a ribosome mask</p></li>
+<li><p><strong>mem_mask</strong> (<em>numpy.ndarray</em>) – a membrane mask</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – it True (default False), additionally
+prints out the target voxels before and after filtering</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a list of the target voxels that are inside the membrane mask as tuples
+in form (x, y, z)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.ribosome_density.ndarray_voxels_to_tupel_list">
+<code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">ndarray_voxels_to_tupel_list</code><span class="sig-paren">(</span><em class="sig-param">voxels_ndarray</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.ndarray_voxels_to_tupel_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turns voxel coordinates from a 2D numpy ndarray in format
+[[x1, y1, z1], [x2, y2, z2], …] into a list of tuples in format
+[(x1, y1, z1), (x2, y2, z2), …].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>voxels_ndarray</strong> (<em>numpy.ndarray</em>) – a 2D array containing voxel coordinates
+in format [[x1, y1, z1], [x2, y2, z2], …]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a list of tuples containing the voxel coordinates in format
+[(x1, y1, z1), (x2, y2, z2), …]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.ribosome_density.nearest_vertex_for_particles">
+<code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">nearest_vertex_for_particles</code><span class="sig-paren">(</span><em class="sig-param">vertices_xyz</em>, <em class="sig-param">particles_xyz</em>, <em class="sig-param">radius</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.nearest_vertex_for_particles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds for each particle coordinates the nearest membrane graph vertices
+coordinates (both sets given by 2D numpy arrays) within a given radius.</p>
+<p>If no vertex exists within the radius, [-1, -1, -1] is returned at the
+respective index. Uses KD trees for a fast search.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertices_xyz</strong> (<em>numpy.ndarray</em>) – membrane graph vertices coordinates in
+format [[x1, y1, z1], [x2, y2, z2], …]</p></li>
+<li><p><strong>particles_xyz</strong> (<em>numpy.ndarray</em>) – particle coordinates in same format as
+the vertices coordinates</p></li>
+<li><p><strong>radius</strong> (<em>int</em><em> or </em><em>float</em>) – distance upper bound for searching vertices from
+each particle coordinate</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a 2D array in same format as the inputs with the nearest vertices
+coordinates (numpy.ndarray)</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All input parameters have to be in the same scale (either in pixels or
+in given units).</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.ribosome_density.particles_xyz_to_np_array">
+<code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">particles_xyz_to_np_array</code><span class="sig-paren">(</span><em class="sig-param">motl_em_file</em>, <em class="sig-param">scaling_factor=1</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.particles_xyz_to_np_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts coordinates of all particles from a motive list EM file and returns
+them in numpy array format.</p>
+<p>Optionally, scales the coordinates by multiplying with a given scaling
+factor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>motl_em_file</strong> (<em>str</em>) – TOM motive list EM file holding the particle
+coordinates in rows 8-10</p></li>
+<li><p><strong>scaling_factor</strong> (<em>int</em><em>, </em><em>optional</em>) – scaling factor by which the coordinates
+are multiplied; if 1 (default), no scaling is performed</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a 2D array containing the particle coordinates in format
+[[x1, y1, z1], [x2, y2, z2], …] (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.ribosome_density.read_in_mask">
+<code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">read_in_mask</code><span class="sig-paren">(</span><em class="sig-param">mask_file</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.read_in_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>A wrapper for reading in a membrane segmentation or ribosome centers mask
+(binary tomographic data).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask_file</strong> (<em>str</em>) – a mask file in EM, MRC or VTI format</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the read in mask (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.ribosome_density.rescale_mask">
+<code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">rescale_mask</code><span class="sig-paren">(</span><em class="sig-param">in_mask_file</em>, <em class="sig-param">out_mask_file</em>, <em class="sig-param">scaling_factor</em>, <em class="sig-param">out_shape</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.rescale_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in a mask (binary tomographic data) from a file, rescales the mask and
+writes it into a file.</p>
+<p>How rescaling is done: The output (rescaled) mask with a given shape is
+initialized with zeros. Foreground (non-zero) voxel coordinates from the
+original mask are multiplied by the scaling factor, and ones (1) are put at
+the resulting coordinates inside the rescaled mask.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_mask_file</strong> (<em>str</em>) – an input mask file</p></li>
+<li><p><strong>out_mask_file</strong> (<em>str</em>) – an output (rescaled) mask file</p></li>
+<li><p><strong>scaling_factor</strong> (<em>int</em>) – a scaling factor by which the foreground voxel
+coordinates in the input file are multiplied</p></li>
+<li><p><strong>out_shape</strong> (<em>tuple</em>) – shape of the output (rescaled) mask
+(size_x, size_y, size_z)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.ribosome_density.tupel_list_to_ndarray_voxels">
+<code class="sig-prename descclassname">pycurv.ribosome_density.</code><code class="sig-name descname">tupel_list_to_ndarray_voxels</code><span class="sig-paren">(</span><em class="sig-param">tupel_list</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.ribosome_density.tupel_list_to_ndarray_voxels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turns voxel coordinates from a list of tuples in format
+[(x1, y1, z1), (x2, y2, z2), …] into a 2D numpy ndarray in format
+[[x1, y1, z1], [x2, y2, z2], …].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>tupel_list</strong> – a list of tuples containing voxel coordinates in format
+[(x1, y1, z1), (x2, y2, z2), …]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a 2D array containing the voxel coordinates in format
+[[x1, y1, z1], [x2, y2, z2], …] (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.surface">
+<span id="pycurv-surface-module"></span><h2>pycurv.surface module<a class="headerlink" href="#module-pycurv.surface" title="Permalink to this headline">¶</a></h2>
+<dl class="data">
+<dt id="pycurv.surface.MAX_DIST_SURF">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">MAX_DIST_SURF</code><em class="property"> = 3</em><a class="headerlink" href="#pycurv.surface.MAX_DIST_SURF" title="Permalink to this definition">¶</a></dt>
+<dd><p>a constant determining the maximal distance in pixels of a point on the
+surface from the segmentation mask, used in gen_isosurface and gen_surface
+functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="data">
+<dt id="pycurv.surface.THRESH_SIGMA1">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">THRESH_SIGMA1</code><em class="property"> = 0.699471735</em><a class="headerlink" href="#pycurv.surface.THRESH_SIGMA1" title="Permalink to this definition">¶</a></dt>
+<dd><p>when convolving a binary mask with a gaussian kernel with sigma 1,
+values at the boundary with 0’s become this value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.surface.add_curvature_to_vtk_surface">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">add_curvature_to_vtk_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">curvature_type</em>, <em class="sig-param">invert=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface.add_curvature_to_vtk_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds curvatures (Gaussian, mean, maximum or minimum) calculated by VTK to
+each triangle vertex of a vtkPolyData surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – a surface of triangles</p></li>
+<li><p><strong>curvature_type</strong> (<em>str</em>) – type of curvature to add: ‘Gaussian’, ‘Mean’,
+‘Maximum’ or ‘Minimum’</p></li>
+<li><p><strong>invert</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), VTK will calculate
+curvatures as for meshes with opposite pointing normals (their
+convention is outwards pointing normals, opposite from ours)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the vtkPolyData surface with ‘&lt;type&gt;_Curvature’ property added to each
+triangle vertex</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.surface.add_point_normals_to_vtk_surface">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">add_point_normals_to_vtk_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">reverse_normals=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface.add_point_normals_to_vtk_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a normal to each triangle vertex of a vtkPolyData surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – a surface of triangles</p></li>
+<li><p><strong>reverse_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), VTK will
+flip the normals (their convention is outwards pointing normals,
+opposite from ours)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the vtkPolyData surface with ‘&lt;type&gt;_Curvature’ property added to each
+triangle vertex</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.surface.gen_isosurface">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">gen_isosurface</code><span class="sig-paren">(</span><em class="sig-param">tomo</em>, <em class="sig-param">lbl</em>, <em class="sig-param">grow=0</em>, <em class="sig-param">sg=0</em>, <em class="sig-param">thr=1.0</em>, <em class="sig-param">mask=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface.gen_isosurface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a isosurface using the Marching Cubes method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tomo</strong> (<em>str</em><em> or </em><em>numpy.ndarray</em>) – segmentation input file in one of the
+formats: ‘.mrc’, ‘.em’ or ‘.vti’, or 3D array containing the
+segmentation</p></li>
+<li><p><strong>lbl</strong> (<em>int</em>) – the label to be considered (&gt; 0)</p></li>
+<li><p><strong>grow</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 the surface is grown by so many voxels
+(default 0 - no growing)</p></li>
+<li><p><strong>sg</strong> (<em>int</em><em>, </em><em>optional</em>) – sigma for gaussian smoothing in voxels (default 0 -
+no smoothing)</p></li>
+<li><p><strong>thr</strong> (<em>optional</em><em>, </em><em>float</em>) – thr for isosurface (default 1.0)</p></li>
+<li><p><strong>mask</strong> (<em>int</em><em> or </em><em>numpy.ndarray</em><em>, </em><em>optional</em>) – if given (default None), the
+surface will be masked with it: if integer, this label is extracted
+from the input segmentation to generate the binary mask, otherwise
+it has to be given as a numpy.ndarray with same dimensions as the
+input segmentation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.surface.gen_surface">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">gen_surface</code><span class="sig-paren">(</span><em class="sig-param">tomo</em>, <em class="sig-param">lbl=1</em>, <em class="sig-param">mask=True</em>, <em class="sig-param">other_mask=None</em>, <em class="sig-param">purge_ratio=1</em>, <em class="sig-param">field=False</em>, <em class="sig-param">mode_2d=False</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface.gen_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a VTK PolyData surface from a segmented tomogram.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tomo</strong> (<em>numpy.ndarray</em><em> or </em><em>str</em>) – the input segmentation as numpy ndarray or
+the file name in MRC, EM or VTI format</p></li>
+<li><p><strong>lbl</strong> (<em>int</em><em>, </em><em>optional</em>) – label for the foreground, default 1</p></li>
+<li><p><strong>mask</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), the input segmentation is
+used as mask for the surface</p></li>
+<li><p><strong>other_mask</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – if given (default None), this
+segmentation is used as mask for the surface</p></li>
+<li><p><strong>purge_ratio</strong> (<em>int</em><em>, </em><em>optional</em>) – if greater than 1 (default 1), then 1 every
+purge_ratio points of the segmentation are randomly deleted</p></li>
+<li><p><strong>field</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), additionally returns
+the polarity distance scalar field</p></li>
+<li><p><strong>mode_2d</strong> (<em>boolean</em><em>, </em><em>optional</em>) – needed for polarity distance calculation
+(if field is True), if True (default False), …</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), prints out
+messages for checking the progress</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>output surface (vtk.vtkPolyData)</p></li>
+<li><p>polarity distance scalar field (np.ndarray), if field is True</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.surface.rescale_surface">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">rescale_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">scale</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface.rescale_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rescales the given vtkPolyData surface with a given scaling factor in each
+of the three dimensions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – a surface of triangles</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – a scaling factor in 3D (x, y, z)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>rescaled surface (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.surface.reverse_sense_and_normals">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">reverse_sense_and_normals</code><span class="sig-paren">(</span><em class="sig-param">vtk_algorithm_output</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface.reverse_sense_and_normals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sometimes the contouring algorithm can create a volume whose gradient
+vector and ordering of polygon (using the right hand rule) are
+inconsistent. vtkReverseSense cures this problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>vtk_algorithm_output</strong> (<em>vtkAlgorithmOutput</em>) – output of a VTK algorithm,
+to get with: algorithm_instance.GetOutputPort()</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>surface with reversed normals (vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.surface.run_gen_surface">
+<code class="sig-prename descclassname">pycurv.surface.</code><code class="sig-name descname">run_gen_surface</code><span class="sig-paren">(</span><em class="sig-param">tomo</em>, <em class="sig-param">outfile_base</em>, <em class="sig-param">lbl=1</em>, <em class="sig-param">mask=True</em>, <em class="sig-param">other_mask=None</em>, <em class="sig-param">save_input_as_vti=False</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">isosurface=False</em>, <em class="sig-param">grow=0</em>, <em class="sig-param">sg=0</em>, <em class="sig-param">thr=1.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface.run_gen_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a VTK PolyData triangle surface for objects in a segmented volume
+with a given label.</p>
+<p>Removes triangles with zero area, if any are present, from the resulting
+surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tomo</strong> (<em>str</em><em> or </em><em>numpy.ndarray</em>) – segmentation input file in one of the
+formats: ‘.mrc’, ‘.em’ or ‘.vti’, or 3D array containing the
+segmentation</p></li>
+<li><p><strong>outfile_base</strong> (<em>str</em>) – the path and filename without the ending for saving
+the surface (ending ‘.surface.vtp’ will be added automatically)</p></li>
+<li><p><strong>lbl</strong> (<em>int</em><em>, </em><em>optional</em>) – the label to be considered, 0 will be ignored,
+default 1</p></li>
+<li><p><strong>mask</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), a mask of the binary
+objects is applied on the resulting surface to reduce artifacts
+(in case isosurface=False)</p></li>
+<li><p><strong>other_mask</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – if given (default None), this
+segmentation is used as mask for the surface</p></li>
+<li><p><strong>save_input_as_vti</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), the
+input is saved as a ‘.vti’ file (‘&lt;outfile_base&gt;.vti’)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+<li><p><strong>isosurface</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), generate
+isosurface (good for filled segmentations) - last three parameters
+are used in this case</p></li>
+<li><p><strong>grow</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 the surface is grown by so many voxels
+(default 0 - no growing)</p></li>
+<li><p><strong>sg</strong> (<em>int</em><em>, </em><em>optional</em>) – sigma for gaussian smoothing in voxels (default 0 -
+no smoothing)</p></li>
+<li><p><strong>thr</strong> (<em>optional</em><em>, </em><em>float</em>) – thr for isosurface (default 1.0)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the triangle surface (vtk.PolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.surface_graphs">
+<span id="pycurv-surface-graphs-module"></span><h2>pycurv.surface_graphs module<a class="headerlink" href="#module-pycurv.surface_graphs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pycurv.surface_graphs.PointGraph">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv.surface_graphs.</code><code class="sig-name descname">PointGraph</code><a class="headerlink" href="#pycurv.surface_graphs.PointGraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pycurv.surface_graphs.SurfaceGraph" title="pycurv.surface_graphs.SurfaceGraph"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycurv.surface_graphs.SurfaceGraph</span></code></a></p>
+<p>Class defining the PointGraph object, its attributes and methods.</p>
+<p>The constructor requires the following parameters of the underlying
+segmentation that will be used to build the graph.</p>
+<dl class="method">
+<dt id="pycurv.surface_graphs.PointGraph.build_graph_from_vtk_surface">
+<code class="sig-name descname">build_graph_from_vtk_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">scale=(1</em>, <em class="sig-param">1</em>, <em class="sig-param">1)</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">reverse_normals=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.PointGraph.build_graph_from_vtk_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the graph from the vtkPolyData surface, which is rescaled to
+given units according to the scale factor.</p>
+<p>Every vertex of the graph represents a surface triangle vertex,
+and every edge of the graph connects two adjacent vertices, just like a
+triangle edge.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – a signed surface (mesh of triangles)
+generated from the segmentation in voxels</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em><em>, </em><em>optional</em>) – pixel size (X, Y, Z) in given units for
+scaling the surface and the graph (default (1, 1, 1))</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+<li><p><strong>reverse_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), the
+triangle normals are reversed during graph generation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>rescaled surface to given units with VTK curvatures
+(vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.PointGraph.collect_normal_votes">
+<code class="sig-name descname">collect_normal_votes</code><span class="sig-paren">(</span><em class="sig-param">vertex_v_ind</em>, <em class="sig-param">g_max</em>, <em class="sig-param">a_max</em>, <em class="sig-param">sigma</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.PointGraph.collect_normal_votes" title="Permalink to this definition">¶</a></dt>
+<dd><p>For a vertex v, collects the normal votes of all triangles within its
+geodesic neighborhood and calculates the weighted covariance matrix sum
+V_v.</p>
+<p>Implements equations (6), illustrated in figure 6(b), (7) and (8) from
+the paper of Page et al., 2002.</p>
+<p>More precisely, a normal vote n_i of each triangle centroid i (whose
+three points are lying within the geodesic neighborhood of vertex v) is
+calculated using the normal n_c_i assigned to the triangle i. Then, each
+vote is represented by a covariance matrix V_i and votes are collected
+as a weighted matrix sum V_v, where each vote is weighted depending on
+the area of triangle i and the geodesic distance of its centroid c_i
+from v.</p>
+<p>Here, c_i is centroid of a triangle (vertex of TriangleGraph) and v is a
+triangle vertex (vertex of PointGraph), like in Page’s approach).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertex_v_ind</strong> (<em>int</em>) – index of the vertex v in the surface
+triangle-graph for which the votes are collected</p></li>
+<li><p><strong>g_max</strong> (<em>float</em>) – the maximal geodesic distance in units of the graph</p></li>
+<li><p><strong>a_max</strong> (<em>float</em>) – the area of the largest triangle in the surface
+triangle-graph</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – sigma, defined as 3*sigma = g_max, so that votes
+beyond the neighborhood can be ignored</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>number of geodesic neighbors of vertex v</p></li>
+<li><p>the 3x3 symmetric matrix V_v (numpy.ndarray)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.PointGraph.graph_to_triangle_poly">
+<code class="sig-name descname">graph_to_triangle_poly</code><span class="sig-paren">(</span><em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.PointGraph.graph_to_triangle_poly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a VTK PolyData object from the PointGraph object with
+triangle-cells representing the surface triangles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vtk.vtkPolyData with triangle-cells</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv.surface_graphs.SurfaceGraph">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv.surface_graphs.</code><code class="sig-name descname">SurfaceGraph</code><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pycurv.graphs.SegmentationGraph" title="pycurv.graphs.SegmentationGraph"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycurv.graphs.SegmentationGraph</span></code></a></p>
+<p>Class defining the abstract SurfaceGraph object.</p>
+<dl class="method">
+<dt id="pycurv.surface_graphs.SurfaceGraph.add_curvature_descriptors_to_vertex">
+<code class="sig-name descname">add_curvature_descriptors_to_vertex</code><span class="sig-paren">(</span><em class="sig-param">vertex</em>, <em class="sig-param">t_1</em>, <em class="sig-param">t_2</em>, <em class="sig-param">kappa_1</em>, <em class="sig-param">kappa_2</em>, <em class="sig-param">gauss_curvature</em>, <em class="sig-param">mean_curvature</em>, <em class="sig-param">shape_index</em>, <em class="sig-param">curvedness</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph.add_curvature_descriptors_to_vertex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the given curvature descriptors as vertex properties to the given
+vertex in the graph. If A property is None, a 0 value or vector is added.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertex</strong> (<em>graph_tool.Vertex</em>) – vertex where the properties should be
+added</p></li>
+<li><p><strong>t_1</strong> (<em>ndarray</em>) – principal maximal direction vector of length 3</p></li>
+<li><p><strong>t_2</strong> (<em>ndarray</em>) – principal minimal direction vector of length 3</p></li>
+<li><p><strong>kappa_1</strong> (<em>float</em>) – principal maximal curvature</p></li>
+<li><p><strong>kappa_2</strong> (<em>float</em>) – principal minimal curvature</p></li>
+<li><p><strong>gauss_curvature</strong> (<em>float</em>) – Gaussian curvature</p></li>
+<li><p><strong>mean_curvature</strong> (<em>float</em>) – mean curvature</p></li>
+<li><p><strong>shape_index</strong> (<em>float</em>) – shape index</p></li>
+<li><p><strong>curvedness</strong> (<em>float</em>) – curvedness</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.SurfaceGraph.build_graph_from_vtk_surface">
+<code class="sig-name descname">build_graph_from_vtk_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">scale</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph.build_graph_from_vtk_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base method for building a graph from a vtkPolyData surface, to be
+implemented by SurfaceGraph subclasses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – a signed surface (mesh of triangles)
+generated from the segmentation in voxels</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – pixel size (X, Y, Z) in given units for scaling the
+surface and the graph</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.SurfaceGraph.collect_curvature_votes">
+<code class="sig-name descname">collect_curvature_votes</code><span class="sig-paren">(</span><em class="sig-param">vertex_v_ind</em>, <em class="sig-param">g_max</em>, <em class="sig-param">sigma</em>, <em class="sig-param">full_dist_map=None</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">a_max=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph.collect_curvature_votes" title="Permalink to this definition">¶</a></dt>
+<dd><p>For a vertex v, collects the curvature and tangent votes of all
+triangles within its geodesic neighborhood belonging to a surface patch
+and calculates the matrix B_v.</p>
+<p>Implements equations (13) and (15) also illustrated in figure 6(c),
+(16), (17), (14), and (5) from the paper. In short, three components are
+calculated for each neighboring vertex (representing triangle centroid)
+v_i:</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>Weight w_i depending on the geodesic distance between v_i and v (so</dt><dd><p>that all weights sum up to 2 * pi).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Tangent t_i from v in the direction of the arc connecting v and v_i</dt><dd><p>(using the estimated normal n_v at v).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Normal curvature kappa_i from Tong and Tang et al. defined as:</dt><dd><p>kappa_i = abs(2 * cos((pi - phi) / 2) / vector_length(vv_i)),
+where phi is the turning angle between n_v and the projection
+n_v_i_p of the estimated normal of v_i (n_v_i) onto the arc plane
+(formed by v, n_v and v_i); sign of kappa_i is opposite to the one
+of dot(t_i, n_v_i_p)</p>
+</dd>
+</dl>
+</li>
+</ol>
+<p>Those components are incorporated into the 3x3 symmetric matrix B_v
+(Eq. 5), which is returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertex_v_ind</strong> (<em>int</em>) – index of the vertex v in the surface
+triangle-graph for which the votes are collected</p></li>
+<li><p><strong>g_max</strong> (<em>float</em>) – the maximal geodesic distance in units of the graph</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – sigma, defined as 3*sigma = g_max, so that votes
+beyond the neighborhood can be ignored</p></li>
+<li><p><strong>full_dist_map</strong> (<em>graph_tool.PropertyMap</em><em>, </em><em>optional</em>) – the full distance
+map for the whole graph; if None, a local distance map is
+calculated for this vertex (default)</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False)
+normal curvature definition from Page et al. is used:
+the turning angle phi between n_v and the projection n_v_i_p
+of the estimated normal of v_i (n_v_i) onto the arc plane
+(formed by v, n_v and v_i) divided by the arc length (geodesic
+distance between v and v_i).</p></li>
+<li><p><strong>a_max</strong> (<em>float</em><em>, </em><em>optional</em>) – if given (default 0.0), votes are
+weighted by triangle area like in the first pass (normals
+estimation)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the 3x3 symmetric matrix B_v (numpy.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.SurfaceGraph.estimate_curvature">
+<code class="sig-name descname">estimate_curvature</code><span class="sig-paren">(</span><em class="sig-param">vertex_v_ind</em>, <em class="sig-param">B_v</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph.estimate_curvature" title="Permalink to this definition">¶</a></dt>
+<dd><p>For a vertex v and its calculated matrix B_v (output of
+collect_curvature_votes), calculates the principal directions (t_1 and
+t_2) and curvatures (kappa_1 and kappa_2) at this vertex.</p>
+<p>This is done using eigen-decomposition of B_v: the eigenvectors
+corresponding to the two largest eigenvalues are the principal
+directions and the principal curvatures are found with linear
+transformations of those eigenvalues (Eq. 4).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertex_v_ind</strong> (<em>int</em>) – index of the vertex v in the surface
+triangle-graph for which the principal directions and curvatures
+are estimated</p></li>
+<li><p><strong>B_v</strong> (<em>numpy.ndarray</em>) – the 3x3 symmetric matrix B_v (output of
+collect_curvature_votes)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>t_1, t_2, kappa_1, kappa_2, gauss_curvature, mean_curvature,
+shape_index, curvedness
+if B_v is None or the decomposition does not work, a list of None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.SurfaceGraph.estimate_normal">
+<code class="sig-name descname">estimate_normal</code><span class="sig-paren">(</span><em class="sig-param">vertex_v_ind</em>, <em class="sig-param">V_v</em>, <em class="sig-param">epsilon=0</em>, <em class="sig-param">eta=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph.estimate_normal" title="Permalink to this definition">¶</a></dt>
+<dd><p>For a vertex v, its calculated matrix V_v (output of
+collect_normal_votes) and the parameters epsilon and eta (default 2
+each), classifies its orientation.</p>
+<p>The output classes are 1 if it belongs to a surface patch, 2 if it
+belongs to a crease junction or 3 if it doesn’t have a preferred
+orientation.</p>
+<p>This is done using eigen-decomposition of V_v and equations (9) and (10)
+from the paper of Page et al., 2002. Equations (11) and (12) may help to
+choose epsilon and eta.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertex_v_ind</strong> (<em>int</em>) – index of the vertex v in the surface
+triangle-graph whose orientation is classified</p></li>
+<li><p><strong>V_v</strong> (<em>numpy.ndarray</em>) – the 3x3 symmetric matrix V_v</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – parameter of Normal Vector Voting
+algorithm influencing the number of triangles classified as
+“crease junction” (class 2), default 0</p></li>
+<li><p><strong>eta</strong> (<em>float</em><em>, </em><em>optional</em>) – parameter of Normal Vector Voting algorithm
+influencing the number of triangles classified as “crease
+junction” (class 2) and “no preferred orientation” (class 3, see
+Notes), default 0</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>1 if it belongs to a surface patch,</dt><dd><p>2 if it belongs to a crease junction or 3 if it doesn’t have a
+preferred orientation</p>
+</dd>
+</dl>
+<p>estimated normal “n_v” (3x1 array) if class is 1, otherwise zeros
+the estimated_tangent “t_v” (3x1 array) if class is 2, otherwise</p>
+<blockquote>
+<div><p>zeros</p>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>orientation of vertex v (int)</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>If epsilon = 0 and eta = 0, all triangles will be classified as
+“surface patch” (class 1).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.SurfaceGraph.first_pass">
+<code class="sig-name descname">first_pass</code><span class="sig-paren">(</span><em class="sig-param">vertex_v_ind</em>, <em class="sig-param">g_max</em>, <em class="sig-param">a_max</em>, <em class="sig-param">sigma</em>, <em class="sig-param">full_dist_map=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph.first_pass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combines the two steps of the first pass: normal votes collection
+and normals estimation. For more information, see the functions
+collect_normal_votes() (of TriangleGraph or PointGraph) and
+estimate_normal() (of TriangleGraph).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertex_v_ind</strong> (<em>int</em>) – index of the vertex v in the surface
+triangle-graph for which the votes are collected</p></li>
+<li><p><strong>g_max</strong> (<em>float</em>) – the maximal geodesic distance in units of the graph</p></li>
+<li><p><strong>a_max</strong> (<em>float</em>) – the area of the largest triangle in the surface
+triangle-graph</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – sigma, defined as 3*sigma = g_max, so that votes
+beyond the neighborhood can be ignored</p></li>
+<li><p><strong>full_dist_map</strong> (<em>graph_tool.PropertyMap</em><em>, </em><em>optional</em>) – the full distance
+map for the whole graph; if None, a local distance map is
+calculated for this vertex (default)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>1 if it belongs to a surface patch,</dt><dd><p>2 if it belongs to a crease junction or 3 if it doesn’t have a
+preferred orientation</p>
+</dd>
+</dl>
+<p>estimated normal “n_v” (3x1 array) if class is 1, otherwise zeros
+the estimated_tangent “t_v” (3x1 array) if class is 2, otherwise</p>
+<blockquote>
+<div><p>zeros</p>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>orientation of vertex v (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.SurfaceGraph.gen_curv_vote">
+<code class="sig-name descname">gen_curv_vote</code><span class="sig-paren">(</span><em class="sig-param">poly_surf</em>, <em class="sig-param">vertex_v</em>, <em class="sig-param">radius_hit</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph.gen_curv_vote" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements the third pass of the method of Tong &amp; Tang et al., 2005,
+“Algorithm 5. GenCurvVote”. Estimates principal curvatures and
+directions (after normals estimation) using curvature tensor. For the
+given triangle center, eight neighboring points are sampled around it at
+equal angles using tangents of length defined by the radius_hit
+parameter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>poly_surf</strong> (<em>vtkPolyData</em>) – surface from which the graph was generated,
+scaled to given units</p></li>
+<li><p><strong>vertex_v</strong> (<em>graph_tool.Vertex</em>) – the vertex v in the surface
+triangle-graph for which the principal directions and curvatures
+are estimated</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph for sampling
+surface points in tangent directions</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.SurfaceGraph.second_pass">
+<code class="sig-name descname">second_pass</code><span class="sig-paren">(</span><em class="sig-param">vertex_v_ind</em>, <em class="sig-param">g_max</em>, <em class="sig-param">sigma</em>, <em class="sig-param">full_dist_map=None</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">a_max=0.0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.SurfaceGraph.second_pass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combines the two steps of the second pass: curvature votes collection
+and curvature estimation. For more information, see SurfaceGraph
+functions collect_curvature_votes() and estimate_curvature().</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertex_v_ind</strong> (<em>int</em>) – index of the vertex v in the surface
+triangle-graph for which the votes are collected</p></li>
+<li><p><strong>g_max</strong> (<em>float</em>) – the maximal geodesic distance in units of the graph</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – sigma, defined as 3*sigma = g_max, so that votes
+beyond the neighborhood can be ignored</p></li>
+<li><p><strong>full_dist_map</strong> (<em>graph_tool.PropertyMap</em><em>, </em><em>optional</em>) – the full distance
+map for the whole graph; if None, a local distance map is
+calculated for this vertex (default)</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False)
+normal curvature definition from Page et al. is used:
+the turning angle phi between n_v and the projection n_v_i_p
+of the estimated normal of v_i (n_v_i) onto the arc plane
+(formed by v, n_v and v_i) divided by the arc length (geodesic
+distance between v and v_i).</p></li>
+<li><p><strong>a_max</strong> (<em>float</em><em>, </em><em>optional</em>) – if given (default 0.0), votes are
+weighted by triangle area like in the first pass (normals
+estimation)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>t_1, t_2, kappa_1, kappa_2, gauss_curvature, mean_curvature,
+shape_index, curvedness or Nones if vertex v does not have any
+neighbor belonging to a surface patch</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pycurv.surface_graphs.TriangleGraph">
+<em class="property">class </em><code class="sig-prename descclassname">pycurv.surface_graphs.</code><code class="sig-name descname">TriangleGraph</code><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pycurv.surface_graphs.SurfaceGraph" title="pycurv.surface_graphs.SurfaceGraph"><code class="xref py py-class docutils literal notranslate"><span class="pre">pycurv.surface_graphs.SurfaceGraph</span></code></a></p>
+<p>Class defining the TriangleGraph object, its attributes and methods.</p>
+<p>The constructor requires the following parameters of the underlying
+segmentation that will be used to build the graph.</p>
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.build_graph_from_vtk_surface">
+<code class="sig-name descname">build_graph_from_vtk_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">scale=(1</em>, <em class="sig-param">1</em>, <em class="sig-param">1)</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">reverse_normals=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.build_graph_from_vtk_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the graph from the vtkPolyData surface, which is rescaled to
+given units according to the scale factor.</p>
+<p>Every vertex of the graph represents the center of a surface triangle,
+and every edge of the graph connects two adjacent triangles. There are
+two types of edges: a “strong” edge if the adjacent triangles share two
+triangle edges and a “weak” edge if they share only one edge.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>vtk.vtkPolyData</em>) – a signed surface (mesh of triangles)
+generated from the segmentation in voxels</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em><em>, </em><em>optional</em>) – pixel size (X, Y, Z) in given units for
+scaling the surface and the graph (default (1, 1, 1))</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+<li><p><strong>reverse_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), the
+triangle normals are reversed during graph generation</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>rescaled surface to given units with VTK curvatures
+(vtk.vtkPolyData)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.collect_normal_votes">
+<code class="sig-name descname">collect_normal_votes</code><span class="sig-paren">(</span><em class="sig-param">vertex_v_ind</em>, <em class="sig-param">g_max</em>, <em class="sig-param">a_max</em>, <em class="sig-param">sigma</em>, <em class="sig-param">full_dist_map=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.collect_normal_votes" title="Permalink to this definition">¶</a></dt>
+<dd><p>For a vertex v, collects the normal votes of all triangles within its
+geodesic neighborhood and calculates the weighted covariance matrix sum
+V_v.</p>
+<p>Implements equations (6), illustrated in figure 6(b), (7) and (8) from
+the paper of Page et al., 2002.</p>
+<p>More precisely, a normal vote n_i of each triangle i (whose centroid c_i
+is lying within the geodesic neighborhood of vertex v) is calculated
+using the normal n assigned to the triangle i. Then, each vote is
+represented by a covariance matrix V_i and votes are collected as a
+weighted matrix sum V_v, where each vote is weighted depending on the
+area of triangle i and the geodesic distance of its centroid c_i from v.</p>
+<p>Here, c_i and v are both centroids of triangles (v is a triangle vertex
+in Page’s approach), which are vertices of TriangleGraph generated from
+the triangle surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertex_v_ind</strong> (<em>int</em>) – index of the vertex v in the surface
+triangle-graph for which the votes are collected</p></li>
+<li><p><strong>g_max</strong> (<em>float</em>) – the maximal geodesic distance in units of the graph</p></li>
+<li><p><strong>a_max</strong> (<em>float</em>) – the area of the largest triangle in the surface
+triangle-graph</p></li>
+<li><p><strong>sigma</strong> (<em>float</em>) – sigma, defined as 3*sigma = g_max, so that votes
+beyond the neighborhood can be ignored</p></li>
+<li><p><strong>full_dist_map</strong> (<em>graph_tool.PropertyMap</em><em>, </em><em>optional</em>) – the full distance
+map for the whole graph; if None, a local distance map is
+calculated for this vertex (default)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>number of geodesic neighbors of vertex v</p></li>
+<li><p>the 3x3 symmetric matrix V_v (numpy.ndarray)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.find_graph_border">
+<code class="sig-name descname">find_graph_border</code><span class="sig-paren">(</span><em class="sig-param">purge=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.find_graph_border" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds vertices at the graph border, defined as such having less than 3
+strong edges.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>purge</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, those vertices and their edges
+will be filtered out permanently, if False (default) no
+filtering will be done</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of indices of vertices at the graph border</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.find_largest_connected_component">
+<code class="sig-name descname">find_largest_connected_component</code><span class="sig-paren">(</span><em class="sig-param">replace=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.find_largest_connected_component" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the largest connected component (lcc) of the graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>replace</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False) and the lcc has
+less vertices, the graph is replaced by its lcc</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the lcc of the graph (graph_tool.GraphView)</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Use lcc only if you are sure that the segmentation region was not
+split into multiple parts during surface generation of subsequent
+surface cleaning.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.find_small_connected_components">
+<code class="sig-name descname">find_small_connected_components</code><span class="sig-paren">(</span><em class="sig-param">threshold=100</em>, <em class="sig-param">purge=False</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.find_small_connected_components" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds small connected components of the graph that are below a given
+threshold size in voxels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>threshold</strong> (<em>int</em><em>, </em><em>optional</em>) – threshold size in voxels (default 100),
+below which connected components are considered small</p></li>
+<li><p><strong>purge</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False) and small
+components were found, their vertices and edges will be filtered
+out permanently; otherwise no filtering will be done</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.find_vertices_near_border">
+<code class="sig-name descname">find_vertices_near_border</code><span class="sig-paren">(</span><em class="sig-param">b</em>, <em class="sig-param">purge=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.find_vertices_near_border" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds vertices that are within a given distance to the graph border.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>b</strong> (<em>float</em>) – distance from border in given units</p></li>
+<li><p><strong>purge</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, those vertices and their edges
+will be filtered out permanently; if False (default), no
+filtering will be done</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.find_vertices_near_border_and_outside_mask">
+<code class="sig-name descname">find_vertices_near_border_and_outside_mask</code><span class="sig-paren">(</span><em class="sig-param">b</em>, <em class="sig-param">mask</em>, <em class="sig-param">scale</em>, <em class="sig-param">label=1</em>, <em class="sig-param">allowed_dist=0</em>, <em class="sig-param">purge=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.find_vertices_near_border_and_outside_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds vertices that are within distance to the graph border and outside
+a mask.</p>
+<p>Outside mask means that scaled back to pixels vertices coordinates are
+further than the allowed distance in pixels to a mask voxel with the
+given label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>b</strong> (<em>float</em>) – distance from border in units of the graph</p></li>
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – 3D mask of the segmentation from which the
+underlying surface was created</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – pixel size (X, Y, Z) in given units</p></li>
+<li><p><strong>label</strong> (<em>int</em><em>, </em><em>optional</em>) – the label in the mask to be considered
+(default 1)</p></li>
+<li><p><strong>allowed_dist</strong> (<em>int</em><em>, </em><em>optional</em>) – allowed distance in pixels between a
+voxel coordinate and a mask voxel (default 0)</p></li>
+<li><p><strong>purge</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, those vertices and their edges
+will be filtered out permanently; if False (default), no
+filtering will be done</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.find_vertices_outside_mask">
+<code class="sig-name descname">find_vertices_outside_mask</code><span class="sig-paren">(</span><em class="sig-param">mask</em>, <em class="sig-param">scale</em>, <em class="sig-param">label=1</em>, <em class="sig-param">allowed_dist=0</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.find_vertices_outside_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds vertices that are outside a mask.</p>
+<p>This means that their scaled back to pixels coordinates are further away
+than an allowed distance in pixels to a mask voxel with the given label.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask</strong> (<em>numpy.ndarray</em>) – 3D mask of the segmentation from which the
+underlying surface was created</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – pixel size (X, Y, Z) in given units</p></li>
+<li><p><strong>label</strong> (<em>int</em><em>, </em><em>optional</em>) – the label in the mask to be considered
+(default 1)</p></li>
+<li><p><strong>allowed_dist</strong> (<em>int</em><em>, </em><em>optional</em>) – allowed distance in pixels between a
+voxel coordinate and a mask voxel (default 0)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pycurv.surface_graphs.TriangleGraph.graph_to_triangle_poly">
+<code class="sig-name descname">graph_to_triangle_poly</code><span class="sig-paren">(</span><em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.graph_to_triangle_poly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a VTK PolyData object from the TriangleGraph object with
+triangle-cells representing the surface triangles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>vtk.vtkPolyData with triangle-cells</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pycurv.surface_graphs.TriangleGraph.point_in_cells">
+<code class="sig-name descname">point_in_cells</code><em class="property"> = None</em><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.point_in_cells" title="Permalink to this definition">¶</a></dt>
+<dd><p>a dictionary mapping a point coordinates (x, y, z) to a list of
+triangle-cell indices sharing this point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pycurv.surface_graphs.TriangleGraph.triangle_cell_ids">
+<code class="sig-name descname">triangle_cell_ids</code><em class="property"> = None</em><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.triangle_cell_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>a list of all added triangle cell indices, whose indices correspond
+to graph vertex indices</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.tomogram_batch_processing">
+<span id="pycurv-tomogram-batch-processing-module"></span><h2>pycurv.tomogram_batch_processing module<a class="headerlink" href="#module-pycurv.tomogram_batch_processing" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv.tomogram_batch_processing.split_segmentation">
+<code class="sig-prename descclassname">pycurv.tomogram_batch_processing.</code><code class="sig-name descname">split_segmentation</code><span class="sig-paren">(</span><em class="sig-param">infile</em>, <em class="sig-param">lbl=1</em>, <em class="sig-param">close=True</em>, <em class="sig-param">close_cube_size=5</em>, <em class="sig-param">close_iter=1</em>, <em class="sig-param">min_region_size=100</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.tomogram_batch_processing.split_segmentation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Splits the segmentation in connected regions with at least the given size
+(number of voxels).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>infile</strong> (<em>str</em>) – the segmentation input file in one of the formats: ‘.mrc’
+‘.em’ or ‘.vti’.</p></li>
+<li><p><strong>lbl</strong> (<em>int</em><em>, </em><em>optional</em>) – default 1</p></li>
+<li><p><strong>close</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), closes small holes in the
+segmentation first</p></li>
+<li><p><strong>close_cube_size</strong> (<em>int</em><em>, </em><em>optional</em>) – if close is True, gives the size of the
+cube structuring element used for closing, default 5</p></li>
+<li><p><strong>close_iter</strong> (<em>int</em><em>, </em><em>optional</em>) – if close is True, gives the number of
+iterations the closing should be repeated, default 1</p></li>
+<li><p><strong>min_region_size</strong> (<em>int</em><em>, </em><em>optional</em>) – gives the minimal number of voxels a
+region has to have in order to be considered, default 100</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a list of regions, where each item is a binary ndarray with the same
+shape as the segmentation but contains one region</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv.vector_voting">
+<span id="pycurv-vector-voting-module"></span><h2>pycurv.vector_voting module<a class="headerlink" href="#module-pycurv.vector_voting" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv.vector_voting.curvature_estimation">
+<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">curvature_estimation</code><span class="sig-paren">(</span><em class="sig-param">radius_hit</em>, <em class="sig-param">graph_file='temp.gt'</em>, <em class="sig-param">method='VV'</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">area2=True</em>, <em class="sig-param">poly_surf=None</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em>, <em class="sig-param">runtimes=''</em>, <em class="sig-param">vertex_based=False</em>, <em class="sig-param">sg=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.curvature_estimation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs the second pass of the modified Normal Vector Voting algorithm with
+the given method to estimate principle curvatures and directions for a
+surface using its triangle graph (third and the last part used by
+normals_directions_and_curvature_estimation).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>graph_file</strong> (<em>string</em><em>, </em><em>optional</em>) – name for a graph file after the first run
+of the algorithm (default ‘temp.gt’ will be removed after loading)</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – a method to run in the second pass (‘VV’ and
+‘SSVV’ are possible, default is ‘VV’)</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False),
+normal curvature formula from Page et al. is used in VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), votes are
+weighted by triangle area also in the second pass (not possible for
+vertex-based approach)</p></li>
+<li><p><strong>poly_surf</strong> (<em>vtkPolyData</em>) – scaled surface from which the graph was
+generated, (required only if method=”SSVV”, default None)</p></li>
+<li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
+calculated for the whole graph (not possible for vertex-based
+approach), otherwise a local distance map is calculated later for
+each vertex (default)</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV (collect_curvature_votes and
+estimate_curvature) in parallel (default 6)</p></li>
+<li><p><strong>runtimes</strong> (<em>str</em>) – if given, runtimes and some parameters are added to
+this file (default ‘’)</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), curvature is
+calculated per triangle vertex instead of triangle center.</p></li>
+<li><p><strong>sg</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a><em> or </em><a class="reference internal" href="#pycurv.surface_graphs.PointGraph" title="pycurv.surface_graphs.PointGraph"><em>PointGraph</em></a>) – if given (default None), this graph
+object will be used instead of loading from the ‘graph_file’ file</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a tuple of TriangleGraph or PointGraph (if pg was given) graph and
+vtkPolyData surface of triangles with classified orientation and
+estimated normals or tangents, principle curvatures and directions</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.vector_voting.normals_directions_and_curvature_estimation">
+<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">normals_directions_and_curvature_estimation</code><span class="sig-paren">(</span><em class="sig-param">sg, radius_hit, epsilon=0, eta=0, methods=['VV'], page_curvature_formula=False, full_dist_map=False, graph_file='temp.gt', area2=True, only_normals=False, poly_surf=None, cores=6, runtimes=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.normals_directions_and_curvature_estimation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs the modified Normal Vector Voting algorithm (with different options for
+the second pass) to estimate surface orientation, principle curvatures and
+directions for a surface using its triangle graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sg</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a><em> or </em><a class="reference internal" href="#pycurv.surface_graphs.PointGraph" title="pycurv.surface_graphs.PointGraph"><em>PointGraph</em></a>) – triangle or point graph generated
+from a surface of interest</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – parameter of Normal Vector Voting algorithm
+influencing the number of triangles classified as “crease junction”
+(class 2), default 0</p></li>
+<li><p><strong>eta</strong> (<em>float</em><em>, </em><em>optional</em>) – parameter of Normal Vector Voting algorithm
+influencing the number of triangles classified as “crease junction”
+(class 2) and “no preferred orientation” (class 3, see Notes),
+default 0</p></li>
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – all methods to run in the second pass (‘VV’
+and ‘SSVV’ are possible, default is ‘VV’)</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False),
+normal curvature formula from Page et al. is used in VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
+calculated for the whole graph (not possible for PointGraph),
+otherwise a local distance map is calculated later for each vertex
+(default)</p></li>
+<li><p><strong>graph_file</strong> (<em>string</em><em>, </em><em>optional</em>) – name for a temporary graph file
+after the first run of the algorithm (default ‘temp.gt’)</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
+triangle area also in the second step (principle directions and
+curvatures estimation; not possible for PointGraph)</p></li>
+<li><p><strong>only_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), only normals
+are estimated, without principal directions and curvatures, only the
+graph with the orientations, normals or tangents is returned.</p></li>
+<li><p><strong>poly_surf</strong> (<em>vtkPolyData</em><em>, </em><em>optional</em>) – surface from which the graph was
+generated, scaled to given units (required only for SSVV, default
+None)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>runtimes</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, runtimes and some parameters are
+added to this file (default ‘’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a dictionary mapping the method name (‘VV’ and ‘SSVV’) to the
+tuple of two elements: TriangleGraph or PointGraph (if pg was given)
+graph and vtkPolyData surface of triangles with classified orientation
+and estimated normals or tangents, principle curvatures and directions
+(if only_normals is False)</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Maximal geodesic neighborhood distance g_max for normal vector voting
+will be derived from radius_hit: g_max = pi * radius_hit / 2</p></li>
+<li><p>If epsilon = 0 and eta = 0 (default), all triangles will be classified
+as “surface patch” (class 1).</p></li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv.vector_voting.normals_estimation">
+<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">normals_estimation</code><span class="sig-paren">(</span><em class="sig-param">sg</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">epsilon=0</em>, <em class="sig-param">eta=0</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em>, <em class="sig-param">runtimes=''</em>, <em class="sig-param">graph_file='temp.gt'</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.normals_estimation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs the modified Normal Vector Voting algorithm to estimate surface
+orientation (classification in surface patch with normal, crease junction
+with tangent or no preferred orientation) for a surface using its graph.</p>
+<p>Adds the “orientation_class” (1-3), the estimated normal “n_v” (if class is
+1) and the estimated_tangent “t_v” (if class is 2) as vertex properties
+into the graph.</p>
+<p>Adds the estimated normal “n_v” as vertex property into the graph.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sg</strong> (<a class="reference internal" href="#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a><em> or </em><a class="reference internal" href="#pycurv.surface_graphs.PointGraph" title="pycurv.surface_graphs.PointGraph"><em>PointGraph</em></a>) – triangle or point graph generated
+from a surface of interest</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em><em>, </em><em>optional</em>) – parameter of Normal Vector Voting algorithm
+influencing the number of triangles classified as “crease junction”
+(class 2), default 0</p></li>
+<li><p><strong>eta</strong> (<em>float</em><em>, </em><em>optional</em>) – parameter of Normal Vector Voting algorithm
+influencing the number of triangles classified as “crease junction”
+(class 2) and “no preferred orientation” (class 3, see Notes),
+default 0</p></li>
+<li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
+calculated for the whole graph (not possible for PointGraph),
+otherwise a local distance map is calculated later for each vertex
+(default)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV (collect_normal_votes
+and estimate_normal) in parallel (default 6)</p></li>
+<li><p><strong>runtimes</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, runtimes and some parameters are
+added to this file (default ‘’)</p></li>
+<li><p><strong>graph_file</strong> (<em>str</em><em>, </em><em>optional</em>) – file path to save the graph, default file
+‘temp.gt’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Maximal geodesic neighborhood distance g_max for normal vector voting
+will be derived from radius_hit: g_max = pi * radius_hit / 2</p></li>
+<li><p>If epsilon = 0 and eta = 0 (default), all triangles will be classified
+as “surface patch” (class 1).</p></li>
+</ul>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pycurv" title="Permalink to this headline">¶</a></h2>
+<p>PyCurv package can be used to analyze the membrane-bound ribosome density,
+calculate intermembrane distances and estimate curvature of membranes in
+cryo-electron tomograms or other volumetric data sources.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyCurv</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Maria Kalemanov, Antonio Martinez-Sanchez.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/pycurv.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

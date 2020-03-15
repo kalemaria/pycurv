@@ -1,0 +1,906 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>pycurv_scripts package &#8212; PyCurv 2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="pycurv-scripts-package">
+<h1>pycurv_scripts package<a class="headerlink" href="#pycurv-scripts-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pycurv_scripts.add_vtk_curvedness_to_vtp">
+<span id="pycurv-scripts-add-vtk-curvedness-to-vtp-module"></span><h2>pycurv_scripts.add_vtk_curvedness_to_vtp module<a class="headerlink" href="#module-pycurv_scripts.add_vtk_curvedness_to_vtp" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pycurv_scripts.curvature_calculation">
+<span id="pycurv-scripts-curvature-calculation-module"></span><h2>pycurv_scripts.curvature_calculation module<a class="headerlink" href="#module-pycurv_scripts.curvature_calculation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.calculate_PM_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">calculate_PM_curvatures</code><span class="sig-paren">(</span><em class="sig-param">fold</em>, <em class="sig-param">base_filename</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.calculate_PM_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates plasma membrane curvatures with AVV using a pre-calculated
+estimated normals file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fold</strong> (<em>str</em>) – path where the input membrane segmentation is and where the
+output will be written</p></li>
+<li><p><strong>base_filename</strong> (<em>str</em>) – base file name for saving the output files</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, e.g. nanometers;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.convert_vtp_to_stl_surface_and_mrc_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">convert_vtp_to_stl_surface_and_mrc_curvatures</code><span class="sig-paren">(</span><em class="sig-param">surf_vtp_file</em>, <em class="sig-param">outfile_base</em>, <em class="sig-param">scale</em>, <em class="sig-param">size</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.convert_vtp_to_stl_surface_and_mrc_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the ‘.vtp’ surface file to ‘.stl’ file and converts selected
+vtkPolyData cell arrays from the ‘.vtp’ file as 3-D volumes in ‘.mrc’ files.
+The selected arrays are: “kappa_1”, “kappa_2”, “curvedness_VV”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surf_vtp_file</strong> (<em>str</em>) – surface .vtp file, should contain the final surface
+with curvatures</p></li>
+<li><p><strong>outfile_base</strong> (<em>str</em>) – base name for the output .mrc and .log files</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em>) – pixel size (X, Y, Z) of the membrane mask in units of the
+surface</p></li>
+<li><p><strong>size</strong> (<em>tuple</em>) – size (X, Y, Z) of the membrane mask</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.extract_curvatures_after_new_workflow">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">extract_curvatures_after_new_workflow</code><span class="sig-paren">(</span><em class="sig-param">fold, base_filename, radius_hit, methods=['VV'], page_curvature_formula=False, area2=True, exclude_borders=0, categorize_shape_index=False, regions=1</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.extract_curvatures_after_new_workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts curvature information from a .gt file generated by new_workflow
+into a .csv file. Optionally, values near surface borders can be excluded
+and shape index can be categorized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fold</strong> (<em>str</em>) – path where the input membrane segmentation is and where the
+output will be written</p></li>
+<li><p><strong>base_filename</strong> (<em>str</em>) – base file name for saving the output files</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, here nanometers;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – all methods to run in the second pass (‘VV’
+and ‘SSVV’ are possible, default is ‘VV’)</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False),
+normal curvature formula from Page et al. is used in VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
+triangle area also in the second step (principle directions and
+curvatures estimation)</p></li>
+<li><p><strong>exclude_borders</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0, triangles within this distance
+from borders in dist and corresponding values will be excluded from
+the output files (graph .gt, surface.vtp file and .csv), iteratively
+starting from 0 until maximally this distance (integer by integer)</p></li>
+<li><p><strong>categorize_shape_index</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False),
+shape index categories will be added to the input graph .gt and
+surface .vtp files as well as the output .csv file</p></li>
+<li><p><strong>regions</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 1, extracts from all region files
+(numerated from 1 until this number before the extension) to one CSV
+without creating VTP and GT files, if exclude_borders &gt; 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.from_nii_workflow">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_nii_workflow</code><span class="sig-paren">(</span><em class="sig-param">nii_file, outfold, radius_hit, page_curvature_formula=False, methods=['VV'], area2=True, cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_nii_workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts surface for every label &gt; 0 in the segmentation in NII format,
+after applying a Gaussian filter with sigma of 1.
+For each surface, estimates curvature for each triangle in a triangle mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nii_file</strong> (<em>str</em>) – NII file with the segmentation</p></li>
+<li><p><strong>outfold</strong> (<em>str</em>) – output folder</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, e.g. nanometers;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False),
+normal curvature formula from Page et al. is used in VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – all methods to run in the second pass (‘VV’
+and ‘SSVV’ are possible, default is ‘VV’)</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
+triangle area also in the second step (principle directions and
+curvatures estimation)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>Returns</strong> – None</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.from_ply_workflow">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_ply_workflow</code><span class="sig-paren">(</span><em class="sig-param">ply_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False, methods=['VV'], area2=True, cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_ply_workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimates curvature for each triangle in a triangle mesh in PLY format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ply_file</strong> (<em>str</em>) – PLY file with the surface</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, e.g. nanometers;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em><em>, </em><em>optional</em>) – pixel size (X, Y, Z) in given units for
+scaling the surface if it is not scaled (default (1, 1, 1))</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False),
+normal curvature formula from Page et al. is used in VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – all methods to run in the second pass (‘VV’
+and ‘SSVV’ are possible, default is ‘VV’)</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
+triangle area also in the second step (principle directions and
+curvatures estimation)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.from_vtk_workflow">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_vtk_workflow</code><span class="sig-paren">(</span><em class="sig-param">vtk_file, radius_hit, vertex_based, epsilon, eta, scale=(1, 1, 1), page_curvature_formula=False, methods=['VV'], area2=True, cores=6, reverse_normals=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_vtk_workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimates curvature for each triangle in a triangle mesh in VTK format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vtk_file</strong> (<em>str</em>) – path to the VTK file with the surface</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, e.g. nanometers;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>vertex_based</strong> (<em>boolean</em>) – if True, curvature is calculated per triangle
+vertex instead of triangle center</p></li>
+<li><p><strong>epsilon</strong> (<em>float</em>) – parameter of Normal Vector Voting algorithm influencing
+the number of triangles classified as “crease junction” (class 2)</p></li>
+<li><p><strong>eta</strong> (<em>float</em>) – parameter of Normal Vector Voting algorithm influencing the
+number of triangles classified as “crease junction” (class 2) and
+“no preferred orientation” (class 3)</p></li>
+<li><p><strong>scale</strong> (<em>tuple</em><em>, </em><em>optional</em>) – pixel size (X, Y, Z) in given units for
+scaling the surface if it is not scaled (default (1, 1, 1))</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False),
+normal curvature formula from Page et al. is used in VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – all methods to run in the second pass (‘VV’
+and ‘SSVV’ are possible, default is ‘VV’)</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
+triangle area also in the second step (principle directions and
+curvatures estimation; not possible if vertex_based is True)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>reverse_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), original
+surface normals will be reversed</p></li>
+<li><p><strong>Returns</strong> – None</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.main_brain">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">main_brain</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.main_brain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs “from_vtk_workflow” with user-input parameters from a VTK surface file,
+like MRI brain provided by Mindboggle (<a class="reference external" href="https://osf.io/36gdy/">https://osf.io/36gdy/</a>).
+Comment it in below in the main and run from terminal like this:
+python curvature_calculation.py vtk_file radius_hit [epsilon eta]
+Either of the latter two parameters is optional and will be set to 0 if not
+given.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The surface normals will be reversed to point inside the brain surface,
+according to our convention.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.main_felix">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">main_felix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.main_felix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function for running the new_workflow function for Felix’ data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.main_heart">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">main_heart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.main_heart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs “from_nii_workflow” on the MRI heart data from HVSMR2016 challenge
+(<a class="reference external" href="http://segchd.csail.mit.edu/data.html">http://segchd.csail.mit.edu/data.html</a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.main_javier">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">main_javier</code><span class="sig-paren">(</span><em class="sig-param">membrane</em>, <em class="sig-param">radius_hit</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.main_javier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function for running the new_workflow function for Javier’s ER or PM.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>membrane</strong> (<em>string</em>) – what membrane segmentation to use ‘ER’ or ‘PM’</p></li>
+<li><p><strong>radius_hit</strong> (<em>int</em>) – neighborhood parameter (in nm)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.main_light_microscopy_cells">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">main_light_microscopy_cells</code><span class="sig-paren">(</span><em class="sig-param">timepoint=22</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.main_light_microscopy_cells" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function for running the ply workflow for the whole C.Elegans embryo
+segmentation (by LimeSeg, of data coming from light microscopy) at a given
+time point. The input data structure of PLY files was downloaded from here:
+<a class="reference external" href="https://raw.githubusercontent.com/NicoKiaru/TestImages/master/LimeSegOutput/">https://raw.githubusercontent.com/NicoKiaru/TestImages/master/LimeSegOutput/</a>
+DubSeg.zip</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>timepoint</strong> (<em>int</em>) – time point, 1-22 are possible for these data set
+(default 22)</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.main_pore">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">main_pore</code><span class="sig-paren">(</span><em class="sig-param">isosurface=False</em>, <em class="sig-param">radius_hit=2</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.main_pore" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function for running the new_workflow function for a membrane pore.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>isosurface</strong> (<em>boolean</em>) – whether to generate isosurface or single-layered
+surface (default)</p></li>
+<li><p><strong>radius_hit</strong> (<em>int</em>) – neighborhood parameter (in nm, default 2)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.main_till">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">main_till</code><span class="sig-paren">(</span><em class="sig-param">organelle</em>, <em class="sig-param">regions=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.main_till" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function for running the new_workflow function for Till’ data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>organelle</strong> (<em>string</em>) – run this organelle in so named subfolder.</p></li>
+<li><p><strong>regions</strong> (<em>commented</em>) – if True, split the segmentation into</p></li>
+<li><p><strong>regions</strong> – </p></li>
+<li><p><strong>each on 1 core. If False</strong> (<em>region</em><em>,</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.curvature_calculation.new_workflow">
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">new_workflow</code><span class="sig-paren">(</span><em class="sig-param">base_filename, seg_file, fold, pixel_size, radius_hit, methods=['VV'], page_curvature_formula=False, area2=True, label=1, filled_label=None, unfilled_mask=None, holes=0, remove_wrong_borders=True, min_component=100, only_normals=False, cores=6, runtimes=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.new_workflow" title="Permalink to this definition">¶</a></dt>
+<dd><p>A script for running all processing steps to estimate membrane curvature.</p>
+<p>The three steps are: 1. signed surface generation, 2. surface cleaning using
+a graph, 3. curvature calculation using a graph generated from the clean
+surface.</p>
+<p>It was written for Javier’s data. Segmentation is not split into regions.
+Second pass, consisting of normals and curvature calculations, can run in
+parallel on multiple cores (for RVV and AVV, but not for SSVV).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>base_filename</strong> (<em>str</em>) – base file name for saving the output files</p></li>
+<li><p><strong>seg_file</strong> (<em>str</em>) – membrane segmentation mask, pass ‘’ if surface exists</p></li>
+<li><p><strong>fold</strong> (<em>str</em>) – path where the input membrane segmentation is and where the
+output will be written</p></li>
+<li><p><strong>pixel_size</strong> (<em>float</em>) – pixel size in nanometer of the segmentation</p></li>
+<li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, e.g. nanometers;
+it should be chosen to correspond to radius of smallest features of
+interest on the surface</p></li>
+<li><p><strong>methods</strong> (<em>list</em><em>, </em><em>optional</em>) – all methods to run in the second pass (‘VV’
+and ‘SSVV’ are possible, default is ‘VV’)</p></li>
+<li><p><strong>page_curvature_formula</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False),
+normal curvature formula from Page et al. is used in VV (see
+collect_curvature_votes)</p></li>
+<li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
+triangle area also in the second step (principle directions and
+curvatures estimation)</p></li>
+<li><p><strong>label</strong> (<em>int</em><em>, </em><em>optional</em>) – label to be considered in the membrane mask
+(default 1)</p></li>
+<li><p><strong>filled_label</strong> (<em>int</em><em>, </em><em>optional</em>) – if the membrane mask was filled with this
+label (default None), complementing it to a compartment
+segmentation, a better surface generation will be used (with a
+slight smoothing; holes are closed automatically by the filling)</p></li>
+<li><p><strong>unfilled_mask</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – if given (default None), apply
+this mask on the extracted surface using a membrane segmentation,
+instead of the segmentation itself; not used if filled_label is
+given</p></li>
+<li><p><strong>holes</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0, small holes in the membrane segmentation
+are closed with a cube of that size in pixels before curvature
+estimation (default 0); not used if filled_label is given</p></li>
+<li><p><strong>remove_wrong_borders</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), wrong
+artefact surface borders will be removed</p></li>
+<li><p><strong>min_component</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0 (default 100), small
+disconnected surface components having triangles within this number
+will be removed</p></li>
+<li><p><strong>only_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), only normals
+are estimated, without principal directions and curvatures, only the
+graph with the orientations class, normals or tangents is returned.</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>runtimes</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, runtimes and some parameters are
+added to this file (default ‘’)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_scripts.distances_calculation">
+<span id="pycurv-scripts-distances-calculation-module"></span><h2>pycurv_scripts.distances_calculation module<a class="headerlink" href="#module-pycurv_scripts.distances_calculation" title="Permalink to this headline">¶</a></h2>
+<dl class="data">
+<dt id="pycurv_scripts.distances_calculation.MAX_DIST_SURF">
+<code class="sig-prename descclassname">pycurv_scripts.distances_calculation.</code><code class="sig-name descname">MAX_DIST_SURF</code><em class="property"> = 3</em><a class="headerlink" href="#pycurv_scripts.distances_calculation.MAX_DIST_SURF" title="Permalink to this definition">¶</a></dt>
+<dd><p>a constant determining the maximal distance in pixels of a point on the
+surface from the segmentation mask, used in gen_isosurface and gen_surface
+functions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="data">
+<dt id="pycurv_scripts.distances_calculation.THRESH_SIGMA1">
+<code class="sig-prename descclassname">pycurv_scripts.distances_calculation.</code><code class="sig-name descname">THRESH_SIGMA1</code><em class="property"> = 0.699471735</em><a class="headerlink" href="#pycurv_scripts.distances_calculation.THRESH_SIGMA1" title="Permalink to this definition">¶</a></dt>
+<dd><p>when convoluting a binary mask with a gaussian kernel with sigma 1,
+values 1 at the boundary with 0’s become this value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.distances_calculation.distances_and_thicknesses_calculation">
+<code class="sig-prename descclassname">pycurv_scripts.distances_calculation.</code><code class="sig-name descname">distances_and_thicknesses_calculation</code><span class="sig-paren">(</span><em class="sig-param">fold</em>, <em class="sig-param">segmentation_file</em>, <em class="sig-param">base_filename</em>, <em class="sig-param">lbl_mem1=1</em>, <em class="sig-param">lbl_mem2=2</em>, <em class="sig-param">lbl_between_mem1_mem2=4</em>, <em class="sig-param">lbl_mem2_lumen=3</em>, <em class="sig-param">pixel_size=1.368</em>, <em class="sig-param">radius_hit=10</em>, <em class="sig-param">maxdist=50</em>, <em class="sig-param">maxthick=80</em>, <em class="sig-param">offset_voxels=1</em>, <em class="sig-param">both_directions=True</em>, <em class="sig-param">reverse_direction=False</em>, <em class="sig-param">mem1='PM'</em>, <em class="sig-param">mem2='cER'</em>, <em class="sig-param">smooth=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.distances_calculation.distances_and_thicknesses_calculation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes input/output folder, input segmentation MRC file and base name for
+output files and calculates distances between the first and the second
+membrane and thicknesses between two sides of the second membrane.
+Default distance measures are given in nanometers.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.distances_calculation.extract_distances">
+<code class="sig-prename descclassname">pycurv_scripts.distances_calculation.</code><code class="sig-name descname">extract_distances</code><span class="sig-paren">(</span><em class="sig-param">fold</em>, <em class="sig-param">base_filename</em>, <em class="sig-param">name</em>, <em class="sig-param">exclude_borders=1</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.distances_calculation.extract_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts distances information from a .gt file into a .csv file. By default,
+values within 1 (in units of the graph) to surface borders are excluded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fold</strong> (<em>str</em>) – path where the input is and where the output will be written</p></li>
+<li><p><strong>base_filename</strong> (<em>str</em>) – base file name for input and output files</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – name of the property to extract (e.g., ‘PMdistance’ or
+‘cERthickness’)</p></li>
+<li><p><strong>exclude_borders</strong> (<em>int</em><em>, </em><em>optional</em>) – if &gt; 0, triangles within this distance
+from borders and corresponding values will be excluded from the
+output files (graph .gt, surface.vtp file and .csv)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.distances_calculation.generate_mem1_mem2_graphs_and_surface">
+<code class="sig-prename descclassname">pycurv_scripts.distances_calculation.</code><code class="sig-name descname">generate_mem1_mem2_graphs_and_surface</code><span class="sig-paren">(</span><em class="sig-param">segmentation_mrc_file</em>, <em class="sig-param">pixel_size</em>, <em class="sig-param">mem1_graph_outfile</em>, <em class="sig-param">mem2_surf_outfile</em>, <em class="sig-param">mem2_graph_outfile</em>, <em class="sig-param">mem1_surf_outfile=None</em>, <em class="sig-param">lbl_mem1=1</em>, <em class="sig-param">lbl_mem2=2</em>, <em class="sig-param">lbl_between_mem1_mem2=4</em>, <em class="sig-param">mem1='PM'</em>, <em class="sig-param">mem2='cER'</em>, <em class="sig-param">smooth=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.distances_calculation.generate_mem1_mem2_graphs_and_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts two membrane surfaces from a segmentations with labels for
+both membranes and a space between them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>segmentation_mrc_file</strong> (<em>string</em>) – segmentation ‘.mrc’ file path</p></li>
+<li><p><strong>pixel_size</strong> (<em>float</em>) – pixel size in given units for scaling the
+surface and the graph</p></li>
+<li><p><strong>mem1_graph_outfile</strong> (<em>string</em>) – first surface graph ‘.gt’ output file</p></li>
+<li><p><strong>mem2_surf_outfile</strong> (<em>string</em>) – second surface ‘.vtp’ output file</p></li>
+<li><p><strong>mem2_graph_outfile</strong> (<em>string</em>) – second surface graph ‘.gt’ output file</p></li>
+<li><p><strong>mem1_surf_outfile</strong> (<em>string</em><em>, </em><em>optional</em>) – first surface ‘.vtp’ output file,
+if None (default) not generated</p></li>
+<li><p><strong>lbl_mem1</strong> (<em>int</em><em>, </em><em>optional</em>) – label of first membrane (default 1)</p></li>
+<li><p><strong>lbl_mem2</strong> (<em>int</em><em>, </em><em>optional</em>) – label of second membrane (default 2)</p></li>
+<li><p><strong>lbl_between_mem1_mem2</strong> (<em>int</em><em>, </em><em>optional</em>) – label of inter-membrane space
+(default 4)</p></li>
+<li><p><strong>mem1</strong> (<em>str</em><em>, </em><em>optional</em>) – name of the first membrane (default “PM”)</p></li>
+<li><p><strong>mem2</strong> (<em>str</em><em>, </em><em>optional</em>) – name of the second membrane (default “cER”)</p></li>
+<li><p><strong>smooth</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), the membrane masks will
+be smoothed using a Gaussian kernel with sigma 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.distances_calculation.generate_mem_lumen_graph_and_surface">
+<code class="sig-prename descclassname">pycurv_scripts.distances_calculation.</code><code class="sig-name descname">generate_mem_lumen_graph_and_surface</code><span class="sig-paren">(</span><em class="sig-param">segmentation_mrc_file</em>, <em class="sig-param">pixel_size</em>, <em class="sig-param">mem_surf_outfile</em>, <em class="sig-param">mem_graph_outfile</em>, <em class="sig-param">lbl_mem=2</em>, <em class="sig-param">lbl_mem_lumen=3</em>, <em class="sig-param">mem='cER'</em>, <em class="sig-param">smooth=True</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.distances_calculation.generate_mem_lumen_graph_and_surface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts inner membrane surface from a segmentation with labels for
+the membrane and its lumen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>segmentation_mrc_file</strong> (<em>string</em>) – segmentation ‘.mrc’ file path</p></li>
+<li><p><strong>pixel_size</strong> (<em>float</em>) – pixel size in given units for scaling the
+surface and the graph</p></li>
+<li><p><strong>mem_surf_outfile</strong> (<em>string</em>) – membrane surface ‘.vtp’ output file</p></li>
+<li><p><strong>mem_graph_outfile</strong> (<em>string</em>) – membrane graph ‘.gt’ output file</p></li>
+<li><p><strong>lbl_mem</strong> (<em>int</em><em>, </em><em>optional</em>) – label of the membrane (default 2)</p></li>
+<li><p><strong>lbl_mem_lumen</strong> (<em>int</em><em>, </em><em>optional</em>) – label of the membrane lumen (default=3)</p></li>
+<li><p><strong>mem</strong> (<em>str</em><em>, </em><em>optional</em>) – name of the first membrane (default “cER”)</p></li>
+<li><p><strong>smooth</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), the membrane masks will
+be smoothed using a Gaussian kernel with sigma 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.distances_calculation.run_calculate_distances">
+<code class="sig-prename descclassname">pycurv_scripts.distances_calculation.</code><code class="sig-name descname">run_calculate_distances</code><span class="sig-paren">(</span><em class="sig-param">mem1_graph_file</em>, <em class="sig-param">mem2_surf_file</em>, <em class="sig-param">mem2_graph_file</em>, <em class="sig-param">mem2_surf_outfile</em>, <em class="sig-param">mem2_graph_outfile</em>, <em class="sig-param">distances_outfile</em>, <em class="sig-param">maxdist</em>, <em class="sig-param">offset=0</em>, <em class="sig-param">both_directions=True</em>, <em class="sig-param">reverse_direction=False</em>, <em class="sig-param">mem1='PM'</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.distances_calculation.run_calculate_distances" title="Permalink to this definition">¶</a></dt>
+<dd><p>A script running calculate_distances with graphs and surface loaded from
+files, transforming the resulting graph to a surface with triangles and
+saving the resulting graph and surface into files.
+All distance measures and in units of the graphs and surfaces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mem1_graph_file</strong> (<em>str</em>) – .gt input file with the first membrane’s
+TriangleGraph with corrected normals</p></li>
+<li><p><strong>mem2_surf_file</strong> (<em>str</em>) – .vtp input file with the second membrane’s
+vtkPolyData surface</p></li>
+<li><p><strong>mem2_graph_file</strong> (<em>str</em>) – .gt input file with the second membrane’s
+TriangleGraph</p></li>
+<li><p><strong>mem2_surf_outfile</strong> (<em>str</em>) – .vtp output file for the second membrane’s
+vtkPolyData surface with distances</p></li>
+<li><p><strong>mem2_graph_outfile</strong> (<em>str</em>) – .gt output file for the second membrane’s
+TriangleGraph with distances</p></li>
+<li><p><strong>distances_outfile</strong> (<em>str</em>) – .csv output file for the distances list</p></li>
+<li><p><strong>maxdist</strong> (<em>float</em>) – maximal distance from the first to the second membrane</p></li>
+<li><p><strong>offset</strong> (<em>float</em><em>, </em><em>optional</em>) – positive or negative offset (default 0)
+to add to the distances, depending on how the surfaces where
+generated and/or in order to account for membrane thickness</p></li>
+<li><p><strong>both_directions</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, look in both directions of
+each first membrane’s normal (default), otherwise only in the normal
+direction</p></li>
+<li><p><strong>reverse_direction</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, look in opposite
+direction of each first membrane’s normals (default=False;
+if both_directions True, will look in both directions)</p></li>
+<li><p><strong>mem1</strong> (<em>str</em><em>, </em><em>optional</em>) – name of the first membrane (default “PM”)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.distances_calculation.run_calculate_thicknesses">
+<code class="sig-prename descclassname">pycurv_scripts.distances_calculation.</code><code class="sig-name descname">run_calculate_thicknesses</code><span class="sig-paren">(</span><em class="sig-param">mem1_graph_file</em>, <em class="sig-param">mem2_surf_file</em>, <em class="sig-param">mem2_graph_file</em>, <em class="sig-param">mem2_surf_outfile</em>, <em class="sig-param">mem2_graph_outfile</em>, <em class="sig-param">thicknesses_outfile</em>, <em class="sig-param">maxdist</em>, <em class="sig-param">maxthick</em>, <em class="sig-param">offset=0.0</em>, <em class="sig-param">both_directions=True</em>, <em class="sig-param">reverse_direction=False</em>, <em class="sig-param">mem2='cER'</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.distances_calculation.run_calculate_thicknesses" title="Permalink to this definition">¶</a></dt>
+<dd><p>A script running calculate_thicknesses with graphs and surface loaded from
+files, transforming the resulting graph to a surface with triangles and
+saving the resulting graph and surface into files.
+All distance measures and in units of the graphs and surfaces</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mem1_graph_file</strong> (<em>str</em>) – .gt input file with the first membrane’s
+TriangleGraph with corrected normals</p></li>
+<li><p><strong>mem2_surf_file</strong> (<em>str</em>) – .vtp input file with the the second membrane’s</p></li>
+<li><p><strong>surface</strong> (<em>vtkPolyData</em>) – </p></li>
+<li><p><strong>mem2_graph_file</strong> (<em>str</em>) – .gt input file with the  the second membrane’s
+TriangleGraph</p></li>
+<li><p><strong>mem2_surf_outfile</strong> – .vtp output file with the the second membrane’s
+vtkPolyData surface with thicknesses</p></li>
+<li><p><strong>mem2_graph_outfile</strong> – .gt output file with the the second membrane’s
+TriangleGraph with thicknesses</p></li>
+<li><p><strong>thicknesses_outfile</strong> – .csv output file for the thicknesses list</p></li>
+<li><p><strong>maxdist</strong> (<em>float</em>) – maximal distance from the first to the second
+membrane</p></li>
+<li><p><strong>maxthick</strong> (<em>float</em>) – maximal thickness of the second organelle</p></li>
+<li><p><strong>offset</strong> (<em>float</em><em>, </em><em>optional</em>) – positive or negative offset (default 0)
+to add to the distances, depending on how the surfaces where
+generated and/or in order to account for membrane thickness</p></li>
+<li><p><strong>both_directions</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, look in both directions of
+each first membrane’s normal (default), otherwise only in the normal
+direction</p></li>
+<li><p><strong>reverse_direction</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, look in opposite
+direction of each first membrane’s normals (default=False;
+if both_directions True, will look in both directions)</p></li>
+<li><p><strong>mem2</strong> (<em>str</em><em>, </em><em>optional</em>) – name of the second membrane (default “cER”)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_scripts.dodo">
+<span id="pycurv-scripts-dodo-module"></span><h2>pycurv_scripts.dodo module<a class="headerlink" href="#module-pycurv_scripts.dodo" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_calculate_MitoER_distances">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_calculate_MitoER_distances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_calculate_MitoER_distances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_calculate_MitoNuc_distances">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_calculate_MitoNuc_distances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_calculate_MitoNuc_distances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_calculate_PM_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_calculate_PM_curvatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_calculate_PM_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using lower surface and normals calculated by task_calculate_PMcER_distances.
+:returns: None</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_calculate_PMcER_distances">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_calculate_PMcER_distances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_calculate_PMcER_distances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_calculate_VacNuc_distances">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_calculate_VacNuc_distances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_calculate_VacNuc_distances" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_calculate_cER_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_calculate_cER_curvatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_calculate_cER_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_extract_MitoER_distances_without_borders">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_extract_MitoER_distances_without_borders</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_extract_MitoER_distances_without_borders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_extract_MitoNuc_distances_without_borders">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_extract_MitoNuc_distances_without_borders</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_extract_MitoNuc_distances_without_borders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_extract_PM_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_extract_PM_curvatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_extract_PM_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_extract_VacNuc_distances_without_borders">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_extract_VacNuc_distances_without_borders</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_extract_VacNuc_distances_without_borders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_extract_cER_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_extract_cER_curvatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_extract_cER_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo.task_extract_distances_without_borders">
+<code class="sig-prename descclassname">pycurv_scripts.dodo.</code><code class="sig-name descname">task_extract_distances_without_borders</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo.task_extract_distances_without_borders" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_scripts.dodo_methods">
+<span id="pycurv-scripts-dodo-methods-module"></span><h2>pycurv_scripts.dodo_methods module<a class="headerlink" href="#module-pycurv_scripts.dodo_methods" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_scripts.dodo_methods.task_calculate_cER_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.dodo_methods.</code><code class="sig-name descname">task_calculate_cER_curvatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo_methods.task_calculate_cER_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo_methods.task_extract_cER_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.dodo_methods.</code><code class="sig-name descname">task_extract_cER_curvatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo_methods.task_extract_cER_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_scripts.dodo_peaks">
+<span id="pycurv-scripts-dodo-peaks-module"></span><h2>pycurv_scripts.dodo_peaks module<a class="headerlink" href="#module-pycurv_scripts.dodo_peaks" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_scripts.dodo_peaks.task_calculate_cER_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.dodo_peaks.</code><code class="sig-name descname">task_calculate_cER_curvatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo_peaks.task_calculate_cER_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.dodo_peaks.task_extract_cER_curvatures">
+<code class="sig-prename descclassname">pycurv_scripts.dodo_peaks.</code><code class="sig-name descname">task_extract_cER_curvatures</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.dodo_peaks.task_extract_cER_curvatures" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_scripts.extract_areas_from_graph_files">
+<span id="pycurv-scripts-extract-areas-from-graph-files-module"></span><h2>pycurv_scripts.extract_areas_from_graph_files module<a class="headerlink" href="#module-pycurv_scripts.extract_areas_from_graph_files" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_scripts.extract_areas_from_graph_files.extract_areas_from_graph">
+<code class="sig-prename descclassname">pycurv_scripts.extract_areas_from_graph_files.</code><code class="sig-name descname">extract_areas_from_graph</code><span class="sig-paren">(</span><em class="sig-param">tg</em>, <em class="sig-param">csv_file</em>, <em class="sig-param">exclude_borders=1</em>, <em class="sig-param">gt_file=None</em>, <em class="sig-param">vtp_file=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.extract_areas_from_graph_files.extract_areas_from_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract triangle areas from a TriangleGraph into a CSV file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tg</strong> (<a class="reference internal" href="pycurv.html#pycurv.surface_graphs.TriangleGraph" title="pycurv.surface_graphs.TriangleGraph"><em>TriangleGraph</em></a>) – graph object</p></li>
+<li><p><strong>csv_file</strong> (<em>str</em>) – CSV file path to be saved</p></li>
+<li><p><strong>exclude_borders</strong> (<em>int</em>) – if &gt; 0 (default 1), exclude triangles within
+1 nm to the triangles at surface border.</p></li>
+<li><p><strong>gt_file</strong> (<em>str</em>) – if specified, saves changes into this graph file path.</p></li>
+<li><p><strong>vtp_file</strong> (<em>str</em>) – if specified, saves changes into this surface file path.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_scripts.gt_to_point_and_line_vtp">
+<span id="pycurv-scripts-gt-to-point-and-line-vtp-module"></span><h2>pycurv_scripts.gt_to_point_and_line_vtp module<a class="headerlink" href="#module-pycurv_scripts.gt_to_point_and_line_vtp" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-pycurv_scripts.ribosome_density_calculation">
+<span id="pycurv-scripts-ribosome-density-calculation-module"></span><h2>pycurv_scripts.ribosome_density_calculation module<a class="headerlink" href="#module-pycurv_scripts.ribosome_density_calculation" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_scripts.ribosome_density_calculation.main">
+<code class="sig-prename descclassname">pycurv_scripts.ribosome_density_calculation.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.ribosome_density_calculation.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Main function with an exemplary calculation of ribosome density on
+ER-membranes for a tomogram.</p>
+<p>Ribosome coordinates had been rescaled from bin 3 to bin 6 and bin 6
+membrane segmentation mask was used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.ribosome_density_calculation.run_build_graph_from_np_ndarray">
+<code class="sig-prename descclassname">pycurv_scripts.ribosome_density_calculation.</code><code class="sig-name descname">run_build_graph_from_np_ndarray</code><span class="sig-paren">(</span><em class="sig-param">mem_mask</em>, <em class="sig-param">mem_graph_file</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.ribosome_density_calculation.run_build_graph_from_np_ndarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a graph from a membrane mask and writes the graph to a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mem_mask</strong> (<em>numpy ndarray</em>) – binary membrane mask in form of 3D array,
+segmenting the underlying tomogram into membrane (voxels with value
+1) and background (voxels with value 0)</p></li>
+<li><p><strong>mem_graph_file</strong> (<em>str</em>) – name for the output membrane graph file
+(preferably with ‘.gt’ or ‘.graphml’ extension)</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.ribosome_density_calculation.run_build_graph_from_np_ndarray_and_calculate_density">
+<code class="sig-prename descclassname">pycurv_scripts.ribosome_density_calculation.</code><code class="sig-name descname">run_build_graph_from_np_ndarray_and_calculate_density</code><span class="sig-paren">(</span><em class="sig-param">mem_mask</em>, <em class="sig-param">ribo_mask</em>, <em class="sig-param">scale_factor_to_nm=1</em>, <em class="sig-param">vtp_files_base=None</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.ribosome_density_calculation.run_build_graph_from_np_ndarray_and_calculate_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds a graph from a membrane mask and calculates ribosome density for each
+membrane voxel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mem_mask</strong> (<em>numpy ndarray</em>) – binary membrane mask in form of 3D array,
+segmenting the underlying tomogram into membrane (voxels with value
+1) and background (voxels with value 0)</p></li>
+<li><p><strong>ribo_mask</strong> (<em>numpy ndarray</em>) – binary mask of ribosomes centers on membrane
+in form of 3D array, where a voxel with value 1 means a particle is
+present at that membrane coordinate</p></li>
+<li><p><strong>scale_factor_to_nm</strong> (<em>float</em><em>, </em><em>optional</em>) – pixel size in nanometers, default
+1 (if no scaling to nanometers is desired)</p></li>
+<li><p><strong>vtp_files_base</strong> (<em>str</em><em>, </em><em>optional</em>) – If not None (default None), the
+VoxelGraph is converted to VTK PolyData points and lines objects and
+written to ‘&lt;vtp_files_base&gt;.vertices.vtp’ and
+‘&lt;vtp_files_base&gt;.edges.vtp’ files, respectively</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a numpy ndarray (with the same shape as the masks) with the densities</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Both masks - mem_mask and ribo_mask - have to have the same shape.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pycurv_scripts.ribosome_density_calculation.run_calculate_density">
+<code class="sig-prename descclassname">pycurv_scripts.ribosome_density_calculation.</code><code class="sig-name descname">run_calculate_density</code><span class="sig-paren">(</span><em class="sig-param">mem_graph_file</em>, <em class="sig-param">ribo_mask</em>, <em class="sig-param">scale_factor_to_nm=1</em>, <em class="sig-param">vtp_files_base=None</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.ribosome_density_calculation.run_calculate_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in the membrane graph from a file and calculates ribosome density for
+each membrane voxel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mem_graph_file</strong> (<em>str</em>) – name of the input membrane graph file (preferably
+with ‘.gt’ or ‘.graphml’ extension)</p></li>
+<li><p><strong>ribo_mask</strong> (<em>numpy ndarray</em>) – binary mask of ribosomes centers on membrane
+in form of 3D array, where a voxel with value 1 means a particle is
+present at that membrane coordinate</p></li>
+<li><p><strong>scale_factor_to_nm</strong> (<em>float</em><em>, </em><em>optional</em>) – pixel size in nanometers, default
+1 (if the graph was not scaled to nanometers)</p></li>
+<li><p><strong>vtp_files_base</strong> (<em>str</em><em>, </em><em>optional</em>) – if given (default None), the
+VoxelGraph is converted to VTK PolyData points and lines objects and
+written to ‘&lt;vtp_files_base&gt;.vertices.vtp’ and
+‘&lt;vtp_files_base&gt;.edges.vtp’ files, respectively</p></li>
+<li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
+information will be printed out</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a numpy ndarray (with the same shape as the mask) with the densities</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_scripts.runsFelixData">
+<span id="pycurv-scripts-runsfelixdata-module"></span><h2>pycurv_scripts.runsFelixData module<a class="headerlink" href="#module-pycurv_scripts.runsFelixData" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="pycurv_scripts.runsFelixData.main">
+<code class="sig-prename descclassname">pycurv_scripts.runsFelixData.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param">tomo</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.runsFelixData.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-pycurv_scripts">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pycurv_scripts" title="Permalink to this headline">¶</a></h2>
+<p>A collection of script using the PyCurv package.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PyCurv</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Maria Kalemanov, Antonio Martinez-Sanchez.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/pycurv_scripts.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
