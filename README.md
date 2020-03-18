@@ -88,8 +88,12 @@ Some experimental data can be found here:
 
 - vesicle: membrane segmentation of a vesicle from a cryo-electron tomogram
   (Bäuerlein et al. 2017)
-- vesicle: compartment segmentation of a cortical ER membrane from a
-  cryo-electron tomogram (Collado et al. 2019)
+- ER: compartment segmentation of a cortical ER membrane from a
+  cryo-electron tomogram (Collado et al. 2019), deposited in EM Data Bank
+  (EMD-10765)
+- Golgi and vesicles: compartment segmentations of the Golgi apparatus and
+  Golgi-derived vesicles from a cryo-electron tomogram, deposited in EM Data
+  Bank (EMD-10766)
 - embryo: surfaces of C. elegans embryo cells imaged by confocal light
   microscopy and segmented by LimeSeg (Machado et al., BMC Bioinformatics 2019)
 - brain: cortical pial surfaces of both human brain hemispheres imaged by MRI
@@ -102,6 +106,7 @@ calculated by VTK):
 
 - vesicle: AVV
 - ER: AVV, SSVV and Mindboggle
+- Golgi and vesicles: AVV
 - embryo: AVV
 - brain: AVV, Mindboggle, FreeSurfer
 

@@ -1009,8 +1009,7 @@ def main_till(organelle, regions=True):
     t_begin = time.time()
 
     # Input parameters:
-    fold = '/fs/pool/pool-ruben/Maria/curvature/Till_4paper/{}/'.format(
-        organelle)
+    fold = '../experimental_data_sets/Golgi_and_vesicles/{}/'.format(organelle)
     base_filename = "l2_t6_{}".format(organelle)
     lbl = 1
     filled_lbl = 2
@@ -1064,7 +1063,7 @@ def main_till(organelle, regions=True):
                       fold=fold, pixel_size=pixel_size, radius_hit=radius_hit,
                       methods=['VV'], page_curvature_formula=False, area2=True,
                       label=lbl, filled_label=filled_lbl, unfilled_mask=None,
-                      holes=0, min_component=0, remove_wrong_borders=True,
+                      holes=0, min_component=100, remove_wrong_borders=True,
                       only_normals=False, cores=1, runtimes=''),
               base_region_files, seg_region_files)
         p.close()
@@ -1242,10 +1241,11 @@ def main_pore(isosurface=False, radius_hit=2):
 if __name__ == "__main__":
 
     main_javier('ER', 10)
+
     main_felix()
+
     # main_till('Golgi')
     # main_till('Vesicles')
-    # main_till('dimifilt_th10000_binned2_smooth200_dec0.6', regions=False)
 
     # main_light_microscopy_cells()
 

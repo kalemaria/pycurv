@@ -11,3 +11,7 @@ TCB_*
 t74_vesicle3*
 *~
 pycurv_testing/test_distances_calculation_output/*
+pycurv_scripts/filter_output.sh
+experimental_data_sets/Golgi_and_vesicles/*/intermediate_files
+experimental_data_sets/Golgi_and_vesicles/*/regions_files
+experimental_data_sets/plotting_organelles_curvature/.ipynb_checkpoints
