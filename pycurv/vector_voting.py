@@ -20,11 +20,11 @@ by shortest distances along the graph edges. Uses several methods of the
 TriangleGraph class in the surface_graphs module, which implement triangle-wise
 operations of the algorithm.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry),
+Author: Maria Salfer (Max Planck Institute for Biochemistry),
 date: 2017-06-17
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def normals_directions_and_curvature_estimation(

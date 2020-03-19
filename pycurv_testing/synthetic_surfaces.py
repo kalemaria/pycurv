@@ -12,10 +12,10 @@ from .synthetic_volumes import SphereMask, CylinderMask, TorusMask, ConeMask
 A set of functions and classes for generating artificial surfaces of
 geometrical objects.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def is_positive_number(arg, input_error=True):

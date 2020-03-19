@@ -8,10 +8,10 @@ from pycurv import pycurv_io as io
 Contains a script getting triangle vertices and edges from a TriangleGraph and
 saving them in to separate VTP file s for visualization with ParaView.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 tg_file = '/fs/pool/pool-ruben/Maria/workspace/github/pycurv/' \
           'experimental_data_sets/ER/AVV/TCB_180830_l2_t2half.ER.AVV_rh10.gt'

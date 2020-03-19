@@ -5,10 +5,10 @@ from .errors_calculation import calculate_histogram_area
 """
 A unit test for testing the function calculating a normalized histogram area.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def test_calculate_histogram_area():

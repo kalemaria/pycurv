@@ -22,10 +22,10 @@ from pycurv import pycurv_io as io
 A script with example applications of the PyCurv package for estimation of
 membrane curvature.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def convert_vtp_to_stl_surface_and_mrc_curvatures(

@@ -8,10 +8,10 @@ A function and a script extracting FreeSurfer curvatures from VTK files to a
 CSV file. Requires Mindboggle Docker container (then do not forget to set:
 DOCK=/home/jovyan/work) or Mindboggle Python package installed on your system.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def get_freesurfer_curvatures(

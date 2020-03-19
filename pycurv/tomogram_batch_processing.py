@@ -11,11 +11,11 @@ of certain label and minimal size.
 The idea is to work on each region separately, e.g. create a surface, transform
 it to a graph, clean and calculate curvatures.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry),
+Author: Maria Salfer (Max Planck Institute for Biochemistry),
 date: 2017-06-17
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def split_segmentation(infile, lbl=1, close=True, close_cube_size=5,

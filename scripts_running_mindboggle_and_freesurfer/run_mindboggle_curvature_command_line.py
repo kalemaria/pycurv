@@ -26,10 +26,10 @@ Internally, this command line is produced and run:
     torus_rr25_csr10.surface.mindboggle_n2_mean_curvature.vtk
 
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 # Read in the arguments
 surface_file = sys.argv[1]

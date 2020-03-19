@@ -9,10 +9,10 @@ from pycurv import pexceptions, run_gen_surface
 A set of functions and classes for generating artificial segmentation volumes
 (masks) of geometrical objects.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 class SphereMask(object):

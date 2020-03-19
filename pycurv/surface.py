@@ -13,11 +13,11 @@ import time
 Set of functions for generating a single-layer, signed surface from a
 membrane segmentation and postprocessing the surface, using the VTK library.
 
-Authors: Maria Kalemanov and Antonio Martinez-Sanchez (Max Planck Institute for
+Authors: Maria Salfer and Antonio Martinez-Sanchez (Max Planck Institute for
 Biochemistry)
 """
 
-__author__ = 'martinez and kalemanov'
+__author__ = 'Antonio Martinez-Sanchez and Maria Salfer'
 
 
 # CONSTANTS

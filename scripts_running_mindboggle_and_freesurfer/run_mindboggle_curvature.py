@@ -11,7 +11,7 @@ VTK files and writing them to a CSV file. Requires Mindboggle Docker container
 installed on your system.
 
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
 

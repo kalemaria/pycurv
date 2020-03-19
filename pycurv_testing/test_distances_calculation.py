@@ -11,10 +11,10 @@ A function generating a synthetic segmentation and an integration test for
 testing the functions calculating distances and thicknesses between membrane
 surfaces.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def generate_pm_er_lumen_segmentation(

@@ -14,10 +14,10 @@ from .linalg import nice_acos, euclidean_distance
 Contains an abstract class (SegmentationGraph) for representing a segmentation
 by a graph with attributes and methods common for all derived classes.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 class SegmentationGraph(object):

@@ -48,8 +48,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'PyCurv'
-copyright = '2017, Maria Kalemanov, Antonio Martinez-Sanchez'
-author = 'Maria Kalemanov, Antonio Martinez-Sanchez'
+copyright = '2017, Maria Salfer, Antonio Martinez-Sanchez'
+author = 'Maria Salfer, Antonio Martinez-Sanchez'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -129,7 +129,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'PyCurv.tex', 'PyCurv Documentation',
-     'Maria Kalemanov, Antonio Martinez-Sanchez', 'manual'),
+     'Maria Salfer, Antonio Martinez-Sanchez', 'manual'),
 ]
 
 

@@ -6,10 +6,10 @@ from pycurv import (triangle_center, triangle_area_cross_product,
 """
 Unit tests for testing some linear algebra functions.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def test_triangle_center():

@@ -22,10 +22,10 @@ Set of functions and classes (abstract SurfaceGraph and derived TriangleGraph)
 for representing a surface by a graph, cleaning the surface and triangle-wise
 operations of the normal vector voting algorithm.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 class SurfaceGraph(graphs.SegmentationGraph):

@@ -24,10 +24,10 @@ rcParams['ytick.major.width'] = 2
 Functions for plotting estimation errors of all the tested curvature estimation
 algorithms using "synthetic" benchmark surfaces.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 FOLDPEAKS = "/fs/pool/pool-ruben/Maria/workspace/github/pycurv/" \
             "experimental_data_sets/ER/peaks_AVV_and_SSVV/TCB/" \

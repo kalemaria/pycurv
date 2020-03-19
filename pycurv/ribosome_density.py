@@ -11,10 +11,10 @@ from . import pexceptions
 Set of functions and a class (VoxelGraph) for calculating ribosome density on
 membranes.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def read_in_mask(mask_file, verbose=False):

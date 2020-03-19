@@ -10,11 +10,11 @@ from . import pexceptions
 Set of functions and a class (TypesConverter) for reading and writing different
 data types.
 
-Authors: Maria Kalemanov and Antonio Martinez-Sanchez (Max Planck Institute for
+Authors: Maria Salfer and Antonio Martinez-Sanchez (Max Planck Institute for
 Biochemistry)
 """
 
-__author__ = 'martinez and kalemanov'
+__author__ = 'Antonio Martinez-Sanchez and Maria Salfer'
 
 
 def load_tomo(fname, mmap=False):

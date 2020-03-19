@@ -14,10 +14,10 @@ A set of functions and a script for calculation of curvature errors of
 Mindboggle and FreeSurfer, using custom CSV files with their curvature values
 and other functions from the testing module.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def calculate_curvature_errors_sphere(

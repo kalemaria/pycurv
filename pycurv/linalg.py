@@ -5,10 +5,10 @@ from scipy.linalg import expm
 """
 Set of linear algebra and some basic math functions.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def perpendicular_vector(iv):

@@ -7,11 +7,11 @@ from .curvature_calculation import (
 """
 Applying new_workflow and extract_curvatures_after_new_workflow on Felix' data.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry),
+Author: Maria Salfer (Max Planck Institute for Biochemistry),
 date: 2018-05-29
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def main(tomo):

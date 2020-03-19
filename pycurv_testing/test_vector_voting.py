@@ -20,10 +20,10 @@ from .errors_calculation import *
 Scripts for testing of validity of curvature estimation methods using
 "synthetic" benchmark surfaces.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 FOLD = './test_vector_voting_output/'
 

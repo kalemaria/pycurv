@@ -11,10 +11,10 @@ Contains a function extracting triangle areas from a TriangleGraph into a CSV
 file and its application on the membrane surfaces of ER-mitochondrion and
 vacuole-nucleus contacts.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def extract_areas_from_graph(

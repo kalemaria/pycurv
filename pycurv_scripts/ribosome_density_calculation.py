@@ -10,10 +10,10 @@ from pycurv import pycurv_io as io
 A script with an example application of the PyCurv package for calculation of
 membrane-bound ribosome density.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, verbose=False):

@@ -7,10 +7,10 @@ from pycurv import pycurv_io as io
 """
 Functions that can be used for visualizing geodesic neighborhood.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def calculate_g_max_from_radius_hit(radius_hit):

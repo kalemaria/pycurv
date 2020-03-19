@@ -11,10 +11,10 @@ A script with example applications of the PyCurv package for measurement of
 distances between parallel membranes, e.g. plasma membrane (PM) and cortical
 endoplasmic reticulum (cER) and thicknesses of an organelle lumen, e.g. cER.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 # CONSTANTS
 MAX_DIST_SURF = 3

@@ -4,10 +4,10 @@ from math import pi, atan, sqrt
 Contains functions of different curvature definitions combining the maximal
 principal curvature kappa_1 with the minimal principal curvature kappa_2.
 
-Author: Maria Kalemanov (Max Planck Institute for Biochemistry)
+Author: Maria Salfer (Max Planck Institute for Biochemistry)
 """
 
-__author__ = 'kalemanov'
+__author__ = 'Maria Salfer'
 
 
 def calculate_gauss_curvature(kappa_1, kappa_2):
