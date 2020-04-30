@@ -557,7 +557,7 @@ def _shape_index_classifier(x):
 
     Returns:
         A tuple of the representative (middle) value of each shape class and
-        the class label, e.g. 0, 'Saddle' fro values in range [-1/8, +1/8)
+        the class label, e.g. 0, 'Saddle' for values in range [-1/8, +1/8)
     """
     if x < -1:
         return None, None
