@@ -1,8 +1,10 @@
 import time
 import sys
 
-from .curvature_calculation import (
-    new_workflow, extract_curvatures_after_new_workflow)
+from pycurv_scripts import (
+    new_workflow, extract_curvatures_after_new_workflow,
+    convert_vtp_to_stl_surface_and_mrc_curvatures)
+from pycurv import pycurv_io as io
 
 """
 Applying new_workflow and extract_curvatures_after_new_workflow on Felix' data.
@@ -62,6 +64,16 @@ def main(tomo):
     print("\nExtracting curvatures for ER")
     extract_curvatures_after_new_workflow(
         fold, base_filename, radius_hit, methods=['VV'], exclude_borders=1)
+
+    surf_vtp_file = '{}{}.{}_rh{}.vtp'.format(
+        fold, base_filename, 'AVV', radius_hit)
+    outfile_base = '{}{}.{}_rh{}'.format(
+        fold, base_filename, 'AVV', radius_hit)
+    scale = (pixel_size, pixel_size, pixel_size)
+    seg = io.load_tomo(fold + seg_file)
+    size = seg.shape
+    convert_vtp_to_stl_surface_and_mrc_curvatures(
+        surf_vtp_file, outfile_base, scale, size)
 
     t_end = time.time()
     duration = t_end - t_begin
