@@ -405,8 +405,8 @@ def vtp_file_to_vtk_file(infilename, outfilename):
     save_vtk(poly, outfilename)
 
 
-def poly_array_to_volume(poly, array_name, scale, size, logfilename=None,
-                         mean=False, verbose=False):
+def poly_array_to_volume(
+        poly, array_name, size, logfilename=None, mean=False, verbose=False):
     """
     Converts a triangle-cell data array of the given vtkPolyData to a 3D array
     of size like the underlying segmentation.
@@ -423,8 +423,6 @@ def poly_array_to_volume(poly, array_name, scale, size, logfilename=None,
         poly (vtk.vtkPolyData): a vtkPolyData object with triangle-cells.
         array_name (str): name of the desired cell data array of the vtkPolyData
             object
-        scale (tuple): pixel size (X, Y, Z) in given units that was used for
-            scaling the graph
         size (tuple): (X, Y, Z) length in pixels of the segmentation
         logfilename (str, optional): specifies an output log file path (default
             None) for listing voxel coordinates with multiple values mapping to
@@ -492,12 +490,11 @@ def poly_array_to_volume(poly, array_name, scale, size, logfilename=None,
             cell_value = array.GetTuple1(cell_id)
 
             # Calculate the corresponding voxel of the vertex and add the value
-            # to the list keyed by the voxel in the dictionary:
-            # Scaling the coordinates back from units to voxels. (Without round
-            # float coordinates are truncated to the next lowest integer.)
-            voxel_x = int(round(x_center / scale[0]))
-            voxel_y = int(round(y_center / scale[1]))
-            voxel_z = int(round(z_center / scale[2]))
+            # to the list keyed by the voxel in the dictionary (without round
+            # float coordinates are truncated to the next lowest integer):
+            voxel_x = int(round(x_center))
+            voxel_y = int(round(y_center))
+            voxel_z = int(round(z_center))
             voxel = (voxel_x, voxel_y, voxel_z)
             if voxel in voxel_to_values:
                 voxel_to_values[voxel].append(cell_value)

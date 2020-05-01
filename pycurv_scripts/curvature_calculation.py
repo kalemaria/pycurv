@@ -15,7 +15,7 @@ from functools import partial
 from pycurv import (
     pexceptions, normals_directions_and_curvature_estimation, run_gen_surface,
     TriangleGraph, PointGraph, curvature_estimation, merge_vtp_files,
-    split_segmentation, MAX_DIST_SURF, THRESH_SIGMA1)
+    split_segmentation, MAX_DIST_SURF, THRESH_SIGMA1, rescale_surface)
 from pycurv import pycurv_io as io
 
 """
@@ -46,26 +46,36 @@ def convert_vtp_to_stl_surface_and_mrc_curvatures(
     Returns:
         None
     """
-    # Converting the '.vtp' surface file to '.stl' file:
-    surf_stl_file = (surf_vtp_file[0:-4] + '.stl')
-    if not isfile(surf_stl_file):
-        io.vtp_file_to_stl_file(surf_vtp_file, surf_stl_file)
+    # Scaling the '.vtp' surface file back to voxels:
+    surf_voxels_vtp_file = (surf_vtp_file[0:-4] + '_voxels.vtp')
+    if not isfile(surf_voxels_vtp_file):
+        poly_nm = io.load_poly(surf_vtp_file)
+        reverse_scale = (1/scale[0], 1/scale[1], 1/scale[2])
+        poly_voxels = rescale_surface(poly_nm, reverse_scale)
+        io.save_vtp(poly_voxels, surf_voxels_vtp_file)
+        print("The '.vtp' file was scaled back to voxels: {}".format(
+            surf_voxels_vtp_file))
+
+    # Converting the '.vtp' surface voxels file to '.stl' file:
+    surf_voxels_stl_file = (surf_voxels_vtp_file[0:-4] + '.stl')
+    if not isfile(surf_voxels_stl_file):
+        io.vtp_file_to_stl_file(surf_voxels_vtp_file, surf_voxels_stl_file)
         print("The '.vtp' file {} was converted to .stl format".format(
-            surf_vtp_file))
+            surf_voxels_vtp_file))
 
     # Converting vtkPolyData selected cell arrays from the '.vtp' file as 3-D
     # volumes in '.mrc' files (and saving them as '.mrc.gz' files).
     # max voxel value & .log files:
     _vtp_arrays_to_mrc_volumes(
-        surf_vtp_file, outfile_base, scale, size, log_files=True)
+        surf_voxels_vtp_file, outfile_base, size, log_files=True)
     # mean voxel value & no .log files:
     _vtp_arrays_to_mrc_volumes(
-        surf_vtp_file, outfile_base, scale, size, mean=True)
+        surf_voxels_vtp_file, outfile_base, size, mean=True)
 
 
 def _vtp_arrays_to_mrc_volumes(
-        surf_vtp_file, outfile_base, scale, size,
-        mean=False, log_files=False, compress=False):
+        surf_vtp_file, outfile_base, size, mean=False, log_files=False,
+        compress=False):
     """
     This function converts selected vtkPolyData cell arrays from the '.vtp' file
     as 3-D volumes in '.mrc' files. The selected arrays are: "kappa_1",
@@ -75,8 +85,6 @@ def _vtp_arrays_to_mrc_volumes(
         surf_vtp_file (str): surface .vtp file, should contain the final surface
             with curvatures
         outfile_base (str): base name for the output .mrc (and .log) files
-        scale (tuple): pixel size (X, Y, Z) of the membrane mask in units of the
-            surface
         size (tuple): size (X, Y, Z) of the membrane mask
         mean (boolean, optional): if True (default False), in case multiple
             triangles map to the same voxel, takes the mean value, else the
@@ -102,8 +110,8 @@ def _vtp_arrays_to_mrc_volumes(
         mrcfilename = "{}.{}.{}.mrc".format(outfile_base, name, voxel_value_str)
         mrcfilenames.append(mrcfilename)
         if log_files:
-            logfilename = "{}.{}.{}.log".format(outfile_base, name,
-                                                voxel_value_str)
+            logfilename = "{}.{}.{}.log".format(
+                outfile_base, name, voxel_value_str)
         else:
             logfilename = None
         logfilenames.append(logfilename)
@@ -112,8 +120,8 @@ def _vtp_arrays_to_mrc_volumes(
     # from arrays, write '.log' files, and save the volumes as '.mrc' files:
     poly = io.load_poly(surf_vtp_file)
     for i, array_name in enumerate(array_names):
-        volume = io.poly_array_to_volume(poly, array_name, scale, size,
-                                         logfilename=logfilenames[i], mean=mean)
+        volume = io.poly_array_to_volume(
+            poly, array_name, size, logfilename=logfilenames[i], mean=mean)
         io.save_numpy(volume, mrcfilenames[i])
 
     if compress:
