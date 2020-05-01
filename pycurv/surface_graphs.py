@@ -12,7 +12,7 @@ from . import pexceptions
 from .pycurv_io import TypesConverter
 from .curvature_definitions import *
 from .surface import (add_point_normals_to_vtk_surface,
-                     add_curvature_to_vtk_surface, rescale_surface)
+                      add_curvature_to_vtk_surface, rescale_surface)
 from .linalg import (
     perpendicular_vector, rotation_matrix, rotate_vector, signum, nice_acos,
     triangle_normal, triangle_center, triangle_area_cross_product)
