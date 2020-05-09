@@ -520,6 +520,6 @@ def curvature_estimation(
     # - duration2
     if runtimes != '':
         with open(runtimes, 'a') as f:
-            f.write("{};{}\n".format(method, duration2))
+            f.write("{};{}\n".format(method_print, duration2))
 
     return sg, surface_curv
