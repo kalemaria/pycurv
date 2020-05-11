@@ -16,7 +16,8 @@ Author: Maria Salfer (Max Planck Institute for Biochemistry)
 __author__ = 'Maria Salfer'
 
 
-def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, verbose=False):
+def run_build_graph_from_np_ndarray(
+        mem_mask, mem_graph_file, scale_factor_to_nm, verbose=False):
     """
     Builds a graph from a membrane mask and writes the graph to a file.
 
@@ -26,6 +27,8 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, verbose=False):
             1) and background (voxels with value 0)
         mem_graph_file (str): name for the output membrane graph file
             (preferably with '.gt' or '.graphml' extension)
+        scale_factor_to_nm (float, optional): pixel size in nanometers, default
+            1 (if no scaling to nanometers is desired)
         verbose (boolean, optional): if True (default False), some extra
             information will be printed out
 
@@ -39,7 +42,8 @@ def run_build_graph_from_np_ndarray(mem_mask, mem_graph_file, verbose=False):
     print('\nStarting building the membrane graph on: {}-{}-{} {}:{}:{}'.format(
         now.year, now.month, now.day, now.hour, now.minute, now.second))
     vg = VoxelGraph()
-    vg.build_graph_from_np_ndarray(mem_mask, verbose)
+    scale3 = (scale_factor_to_nm, scale_factor_to_nm, scale_factor_to_nm)
+    vg.build_graph_from_np_ndarray(mem_mask, scale=scale3, verbose=verbose)
     now = datetime.now()
     print('\nFinished building the graph on: {}-{}-{} {}:{}:{}'.format(
         now.year, now.month, now.day, now.hour, now.minute, now.second))
@@ -160,7 +164,8 @@ def run_build_graph_from_np_ndarray_and_calculate_density(
     print('\nStarting building the VoxelGraph on: {}-{}-{} {}:{}:{}'.format(
         now.year, now.month, now.day, now.hour, now.minute, now.second))
     vg = VoxelGraph()
-    vg.build_graph_from_np_ndarray(mem_mask, verbose)
+    scale3 = (scale_factor_to_nm, scale_factor_to_nm, scale_factor_to_nm)
+    vg.build_graph_from_np_ndarray(mem_mask, scale=scale3, verbose=verbose)
     now = datetime.now()
     print('\nFinished building the graph on: {}-{}-{} {}:{}:{}'.format(
         now.year, now.month, now.day, now.hour, now.minute, now.second))
