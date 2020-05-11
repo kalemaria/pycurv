@@ -324,15 +324,13 @@ class VoxelGraph(graphs.SegmentationGraph):
             print('{} membrane voxels'.format(len(membrane_voxels)))
             if verbose:
                 print(membrane_voxels)
-            self._expand_voxels(mask, membrane_voxels, scale,
-                                verbose)
+            self._expand_voxels(mask, membrane_voxels, scale, verbose)
         else:
             raise pexceptions.PySegInputError(
                 expr='build_graph_from_np_ndarray (VoxelGraph)',
                 msg='A 3D numpy ndarray object required as first input.')
 
-    def _expand_voxels(self, mask, remaining_mem_voxels, scale,
-                       verbose=False):
+    def _expand_voxels(self, mask, remaining_mem_voxels, scale, verbose=False):
         """
         An iterative function used for building the membrane graph of a
         VoxelGraph object.
@@ -410,9 +408,9 @@ class VoxelGraph(graphs.SegmentationGraph):
                     for neighbor_voxel in neighbor_voxels:
 
                         scaled_neighbor_voxel = (
-                            neighbor_voxel[0] * scale,
-                            neighbor_voxel[1] * scale,
-                            neighbor_voxel[2] * scale
+                            neighbor_voxel[0] * scale[0],
+                            neighbor_voxel[1] * scale[1],
+                            neighbor_voxel[2] * scale[2]
                         )
                         # If the scaled neighbor voxel has been already added to
                         # the graph, get its vertex descriptor:
