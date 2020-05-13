@@ -1018,6 +1018,8 @@ def main_till(organelle, regions=True):
 
     # Input parameters:
     fold = '../experimental_data_sets/Golgi_and_vesicles/{}/'.format(organelle)
+    seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl.{}Filled.mrc'.format(
+        organelle)
     base_filename = "l2_t6_{}".format(organelle)
     lbl = 1
     filled_lbl = 2
@@ -1028,8 +1030,6 @@ def main_till(organelle, regions=True):
     if regions:
         # Load the segmentation numpy array from the file and join both labels
         # as 1:
-        seg_file = '20170217_FIB112_G1_l2_t6_dimifilt_lbl.{}Filled.mrc'.format(
-            organelle)
         seg = io.load_tomo(fold + seg_file)
         assert (isinstance(seg, np.ndarray))
         data_type = seg.dtype
@@ -1084,19 +1084,19 @@ def main_till(organelle, regions=True):
         surf_file = '{}{}.AVV_rh{}.vtp'.format(fold, base_filename, radius_hit)
         io.merge_vtp_files(region_surf_files, surf_file)
 
-    else:  # No regions, use the ready surface
+    else:  # No regions
         new_workflow(
-            base_filename, "", fold=fold,
+            base_filename, seg_file, fold=fold,
             pixel_size=pixel_size, radius_hit=radius_hit, methods=['VV'],
             page_curvature_formula=False, area2=True, label=lbl,
             filled_label=filled_lbl, unfilled_mask=None, holes=0,
             min_component=min_comp, remove_wrong_borders=True,
-            only_normals=False, cores=6, runtimes='')
+            only_normals=False, cores=10, runtimes='')
 
         # Extract curvatures:
         extract_curvatures_after_new_workflow(
             fold, base_filename, radius_hit, methods=['VV'],
-            exclude_borders=2, categorize_shape_index=True)
+            exclude_borders=1, categorize_shape_index=True)
 
     t_end = time.time()
     duration = t_end - t_begin
