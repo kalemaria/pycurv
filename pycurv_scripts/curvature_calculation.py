@@ -139,7 +139,7 @@ def new_workflow(
         methods=['VV'], page_curvature_formula=False, area2=True,
         label=1, filled_label=None, unfilled_mask=None, holes=0,
         remove_wrong_borders=True, min_component=100, only_normals=False,
-        cores=6, runtimes=''):
+        cores=10, runtimes=''):
     """
     A script for running all processing steps to estimate membrane curvature.
 
@@ -189,7 +189,7 @@ def new_workflow(
         only_normals (boolean, optional): if True (default False), only normals
             are estimated, without principal directions and curvatures, only the
             graph with the orientations class, normals or tangents is returned.
-        cores (int, optional): number of cores to run VV in parallel (default 6)
+        cores (int, optional): number of cores to run VV in parallel (default 10)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default '')
 
@@ -353,7 +353,7 @@ def new_workflow(
             io.save_vtp(surf, surf_file)
 
 
-def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=6):
+def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=10):
     """
     Calculates plasma membrane curvatures with AVV using a pre-calculated
     estimated normals file.
@@ -365,7 +365,7 @@ def calculate_PM_curvatures(fold, base_filename, radius_hit, cores=6):
         radius_hit (float): radius in length unit of the graph, e.g. nanometers;
             it should be chosen to correspond to radius of smallest features of
             interest on the surface
-        cores (int, optional): number of cores to run VV in parallel (default 6)
+        cores (int, optional): number of cores to run VV in parallel (default 10)
 
     Returns:
         None
@@ -593,7 +593,7 @@ def _shape_index_classifier(x):
 
 def from_ply_workflow(
         ply_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False,
-        methods=["VV"], area2=True, cores=6):
+        methods=["VV"], area2=True, cores=10):
     """
     Estimates curvature for each triangle in a triangle mesh in PLY format.
 
@@ -612,7 +612,7 @@ def from_ply_workflow(
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
             curvatures estimation)
-        cores (int, optional): number of cores to run VV in parallel (default 6)
+        cores (int, optional): number of cores to run VV in parallel (default 10)
 
     Returns:
         None
@@ -670,7 +670,7 @@ def from_ply_workflow(
 
 def from_vtk_workflow(
         vtk_file, radius_hit, vertex_based, epsilon, eta, scale=(1, 1, 1),
-        page_curvature_formula=False, methods=["VV"], area2=True, cores=6,
+        page_curvature_formula=False, methods=["VV"], area2=True, cores=10,
         reverse_normals=False):
     """
     Estimates curvature for each triangle in a triangle mesh in VTK format.
@@ -697,7 +697,7 @@ def from_vtk_workflow(
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
             curvatures estimation; not possible if vertex_based is True)
-        cores (int, optional): number of cores to run VV in parallel (default 6)
+        cores (int, optional): number of cores to run VV in parallel (default 10)
         reverse_normals (boolean, optional): if True (default False), original
             surface normals will be reversed
 
@@ -800,7 +800,7 @@ def from_vtk_workflow(
 
 def from_nii_workflow(
         nii_file, outfold, radius_hit, page_curvature_formula=False,
-        methods=["VV"], area2=True, cores=6):
+        methods=["VV"], area2=True, cores=10):
     """
     Extracts surface for every label > 0 in the segmentation in NII format,
     after applying a Gaussian filter with sigma of 1.
@@ -820,7 +820,7 @@ def from_nii_workflow(
         area2 (boolean, optional): if True (default), votes are weighted by
             triangle area also in the second step (principle directions and
             curvatures estimation)
-        cores (int, optional): number of cores to run VV in parallel (default 6)
+        cores (int, optional): number of cores to run VV in parallel (default 10)
 
         Returns:
             None
@@ -1193,7 +1193,7 @@ def main_brain():
         eta = 0
     from_vtk_workflow(
         vtk_file, radius_hit, vertex_based=False, epsilon=epsilon, eta=eta,
-        scale=(1, 1, 1), methods=["VV"], cores=6, reverse_normals=True)
+        scale=(1, 1, 1), methods=["VV"], cores=10, reverse_normals=True)
 
 
 def main_pore(isosurface=False, radius_hit=2):

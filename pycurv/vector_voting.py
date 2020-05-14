@@ -30,7 +30,7 @@ __author__ = 'Maria Salfer'
 def normals_directions_and_curvature_estimation(
         sg, radius_hit, epsilon=0, eta=0, methods=['VV'],
         page_curvature_formula=False, full_dist_map=False, graph_file='temp.gt',
-        area2=True, only_normals=False, poly_surf=None, cores=6, runtimes=''):
+        area2=True, only_normals=False, poly_surf=None, cores=10, runtimes=''):
     """
     Runs the modified Normal Vector Voting algorithm (with different options for
     the second pass) to estimate surface orientation, principle curvatures and
@@ -69,7 +69,7 @@ def normals_directions_and_curvature_estimation(
         poly_surf (vtkPolyData, optional): surface from which the graph was
             generated, scaled to given units (required only for SSVV, default
             None)
-        cores (int, optional): number of cores to run VV in parallel (default 6)
+        cores (int, optional): number of cores to run VV in parallel (default 10)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default '')
 
@@ -120,7 +120,7 @@ def normals_directions_and_curvature_estimation(
 
 
 def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
-                       cores=6, runtimes='', graph_file='temp.gt'):
+                       cores=10, runtimes='', graph_file='temp.gt'):
     """
     Runs the modified Normal Vector Voting algorithm to estimate surface
     orientation (classification in surface patch with normal, crease junction
@@ -150,7 +150,7 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
             otherwise a local distance map is calculated later for each vertex
             (default)
         cores (int, optional): number of cores to run VV (collect_normal_votes
-            and estimate_normal) in parallel (default 6)
+            and estimate_normal) in parallel (default 10)
         runtimes (str, optional): if given, runtimes and some parameters are
             added to this file (default '')
         graph_file (str, optional): file path to save the graph, default file
@@ -317,7 +317,7 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
 def curvature_estimation(
         radius_hit, graph_file='temp.gt', method='VV',
         page_curvature_formula=False, area2=True, poly_surf=None,
-        full_dist_map=False, cores=6, runtimes='', vertex_based=False, sg=None):
+        full_dist_map=False, cores=10, runtimes='', vertex_based=False, sg=None):
     """
     Runs the second pass of the modified Normal Vector Voting algorithm with
     the given method to estimate principle curvatures and directions for a
@@ -345,7 +345,7 @@ def curvature_estimation(
             approach), otherwise a local distance map is calculated later for
             each vertex (default)
         cores (int): number of cores to run VV (collect_curvature_votes and
-            estimate_curvature) in parallel (default 6)
+            estimate_curvature) in parallel (default 10)
         runtimes (str): if given, runtimes and some parameters are added to
             this file (default '')
         vertex_based (boolean, optional): if True (default False), curvature is
