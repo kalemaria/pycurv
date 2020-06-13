@@ -112,9 +112,9 @@ calculated by VTK):
 
 
 # Installing PyCurv
-Please note that PyCurv depends on one not publicly available Python package,
-pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
-has to be requested from its author, Dr. Vladan Lučić.
+Please note that PyCurv depends on a publicly available Python package,
+Pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
+can be found [here](https://github.com/vladanl/Pyto).
 
 ## Installation instructions with anaconda
 The following instruction were tested on SUSE Linux Enterprise Server 12, but
@@ -160,8 +160,9 @@ they should work on other Linux-based systems.
    export PATH=<your_anaconda_path>/bin:$PATH
    ```
 
-2. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
-   DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in your `~/.bashrc`:
+2. Add the path to the [Pyto](https://github.com/vladanl/Pyto) package to PYTHONPATH in your `~/.bashrc`
+   (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
+   https://docs.python.org/3.6/tutorial/modules.html):
    ```
    export PYTHONPATH=<your_path_to_pyto>:$PYTHONPATH
    ```
@@ -198,10 +199,7 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
    Unfortunately, this installation of the graph-tool package does not work with
    anaconda python.
 
-2. Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
-   DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
-   (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
-   https://docs.python.org/3.6/tutorial/modules.html)
+2. Add the path to the [Pyto](https://github.com/vladanl/Pyto) package to PYTHONPATH in bashrc.
 
 3. Install [pip3](https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/)
    (includes setuptools), [venv](https://docs.python.org/3/library/venv.html)
