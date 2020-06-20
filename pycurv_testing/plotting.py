@@ -48,6 +48,18 @@ FOLDTILL = "/fs/pool/pool-ruben/Maria/curvature/Till_4paper/"
 LINEWIDTH = 4
 MARKERS = ['*', 'v', '^', 's', 'o', 'v', '^', 's', 'o', '*']
 COLORS = ['b', 'c', 'g', 'y', 'r', 'b', 'c', 'g', 'y', 'r']
+# font sizes
+SMALL_SIZE = 22
+MEDIUM_SIZE = 26
+BIGGER_SIZE = 30
+
+plt.rc('font', size=SMALL_SIZE)         # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)    # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)   # legend fontsize (was hard-coded as 18)
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
 def plot_hist(values, num_bins, title, x_label="Value", y_label="Frequency",
@@ -70,7 +82,7 @@ def plot_hist(values, num_bins, title, x_label="Value", y_label="Frequency",
     Returns:
         None
     """
-    plt.rcParams.update({'font.size': 16})
+    # plt.rcParams.update({'font.size': 16})
     fig = plt.figure()
     if x_range is None:
         plt.hist(values, bins=num_bins)
@@ -123,7 +135,7 @@ def plot_line_hist(values, weights=None, num_bins=20, title=None,
     Returns:
         None
     """
-    plt.rcParams.update({'font.size': 16})
+    # plt.rcParams.update({'font.size': 16})
     fig = plt.figure()
     if max_val is not None:
         values = [max_val if val > max_val else val for val in values]
@@ -270,7 +282,7 @@ def plot_composite_line_hist(
             ticks on X axis
         zorders (list, optional): list of integers indicating the order of data
             lines on the plot
-        fontsize (int, optional): fontsize (default 30)
+        fontsize (int, optional): title fontsize (default 30)
         ncol (int, optional): number of legend columns (default 1)
 
     Returns:
@@ -280,7 +292,7 @@ def plot_composite_line_hist(
         either data_arrays or data_files has to be given
 
     """
-    plt.rcParams.update({'font.size': 16})
+    # plt.rcParams.update({'font.size': 16})
     fig, ax = plt.subplots()
 
     hist_areas = []
@@ -318,7 +330,7 @@ def plot_composite_line_hist(
     plt.ylabel(y_label)
     if y_range is not None:
         plt.ylim(y_range)
-    plt.legend(loc=legend_loc, fancybox=True, framealpha=0.5, fontsize=18,
+    plt.legend(loc=legend_loc, fancybox=True, framealpha=0.5,
                ncol=ncol, columnspacing=1, handletextpad=0.2, borderpad=0.2)
     # plt.grid(True)
     plt.tight_layout()
@@ -570,7 +582,7 @@ def plot_plane_normals_different_noise_and_rh(
         hist_areas_for_rhs.append(hist_areas)
 
     # Do the plot:
-    plt.rcParams.update({'font.size': 16})
+    # plt.rcParams.update({'font.size': 16})
     fig, ax = plt.subplots()
 
     for hist_areas, m, c, l in zip(
@@ -583,7 +595,7 @@ def plot_plane_normals_different_noise_and_rh(
     plt.ylabel("Area under the cumulative\nerror histogram")
     if y_range is not None:
         plt.ylim(y_range)
-    plt.legend(loc="lower right", fancybox=True, framealpha=0.5, fontsize=18,
+    plt.legend(loc="lower right", fancybox=True, framealpha=0.5,
                ncol=1, columnspacing=1, handletextpad=0.2, borderpad=0.2)
     plt.tight_layout()
     # Only show ticks on the left and bottom spines
@@ -1394,7 +1406,7 @@ def plot_sphere_curvature_errors_allVV(
         data = [RVV_curv_errors, AVV_curv_errors, SSVV_curv_errors,
                 VTK_curv_errors, MB_curv_errors, FS_curv_errors]
 
-        outfile = ("{}/{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}_FS.{}_errors.png"
+        outfile = ("{}/{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}_FS.{}_errors_new.png"
             .format(plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, curvature))
         if x_range is None:
             x_range = (0, max([max(d) for d in data]))
@@ -1434,7 +1446,7 @@ def plot_sphere_curvature_errors_allVV(
         data = [RVV_curv_errors, AVV_curv_errors, SSVV_curv_errors]
 
         outfile = (
-        "{}/{}.RVVrh{}_AVVrh{}_SSVVrh{}.{}_errors.png".format(
+        "{}/{}.RVVrh{}_AVVrh{}_SSVVrh{}.{}_errors_new.png".format(
             plot_fold, basename, rhRVV, rhAVV, rhSSVV, curvature))
         if x_range is None:
             x_range = (0, max([max(d) for d in data]))
@@ -1984,7 +1996,7 @@ def plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
 
         # directions
         data = [RVV_T_errors, AVV_T_errors, SSVV_T_errors]
-        outfile = "{}{}.RVVrh{}_AVVrh{}_vs_SSVVrh{}.T_{}_errors.png".format(
+        outfile = "{}{}.RVVrh{}_AVVrh{}_vs_SSVVrh{}.T_{}_errors_new_.png".format(
             plot_fold, basename, rhRVV, rhAVV, rhSSVV, i)
         if x_range_T is None:
             x_range = (0, max([max(d) for d in data]))
@@ -2013,7 +2025,7 @@ def plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
         data = [RVV_kappa_errors, AVV_kappa_errors, SSVV_kappa_errors,
                 VTK_kappa_errors, MB_kappa_errors, FS_kappa_errors]
         outfile = (
-            "{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}_FS.kappa_{}_errors.png"
+            "{}{}.RVVrh{}_AVVrh{}_SSVVrh{}_VTK_MBn{}_FS.kappa_{}_errors_new_.png"
             .format(plot_fold, basename, rhRVV, rhAVV, rhSSVV, n, i))
         if x_range_kappa is None:
             x_range = (0, max([max(d) for d in data]))
@@ -2037,7 +2049,8 @@ def plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
             y_label="Cumulative relative frequency",
             outfile=outfile,
             num_bins=20, normalize=True, cumulative=True,
-            x_range=x_range, y_range=y_range
+            x_range=x_range, y_range=y_range,
+            *args, **kwargs
         )
 
 
@@ -2538,7 +2551,7 @@ if __name__ == "__main__":
     # plot_plane_normals(x_range=(0, 0.4))
     # plot_plane_normals(x_range=(0, 0.4), rand_dir=True)
 
-    plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
+    # plot_plane_normals_different_noise_and_rh(x_range=(0, 0.4))
 
     # # voxel sphere - Fig 5
     # kwargs = {}
@@ -2554,15 +2567,15 @@ if __name__ == "__main__":
     #                 "sphere_r10_{}_RadiusHit5-10_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
     # # Fig 8:
-    # for r in [10, 30]:
-    #     plot_sphere_curvature_errors_allVV(  # both curvatures
-    #         r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
-    #         x_range=(0, 0.7), legend_loc="center right"
-    #     )
-    # plot_sphere_curvature_errors_allVV(  # both curvatures
-    #     r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
-    #     x_range=(0, 0.7), legend_loc="center right"
-    # )
+    for r in [10, 30]:
+        plot_sphere_curvature_errors_allVV(  # both curvatures
+            r=r, rhRVV=10, rhAVV=10, rhSSVV=8, n=2, voxel=True,
+            x_range=(0, 0.7), legend_loc="center right"
+        )
+    plot_sphere_curvature_errors_allVV(  # both curvatures
+        r=30, rhRVV=28, rhAVV=28, rhSSVV=28, n=2, voxel=True, onlyVV=True,
+        x_range=(0, 0.7), legend_loc="center right"
+    )
     #
     # # smooth torus
     # kwargs = {}
@@ -2584,12 +2597,16 @@ if __name__ == "__main__":
     #                 "torus_rr25_csr10_{}_RadiusHit4-9_{}_area.csv".format(
     #                     method, curvature)), **kwargs)
     # # Fig 6:
+    # kwargs = {}
+    # kwargs["num_x_values"] = 6
     # plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
     #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 0.08),
-    #     legend_loc="lower right")  # range for kappa1
+    #     legend_loc="lower right", **kwargs)  # range for kappa1
+    # kwargs2 = {}
+    # kwargs2["ncol"] = 2
     # plot_torus_kappa_1_and_2_t_1_and_2_errors_allVV(
     #     rhRVV=10, rhAVV=9, rhSSVV=6, n=4, x_range_kappa=(0, 1.4),
-    #     legend_loc="lower right")  # range for kappa2
+    #     legend_loc="lower right", **kwargs2)  # range for kappa2
     #
     # # smooth sphere
     # kwargs = {}
