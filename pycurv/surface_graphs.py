@@ -1125,9 +1125,9 @@ class TriangleGraph(SurfaceGraph):
         triangle-cell indices sharing this point.
         """
 
-        self.triangle_cell_ids = []
-        """a list of all added triangle cell indices, whose indices correspond
-        to graph vertex indices"""
+        self.triangle_cell_ids = {}
+        """dict: a dictionary of all added triangle cell indices, mapping them
+        to their graph vertex indices"""
 
     def build_graph_from_vtk_surface(self, surface, scale=(1, 1, 1),
                                      verbose=False, reverse_normals=False):
@@ -1268,9 +1268,9 @@ class TriangleGraph(SurfaceGraph):
 
             # Add the centroid as vertex to the graph, setting its properties:
             vd = self.graph.add_vertex()  # vertex descriptor
+            vd_id = self.graph.vertex_index[vd]
             self.graph.vp.xyz[vd] = center_xyz
-            self.coordinates_to_vertex_index[
-                tuple(center_xyz)] = self.graph.vertex_index[vd]
+            self.coordinates_to_vertex_index[tuple(center_xyz)] = vd_id
             self.graph.vp.area[vd] = area
             self.graph.vp.normal[vd] = normal
             self.graph.vp.min_curvature[vd] = avg_min_curvature
@@ -1290,12 +1290,11 @@ class TriangleGraph(SurfaceGraph):
                        self.graph.vp.max_curvature[vd],
                        self.graph.vp.points[vd]))
 
-            self.triangle_cell_ids.append(cell_id)
+            self.triangle_cell_ids[cell_id] = vd_id
 
         # 3. Add edges for each cell / vertex.
-        for i, cell_id in enumerate(self.triangle_cell_ids):
-            # Note: i corresponds to the vertex number of each cell, because
-            # they were added in this order
+        for cell_id, i in self.triangle_cell_ids.items():
+            # Note: i corresponds to the vertex number of each cell
             cell = surface.GetCell(cell_id)
             if verbose:
                 print('(Triangle) cell number {}:'.format(cell_id))
@@ -1304,22 +1303,24 @@ class TriangleGraph(SurfaceGraph):
             # cell i (1 or 2) as follows.
             # For each point j of cell i, iterate over the neighbor cells
             # sharing that point (excluding the cell i).
-            # Add each neighbor cell to the neighbor_cells list if it is not
+            # Add each neighbor cell to the neighbor_cells dict if it is not
             # there yet and add 1 into the shared_points list.
             # Otherwise, find the index of the cell in neighbor_cells and
             # increase the counter of shared_points at the same index.
             points_cell = cell.GetPoints()
-            neighbor_cells = []
+            neighbor_cells = {}
             shared_points = []
+            idx_new = 0  # counter of newly added neighbor cells of point j
             for j in range(points_cell.GetNumberOfPoints()):
                 point_j = points_cell.GetPoint(j)
                 for neighbor_cell_id in self.point_in_cells[point_j]:
                     if neighbor_cell_id != cell_id:
                         if neighbor_cell_id not in neighbor_cells:
-                            neighbor_cells.append(neighbor_cell_id)
+                            neighbor_cells[neighbor_cell_id] = idx_new
                             shared_points.append(1)
+                            idx_new += 1
                         else:
-                            idx = neighbor_cells.index(neighbor_cell_id)
+                            idx = neighbor_cells[neighbor_cell_id]
                             shared_points[idx] += 1
             if verbose:
                 print("has {} neighbor cells".format(len(neighbor_cells)))
@@ -1331,14 +1332,14 @@ class TriangleGraph(SurfaceGraph):
             p_i = self.graph.vp.xyz[vd_i]  # a list
             p_i = tuple(p_i)
 
-            # Iterate over the ready neighbor_cells and shared_points lists,
+            # Iterate over the ready neighbor_cells dict and shared_points list,
             # connecting cell i with a neighbor cell x with a "strong" edge
             # if they share 2 edges and with a "weak" edge otherwise (if
             # they share only 1 edge).
-            for idx, neighbor_cell_id in enumerate(neighbor_cells):
+            for neighbor_cell_id, idx in neighbor_cells.items():
                 # Get the vertex descriptor representing the cell x:
                 # vertex index of the current neighbor cell
-                x = self.triangle_cell_ids.index(neighbor_cell_id)
+                x = self.triangle_cell_ids[neighbor_cell_id]
                 # vertex descriptor of the current neighbor cell, vertex x
                 vd_x = self.graph.vertex(x)
 
