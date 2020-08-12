@@ -27,7 +27,7 @@ for the following analyses:
 - Estimation of membrane curvature using our several tensor voting-based methods
   based on (Page et al. 2002, Graphical Models) and (Tong and Tang 2005, IEEE
   Transactions on Pattern Analysis and Machine Intelligence), details available
-  in the pre-print ([Kalemanov et al. 2019, bioRxiv](https://www.biorxiv.org/content/10.1101/579060v1.full)).
+  in ([Salfer et al. 2020, PLoS Computational biology](https://doi.org/10.1371/journal.pcbi.1007962)).
   The workflow consists of the following three main steps:
   1. signed surface generation from a segmentation
   2. surface graph generation and surface cleaning
@@ -505,3 +505,8 @@ Finally, you can plot your results in the CSV file, using for example
 # Reporting bugs
 If you have found a bug or have an issue with the software, please open an issue
 [here](https://github.com/kalemaria/pycurv/issues).
+
+# Citing PyCurv
+If you have used PyCurv for a scientific work, please cite the publication
+"Reliable estimation of membrane curvature for cryo-electron tomography"
+([Salfer et al. 2020, PLoS Computational biology](https://doi.org/10.1371/journal.pcbi.1007962)).
