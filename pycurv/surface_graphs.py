@@ -1129,7 +1129,7 @@ class TriangleGraph(SurfaceGraph):
         """dict: a dictionary of all added triangle cell indices, mapping them
         to their graph vertex indices"""
 
-    def build_graph_from_vtk_surface(self, surface, scale=(1, 1, 1),
+    def build_graph_from_vtk_surface(self, surface, scale=(1, 1, 1), vtk=True,
                                      verbose=False, reverse_normals=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
@@ -1145,6 +1145,10 @@ class TriangleGraph(SurfaceGraph):
                 generated from the segmentation in voxels
             scale (tuple, optional): pixel size (X, Y, Z) in given units for
                 scaling the surface and the graph (default (1, 1, 1))
+            vtk (boolean, optional): if True (default), add VTK curvatures at
+                each triangle center by averaging the values at the three
+                triangle vertices. Setting this option to False can save time
+                for big surfaces, if VTK comparison is not needed.
             verbose (boolean, optional): if True (default False), some extra
                 information will be printed out
             reverse_normals (boolean, optional): if True (default False), the
@@ -1161,36 +1165,36 @@ class TriangleGraph(SurfaceGraph):
             # rescale the surface to units
             surface = rescale_surface(surface, scale)
 
-        # Adding curvatures to the vtkPolyData surface
-        # because VTK and we (gen_surface) have the opposite normal
-        # convention: VTK outwards pointing normals, we: inwards pointing
-        if reverse_normals:
-            invert = False
-        else:
-            invert = True
-        surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
-        surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
-
         if verbose:
             # Check numbers of cells and all points.
             print('{} cells'.format(surface.GetNumberOfCells()))
             print('{} points'.format(surface.GetNumberOfPoints()))
 
-        point_data = surface.GetPointData()
-        n = point_data.GetNumberOfArrays()
         min_curvatures = None
         max_curvatures = None
         gauss_curvatures = None
         mean_curvatures = None
-        for i in range(n):
-            if point_data.GetArrayName(i) == "Minimum_Curvature":
-                min_curvatures = point_data.GetArray(i)
-            elif point_data.GetArrayName(i) == "Maximum_Curvature":
-                max_curvatures = point_data.GetArray(i)
-            elif point_data.GetArrayName(i) == "Gauss_Curvature":
-                gauss_curvatures = point_data.GetArray(i)
-            elif point_data.GetArrayName(i) == "Mean_Curvature":
-                mean_curvatures = point_data.GetArray(i)
+        if vtk:
+            # Adding curvatures to the vtkPolyData surface
+            # because VTK and we (gen_surface) have the opposite normal
+            # convention: VTK outwards pointing normals, we: inwards pointing
+            if reverse_normals:
+                invert = False
+            else:
+                invert = True
+            surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
+            surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
+            point_data = surface.GetPointData()
+            n = point_data.GetNumberOfArrays()
+            for i in range(n):
+                if point_data.GetArrayName(i) == "Minimum_Curvature":
+                    min_curvatures = point_data.GetArray(i)
+                elif point_data.GetArrayName(i) == "Maximum_Curvature":
+                    max_curvatures = point_data.GetArray(i)
+                elif point_data.GetArrayName(i) == "Gauss_Curvature":
+                    gauss_curvatures = point_data.GetArray(i)
+                elif point_data.GetArrayName(i) == "Mean_Curvature":
+                    mean_curvatures = point_data.GetArray(i)
 
         # 2. Add each triangle cell as a vertex to the graph. Ignore the
         # non-triangle cells and cell with area equal to zero.
@@ -1250,22 +1254,6 @@ class TriangleGraph(SurfaceGraph):
             if reverse_normals:
                 normal *= -1
 
-            # Get the min, max, Gaussian and mean curvatures (calculated by
-            # VTK) for each of 3 points of the triangle i and calculate the
-            # average curvatures:
-            avg_min_curvature = np.average(
-                [min_curvatures.GetTuple1(
-                    cell.GetPointId(j)) for j in range(0, 3)])
-            avg_max_curvature = np.average(
-                [max_curvatures.GetTuple1(
-                    cell.GetPointId(j)) for j in range(0, 3)])
-            avg_gauss_curvature = np.average(
-                [gauss_curvatures.GetTuple1(
-                    cell.GetPointId(j)) for j in range(0, 3)])
-            avg_mean_curvature = np.average(
-                [mean_curvatures.GetTuple1(
-                    cell.GetPointId(j)) for j in range(0, 3)])
-
             # Add the centroid as vertex to the graph, setting its properties:
             vd = self.graph.add_vertex()  # vertex descriptor
             vd_id = self.graph.vertex_index[vd]
@@ -1273,22 +1261,36 @@ class TriangleGraph(SurfaceGraph):
             self.coordinates_to_vertex_index[tuple(center_xyz)] = vd_id
             self.graph.vp.area[vd] = area
             self.graph.vp.normal[vd] = normal
-            self.graph.vp.min_curvature[vd] = avg_min_curvature
-            self.graph.vp.max_curvature[vd] = avg_max_curvature
-            self.graph.vp.gauss_curvature[vd] = avg_gauss_curvature
-            self.graph.vp.mean_curvature[vd] = avg_mean_curvature
             self.graph.vp.points[vd] = points_xyz
+
+            if vtk:
+                # Get the min, max, Gaussian and mean curvatures (calculated by
+                # VTK) for each of 3 points of the triangle i and calculate the
+                # average curvatures:
+                avg_min_curvature = np.average(
+                    [min_curvatures.GetTuple1(
+                        cell.GetPointId(j)) for j in range(0, 3)])
+                avg_max_curvature = np.average(
+                    [max_curvatures.GetTuple1(
+                        cell.GetPointId(j)) for j in range(0, 3)])
+                avg_gauss_curvature = np.average(
+                    [gauss_curvatures.GetTuple1(
+                        cell.GetPointId(j)) for j in range(0, 3)])
+                avg_mean_curvature = np.average(
+                    [mean_curvatures.GetTuple1(
+                        cell.GetPointId(j)) for j in range(0, 3)])
+                # Add the properties to the graph vertex:
+                self.graph.vp.min_curvature[vd] = avg_min_curvature
+                self.graph.vp.max_curvature[vd] = avg_max_curvature
+                self.graph.vp.gauss_curvature[vd] = avg_gauss_curvature
+                self.graph.vp.mean_curvature[vd] = avg_mean_curvature
 
             if verbose:
                 print('\tThe triangle centroid {} has been added to the graph '
                       'as a vertex. Triangle area = {}, normal = {},\n'
-                      'average minimal curvature = {},'
-                      'average maximal curvature = {}, points = {}.'.format(
+                      'points = {}.'.format(
                        self.graph.vp.xyz[vd], self.graph.vp.area[vd],
-                       self.graph.vp.normal[vd],
-                       self.graph.vp.min_curvature[vd],
-                       self.graph.vp.max_curvature[vd],
-                       self.graph.vp.points[vd]))
+                       self.graph.vp.normal[vd], self.graph.vp.points[vd]))
 
             self.triangle_cell_ids[cell_id] = vd_id
 
