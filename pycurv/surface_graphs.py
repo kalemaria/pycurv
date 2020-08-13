@@ -1129,8 +1129,9 @@ class TriangleGraph(SurfaceGraph):
         """dict: a dictionary of all added triangle cell indices, mapping them
         to their graph vertex indices"""
 
-    def build_graph_from_vtk_surface(self, surface, scale=(1, 1, 1), vtk=True,
-                                     verbose=False, reverse_normals=False):
+    def build_graph_from_vtk_surface(
+            self, surface, scale=(1, 1, 1), vtk_curv=True, verbose=False,
+            reverse_normals=False):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
         given units according to the scale factor.
@@ -1145,8 +1146,8 @@ class TriangleGraph(SurfaceGraph):
                 generated from the segmentation in voxels
             scale (tuple, optional): pixel size (X, Y, Z) in given units for
                 scaling the surface and the graph (default (1, 1, 1))
-            vtk (boolean, optional): if True (default), add VTK curvatures at
-                each triangle center by averaging the values at the three
+            vtk_curv (boolean, optional): if True (default), add VTK curvatures
+                at each triangle center by averaging the values at the three
                 triangle vertices. Setting this option to False can save time
                 for big surfaces, if VTK comparison is not needed.
             verbose (boolean, optional): if True (default False), some extra
@@ -1174,7 +1175,7 @@ class TriangleGraph(SurfaceGraph):
         max_curvatures = None
         gauss_curvatures = None
         mean_curvatures = None
-        if vtk:
+        if vtk_curv:
             # Adding curvatures to the vtkPolyData surface
             # because VTK and we (gen_surface) have the opposite normal
             # convention: VTK outwards pointing normals, we: inwards pointing
@@ -1263,7 +1264,7 @@ class TriangleGraph(SurfaceGraph):
             self.graph.vp.normal[vd] = normal
             self.graph.vp.points[vd] = points_xyz
 
-            if vtk:
+            if vtk_curv:
                 # Get the min, max, Gaussian and mean curvatures (calculated by
                 # VTK) for each of 3 points of the triangle i and calculate the
                 # average curvatures:
