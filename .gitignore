@@ -15,4 +15,5 @@ pycurv_scripts/filter_output.sh
 experimental_data_sets/Golgi_and_vesicles/*/intermediate_files
 experimental_data_sets/Golgi_and_vesicles/*/regions_files
 experimental_data_sets/Golgi_and_vesicles/Vesicles/whole_seg/
+experimental_data_sets/Golgi_and_vesicles/Vesicles/faster_tg/
 experimental_data_sets/plotting_organelles_curvature/.ipynb_checkpoints
