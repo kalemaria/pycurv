@@ -34,7 +34,7 @@ for the following analyses:
   Estimation of membrane curvature using our several tensor voting-based methods
   based on (Page et al. 2002, Graphical Models) and (Tong and Tang 2005, IEEE
   Transactions on Pattern Analysis and Machine Intelligence), details available
-  in the pre-print (\ `Kalemanov et al. 2019, bioRxiv <https://www.biorxiv.org/content/10.1101/579060v1.full>`_\ ).
+  in (\ `Salfer et al. 2020, PLoS Computational biology <https://doi.org/10.1371/journal.pcbi.1007962>`_\ ).
   The workflow consists of the following three main steps:
 
 
@@ -110,8 +110,12 @@ Some experimental data can be found here:
 
 * vesicle: membrane segmentation of a vesicle from a cryo-electron tomogram
   (Bäuerlein et al. 2017)
-* vesicle: compartment segmentation of a cortical ER membrane from a
-  cryo-electron tomogram (Collado et al. 2019)
+* ER: compartment segmentation of a cortical ER membrane from a
+  cryo-electron tomogram (Collado et al. 2019), deposited in EM Data Bank
+  (EMD-10765)
+* Golgi and vesicles: compartment segmentations of the Golgi apparatus and
+  Golgi-derived vesicles from a cryo-electron tomogram, deposited in EM Data
+  Bank (EMD-10766)
 * embryo: surfaces of C. elegans embryo cells imaged by confocal light
   microscopy and segmented by LimeSeg (Machado et al., BMC Bioinformatics 2019)
 * brain: cortical pial surfaces of both human brain hemispheres imaged by MRI
@@ -125,15 +129,16 @@ calculated by VTK):
 
 * vesicle: AVV
 * ER: AVV, SSVV and Mindboggle
+* Golgi and vesicles: AVV
 * embryo: AVV
 * brain: AVV, Mindboggle, FreeSurfer
 
 Installing PyCurv
 =================
 
-Please note that PyCurv depends on one not publicly available Python package,
-pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
-has to be requested from its author, Dr. Vladan Lučić.
+Please note that PyCurv depends on a publicly available Python package,
+Pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
+can be found `here <https://github.com/vladanl/Pyto>`_.
 
 Installation instructions with anaconda
 ---------------------------------------
@@ -187,8 +192,9 @@ they should work on other Linux-based systems.
       export PATH=<your_anaconda_path>/bin:$PATH
 
 #. 
-   Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
-   DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in your ``~/.bashrc``\ :
+   Add the path to the `Pyto <https://github.com/vladanl/Pyto>`_ package to PYTHONPATH in your ``~/.bashrc``
+   (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
+   https://docs.python.org/3.6/tutorial/modules.html):
 
    .. code-block::
 
@@ -239,10 +245,7 @@ Ubuntu 18.04 has ``python3`` version 3.6.7 preinstalled.
    anaconda python.
 
 #. 
-   Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
-   DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
-   (See https://stackoverflow.com/questions/19917492/how-to-use-pythonpath and
-   https://docs.python.org/3.6/tutorial/modules.html)
+   Add the path to the `Pyto <https://github.com/vladanl/Pyto>`_ package to PYTHONPATH in bashrc.
 
 #. 
    Install `pip3 <https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/>`_
@@ -631,3 +634,10 @@ Reporting bugs
 
 If you have found a bug or have an issue with the software, please open an issue
 `here <https://github.com/kalemaria/pycurv/issues>`_.
+
+Citing PyCurv
+=============
+
+If you have used PyCurv for a scientific work, please cite the publication
+"Reliable estimation of membrane curvature for cryo-electron tomography"
+(\ `Salfer et al. 2020, PLoS Computational biology <https://doi.org/10.1371/journal.pcbi.1007962>`_\ ).

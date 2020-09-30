@@ -409,8 +409,7 @@ floats of length 3 (x2, y2, z2)</p></li>
 <dd><p>Finds geodesic neighbor vertices of a given vertex v in the graph that
 are within a given maximal geodesic distance g_max from it.</p>
 <p>Also finds the corresponding geodesic distances. All edges are
-considered. The distances are calculated with a breadth-first search
-(BFS) or Dijkstra’s algorithm.</p>
+considered. The distances are calculated with Dijkstra’s algorithm.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -1095,7 +1094,7 @@ the cubical cells that compose the data set, default [1, 1, 1]</p></li>
 
 <dl class="function">
 <dt id="pycurv.pycurv_io.poly_array_to_volume">
-<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">poly_array_to_volume</code><span class="sig-paren">(</span><em class="sig-param">poly</em>, <em class="sig-param">array_name</em>, <em class="sig-param">scale</em>, <em class="sig-param">size</em>, <em class="sig-param">logfilename=None</em>, <em class="sig-param">mean=False</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.poly_array_to_volume" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv.pycurv_io.</code><code class="sig-name descname">poly_array_to_volume</code><span class="sig-paren">(</span><em class="sig-param">poly</em>, <em class="sig-param">array_name</em>, <em class="sig-param">size</em>, <em class="sig-param">logfilename=None</em>, <em class="sig-param">mean=False</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.pycurv_io.poly_array_to_volume" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts a triangle-cell data array of the given vtkPolyData to a 3D array
 of size like the underlying segmentation.</p>
 <p>Initializes a 3D matrix of size like the segmentation with zeros, calculates
@@ -1110,8 +1109,6 @@ the value list into a file.</p>
 <li><p><strong>poly</strong> (<em>vtk.vtkPolyData</em>) – a vtkPolyData object with triangle-cells.</p></li>
 <li><p><strong>array_name</strong> (<em>str</em>) – name of the desired cell data array of the vtkPolyData
 object</p></li>
-<li><p><strong>scale</strong> (<em>tuple</em>) – pixel size (X, Y, Z) in given units that was used for
-scaling the graph</p></li>
 <li><p><strong>size</strong> (<em>tuple</em>) – (X, Y, Z) length in pixels of the segmentation</p></li>
 <li><p><strong>logfilename</strong> (<em>str</em><em>, </em><em>optional</em>) – specifies an output log file path (default
 None) for listing voxel coordinates with multiple values mapping to
@@ -2002,10 +1999,7 @@ preferred orientation</p>
 </dd>
 </dl>
 <p>estimated normal “n_v” (3x1 array) if class is 1, otherwise zeros
-the estimated_tangent “t_v” (3x1 array) if class is 2, otherwise</p>
-<blockquote>
-<div><p>zeros</p>
-</div></blockquote>
+estimated tangent “t_v” (3x1 array) if class is 2, otherwise zeros</p>
 </p>
 </dd>
 <dt class="field-odd">Return type</dt>
@@ -2046,10 +2040,7 @@ preferred orientation</p>
 </dd>
 </dl>
 <p>estimated normal “n_v” (3x1 array) if class is 1, otherwise zeros
-the estimated_tangent “t_v” (3x1 array) if class is 2, otherwise</p>
-<blockquote>
-<div><p>zeros</p>
-</div></blockquote>
+estimated_tangent “t_v” (3x1 array) if class is 2, otherwise zeros</p>
 </p>
 </dd>
 <dt class="field-odd">Return type</dt>
@@ -2129,7 +2120,7 @@ neighbor belonging to a surface patch</p>
 segmentation that will be used to build the graph.</p>
 <dl class="method">
 <dt id="pycurv.surface_graphs.TriangleGraph.build_graph_from_vtk_surface">
-<code class="sig-name descname">build_graph_from_vtk_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">scale=(1</em>, <em class="sig-param">1</em>, <em class="sig-param">1)</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">reverse_normals=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.build_graph_from_vtk_surface" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">build_graph_from_vtk_surface</code><span class="sig-paren">(</span><em class="sig-param">surface</em>, <em class="sig-param">scale=(1</em>, <em class="sig-param">1</em>, <em class="sig-param">1)</em>, <em class="sig-param">vtk_curv=True</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">reverse_normals=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.build_graph_from_vtk_surface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds the graph from the vtkPolyData surface, which is rescaled to
 given units according to the scale factor.</p>
 <p>Every vertex of the graph represents the center of a surface triangle,
@@ -2143,6 +2134,10 @@ triangle edges and a “weak” edge if they share only one edge.</p>
 generated from the segmentation in voxels</p></li>
 <li><p><strong>scale</strong> (<em>tuple</em><em>, </em><em>optional</em>) – pixel size (X, Y, Z) in given units for
 scaling the surface and the graph (default (1, 1, 1))</p></li>
+<li><p><strong>vtk_curv</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), add VTK curvatures
+at each triangle center by averaging the values at the three
+triangle vertices. Setting this option to False can save time
+for big surfaces, if VTK comparison is not needed.</p></li>
 <li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
 information will be printed out</p></li>
 <li><p><strong>reverse_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), the
@@ -2363,8 +2358,13 @@ triangle-cell indices sharing this point.</p>
 <dl class="attribute">
 <dt id="pycurv.surface_graphs.TriangleGraph.triangle_cell_ids">
 <code class="sig-name descname">triangle_cell_ids</code><em class="property"> = None</em><a class="headerlink" href="#pycurv.surface_graphs.TriangleGraph.triangle_cell_ids" title="Permalink to this definition">¶</a></dt>
-<dd><p>a list of all added triangle cell indices, whose indices correspond
-to graph vertex indices</p>
+<dd><p>a dictionary of all added triangle cell indices, mapping them
+to their graph vertex indices</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -2405,7 +2405,7 @@ shape as the segmentation but contains one region</p>
 <span id="pycurv-vector-voting-module"></span><h2>pycurv.vector_voting module<a class="headerlink" href="#module-pycurv.vector_voting" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pycurv.vector_voting.curvature_estimation">
-<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">curvature_estimation</code><span class="sig-paren">(</span><em class="sig-param">radius_hit</em>, <em class="sig-param">graph_file='temp.gt'</em>, <em class="sig-param">method='VV'</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">area2=True</em>, <em class="sig-param">poly_surf=None</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em>, <em class="sig-param">runtimes=''</em>, <em class="sig-param">vertex_based=False</em>, <em class="sig-param">sg=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.curvature_estimation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">curvature_estimation</code><span class="sig-paren">(</span><em class="sig-param">radius_hit</em>, <em class="sig-param">graph_file='temp.gt'</em>, <em class="sig-param">method='VV'</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">area2=True</em>, <em class="sig-param">poly_surf=None</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=10</em>, <em class="sig-param">runtimes=''</em>, <em class="sig-param">vertex_based=False</em>, <em class="sig-param">sg=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.curvature_estimation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs the second pass of the modified Normal Vector Voting algorithm with
 the given method to estimate principle curvatures and directions for a
 surface using its triangle graph (third and the last part used by
@@ -2433,7 +2433,7 @@ calculated for the whole graph (not possible for vertex-based
 approach), otherwise a local distance map is calculated later for
 each vertex (default)</p></li>
 <li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV (collect_curvature_votes and
-estimate_curvature) in parallel (default 6)</p></li>
+estimate_curvature) in parallel (default 10)</p></li>
 <li><p><strong>runtimes</strong> (<em>str</em>) – if given, runtimes and some parameters are added to
 this file (default ‘’)</p></li>
 <li><p><strong>vertex_based</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), curvature is
@@ -2452,7 +2452,7 @@ estimated normals or tangents, principle curvatures and directions</p>
 
 <dl class="function">
 <dt id="pycurv.vector_voting.normals_directions_and_curvature_estimation">
-<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">normals_directions_and_curvature_estimation</code><span class="sig-paren">(</span><em class="sig-param">sg, radius_hit, epsilon=0, eta=0, methods=['VV'], page_curvature_formula=False, full_dist_map=False, graph_file='temp.gt', area2=True, only_normals=False, poly_surf=None, cores=6, runtimes=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.normals_directions_and_curvature_estimation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">normals_directions_and_curvature_estimation</code><span class="sig-paren">(</span><em class="sig-param">sg, radius_hit, epsilon=0, eta=0, methods=['VV'], page_curvature_formula=False, full_dist_map=False, graph_file='temp.gt', area2=True, only_normals=False, poly_surf=None, cores=10, runtimes=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.normals_directions_and_curvature_estimation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs the modified Normal Vector Voting algorithm (with different options for
 the second pass) to estimate surface orientation, principle curvatures and
 directions for a surface using its triangle graph.</p>
@@ -2491,7 +2491,7 @@ graph with the orientations, normals or tangents is returned.</p></li>
 <li><p><strong>poly_surf</strong> (<em>vtkPolyData</em><em>, </em><em>optional</em>) – surface from which the graph was
 generated, scaled to given units (required only for SSVV, default
 None)</p></li>
-<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 10)</p></li>
 <li><p><strong>runtimes</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, runtimes and some parameters are
 added to this file (default ‘’)</p></li>
 </ul>
@@ -2515,7 +2515,7 @@ as “surface patch” (class 1).</p></li>
 
 <dl class="function">
 <dt id="pycurv.vector_voting.normals_estimation">
-<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">normals_estimation</code><span class="sig-paren">(</span><em class="sig-param">sg</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">epsilon=0</em>, <em class="sig-param">eta=0</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em>, <em class="sig-param">runtimes=''</em>, <em class="sig-param">graph_file='temp.gt'</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.normals_estimation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv.vector_voting.</code><code class="sig-name descname">normals_estimation</code><span class="sig-paren">(</span><em class="sig-param">sg</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">epsilon=0</em>, <em class="sig-param">eta=0</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=10</em>, <em class="sig-param">runtimes=''</em>, <em class="sig-param">graph_file='temp.gt'</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv.vector_voting.normals_estimation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs the modified Normal Vector Voting algorithm to estimate surface
 orientation (classification in surface patch with normal, crease junction
 with tangent or no preferred orientation) for a surface using its graph.</p>
@@ -2543,7 +2543,7 @@ calculated for the whole graph (not possible for PointGraph),
 otherwise a local distance map is calculated later for each vertex
 (default)</p></li>
 <li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV (collect_normal_votes
-and estimate_normal) in parallel (default 6)</p></li>
+and estimate_normal) in parallel (default 10)</p></li>
 <li><p><strong>runtimes</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, runtimes and some parameters are
 added to this file (default ‘’)</p></li>
 <li><p><strong>graph_file</strong> (<em>str</em><em>, </em><em>optional</em>) – file path to save the graph, default file
@@ -2622,7 +2622,7 @@ cryo-electron tomograms or other volumetric data sources.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2017, Maria Kalemanov, Antonio Martinez-Sanchez.
+      &copy;2017, Maria Salfer, Antonio Martinez-Sanchez.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>

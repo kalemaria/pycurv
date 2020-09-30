@@ -270,7 +270,7 @@ as a file under this path</p></li>
 ticks on X axis</p></li>
 <li><p><strong>zorders</strong> (<em>list</em><em>, </em><em>optional</em>) – list of integers indicating the order of data
 lines on the plot</p></li>
-<li><p><strong>fontsize</strong> (<em>int</em><em>, </em><em>optional</em>) – fontsize (default 30)</p></li>
+<li><p><strong>fontsize</strong> (<em>int</em><em>, </em><em>optional</em>) – title fontsize (default 30)</p></li>
 <li><p><strong>ncol</strong> (<em>int</em><em>, </em><em>optional</em>) – number of legend columns (default 1)</p></li>
 </ul>
 </dd>
@@ -1678,7 +1678,7 @@ correct.</p>
 
 <dl class="function">
 <dt id="pycurv_testing.test_vector_voting.run_cylinder_with_creases">
-<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">run_cylinder_with_creases</code><span class="sig-paren">(</span><em class="sig-param">radius_hit</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">epsilon</em>, <em class="sig-param">eta</em>, <em class="sig-param">radius=10</em>, <em class="sig-param">h=25</em>, <em class="sig-param">res=10</em>, <em class="sig-param">subdivisions=3</em>, <em class="sig-param">max_edge=0</em>, <em class="sig-param">max_area=0</em>, <em class="sig-param">decimate=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.run_cylinder_with_creases" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">run_cylinder_with_creases</code><span class="sig-paren">(</span><em class="sig-param">radius_hit</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">epsilon</em>, <em class="sig-param">eta</em>, <em class="sig-param">radius=10</em>, <em class="sig-param">h=25</em>, <em class="sig-param">res=10</em>, <em class="sig-param">subdivisions=3</em>, <em class="sig-param">max_edge=0</em>, <em class="sig-param">max_area=0</em>, <em class="sig-param">decimate=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.run_cylinder_with_creases" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tests whether surface is correctly classified for a cylinder surface with
 circular planes and that neighborhood search does not go over the creases
 for curvature estimation step, using normal vector voting (VV) or VV
@@ -1726,7 +1726,7 @@ collect_curvature_votes)</p></li>
 <li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
 calculated for the whole graph, otherwise a local distance map
 is calculated for each vertex (default)</p></li>
-<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 10)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1761,7 +1761,7 @@ is built instead of a TriangleGraph.</p></li>
 
 <dl class="function">
 <dt id="pycurv_testing.test_vector_voting.test_cylinder_directions_curvatures">
-<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">test_cylinder_directions_curvatures</code><span class="sig-paren">(</span><em class="sig-param">radius</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">eb</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">voxel</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">res=0</em>, <em class="sig-param">h=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.test_cylinder_directions_curvatures" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">test_cylinder_directions_curvatures</code><span class="sig-paren">(</span><em class="sig-param">radius</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">eb</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">voxel</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">res=0</em>, <em class="sig-param">h=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.test_cylinder_directions_curvatures" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tests whether minimal principal directions (t_2), as well as minimal and
 maximal principal curvatures are correctly estimated for an opened
 cylinder surface (without the circular planes) with known
@@ -1807,7 +1807,7 @@ collect_curvature_votes)</p></li>
 <li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
 calculated for the whole graph, otherwise a local distance map
 is calculated for each vertex (default)</p></li>
-<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 10)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -1848,7 +1848,7 @@ vertex instead of triangle center</p></li>
 
 <dl class="function">
 <dt id="pycurv_testing.test_vector_voting.test_sphere_curvatures">
-<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">test_sphere_curvatures</code><span class="sig-paren">(</span><em class="sig-param">radius</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">voxel</em>, <em class="sig-param">ico</em>, <em class="sig-param">runtimes</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">res=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">save_areas=False</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.test_sphere_curvatures" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_testing.test_vector_voting.</code><code class="sig-name descname">test_sphere_curvatures</code><span class="sig-paren">(</span><em class="sig-param">radius</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">inverse</em>, <em class="sig-param">methods</em>, <em class="sig-param">area2</em>, <em class="sig-param">voxel</em>, <em class="sig-param">ico</em>, <em class="sig-param">runtimes</em>, <em class="sig-param">vertex_based</em>, <em class="sig-param">res=0</em>, <em class="sig-param">noise=0</em>, <em class="sig-param">save_areas=False</em>, <em class="sig-param">page_curvature_formula=False</em>, <em class="sig-param">full_dist_map=False</em>, <em class="sig-param">cores=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_testing.test_vector_voting.test_sphere_curvatures" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs all the steps needed to calculate curvatures for a test sphere with a
 given radius. Tests whether the curvatures are correctly estimated using
 normal vector voting (VV), VV combined with curvature tensor voting (SSVV).
@@ -1893,7 +1893,7 @@ collect_curvature_votes)</p></li>
 <li><p><strong>full_dist_map</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True, a full distance map is
 calculated for the whole graph, otherwise a local distance map
 is calculated for each vertex (default)</p></li>
-<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em>) – number of cores to run VV in parallel (default 10)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -2084,7 +2084,7 @@ neighborhood parameter
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2017, Maria Kalemanov, Antonio Martinez-Sanchez.
+      &copy;2017, Maria Salfer, Antonio Martinez-Sanchez.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>

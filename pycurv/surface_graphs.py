@@ -83,8 +83,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 2 if it belongs to a crease junction or 3 if it doesn't have a
                 preferred orientation
             estimated normal "n_v" (3x1 array) if class is 1, otherwise zeros
-            the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
-                zeros
+            estimated tangent "t_v" (3x1 array) if class is 2, otherwise zeros
 
         Notes:
             If epsilon = 0 and eta = 0, all triangles will be classified as
@@ -403,8 +402,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
                 2 if it belongs to a crease junction or 3 if it doesn't have a
                 preferred orientation
             estimated normal "n_v" (3x1 array) if class is 1, otherwise zeros
-            the estimated_tangent "t_v" (3x1 array) if class is 2, otherwise
-                zeros
+            estimated_tangent "t_v" (3x1 array) if class is 2, otherwise zeros
         """
         if self.__class__.__name__ == 'TriangleGraph':
             num_neighbors, V_v = self.collect_normal_votes(

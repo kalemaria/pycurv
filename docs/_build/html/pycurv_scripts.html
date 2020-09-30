@@ -42,7 +42,7 @@
 <span id="pycurv-scripts-curvature-calculation-module"></span><h2>pycurv_scripts.curvature_calculation module<a class="headerlink" href="#module-pycurv_scripts.curvature_calculation" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="pycurv_scripts.curvature_calculation.calculate_PM_curvatures">
-<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">calculate_PM_curvatures</code><span class="sig-paren">(</span><em class="sig-param">fold</em>, <em class="sig-param">base_filename</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.calculate_PM_curvatures" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">calculate_PM_curvatures</code><span class="sig-paren">(</span><em class="sig-param">fold</em>, <em class="sig-param">base_filename</em>, <em class="sig-param">radius_hit</em>, <em class="sig-param">cores=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.calculate_PM_curvatures" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates plasma membrane curvatures with AVV using a pre-calculated
 estimated normals file.</p>
 <dl class="field-list simple">
@@ -54,7 +54,7 @@ output will be written</p></li>
 <li><p><strong>radius_hit</strong> (<em>float</em>) – radius in length unit of the graph, e.g. nanometers;
 it should be chosen to correspond to radius of smallest features of
 interest on the surface</p></li>
-<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 10)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -129,7 +129,7 @@ without creating VTP and GT files, if exclude_borders &gt; 0.</p></li>
 
 <dl class="function">
 <dt id="pycurv_scripts.curvature_calculation.from_nii_workflow">
-<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_nii_workflow</code><span class="sig-paren">(</span><em class="sig-param">nii_file, outfold, radius_hit, page_curvature_formula=False, methods=['VV'], area2=True, cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_nii_workflow" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_nii_workflow</code><span class="sig-paren">(</span><em class="sig-param">nii_file, outfold, radius_hit, page_curvature_formula=False, methods=['VV'], area2=True, cores=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_nii_workflow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extracts surface for every label &gt; 0 in the segmentation in NII format,
 after applying a Gaussian filter with sigma of 1.
 For each surface, estimates curvature for each triangle in a triangle mesh.</p>
@@ -149,7 +149,7 @@ and ‘SSVV’ are possible, default is ‘VV’)</p></li>
 <li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
 triangle area also in the second step (principle directions and
 curvatures estimation)</p></li>
-<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 10)</p></li>
 <li><p><strong>Returns</strong> – None</p></li>
 </ul>
 </dd>
@@ -158,7 +158,7 @@ curvatures estimation)</p></li>
 
 <dl class="function">
 <dt id="pycurv_scripts.curvature_calculation.from_ply_workflow">
-<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_ply_workflow</code><span class="sig-paren">(</span><em class="sig-param">ply_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False, methods=['VV'], area2=True, cores=6</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_ply_workflow" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_ply_workflow</code><span class="sig-paren">(</span><em class="sig-param">ply_file, radius_hit, scale=(1, 1, 1), page_curvature_formula=False, methods=['VV'], area2=True, cores=10</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_ply_workflow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimates curvature for each triangle in a triangle mesh in PLY format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -177,7 +177,7 @@ and ‘SSVV’ are possible, default is ‘VV’)</p></li>
 <li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
 triangle area also in the second step (principle directions and
 curvatures estimation)</p></li>
-<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 10)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -188,7 +188,7 @@ curvatures estimation)</p></li>
 
 <dl class="function">
 <dt id="pycurv_scripts.curvature_calculation.from_vtk_workflow">
-<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_vtk_workflow</code><span class="sig-paren">(</span><em class="sig-param">vtk_file, radius_hit, vertex_based, epsilon, eta, scale=(1, 1, 1), page_curvature_formula=False, methods=['VV'], area2=True, cores=6, reverse_normals=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_vtk_workflow" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">from_vtk_workflow</code><span class="sig-paren">(</span><em class="sig-param">vtk_file, radius_hit, vertex_based, epsilon, eta, scale=(1, 1, 1), page_curvature_formula=False, methods=['VV'], area2=True, cores=10, reverse_normals=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.from_vtk_workflow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimates curvature for each triangle in a triangle mesh in VTK format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -214,7 +214,7 @@ and ‘SSVV’ are possible, default is ‘VV’)</p></li>
 <li><p><strong>area2</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default), votes are weighted by
 triangle area also in the second step (principle directions and
 curvatures estimation; not possible if vertex_based is True)</p></li>
-<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 10)</p></li>
 <li><p><strong>reverse_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), original
 surface normals will be reversed</p></li>
 <li><p><strong>Returns</strong> – None</p></li>
@@ -342,7 +342,7 @@ surface (default)</p></li>
 
 <dl class="function">
 <dt id="pycurv_scripts.curvature_calculation.new_workflow">
-<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">new_workflow</code><span class="sig-paren">(</span><em class="sig-param">base_filename, seg_file, fold, pixel_size, radius_hit, methods=['VV'], page_curvature_formula=False, area2=True, label=1, filled_label=None, unfilled_mask=None, holes=0, remove_wrong_borders=True, min_component=100, only_normals=False, cores=6, runtimes=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.new_workflow" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_scripts.curvature_calculation.</code><code class="sig-name descname">new_workflow</code><span class="sig-paren">(</span><em class="sig-param">base_filename, seg_file, fold, pixel_size, radius_hit, methods=['VV'], page_curvature_formula=False, area2=True, label=1, filled_label=None, unfilled_mask=None, holes=0, remove_wrong_borders=True, min_component=100, only_normals=False, cores=10, runtimes=''</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.curvature_calculation.new_workflow" title="Permalink to this definition">¶</a></dt>
 <dd><p>A script for running all processing steps to estimate membrane curvature.</p>
 <p>The three steps are: 1. signed surface generation, 2. surface cleaning using
 a graph, 3. curvature calculation using a graph generated from the clean
@@ -390,7 +390,7 @@ will be removed</p></li>
 <li><p><strong>only_normals</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), only normals
 are estimated, without principal directions and curvatures, only the
 graph with the orientations class, normals or tangents is returned.</p></li>
-<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 6)</p></li>
+<li><p><strong>cores</strong> (<em>int</em><em>, </em><em>optional</em>) – number of cores to run VV in parallel (default 10)</p></li>
 <li><p><strong>runtimes</strong> (<em>str</em><em>, </em><em>optional</em>) – if given, runtimes and some parameters are
 added to this file (default ‘’)</p></li>
 </ul>
@@ -742,7 +742,7 @@ membrane segmentation mask was used.</p>
 
 <dl class="function">
 <dt id="pycurv_scripts.ribosome_density_calculation.run_build_graph_from_np_ndarray">
-<code class="sig-prename descclassname">pycurv_scripts.ribosome_density_calculation.</code><code class="sig-name descname">run_build_graph_from_np_ndarray</code><span class="sig-paren">(</span><em class="sig-param">mem_mask</em>, <em class="sig-param">mem_graph_file</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.ribosome_density_calculation.run_build_graph_from_np_ndarray" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pycurv_scripts.ribosome_density_calculation.</code><code class="sig-name descname">run_build_graph_from_np_ndarray</code><span class="sig-paren">(</span><em class="sig-param">mem_mask</em>, <em class="sig-param">mem_graph_file</em>, <em class="sig-param">scale_factor_to_nm</em>, <em class="sig-param">verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#pycurv_scripts.ribosome_density_calculation.run_build_graph_from_np_ndarray" title="Permalink to this definition">¶</a></dt>
 <dd><p>Builds a graph from a membrane mask and writes the graph to a file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -752,6 +752,8 @@ segmenting the underlying tomogram into membrane (voxels with value
 1) and background (voxels with value 0)</p></li>
 <li><p><strong>mem_graph_file</strong> (<em>str</em>) – name for the output membrane graph file
 (preferably with ‘.gt’ or ‘.graphml’ extension)</p></li>
+<li><p><strong>scale_factor_to_nm</strong> (<em>float</em><em>, </em><em>optional</em>) – pixel size in nanometers, default
+1 (if no scaling to nanometers is desired)</p></li>
 <li><p><strong>verbose</strong> (<em>boolean</em><em>, </em><em>optional</em>) – if True (default False), some extra
 information will be printed out</p></li>
 </ul>
@@ -888,7 +890,7 @@ information will be printed out</p></li>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2017, Maria Kalemanov, Antonio Martinez-Sanchez.
+      &copy;2017, Maria Salfer, Antonio Martinez-Sanchez.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>

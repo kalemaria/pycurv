@@ -57,7 +57,7 @@ for the following analyses:</p>
 <li><p>Estimation of membrane curvature using our several tensor voting-based methods
 based on (Page et al. 2002, Graphical Models) and (Tong and Tang 2005, IEEE
 Transactions on Pattern Analysis and Machine Intelligence), details available
-in the pre-print (<a class="reference external" href="https://www.biorxiv.org/content/10.1101/579060v1.full">Kalemanov et al. 2019, bioRxiv</a>).
+in (<a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007962">Salfer et al. 2020, PLoS Computational biology</a>).
 The workflow consists of the following three main steps:</p>
 <ol class="arabic simple">
 <li><p>signed surface generation from a segmentation</p></li>
@@ -124,8 +124,12 @@ and the test surfaces, e.g. <code class="docutils literal notranslate"><span cla
 <ul class="simple">
 <li><p>vesicle: membrane segmentation of a vesicle from a cryo-electron tomogram
 (Bäuerlein et al. 2017)</p></li>
-<li><p>vesicle: compartment segmentation of a cortical ER membrane from a
-cryo-electron tomogram (Collado et al. 2019)</p></li>
+<li><p>ER: compartment segmentation of a cortical ER membrane from a
+cryo-electron tomogram (Collado et al. 2019), deposited in EM Data Bank
+(EMD-10765)</p></li>
+<li><p>Golgi and vesicles: compartment segmentations of the Golgi apparatus and
+Golgi-derived vesicles from a cryo-electron tomogram, deposited in EM Data
+Bank (EMD-10766)</p></li>
 <li><p>embryo: surfaces of C. elegans embryo cells imaged by confocal light
 microscopy and segmented by LimeSeg (Machado et al., BMC Bioinformatics 2019)</p></li>
 <li><p>brain: cortical pial surfaces of both human brain hemispheres imaged by MRI
@@ -138,6 +142,7 @@ calculated by VTK):</p>
 <ul class="simple">
 <li><p>vesicle: AVV</p></li>
 <li><p>ER: AVV, SSVV and Mindboggle</p></li>
+<li><p>Golgi and vesicles: AVV</p></li>
 <li><p>embryo: AVV</p></li>
 <li><p>brain: AVV, Mindboggle, FreeSurfer</p></li>
 </ul>
@@ -145,9 +150,9 @@ calculated by VTK):</p>
 </div>
 <div class="section" id="installing-pycurv">
 <h1>Installing PyCurv<a class="headerlink" href="#installing-pycurv" title="Permalink to this headline">¶</a></h1>
-<p>Please note that PyCurv depends on one not publicly available Python package,
-pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
-has to be requested from its author, Dr. Vladan Lučić.</p>
+<p>Please note that PyCurv depends on a publicly available Python package,
+Pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
+can be found <a class="reference external" href="https://github.com/vladanl/Pyto">here</a>.</p>
 <div class="section" id="installation-instructions-with-anaconda">
 <h2>Installation instructions with anaconda<a class="headerlink" href="#installation-instructions-with-anaconda" title="Permalink to this headline">¶</a></h2>
 <p>The following instruction were tested on SUSE Linux Enterprise Server 12, but
@@ -190,8 +195,9 @@ bash shell, add it to PATH by adding the following line to your <code class="doc
 </pre></div>
 </div>
 </li>
-<li><p>Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
-DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code>:</p>
+<li><p>Add the path to the <a class="reference external" href="https://github.com/vladanl/Pyto">Pyto</a> package to PYTHONPATH in your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code>
+(See <a class="reference external" href="https://stackoverflow.com/questions/19917492/how-to-use-pythonpath">https://stackoverflow.com/questions/19917492/how-to-use-pythonpath</a> and
+<a class="reference external" href="https://docs.python.org/3.6/tutorial/modules.html">https://docs.python.org/3.6/tutorial/modules.html</a>):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PYTHONPATH=&lt;your_path_to_pyto&gt;:$PYTHONPATH
 </pre></div>
 </div>
@@ -230,10 +236,7 @@ for Ubuntu according to <a class="reference external" href="https://git.skewed.d
 <p>Unfortunately, this installation of the graph-tool package does not work with
 anaconda python.</p>
 </li>
-<li><p>Add the path to the pyto package (Lučić et al., 2016, PMID: 27742578,
-DOI: 10.1016/j.jsb.2016.10.004) to PYTHONPATH in bashrc.
-(See <a class="reference external" href="https://stackoverflow.com/questions/19917492/how-to-use-pythonpath">https://stackoverflow.com/questions/19917492/how-to-use-pythonpath</a> and
-<a class="reference external" href="https://docs.python.org/3.6/tutorial/modules.html">https://docs.python.org/3.6/tutorial/modules.html</a>)</p></li>
+<li><p>Add the path to the <a class="reference external" href="https://github.com/vladanl/Pyto">Pyto</a> package to PYTHONPATH in bashrc.</p></li>
 <li><p>Install <a class="reference external" href="https://linuxize.com/post/how-to-install-pip-on-ubuntu-18.04/">pip3</a>
 (includes setuptools), <a class="reference external" href="https://docs.python.org/3/library/venv.html">venv</a>
 (from Python version 3.3 on, recommended from version 3.5 on) in e.g.
@@ -543,6 +546,12 @@ excluding those within 1 nm to the surface border.</p>
 <h1>Reporting bugs<a class="headerlink" href="#reporting-bugs" title="Permalink to this headline">¶</a></h1>
 <p>If you have found a bug or have an issue with the software, please open an issue
 <a class="reference external" href="https://github.com/kalemaria/pycurv/issues">here</a>.</p>
+</div>
+<div class="section" id="citing-pycurv">
+<h1>Citing PyCurv<a class="headerlink" href="#citing-pycurv" title="Permalink to this headline">¶</a></h1>
+<p>If you have used PyCurv for a scientific work, please cite the publication
+“Reliable estimation of membrane curvature for cryo-electron tomography”
+(<a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1007962">Salfer et al. 2020, PLoS Computational biology</a>).</p>
 <div class="toctree-wrapper compound">
 </div>
 </div>
@@ -603,7 +612,7 @@ excluding those within 1 nm to the surface border.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &copy;2017, Maria Kalemanov, Antonio Martinez-Sanchez.
+      &copy;2017, Maria Salfer, Antonio Martinez-Sanchez.
       
       |
       Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
