@@ -28,7 +28,7 @@ for the following analyses:
   based on (Page et al. 2002, Graphical Models) and (Tong and Tang 2005, IEEE
   Transactions on Pattern Analysis and Machine Intelligence), details available
   in ([Salfer et al. 2020, PLoS Computational biology](https://doi.org/10.1371/journal.pcbi.1007962)).
-  The workflow consists of the following three main steps:
+  The workflow consists of the following main steps:
   1. signed surface generation from a segmentation
   2. surface graph generation and surface cleaning
   3. estimation of normal vectors of the true surface per triangle
