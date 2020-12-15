@@ -329,7 +329,7 @@ def extract_distances(
 
 def _extract_distances_from_graph(
         tg, csv_file, exclude_borders, name, gt_file=None, vtp_file=None):
-    # If don't want to include curvatures near borders, filter out those
+    # If don't want to include distances near borders, filter out those
     if exclude_borders > 0:
         tg.find_vertices_near_border(exclude_borders, purge=True)
 
@@ -341,11 +341,11 @@ def _extract_distances_from_graph(
         surf = tg.graph_to_triangle_poly()
         io.save_vtp(surf, vtp_file)
 
-    # Getting estimated principal curvatures from the output graph:
+    # Getting the distances and triangle areas from the output graph:
     distances = tg.get_vertex_property_array(name)
     triangle_areas = tg.get_vertex_property_array("area")
 
-    # Writing all the curvature values and errors into a csv file:
+    # Writing the distances and triangle areas into a csv file:
     df = pd.DataFrame()
     df[name] = distances
     df["triangleAreas"] = triangle_areas
