@@ -4,9 +4,9 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 7.24641752243042 s
-<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2baaaf3aaa50>
-Graph construction from surface took: 0.0 min 7.2524473667144775 s
+TriangleGraph generation took: 0.0 min 6.342411279678345 s
+<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2adad6f6d650>
+Graph construction from surface took: 0.0 min 6.392564296722412 s
 
 Preparing for running modified Vector Voting...
 radius_hit = 5
@@ -14,25 +14,25 @@ g_max = 7.853981633974483
 Maximal triangle area = 0.6480838017244903
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.0003631114959716797 s
+Preparation took: 0.0 min 0.0004169940948486328 s
 
 Running modified Vector Voting for all vertices...
 
 First pass: estimating normals...
 number of vertices: 3264
 Calling find_geodesic_neighbors
-Opened a pool with 6 processes
+Opened a pool with 10 processes
 Average number of geodesic neighbors for all vertices: 336.0526960784314
 3264 surface patches
-First pass took: 0.0 min 51.77746081352234 s
-Preparation took: 0.0 min 0.0006270408630371094 s
+First pass took: 0.0 min 37.17675232887268 s
+Preparation took: 0.0 min 0.0006406307220458984 s
 
 Second pass: estimating principle curvatures and directions for surface patches using RVV...
 3264 vertices to estimate curvature
 Calling find_geodesic_neighbors
-Opened a pool with 6 processes
-Second run of VV took: 1.0 min 14.714441299438477 s
-Whole method took: 2.0 min 6.496919631958008 s
+Opened a pool with 10 processes
+Second run of VV took: 0.0 min 48.26105713844299 s
+Whole method took: 1.0 min 25.44290590286255 s
 Finding vertices at the graph border...
 136 vertices are at the graph border.
 For each graph border vertex, finding vertices within geodesic distance 0 to it...
@@ -40,7 +40,7 @@ For each graph border vertex, finding vertices within geodesic distance 0 to it.
 Filtering out those vertices and their edges...
 
 Excluded triangles that are 0 to surface borders.
-<Graph object, undirected, with 3128 vertices and 18252 edges, edges filtered by (<EdgePropertyMap object with value type 'bool', for Graph 0x2baaaf3aaa50, at 0x2baaaedac9d0>, False), vertices filtered by (<VertexPropertyMap object with value type 'bool', for Graph 0x2baaaf3aaa50, at 0x2baaaf3aa090>, False) at 0x2baaaf3aaa50>
+<Graph object, undirected, with 3128 vertices and 18252 edges, edges filtered by (<EdgePropertyMap object with value type 'bool', for Graph 0x2adad6f6d650, at 0x2adad6e36f10>, False), vertices filtered by (<VertexPropertyMap object with value type 'bool', for Graph 0x2adad6f6d650, at 0x2adad6f6d750>, False) at 0x2adad6f6d650>
 
 Evaluating RVV...
 3128 "kappa_1" values
