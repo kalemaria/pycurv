@@ -35,7 +35,7 @@ for the following analyses:
   based on (Page et al. 2002, Graphical Models) and (Tong and Tang 2005, IEEE
   Transactions on Pattern Analysis and Machine Intelligence), details available
   in (\ `Salfer et al. 2020, PLoS Computational biology <https://doi.org/10.1371/journal.pcbi.1007962>`_\ ).
-  The workflow consists of the following three main steps:
+  The workflow consists of the following main steps:
 
 
   #. signed surface generation from a segmentation
@@ -166,12 +166,11 @@ they should work on other Linux-based systems.
       conda config --set allow_conda_downgrades true
       conda config --add channels pkgw-forge
       conda config --add channels conda-forge
-      conda config --add channels ostrokach-forge
 
       conda install -c pkgw-forge gtk3
       conda install -c conda-forge pygobject
       conda install -c conda-forge matplotlib
-      conda install -c ostrokach-forge graph-tool
+      conda install -c conda-forge/label/cf202003 graph-tool
 
       export PATH=$targetFold/bin:$PATH
 
