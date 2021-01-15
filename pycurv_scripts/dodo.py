@@ -474,6 +474,8 @@ def task_calculate_MitoNuc_distances():
     radius_hit = RADIUS_HIT
     mem1 = "Mito"
     mem2 = "Nuc"
+    lbl_between_mem1_mem2 = 3
+    pixel_size = 1.368
 
     fold_p = Path(fold)
     # iterate over all subfolders
@@ -494,7 +496,8 @@ def task_calculate_MitoNuc_distances():
                         'radius_hit': RADIUS_HIT,
                         'mem1': mem1,
                         'mem2': mem2,
-                        'lbl_between_mem1_mem2': 3,
+                        'lbl_between_mem1_mem2': lbl_between_mem1_mem2,
+                        'pixel_size': pixel_size,
                         'maxthick': 0
                     })
                 ],
