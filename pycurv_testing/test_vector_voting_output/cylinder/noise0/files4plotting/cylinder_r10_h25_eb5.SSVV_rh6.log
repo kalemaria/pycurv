@@ -4,9 +4,9 @@
 Reading in the surface file to get a vtkPolyData surface...
 
 Building the TriangleGraph from the vtkPolyData surface with curvatures...
-TriangleGraph generation took: 0.0 min 6.433626651763916 s
-<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2ada5b5fd850>
-Graph construction from surface took: 0.0 min 6.488929510116577 s
+TriangleGraph generation took: 0.0 min 10.43198013305664 s
+<Graph object, undirected, with 3264 vertices and 19068 edges at 0x2b89c0052690>
+Graph construction from surface took: 0.0 min 10.435397148132324 s
 
 Preparing for running modified Vector Voting...
 radius_hit = 6
@@ -14,7 +14,7 @@ g_max = 9.42477796076938
 Maximal triangle area = 0.6480838017244903
 epsilon = 0
 eta = 0
-Preparation took: 0.0 min 0.0007195472717285156 s
+Preparation took: 0.0 min 0.0015609264373779297 s
 
 Running modified Vector Voting for all vertices...
 
@@ -24,13 +24,13 @@ Calling find_geodesic_neighbors
 Opened a pool with 10 processes
 Average number of geodesic neighbors for all vertices: 470.6280637254902
 3264 surface patches
-First pass took: 0.0 min 48.51745343208313 s
-Preparation took: 0.0 min 0.00048041343688964844 s
+First pass took: 1.0 min 14.347962141036987 s
+Preparation took: 0.0 min 0.0006473064422607422 s
 
 Second pass: estimating principle curvatures and directions for surface patches using SSVV...
 3264 vertices to estimate curvature
-Second run of SSVV took: 0.0 min 6.421600103378296 s
-Whole method took: 0.0 min 54.941298961639404 s
+Second run of SSVV took: 0.0 min 6.726034164428711 s
+Whole method took: 1.0 min 21.0778329372406 s
 Finding vertices at the graph border...
 136 vertices are at the graph border.
 For each graph border vertex, finding vertices within geodesic distance 5 to it...
@@ -38,7 +38,7 @@ For each graph border vertex, finding vertices within geodesic distance 5 to it.
 Filtering out those vertices and their edges...
 
 Excluded triangles that are 5 to surface borders.
-<Graph object, undirected, with 1768 vertices and 10092 edges, edges filtered by (<EdgePropertyMap object with value type 'bool', for Graph 0x2ada5b5fd850, at 0x2adad5d08910>, False), vertices filtered by (<VertexPropertyMap object with value type 'bool', for Graph 0x2ada5b5fd850, at 0x2ada5b5fd950>, False) at 0x2ada5b5fd850>
+<Graph object, undirected, with 1768 vertices and 10092 edges, edges filtered by (<EdgePropertyMap object with value type 'bool', for Graph 0x2b89c0052690, at 0x2b89c01046d0>, False), vertices filtered by (<VertexPropertyMap object with value type 'bool', for Graph 0x2b89c0052690, at 0x2b89c0052790>, False) at 0x2b89c0052690>
 
 Evaluating SSVV...
 1768 "kappa_1" values
