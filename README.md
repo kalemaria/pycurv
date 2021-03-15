@@ -116,16 +116,17 @@ Please note that PyCurv depends on a publicly available Python package,
 Pyto (Lučić et al., 2016, PMID: 27742578, DOI: 10.1016/j.jsb.2016.10.004), it
 can be found [here](https://github.com/vladanl/Pyto).
 
-## Installation instructions with anaconda
+## Installation instructions with conda
 The following instruction were tested on SUSE Linux Enterprise Server 12, but
 they should work on other Linux-based systems.
 
-1. Install anaconda with [graph-tool](https://graph-tool.skewed.de/)
+1. Install miniconda (faster than anaconda, but some packages like jupyter notebook
+   are missing) with [graph-tool](https://graph-tool.skewed.de/)
    (Peixoto, 2014) and its dependencies:
    ```
-   targetFold=<your_anaconda_path>
-   wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
-   bash Anaconda3-2019.10-Linux-x86_64.sh -b -p $targetFold
+   targetFold=<your_conda_path>
+   wget https://repo.anaconda.com/miniconda/Miniconda3-4.7.10-Linux-x86_64.sh 
+   bash Miniconda3-4.7.10-Linux-x86_64.sh -b -p $targetFold
 
    export PATH=$targetFold/bin:$PATH
 
@@ -146,17 +147,17 @@ they should work on other Linux-based systems.
    ```
 
    From the same bash shell, `which python` should output
-   `<your_anaconda_path>/bin/python`.
+   `<your_conda_path>/bin/python`.
 
    You should be able to import `graph_tool` from a `python` or `ipython` shell:
    ```python
    from graph_tool.all import *
    ```
 
-   In order that your anaconda python is found every time you open a new
+   In order that your conda python is found every time you open a new
    bash shell, add it to PATH by adding the following line to your `~/.bashrc`:
    ```
-   export PATH=<your_anaconda_path>/bin:$PATH
+   export PATH=<your_conda_path>/bin:$PATH
    ```
 
 2. Add the path to the [Pyto](https://github.com/vladanl/Pyto) package to PYTHONPATH in your `~/.bashrc`
@@ -182,7 +183,7 @@ they should work on other Linux-based systems.
    You should be able to import `pycurv`, `pycurv_testing` and `pycurv_scripts`
    from a `python` or `ipython` shell.
 
-## Installation instructions without anaconda
+## Installation instructions without conda
 The following instruction were tested on Ubuntu 18.04, but the process should be
 equivalent for other Ubuntu versions. Ubuntu can be installed for free, also in
 a virtual machine on other operating systems (Windows or Mac).
@@ -196,7 +197,7 @@ Ubuntu 18.04 has `python3` version 3.6.7 preinstalled.
    apt-key adv --keyserver pgp.skewed.de --recv-key 612DEFB798507F25
    ```
    Unfortunately, this installation of the graph-tool package does not work with
-   anaconda python.
+   conda python.
 
 2. Add the path to the [Pyto](https://github.com/vladanl/Pyto) package to PYTHONPATH in bashrc.
 
