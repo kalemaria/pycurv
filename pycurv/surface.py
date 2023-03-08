@@ -241,9 +241,9 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
                         norm[2] = 0
                         pnorm = (i_x, i_y, 0)
                         p = (x, y, 0)
-                        dprod = dot_norm(np.asarray(p, dtype=np.float),
-                                         np.asarray(pnorm, dtype=np.float),
-                                         np.asarray(norm, dtype=np.float))
+                        dprod = dot_norm(np.asarray(p, dtype=np.float32),
+                                         np.asarray(pnorm, dtype=np.float32),
+                                         np.asarray(norm, dtype=np.float32))
                         tomod[x, y, z] = tomod[x, y, z] * np.sign(dprod)
         else:
             for x in range(nx):
@@ -258,9 +258,9 @@ def gen_surface(tomo, lbl=1, mask=True, other_mask=None, purge_ratio=1,
                         # norm[2] = hold_norm[2]
                         pnorm = (i_x, i_y, i_z)
                         p = (x, y, z)
-                        dprod = dot_norm(np.asarray(pnorm, dtype=np.float),
-                                         np.asarray(p, dtype=np.float),
-                                         np.asarray(norm, dtype=np.float))
+                        dprod = dot_norm(np.asarray(pnorm, dtype=np.float32),
+                                         np.asarray(p, dtype=np.float32),
+                                         np.asarray(norm, dtype=np.float32))
                         tomod[x, y, z] = tomod[x, y, z] * np.sign(dprod)
 
         if verbose:
@@ -318,7 +318,7 @@ def gen_isosurface(tomo, lbl, grow=0, sg=0, thr=1.0, mask=None):
 
     # Smoothing
     if sg > 0:
-        binary_seg = gaussian_filter(binary_seg.astype(np.float), sg)
+        binary_seg = gaussian_filter(binary_seg.astype(np.float32), sg)
 
     # Generate isosurface
     smoothed_seg_vti = io.numpy_to_vti(binary_seg)
