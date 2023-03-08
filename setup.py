@@ -23,5 +23,5 @@ setup(
         "(LGPLv3)",
         "Operating System :: POSIX :: Linux",
     ],
-    python_requires='==3',
+    python_requires='>=3.4',
 )
