@@ -2270,13 +2270,13 @@ def plot_peak_curvature_diff_rh(
         selection = df.query('(segmentation==@segmentation) & (method==@method)'
                              '& (radius_hit==@radius_hit)')
         curvatures = selection[curvature].values[0]
-        curvatures_array = np.array(curvatures).astype(np.float)
+        curvatures_array = np.array(curvatures).astype(np.float32)
         curvatures_arrays.append(curvatures_array)
         label = r"rh={}".format(radius_hit)
         labels.append(label)
         if weights is not None:
             weights = selection[weights].values[0]
-            weights_array = np.array(weights).astype(np.float)
+            weights_array = np.array(weights).astype(np.float32)
             weights_arrays.append(weights_array)
 
     if x_range is None:

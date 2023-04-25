@@ -1437,7 +1437,7 @@ class TriangleGraph(SurfaceGraph):
             # Geometry
             # lut[vertex_index, triangle_point_index*] = point_array_index**
             # *ALWAYS 0-2, **0-(NumPoints-1)
-            lut = np.zeros(shape=(self.graph.num_vertices(), 3), dtype=np.int)
+            lut = np.zeros(shape=(self.graph.num_vertices(), 3), dtype=int)
             i = 0  # next new point index
             # dictionary of points with a key (x, y, z) and the index in VTK
             # points list as a value

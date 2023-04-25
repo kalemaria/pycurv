@@ -319,7 +319,7 @@ def main():
     # Gaussian smoothing
     sigma = 0.2
     smooth_sphere = ndimage.filters.gaussian_filter(
-        sphere.astype(np.float), sigma)
+        sphere.astype(np.float32), sigma)
     print(np.min(smooth_sphere))
     print(np.max(smooth_sphere))
     io.save_numpy(smooth_sphere, "{}smooth_sphere_r{}_t{}_box{}.mrc".format(

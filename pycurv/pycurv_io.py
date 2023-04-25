@@ -577,7 +577,7 @@ class TypesConverter(object):
             return np.bool
         elif (isinstance(din, vtk.vtkIntArray) or
                 isinstance(din, vtk.vtkTypeInt32Array)):
-            return np.int
+            return np.int32
         elif isinstance(din, vtk.vtkTypeInt8Array):
             return np.int8
         elif isinstance(din, vtk.vtkTypeInt16Array):
@@ -665,7 +665,7 @@ class TypesConverter(object):
         elif (din == 'int64_t') or (din == 'vector<int64_t>'):
             return np.int64
         elif (din == 'double') or (din == 'vector<double>'):
-            return np.float
+            return float
         else:
             raise pexceptions.PySegInputError(
                 expr='gt_to_numpy (TypesConverter)',

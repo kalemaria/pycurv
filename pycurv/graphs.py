@@ -349,7 +349,7 @@ class SegmentationGraph(object):
             print('edge arrays length: {}'.format(len(edge_arrays)))
 
         # Geometry
-        lut = np.zeros(shape=self.graph.num_vertices(), dtype=np.int)
+        lut = np.zeros(shape=self.graph.num_vertices(), dtype=int)
         for i, vd in enumerate(self.graph.vertices()):
             [x, y, z] = self.graph.vp.xyz[vd]
             points.InsertPoint(i, x, y, z)
