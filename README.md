@@ -507,8 +507,6 @@ If you have found a bug or have an issue with the software, please open an issue
 [here](https://github.com/kalemaria/pycurv/issues).
 
 # Citing PyCurv
-If you have used PyCurv for a scientific work, please cite the publication
-"Reliable estimation of membrane curvature for cryo-electron tomography"
-([Salfer et al. 2020, PLoS Computational biology](https://doi.org/10.1371/journal.pcbi.1007962))
-and "Stabilizing Tensor Voting for 3D Curvature Estimation"
-[Pérez, Uhlmann and Forster-Heinlein](https://easychair.org/publications/paper/ssD6).
+If you have used PyCurv for a scientific work, please cite the publications:
+- "Reliable estimation of membrane curvature for cryo-electron tomography" ([Salfer et al. 2020, PLoS Computational biology](https://doi.org/10.1371/journal.pcbi.1007962))
+- "Stabilizing Tensor Voting for 3D Curvature Estimation" ([Pérez, Uhlmann and Forster-Heinlein 2024, Proceedings of 3rd International Workshop on Mathematical Modeling and Scientific Computing](https://easychair.org/publications/paper/ssD6)).
