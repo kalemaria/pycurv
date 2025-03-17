@@ -197,6 +197,8 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     # vertex property for storing the estimated tangent of the corresponding
     # vertex (if the vertex belongs to class 2):
     sg.graph.vp.t_v = sg.graph.new_vertex_property("vector<float>")
+    # vertex property for storing local average of estimated normals
+    sg.graph.vp.avg_normals = sg.graph.new_vertex_property('vector<float>')
 
     if full_dist_map is True and sg.__class__.__name__ == "TriangleGraph":
         # * Distance map between all pairs of vertices *
@@ -290,6 +292,32 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
             except KeyError:
                 classes_counts[class_v] = 1
         avg_num_neighbors = float(sum_num_neighbors) / float(num_v)
+    
+    # Post processing to correct orientation of normals
+    for v in sg.graph.vertices():
+        # Find the neighboring vertices of vertex v to be returned:
+        if sg.__class__.__name__ == "TriangleGraph":
+            neighbor_idx_to_dist = sg.find_geodesic_neighbors(
+                v, g_max)
+        else:  # PointGraph
+            neighbor_idx_to_dist = sg.find_geodesic_neighbors_exact(
+                v, g_max)
+            
+        pos = list(neighbor_idx_to_dist.keys())
+        
+        # Get neighboring vertices of v
+        adj_vertices = set(u for u in v.all_neighbors() if u in pos)
+        # Get neighboring normals of v
+        adj_normals = [vp_n_v[u] for u in adj_vertices]
+        # Calculate the average of the neighboring normals
+        avg_normal = np.mean(adj_normals, axis=0)
+        # Assign it as an attribute to v, we also normalize the averaged normal
+        sg.graph.vp.avg_normals[v] = avg_normal / np.linalg.norm(avg_normal)
+        
+        # Determine if the orientation of the normal at v should be reversed
+        dot_prod = np.dot(vp_n_v[v], sg.graph.vp.avg_normals[v])
+        if dot_prod < 0:
+            vp_n_v[v] = np.array([-x for x in vp_n_v[v]])
 
     # Printing out some numbers concerning the first pass:
     print("Average number of geodesic neighbors for all vertices: {}".format(
