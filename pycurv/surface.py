@@ -3,9 +3,7 @@ import vtk
 from . import pexceptions
 from . import pycurv_io as io
 import numpy as np
-from scipy.ndimage import binary_dilation
-from scipy.ndimage.morphology import distance_transform_edt
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import binary_dilation, distance_transform_edt, gaussian_filter
 from .linalg import dot_norm
 import time
 
@@ -431,7 +429,8 @@ def run_gen_surface(tomo, outfile_base, lbl=1, mask=True, other_mask=None,
     return surface
 
 
-def add_curvature_to_vtk_surface(surface, curvature_type, invert=True):
+def add_curvature_to_vtk_surface(surface, curvature_type, invert=True,
+                                 suppress_warnings=True):
     """
     Adds curvatures (Gaussian, mean, maximum or minimum) calculated by VTK to
     each triangle vertex of a vtkPolyData surface.
@@ -443,6 +442,8 @@ def add_curvature_to_vtk_surface(surface, curvature_type, invert=True):
         invert (boolean, optional): if True (default), VTK will calculate
             curvatures as for meshes with opposite pointing normals (their
             convention is outwards pointing normals, opposite from ours)
+        suppress_warnings (boolean, optional): if True (default), VTK warnings
+            from the curvature calculation are suppressed
 
     Returns:
         the vtkPolyData surface with '<type>_Curvature' property added to each
@@ -466,7 +467,11 @@ def add_curvature_to_vtk_surface(surface, curvature_type, invert=True):
                      "input: 'Gaussian', 'Mean', 'Maximum' or 'Minimum'."))
         if invert:
             curvature_filter.InvertMeanCurvatureOn()  # default Off
+        if suppress_warnings:
+            vtk.vtkObject.GlobalWarningDisplayOff()
         curvature_filter.Update()
+        if suppress_warnings:
+            vtk.vtkObject.GlobalWarningDisplayOn()
         surface_curvature = curvature_filter.GetOutput()
         return surface_curvature
     else:

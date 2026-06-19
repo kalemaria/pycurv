@@ -134,7 +134,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
     # the second step of normal vector voting algorithm of Page et al., 2002. *
     def collect_curvature_votes(
             self, vertex_v_ind, g_max, sigma, full_dist_map=None,
-            page_curvature_formula=False, a_max=0.0):
+            page_curvature_formula=False, a_max=0.0, vectorized=True):
         """
         For a vertex v, collects the curvature and tangent votes of all
         triangles within its geodesic neighborhood belonging to a surface patch
@@ -179,6 +179,8 @@ class SurfaceGraph(graphs.SegmentationGraph):
             a_max (float, optional): if given (default 0.0), votes are
                 weighted by triangle area like in the first pass (normals
                 estimation)
+            vectorized (bool, optional): if True (default), use vectorized
+                NumPy operations for faster computation (TriangleGraph only)
         Returns:
             the 3x3 symmetric matrix B_v (numpy.ndarray)
         """
@@ -214,9 +216,7 @@ class SurfaceGraph(graphs.SegmentationGraph):
             neighbor_idx_to_dist = self.find_geodesic_neighbors_exact(
                 vertex_v, g_max, verbose=False, only_surface=True)
         # Doing it again, because saving in first pass caused memory problems
-        try:
-            assert(len(neighbor_idx_to_dist) > 0)
-        except AssertionError:
+        if len(neighbor_idx_to_dist) == 0:
             print("{} neighbors in a surface patch with weights w_i:".format(
                 len(neighbor_idx_to_dist)))
             print("The vertex will be ignored.")
@@ -227,6 +227,19 @@ class SurfaceGraph(graphs.SegmentationGraph):
         v = array(xyz[vertex_v])
         n_v = array(vp_n_v[vertex_v])
 
+        # Use vectorized implementation for TriangleGraph
+        if vectorized and self.__class__.__name__ == "TriangleGraph" and len(neighbor_idx_to_dist) > 0:
+            from .vectorized_voting import collect_curvature_votes_vectorized
+            arrays = self.get_estimated_normal_arrays()
+            neighbor_indices = np.array(list(neighbor_idx_to_dist.keys()))
+            neighbor_distances = np.array([neighbor_idx_to_dist[i] for i in neighbor_indices])
+            return collect_curvature_votes_vectorized(
+                v, n_v, neighbor_indices, neighbor_distances,
+                arrays['xyz'], arrays['n_v'],
+                arrays['area'] if a_max > 0 else None,
+                a_max, sigma, page_curvature_formula)
+
+        # Fallback to original loop-based implementation
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated:
         B_v = np.zeros(shape=(3, 3))
@@ -681,7 +694,7 @@ class PointGraph(SurfaceGraph):
 
     def build_graph_from_vtk_surface(
             self, surface, scale=(1, 1, 1), verbose=False,
-            reverse_normals=False):
+            reverse_normals=False, suppress_vtk_warnings=True):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
         given units according to the scale factor.
@@ -699,6 +712,8 @@ class PointGraph(SurfaceGraph):
                 information will be printed out
             reverse_normals (boolean, optional): if True (default False), the
                 triangle normals are reversed during graph generation
+            suppress_vtk_warnings (boolean, optional): if True (default), VTK
+                warnings from curvature calculation are suppressed
 
         Returns:
             rescaled surface to given units with VTK curvatures
@@ -716,8 +731,12 @@ class PointGraph(SurfaceGraph):
             invert = False
         else:
             invert = True
-        surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
-        surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
+        surface = add_curvature_to_vtk_surface(
+            surface, "Minimum", invert,
+            suppress_warnings=suppress_vtk_warnings)
+        surface = add_curvature_to_vtk_surface(
+            surface, "Maximum", invert,
+            suppress_warnings=suppress_vtk_warnings)
         surface = add_point_normals_to_vtk_surface(surface, reverse_normals)
 
         point_data = surface.GetPointData()
@@ -793,23 +812,23 @@ class PointGraph(SurfaceGraph):
                 for k in range(0, 2):
                     x1, y1, z1 = points_cell.GetPoint(k)
                     p1 = (x1, y1, z1)
-                    # vertex descriptor of the 1st point
-                    vd1 = self.graph.vertex(
-                        self.coordinates_to_vertex_index[p1])
+                    # vertex index and descriptor of the 1st point
+                    idx1 = self.coordinates_to_vertex_index[p1]
+                    vd1 = self.graph.vertex(idx1)
                     for l in range(k + 1, 3):
                         x2, y2, z2 = points_cell.GetPoint(l)
                         p2 = (x2, y2, z2)
-                        # vertex descriptor of the 2nd point
-                        vd2 = self.graph.vertex(
-                            self.coordinates_to_vertex_index[p2])
-                        if not (
-                              (p1, p2) in self.coordinates_pair_connected or
-                              (p2, p1) in self.coordinates_pair_connected):
+                        # vertex index and descriptor of the 2nd point
+                        idx2 = self.coordinates_to_vertex_index[p2]
+                        vd2 = self.graph.vertex(idx2)
+                        # Use ordered vertex indices for edge tracking (faster than coordinate tuples)
+                        edge_key = (min(idx1, idx2), max(idx1, idx2))
+                        if edge_key not in self.coordinates_pair_connected:
                             # edge descriptor
                             ed = self.graph.add_edge(vd1, vd2)
                             self.graph.ep.distance[ed] = \
                                 self.distance_between_voxels(p1, p2)
-                            self.coordinates_pair_connected.add((p1, p2))
+                            self.coordinates_pair_connected.add(edge_key)
                             if verbose:
                                 print('\tThe neighbor points ({}, {}, {}) and '
                                       '({}, {}, {}) have been connected by an '
@@ -1127,9 +1146,10 @@ class TriangleGraph(SurfaceGraph):
         """dict: a dictionary of all added triangle cell indices, mapping them
         to their graph vertex indices"""
 
-    def build_graph_from_vtk_surface(
-            self, surface, scale=(1, 1, 1), vtk_curv=True, verbose=False,
-            reverse_normals=False):
+    def build_graph_from_vtk_surface(self, surface, scale=(1, 1, 1),
+                                     vtk_curv=True, verbose=False,
+                                     reverse_normals=False,
+                                     suppress_vtk_warnings=True):
         """
         Builds the graph from the vtkPolyData surface, which is rescaled to
         given units according to the scale factor.
@@ -1152,6 +1172,8 @@ class TriangleGraph(SurfaceGraph):
                 information will be printed out
             reverse_normals (boolean, optional): if True (default False), the
                 triangle normals are reversed during graph generation
+            suppress_vtk_warnings (boolean, optional): if True (default), VTK
+                warnings from curvature calculation are suppressed
 
         Returns:
             rescaled surface to given units with VTK curvatures
@@ -1181,8 +1203,12 @@ class TriangleGraph(SurfaceGraph):
                 invert = False
             else:
                 invert = True
-            surface = add_curvature_to_vtk_surface(surface, "Minimum", invert)
-            surface = add_curvature_to_vtk_surface(surface, "Maximum", invert)
+            surface = add_curvature_to_vtk_surface(
+                surface, "Minimum", invert,
+                suppress_warnings=suppress_vtk_warnings)
+            surface = add_curvature_to_vtk_surface(
+                surface, "Maximum", invert,
+                suppress_warnings=suppress_vtk_warnings)
             point_data = surface.GetPointData()
             n = point_data.GetNumberOfArrays()
             for i in range(n):
@@ -1304,64 +1330,53 @@ class TriangleGraph(SurfaceGraph):
             # cell i (1 or 2) as follows.
             # For each point j of cell i, iterate over the neighbor cells
             # sharing that point (excluding the cell i).
-            # Add each neighbor cell to the neighbor_cells dict if it is not
-            # there yet and add 1 into the shared_points list.
-            # Otherwise, find the index of the cell in neighbor_cells and
-            # increase the counter of shared_points at the same index.
+            # Use a dictionary for O(1) lookup and update of shared point counts.
             points_cell = cell.GetPoints()
-            neighbor_cells = {}
-            shared_points = []
-            idx_new = 0  # counter of newly added neighbor cells of point j
+            neighbor_cell_shared_points = {}  # dict: neighbor_cell_id -> shared_points_count
             for j in range(points_cell.GetNumberOfPoints()):
                 point_j = points_cell.GetPoint(j)
                 for neighbor_cell_id in self.point_in_cells[point_j]:
                     if neighbor_cell_id != cell_id:
-                        if neighbor_cell_id not in neighbor_cells:
-                            neighbor_cells[neighbor_cell_id] = idx_new
-                            shared_points.append(1)
-                            idx_new += 1
-                        else:
-                            idx = neighbor_cells[neighbor_cell_id]
-                            shared_points[idx] += 1
+                        neighbor_cell_shared_points[neighbor_cell_id] = \
+                            neighbor_cell_shared_points.get(neighbor_cell_id, 0) + 1
             if verbose:
-                print("has {} neighbor cells".format(len(neighbor_cells)))
+                print("has {} neighbor cells".format(len(neighbor_cell_shared_points)))
 
             # Get the vertex descriptor representing the cell i (vertex i):
             vd_i = self.graph.vertex(i)
-
-            # Get the coordinates of the vertex i:
-            p_i = self.graph.vp.xyz[vd_i]  # a list
-            p_i = tuple(p_i)
 
             # Iterate over the ready neighbor_cells dict and shared_points list,
             # connecting cell i with a neighbor cell x with a "strong" edge
             # if they share 2 edges and with a "weak" edge otherwise (if
             # they share only 1 edge).
-            for neighbor_cell_id, idx in neighbor_cells.items():
+            for neighbor_cell_id, num_shared in neighbor_cell_shared_points.items():
                 # Get the vertex descriptor representing the cell x:
-                # vertex index of the current neighbor cell
+                # vertex index of the current neighbor cell (O(1) lookup)
                 x = self.triangle_cell_ids[neighbor_cell_id]
-                # vertex descriptor of the current neighbor cell, vertex x
-                vd_x = self.graph.vertex(x)
 
-                # Get the coordinates of the vertex x:
-                p_x = self.graph.vp.xyz[vd_x]
-                p_x = tuple(p_x)
+                # Use ordered vertex indices for edge tracking (much faster than
+                # coordinate tuples - avoids slow graph-tool PropertyArray to tuple conversion)
+                edge_key = (min(i, x), max(i, x))
 
                 # Add an edge between the vertices i and x, if it has not
                 # been added yet:
-                if not (((p_i, p_x) in self.coordinates_pair_connected) or
-                        ((p_x, p_i) in self.coordinates_pair_connected)):
+                if edge_key not in self.coordinates_pair_connected:
+                    vd_x = self.graph.vertex(x)
                     ed = self.graph.add_edge(vd_i, vd_x)  # edge descriptor
-                    self.coordinates_pair_connected.add((p_i, p_x))
+                    self.coordinates_pair_connected.add(edge_key)
 
-                    # Add the distance of the edge
-                    self.graph.ep.distance[ed] = self.distance_between_voxels(
-                        p_i, p_x)
+                    # Get coordinates only when needed (for distance calculation)
+                    # Access coordinates as lists to avoid slow np.array() conversion
+                    p_i = self.graph.vp.xyz[vd_i]
+                    p_x = self.graph.vp.xyz[vd_x]
+
+                    # Inline Euclidean distance calculation (avoids np.array overhead)
+                    dist_sq = (p_i[0] - p_x[0])**2 + (p_i[1] - p_x[1])**2 + (p_i[2] - p_x[2])**2
+                    self.graph.ep.distance[ed] = dist_sq ** 0.5
 
                     # Assign the "strength" property to the edge as
                     # explained above:
-                    if shared_points[idx] == 2:
+                    if num_shared == 2:
                         is_strong = 1
                         strength = 'strong'
                     else:
@@ -1407,16 +1422,20 @@ class TriangleGraph(SurfaceGraph):
         Returns:
             vtk.vtkPolyData with triangle-cells
         """
+        from vtk.util.numpy_support import numpy_to_vtk
+
         if self.graph.num_vertices() > 0:
             # Initialization
             poly_triangles = vtk.vtkPolyData()
             points = vtk.vtkPoints()
-            vertex_arrays = list()
-            # Vertex property arrays
+
+            # Pre-compute property metadata (avoid repeated type lookups)
+            prop_metadata = []  # list of (prop_key, num_components, numpy_dtype, vtk_array)
+            types_converter = TypesConverter()  # single instance reused
             for prop_key in list(self.graph.vp.keys()):
                 data_type = self.graph.vp[prop_key].value_type()
                 if (data_type != 'string' and data_type != 'python::object' and
-                        prop_key != 'points'):  # and prop_key != 'xyz'
+                        prop_key != 'points'):
                     if verbose:
                         print('\nvertex property key: {}'.format(prop_key))
                         print('value type: {}'.format(data_type))
@@ -1425,19 +1444,21 @@ class TriangleGraph(SurfaceGraph):
                     else:  # vector
                         num_components = len(
                             self.graph.vp[prop_key][self.graph.vertex(0)])
-                    array = TypesConverter().gt_to_vtk(data_type)
-                    array.SetName(prop_key)
+                    vtk_array = types_converter.gt_to_vtk(data_type)
+                    vtk_array.SetName(prop_key)
                     if verbose:
                         print('number of components: {}'.format(num_components))
-                    array.SetNumberOfComponents(num_components)
-                    vertex_arrays.append(array)
+                    vtk_array.SetNumberOfComponents(num_components)
+                    numpy_dtype = types_converter.gt_to_numpy(data_type)
+                    prop_metadata.append((prop_key, num_components, numpy_dtype, vtk_array))
             if verbose:
-                print('\nvertex arrays length: {}'.format(len(vertex_arrays)))
+                print('\nvertex arrays length: {}'.format(len(prop_metadata)))
 
             # Geometry
             # lut[vertex_index, triangle_point_index*] = point_array_index**
             # *ALWAYS 0-2, **0-(NumPoints-1)
-            lut = np.zeros(shape=(self.graph.num_vertices(), 3), dtype=int)
+            num_vertices = self.graph.num_vertices()
+            lut = np.zeros(shape=(num_vertices, 3), dtype=int)
             i = 0  # next new point index
             # dictionary of points with a key (x, y, z) and the index in VTK
             # points list as a value
@@ -1467,23 +1488,31 @@ class TriangleGraph(SurfaceGraph):
                 # is ALWAYS 0-2.
                 # The second parameter is the index into the point (geometry)
                 # array, so this can range from 0-(NumPoints-1)
-                triangle.GetPointIds().SetId(
-                    0, lut[self.graph.vertex_index[vd], 0])
-                triangle.GetPointIds().SetId(
-                    1, lut[self.graph.vertex_index[vd], 1])
-                triangle.GetPointIds().SetId(
-                    2, lut[self.graph.vertex_index[vd], 2])
+                v_idx = self.graph.vertex_index[vd]
+                triangle.GetPointIds().SetId(0, lut[v_idx, 0])
+                triangle.GetPointIds().SetId(1, lut[v_idx, 1])
+                triangle.GetPointIds().SetId(2, lut[v_idx, 2])
                 triangles.InsertNextCell(triangle)
-                for array in vertex_arrays:
-                    prop_key = array.GetName()
-                    n_comp = array.GetNumberOfComponents()
-                    data_type = self.graph.vp[prop_key].value_type()
-                    data_type = TypesConverter().gt_to_numpy(data_type)
-                    array.InsertNextTuple(self.get_vertex_prop_entry(
-                        prop_key, vd, n_comp, data_type))
             if verbose:
                 print('number of triangle cells: {}'.format(
                     triangles.GetNumberOfCells()))
+
+            # Build vertex property arrays - use bulk operations for scalars
+            vertex_arrays = []
+            for prop_key, num_components, numpy_dtype, vtk_array in prop_metadata:
+                prop = self.graph.vp[prop_key]
+                if num_components == 1:
+                    # Scalar property - use numpy_to_vtk for bulk transfer
+                    arr = np.asarray(prop.get_array(), dtype=np.float64)
+                    vtk_arr = numpy_to_vtk(arr, deep=True)
+                    vtk_arr.SetName(prop_key)
+                    vertex_arrays.append(vtk_arr)
+                else:
+                    # Vector property - still need per-vertex iteration
+                    for vd in self.graph.vertices():
+                        vtk_array.InsertNextTuple(tuple(
+                            numpy_dtype(prop[vd][k]) for k in range(num_components)))
+                    vertex_arrays.append(vtk_array)
 
             # vtkPolyData construction
             poly_triangles.SetPoints(points)
@@ -1810,13 +1839,11 @@ class TriangleGraph(SurfaceGraph):
             # a small component with size below the threshold:
             self.graph.vp.small_component = \
                 self.graph.new_vertex_property("boolean")
-            num_vertices_in_small_components = 0
-            for v in self.graph.vertices():
-                if comp_labels_map[v] in small_components:
-                    self.graph.vp.small_component[v] = 1
-                    num_vertices_in_small_components += 1
-                else:
-                    self.graph.vp.small_component[v] = 0
+            # Vectorized membership check using numpy (much faster than Python loop)
+            comp_labels = comp_labels_map.a
+            is_small = np.isin(comp_labels, list(small_components))
+            self.graph.vp.small_component.a = is_small
+            num_vertices_in_small_components = np.sum(is_small)
             print("{} vertices are in the small components.".format(
                 num_vertices_in_small_components))
 
@@ -1824,9 +1851,10 @@ class TriangleGraph(SurfaceGraph):
                 print('Filtering out those vertices and their edges belonging '
                       'to the small components...')
                 # Set the filter to get only vertices NOT belonging to a small
-                # component.
-                self.graph.set_vertex_filter(
-                    self.graph.vp.small_component.t(lambda x: 1-x))
+                # component. Invert the property in-place using numpy (fast)
+                # Note: use logical_not, not ~, because property uses uint8 internally
+                self.graph.vp.small_component.a[:] = np.logical_not(self.graph.vp.small_component.a)
+                self.graph.set_vertex_filter(self.graph.vp.small_component)
                 # Purge filtered out vertices and edges from the graph:
                 self.graph.purge_vertices()
                 # Update graph's dictionary coordinates_to_vertex_index:
@@ -1844,8 +1872,48 @@ class TriangleGraph(SurfaceGraph):
     # * The following TriangleGraph methods are implementing with adaptations
     # the first step of normal vector voting algorithm of Page et al., 2002. *
 
+    def get_vertex_arrays(self):
+        """
+        Get numpy arrays of vertex properties for vectorized voting operations.
+
+        Caches the arrays on first call for efficiency. The cache is invalidated
+        if the graph structure changes.
+
+        Returns:
+            dict with keys 'xyz', 'normal', 'area' containing numpy arrays
+        """
+        if not hasattr(self, '_vertex_arrays') or self._vertex_arrays is None:
+            self._vertex_arrays = {
+                'xyz': self.graph.vp.xyz.get_2d_array([0, 1, 2]).T,
+                'normal': self.graph.vp.normal.get_2d_array([0, 1, 2]).T,
+                'area': np.array(self.graph.vp.area.a),
+            }
+        return self._vertex_arrays
+
+    def get_estimated_normal_arrays(self):
+        """
+        Get numpy arrays including estimated normals for curvature voting.
+
+        Should only be called after first pass (normals estimation) is complete.
+
+        Returns:
+            dict with keys 'xyz', 'n_v', 'area' containing numpy arrays
+        """
+        if not hasattr(self, '_estimated_normal_arrays') or self._estimated_normal_arrays is None:
+            self._estimated_normal_arrays = {
+                'xyz': self.graph.vp.xyz.get_2d_array([0, 1, 2]).T,
+                'n_v': self.graph.vp.n_v.get_2d_array([0, 1, 2]).T,
+                'area': np.array(self.graph.vp.area.a),
+            }
+        return self._estimated_normal_arrays
+
+    def clear_vertex_array_cache(self):
+        """Clear the cached vertex arrays."""
+        self._vertex_arrays = None
+        self._estimated_normal_arrays = None
+
     def collect_normal_votes(self, vertex_v_ind, g_max, a_max, sigma,
-                             full_dist_map=None):
+                             full_dist_map=None, vectorized=True):
         """
         For a vertex v, collects the normal votes of all triangles within its
         geodesic neighborhood and calculates the weighted covariance matrix sum
@@ -1876,39 +1944,49 @@ class TriangleGraph(SurfaceGraph):
             full_dist_map (graph_tool.PropertyMap, optional): the full distance
                 map for the whole graph; if None, a local distance map is
                 calculated for this vertex (default)
+            vectorized (bool, optional): if True (default), use vectorized
+                NumPy operations for faster computation
 
         Returns:
             - number of geodesic neighbors of vertex v
             - the 3x3 symmetric matrix V_v (numpy.ndarray)
         """
-        # To spare function referencing every time in the following for loop:
-        vertex = self.graph.vertex
-        normal = self.graph.vp.normal
-        array = np.array
-        xyz = self.graph.vp.xyz
-        sqrt = math.sqrt
-        dot = np.dot
-        outer = np.multiply.outer
-        area = self.graph.vp.area
-        exp = math.exp
-
         # Get the coordinates of vertex v (as numpy array):
         vertex_v = self.graph.vertex(vertex_v_ind)
-        v = xyz[vertex_v]
-        v = array(v)
+        xyz = self.graph.vp.xyz
+        v = np.array(xyz[vertex_v])
 
         # Find the neighboring vertices of vertex v to be returned:
         if vertex_v_ind == 0:
             print("Calling find_geodesic_neighbors")
         neighbor_idx_to_dist = self.find_geodesic_neighbors(
             vertex_v, g_max, full_dist_map=full_dist_map)
-        try:
-            assert len(neighbor_idx_to_dist) > 0
-        except AssertionError:
+
+        if len(neighbor_idx_to_dist) == 0:
             print("\nWarning: the vertex v = {} has 0 neighbors. It will be "
                   "ignored later.".format(v))
-            # return a placeholder instead of V_v
             return 0, np.zeros(shape=(3, 3))
+
+        # Use vectorized implementation for better performance
+        if vectorized and len(neighbor_idx_to_dist) > 0:
+            from .vectorized_voting import collect_normal_votes_vectorized
+            arrays = self.get_vertex_arrays()
+            neighbor_indices = np.array(list(neighbor_idx_to_dist.keys()))
+            neighbor_distances = np.array([neighbor_idx_to_dist[i] for i in neighbor_indices])
+            return collect_normal_votes_vectorized(
+                v, neighbor_indices, neighbor_distances,
+                arrays['xyz'], arrays['normal'], arrays['area'],
+                a_max, sigma)
+
+        # Fallback to original loop-based implementation
+        vertex = self.graph.vertex
+        normal = self.graph.vp.normal
+        array = np.array
+        sqrt = math.sqrt
+        dot = np.dot
+        outer = np.multiply.outer
+        area = self.graph.vp.area
+        exp = math.exp
 
         # Initialize the weighted matrix sum of all votes for vertex v to be
         # calculated and returned:

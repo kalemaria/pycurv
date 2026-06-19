@@ -1,3 +1,4 @@
+import sys
 import time
 import numpy as np
 import math
@@ -7,8 +8,106 @@ import pathos.pools as pp
 from functools import partial
 from os import remove
 from os.path import isfile
+from tqdm import tqdm
+from scipy import sparse
+import tempfile
+import os
 
 from .surface_graphs import TriangleGraph, PointGraph
+
+# Worker-local cache for loaded graphs (avoids reloading for each chunk)
+_worker_graph_cache = {}
+
+
+def _chunk_indices(indices, chunk_size):
+    """Split indices into chunks for batched parallel processing.
+
+    Args:
+        indices: Iterable of indices to chunk
+        chunk_size: Maximum size of each chunk
+
+    Returns:
+        List of lists, each containing up to chunk_size indices
+    """
+    indices = list(indices)
+    return [indices[i:i + chunk_size] for i in range(0, len(indices), chunk_size)]
+
+
+def _get_cached_graph(graph_file, graph_class):
+    """Load graph from file, caching in worker-local storage.
+
+    Each worker process loads the graph once and reuses it for all chunks.
+    This avoids the overhead of pickling the graph with each task.
+    """
+    global _worker_graph_cache
+    cache_key = (graph_file, graph_class)
+
+    if cache_key not in _worker_graph_cache:
+        if graph_class == 'TriangleGraph':
+            sg = TriangleGraph()
+        else:
+            sg = PointGraph()
+        sg.graph = load_graph(graph_file)
+        _worker_graph_cache[cache_key] = sg
+
+    return _worker_graph_cache[cache_key]
+
+
+def _process_vertex_chunk_first_pass(vertex_indices, sg, g_max, a_max, sigma, full_dist_map):
+    """Process a chunk of vertices for the first pass (normal estimation).
+
+    Args:
+        vertex_indices: List of vertex indices to process
+        sg: Surface graph object OR tuple (graph_file, graph_class) for lazy loading
+        g_max: Maximum geodesic distance
+        a_max: Maximum triangle area
+        sigma: Sigma parameter for weighting
+        full_dist_map: Full distance map or None
+
+    Returns:
+        List of (num_neighbors, class_v, n_v, t_v) tuples for each vertex
+    """
+    # Support lazy loading from file to reduce IPC overhead
+    if isinstance(sg, tuple):
+        graph_file, graph_class = sg
+        sg = _get_cached_graph(graph_file, graph_class)
+
+    results = []
+    for idx in vertex_indices:
+        result = sg.first_pass(idx, g_max=g_max, a_max=a_max,
+                               sigma=sigma, full_dist_map=full_dist_map)
+        results.append(result)
+    return results
+
+
+def _process_vertex_chunk_second_pass(vertex_indices, sg, g_max, sigma,
+                                       page_curvature_formula, a_max, full_dist_map):
+    """Process a chunk of vertices for the second pass (curvature estimation).
+
+    Args:
+        vertex_indices: List of vertex indices to process
+        sg: Surface graph object OR tuple (graph_file, graph_class) for lazy loading
+        g_max: Maximum geodesic distance
+        sigma: Sigma parameter for weighting
+        page_curvature_formula: Whether to use Page's curvature formula
+        a_max: Maximum triangle area (0.0 to disable area weighting)
+        full_dist_map: Full distance map or None
+
+    Returns:
+        List of (t_1, t_2, kappa_1, kappa_2, gauss, mean, shape, curvedness) tuples
+    """
+    # Support lazy loading from file to reduce IPC overhead
+    if isinstance(sg, tuple):
+        graph_file, graph_class = sg
+        sg = _get_cached_graph(graph_file, graph_class)
+
+    results = []
+    for idx in vertex_indices:
+        result = sg.second_pass(idx, g_max=g_max, sigma=sigma,
+                                page_curvature_formula=page_curvature_formula,
+                                a_max=a_max, full_dist_map=full_dist_map)
+        results.append(result)
+    return results
 
 """
 Contains a function implementing the normal vector voting algorithm (Page et
@@ -214,6 +313,10 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     else:
         full_dist_map = None
 
+    # Initialize distance cache for efficient neighbor search on large graphs
+    # The distance cache stores Dijkstra results to reduce redundant computations
+    graph_num_vertices = sg.graph.num_vertices()
+
     t_end0 = time.time()
     duration0 = t_end0 - t_begin0
     minutes, seconds = divmod(duration0, 60)
@@ -243,15 +346,48 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
     vp_t_v = sg.graph.vp.t_v
 
     if cores > 1:  # parallel processing
+        # Save graph to temp file - workers load from file instead of pickling
+        # This significantly reduces IPC overhead for large graphs
+        temp_graph_fd, temp_graph_file = tempfile.mkstemp(suffix='.gt')
+        os.close(temp_graph_fd)
+        sg.graph.save(temp_graph_file)
+        graph_class = sg.__class__.__name__
+        sg_ref = (temp_graph_file, graph_class)  # lightweight reference
+
         p = pp.ProcessPool(cores)
         print('Opened a pool with {} processes'.format(cores))
-        results_list = p.map(partial(first_pass,
-                                     g_max=g_max, a_max=a_max, sigma=sigma,
-                                     full_dist_map=full_dist_map),
-                             list(range(num_v)))  # a list of vertex v indices
+
+        # Use chunked processing to reduce IPC overhead
+        # Each chunk is processed as a batch, reducing task count from num_v to ~num_v/chunk_size
+        chunk_size = max(100, num_v // (cores * 6))
+        vertex_chunks = _chunk_indices(range(num_v), chunk_size)
+        print('Processing {} vertices in {} chunks of ~{} vertices each'.format(
+            num_v, len(vertex_chunks), chunk_size))
+
+        # Explicit progress message for stderr (shows even if tqdm doesn't render)
+        print('First pass: processing {} chunks...'.format(
+            len(vertex_chunks)), file=sys.stderr)
+
+        chunk_results = list(tqdm(
+            p.imap(
+                partial(_process_vertex_chunk_first_pass, sg=sg_ref,
+                        g_max=g_max, a_max=a_max, sigma=sigma,
+                        full_dist_map=full_dist_map),
+                vertex_chunks),
+            total=len(vertex_chunks),
+            desc="First pass",
+            unit="chunk",
+            file=sys.stderr))
         p.close()
         p.clear()
+        print('First pass: completed {} chunks'.format(len(vertex_chunks)), file=sys.stderr)
 
+        # Clean up temp file
+        if isfile(temp_graph_file):
+            remove(temp_graph_file)
+
+        # Flatten chunk results into a single list
+        results_list = [result for chunk in chunk_results for result in chunk]
         results_array = np.array(results_list, dtype=object)
         # Calculating average neighbors number:
         num_neighbors_array = results_array[:, 0]
@@ -273,7 +409,7 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
 
     else:  # cores == 1, sequential processing
         sum_num_neighbors = 0
-        for i in range(num_v):
+        for i in tqdm(range(num_v), desc="First pass", unit="vtx", file=sys.stderr):
             if sg.__class__.__name__ == "TriangleGraph":
                 num_neighbors, V_v = collect_normal_votes(
                     i, g_max, a_max, sigma, full_dist_map=full_dist_map)
@@ -294,30 +430,57 @@ def normals_estimation(sg, radius_hit, epsilon=0, eta=0, full_dist_map=False,
         avg_num_neighbors = float(sum_num_neighbors) / float(num_v)
     
     # Post processing to correct orientation of normals
-    for v in sg.graph.vertices():
-        # Find the neighboring vertices of vertex v to be returned:
-        if sg.__class__.__name__ == "TriangleGraph":
-            neighbor_idx_to_dist = sg.find_geodesic_neighbors(
-                v, g_max)
-        else:  # PointGraph
-            neighbor_idx_to_dist = sg.find_geodesic_neighbors_exact(
-                v, g_max)
-            
-        pos = list(neighbor_idx_to_dist.keys())
-        
-        # Get neighboring vertices of v
-        adj_vertices = set(u for u in v.all_neighbors() if u in pos)
-        # Get neighboring normals of v
-        adj_normals = [vp_n_v[u] for u in adj_vertices]
-        # Calculate the average of the neighboring normals
-        avg_normal = np.mean(adj_normals, axis=0)
-        # Assign it as an attribute to v, we also normalize the averaged normal
-        sg.graph.vp.avg_normals[v] = avg_normal / np.linalg.norm(avg_normal)
-        
-        # Determine if the orientation of the normal at v should be reversed
-        dot_prod = np.dot(vp_n_v[v], sg.graph.vp.avg_normals[v])
-        if dot_prod < 0:
-            vp_n_v[v] = np.array([-x for x in vp_n_v[v]])
+    # Fully vectorized using sparse matrix operations
+    print("\nPost-processing: correcting normal orientations...")
+
+    # Extract all normals into numpy array (N x 3)
+    normals = np.array([vp_n_v[v] for v in sg.graph.vertices()])
+
+    # Build sparse adjacency matrix with distance filtering
+    # Only include edges where distance <= g_max
+    rows = []
+    cols = []
+    ep_distance = sg.graph.ep.distance
+    for e in sg.graph.edges():
+        dist = ep_distance[e]
+        if dist <= g_max:
+            src, tgt = int(e.source()), int(e.target())
+            rows.extend([src, tgt])
+            cols.extend([tgt, src])
+
+    # Create sparse adjacency matrix
+    data = np.ones(len(rows), dtype=np.float32)
+    adj_matrix = sparse.csr_matrix((data, (rows, cols)), shape=(num_v, num_v))
+
+    # Row-normalize: divide each row by number of neighbors
+    row_sums = np.array(adj_matrix.sum(axis=1)).flatten()
+    row_sums[row_sums == 0] = 1  # Avoid division by zero
+    inv_row_sums = 1.0 / row_sums
+    normalizer = sparse.diags(inv_row_sums)
+    adj_normalized = normalizer @ adj_matrix
+
+    # Compute average normals via sparse matrix multiplication
+    avg_normals = adj_normalized @ normals  # (N x 3)
+
+    # Normalize the averaged normals
+    norms = np.linalg.norm(avg_normals, axis=1, keepdims=True)
+    norms[norms == 0] = 1  # Avoid division by zero
+    avg_normals = avg_normals / norms
+
+    # Compute dot products between original and average normals
+    dot_products = np.sum(normals * avg_normals, axis=1)
+
+    # Flip normals where dot product is negative
+    flip_mask = dot_products < 0
+    normals[flip_mask] *= -1
+    num_flipped = np.sum(flip_mask)
+    print(f"Flipped {num_flipped} normals for consistency")
+
+    # Write back to graph properties
+    vp_avg_normals = sg.graph.vp.avg_normals
+    for i, v in enumerate(sg.graph.vertices()):
+        vp_n_v[v] = normals[i]
+        vp_avg_normals[v] = avg_normals[i]
 
     # Printing out some numbers concerning the first pass:
     print("Average number of geodesic neighbors for all vertices: {}".format(
@@ -490,19 +653,52 @@ def curvature_estimation(
 
     if method == "VV":
         if cores > 1:  # parallel processing
+            # Save graph to temp file - workers load from file instead of pickling
+            # This significantly reduces IPC overhead for large graphs
+            temp_graph_fd, temp_graph_file = tempfile.mkstemp(suffix='.gt')
+            os.close(temp_graph_fd)
+            sg.graph.save(temp_graph_file)
+            graph_class = sg.__class__.__name__
+            sg_ref = (temp_graph_file, graph_class)  # lightweight reference
+
             p = pp.ProcessPool(cores)
             print('Opened a pool with {} processes'.format(cores))
+
+            # Use chunked processing to reduce IPC overhead
+            num_good = len(good_vertices_ind)
+            chunk_size = max(100, num_good // (cores * 6))
+            vertex_chunks = _chunk_indices(good_vertices_ind, chunk_size)
+            print('Processing {} vertices in {} chunks of ~{} vertices each'.format(
+                num_good, len(vertex_chunks), chunk_size))
+
+            # Explicit progress message for stderr (shows even if tqdm doesn't render)
+            print('Second pass: processing {} chunks...'.format(
+                len(vertex_chunks)), file=sys.stderr)
+
             # results_list has same length as good_vertices_ind
             # columns: t_1, t_2, kappa_1, kappa_2, gauss_curvature,
             # mean_curvature, shape_index, curvedness
-            results_list = p.map(partial(
-                second_pass, g_max=g_max, sigma=sigma,
-                page_curvature_formula=page_curvature_formula, a_max=a_max,
-                full_dist_map=full_dist_map),
-                good_vertices_ind)
+            chunk_results = list(tqdm(
+                p.imap(
+                    partial(_process_vertex_chunk_second_pass, sg=sg_ref,
+                            g_max=g_max, sigma=sigma,
+                            page_curvature_formula=page_curvature_formula,
+                            a_max=a_max, full_dist_map=full_dist_map),
+                    vertex_chunks),
+                total=len(vertex_chunks),
+                desc="Second pass",
+                unit="chunk",
+                file=sys.stderr))
             p.close()
             p.clear()
+            print('Second pass: completed {} chunks'.format(len(vertex_chunks)), file=sys.stderr)
 
+            # Clean up temp file
+            if isfile(temp_graph_file):
+                remove(temp_graph_file)
+
+            # Flatten chunk results into a single list
+            results_list = [result for chunk in chunk_results for result in chunk]
             results_array = np.array(results_list, dtype=object)
             t_1_array = results_array[:, 0]
             t_2_array = results_array[:, 1]
@@ -525,7 +721,8 @@ def curvature_estimation(
 
         else:  # cores == 1, sequential processing
             # Curvature votes collection and estimation for VV:
-            for i, v_ind in enumerate(good_vertices_ind):
+            for i, v_ind in tqdm(enumerate(good_vertices_ind), total=len(good_vertices_ind),
+                                 desc="Second pass", unit="vtx", file=sys.stderr):
                 B_v = collect_curvature_votes(
                     v_ind, g_max, sigma,
                     page_curvature_formula=page_curvature_formula,

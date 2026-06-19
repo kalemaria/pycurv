@@ -95,11 +95,14 @@ class SegmentationGraph(object):
         Returns:
             None
         """
-        self.coordinates_to_vertex_index = {}
-        for vd in self.graph.vertices():
-            [x, y, z] = self.graph.vp.xyz[vd]
-            self.coordinates_to_vertex_index[
-                (x, y, z)] = self.graph.vertex_index[vd]
+        # Vectorized: get all coordinates as numpy array and build dict
+        # (much faster than iterating with graph-tool property access overhead)
+        # Convert to Python floats to ensure consistent hashing for dict keys
+        xyz = self.graph.vp.xyz.get_2d_array([0, 1, 2]).T
+        self.coordinates_to_vertex_index = {
+            (float(row[0]), float(row[1]), float(row[2])): i
+            for i, row in enumerate(xyz)
+        }
 
     def calculate_density(self, size, scale, mask=None, target_coordinates=None,
                           verbose=False):
@@ -532,6 +535,11 @@ class SegmentationGraph(object):
         Also finds the corresponding geodesic distances. All edges are
         considered. The distances are calculated with Dijkstra's algorithm.
 
+        When a spatial index is available and no full distance map or cache
+        exists, uses KD-tree pre-filtering to reduce the search space. Since
+        geodesic distance >= Euclidean distance, vertices beyond Euclidean
+        radius g_max cannot be geodesic neighbors.
+
         Args:
             v (graph_tool.Vertex): the source vertex
             g_max: maximal geodesic distance (in the units of the graph)
@@ -547,23 +555,25 @@ class SegmentationGraph(object):
             a dictionary mapping a neighbor vertex index to the geodesic
             distance from vertex v
         """
+        vertex = self.graph.vertex
+        orientation_class = self.graph.vp.orientation_class
+        neighbor_id_to_dist = dict()
+        source_idx = int(v)
+
         if full_dist_map is not None:
+            # Full distance map available - use it directly
             dist_v = full_dist_map[v].get_array()
         else:
+            # Compute distance map for this vertex
             dist_v = shortest_distance(self.graph, source=v, target=None,
                                        weights=self.graph.ep.distance,
                                        max_dist=g_max)
             dist_v = dist_v.get_array()
-        # numpy array of distances from v to all vertices, in vertex index order
 
-        vertex = self.graph.vertex
-        orientation_class = self.graph.vp.orientation_class
-        neighbor_id_to_dist = dict()
-
-        idxs = np.where(dist_v <= g_max)[0]  # others are INF
+        idxs = np.where(dist_v <= g_max)[0]
         for idx in idxs:
             dist = dist_v[idx]
-            if dist != 0:  # ignore the source vertex itself
+            if dist != 0:
                 v_i = vertex(idx)
                 if (not only_surface) or orientation_class[v_i] == 1:
                     neighbor_id_to_dist[idx] = dist

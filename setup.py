@@ -16,12 +16,12 @@ setup(
     packages=find_packages(),
     install_requires=["numpy", "scipy", "scikit-image", "pandas", "pytest",
                       "matplotlib", "vtk", "nibabel",
-                      "pathos", "networkx", "future", "doit"],
+                      "pathos", "networkx", "future", "doit", "tqdm"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Lesser General Public License v3 "
         "(LGPLv3)",
         "Operating System :: POSIX :: Linux",
     ],
-    python_requires='>=3.4',
+    python_requires='>=3.11',
 )
